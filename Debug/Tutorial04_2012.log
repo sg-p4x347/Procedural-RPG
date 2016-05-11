@@ -1,0 +1,40 @@
+﻿Build started 5/10/2016 9:10:53 PM.
+     1>Project "C:\Gage Omega\Documents\Procedural RPG\Tutorial04_2012.vcxproj" on node 2 (Build target(s)).
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(388,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (ProceduralRPG.vcxproj, Tutorial04.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W4 /WX- /Od /Oi /Oy- /D WIN32 /D _DEBUG /D DEBUG /D PROFILE /D _WINDOWS /D _WIN32_WINNT=0x0600 /D _UNICODE /D UNICODE /Gm- /EHsc /RTC1 /MDd /GS /arch:SSE2 /fp:fast /Zc:wchar_t /Zc:forScope /openmp- /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt  Region.cpp
+         Region.cpp
+     1>c:\gage omega\documents\procedural rpg\region.cpp(10): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\gage omega\documents\procedural rpg\region.cpp(11): warning C4244: '=' : conversion from 'int' to 'unsigned short', possible loss of data
+     1>c:\gage omega\documents\procedural rpg\region.cpp(12): warning C4244: '=' : conversion from 'int' to 'unsigned short', possible loss of data
+     1>c:\gage omega\documents\procedural rpg\region.cpp(42): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\gage omega\documents\procedural rpg\region.cpp(67): warning C4244: 'initializing' : conversion from 'double' to 'int', possible loss of data
+     1>c:\gage omega\documents\procedural rpg\region.cpp(69): warning C4244: 'argument' : conversion from 'unsigned int' to 'float', possible loss of data
+     1>c:\gage omega\documents\procedural rpg\region.cpp(73): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\gage omega\documents\procedural rpg\region.cpp(75): warning C4244: 'initializing' : conversion from 'double' to 'int', possible loss of data
+     1>c:\gage omega\documents\procedural rpg\region.cpp(77): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\gage omega\documents\procedural rpg\region.cpp(153): warning C4715: 'Region::loadTerrain' : not all control paths return a value
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Gage Omega\Documents\Procedural RPG\Debug\Procedural RPG.exe" /INCREMENTAL /NOLOGO d3d11.lib d3dcompiler.lib dxguid.lib winmm.lib comctl32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /manifestinput:"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\Include\Manifest\dpiaware.manifest" /DEBUG /PDB:"C:\Gage Omega\Documents\Procedural RPG\Debug\Procedural RPG.pdb" /SUBSYSTEM:WINDOWS /LARGEADDRESSAWARE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Gage Omega\Documents\Procedural RPG\Debug\Procedural RPG.lib" /MACHINE:X86 /SAFESEH  Debug\Tutorial04.res
+         Debug\CircularArray.obj
+         Debug\ColorShader.obj
+         Debug\d3dclass.obj
+         Debug\Distribution.obj
+         Debug\Entity.obj
+         Debug\Game.obj
+         Debug\inputclass.obj
+         Debug\NPC.obj
+         Debug\pch.obj
+         Debug\Player.obj
+         Debug\ProceduralRPG.obj
+         Debug\Region.obj
+         Debug\ShaderManager.obj
+         Debug\TextureShader.obj
+         Debug\Utility.obj
+         Debug\World.obj
+         Tutorial04_2012.vcxproj -> C:\Gage Omega\Documents\Procedural RPG\Debug\Procedural RPG.exe
+     1>Done Building Project "C:\Gage Omega\Documents\Procedural RPG\Tutorial04_2012.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:03.41

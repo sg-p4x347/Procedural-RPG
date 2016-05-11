@@ -1,0 +1,12 @@
+﻿Build started 1/7/2016 8:39:18 PM.
+     1>Project "C:\Gage Omega\Documents\ProceduralRPG\ProceduralRPG.vcxproj" on node 2 (Build target(s)).
+     1>FxCompile:
+         C:\Program Files (x86)\Windows Kits\8.1\bin\x86\fxc.exe /nologo /E"main" /Fo "C:\Gage Omega\Documents\ProceduralRPG\Debug\Tutorial04.cso" /Od /Zi Tutorial04.fx 
+     1>FXC : error X3501: 'main': entrypoint not found
+         
+         compilation failed; no code produced
+     1>Done Building Project "C:\Gage Omega\Documents\ProceduralRPG\ProceduralRPG.vcxproj" (Build target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:00.07

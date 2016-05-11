@@ -1,0 +1,23 @@
+﻿#pragma once
+#include <wrl.h>
+#include <wrl/client.h>
+#include <d3d11_2.h>
+#include <d2d1_2.h>
+#include <d2d1effects_1.h>
+#include <dwrite_2.h>
+#include <wincodec.h>
+#include <DirectXColors.h>
+#include <DirectXMath.h>
+#include <memory>
+#include <concrt.h>
+#include <ppltasks.h>
+#include <math.h>
+#include <time.h>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <string>
+
+#include <windows.h>
+#include <d3dcompiler.h>
+#include "resource.h"
