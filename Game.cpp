@@ -31,10 +31,10 @@ void Game::Initialize(HWND window, int width, int height)
 
     // TODO: Change the timer settings if you want something other than the default variable timestep mode.
     // e.g. for 60 FPS fixed timestep update logic, call:
-    /*
+	loadWorld();
     m_timer.SetFixedTimeStep(true);
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
-    */
+    
 }
 
 // Executes the basic game loop.
@@ -51,10 +51,12 @@ void Game::Tick()
 // Updates the world.
 void Game::Update(DX::StepTimer const& timer)
 {
-    float elapsedTime = float(timer.GetElapsedSeconds());
+    float elapsed = float(timer.GetElapsedSeconds());
 
     // TODO: Add your game logic here.
-    elapsedTime;
+	float time = float(timer.GetTotalSeconds());
+
+	m_world->update(elapsed);
 }
 
 // Draws the scene.
@@ -69,15 +71,97 @@ void Game::Render()
     Clear();
 
     // TODO: Add your rendering code here.
-	m_spriteBatch->Begin();
+	//m_world->render();
 
-	m_spriteBatch->Draw(m_texture.Get(), m_screenPos, nullptr, Colors::White,
-		0.f, m_origin);
+	m_d3dContext->OMSetBlendState(m_states->Opaque(), nullptr, 0xFFFFFFFF);
+	m_d3dContext->OMSetDepthStencilState(m_states->DepthNone(), 0);
+	m_d3dContext->RSSetState(m_states->CullCounterClockwise());
 
-	m_spriteBatch->End();
+	m_effect->SetWorld(m_worldMatrix);
+
+	m_effect->Apply(m_d3dContext.Get());
+
+	m_d3dContext->IASetInputLayout(m_inputLayout.Get());
+	// begin
+	m_batch->Begin();
+
+	Vector3 xaxis(2.f, 0.f, 0.f);
+	Vector3 yaxis(0.f, 0.f, 2.f);
+	Vector3 origin = Vector3::Zero;
+	// Render regions
+	shared_ptr<CircularArray> regions = m_world->getRegions();
+	for (int i = regions->size() - 1; i >= 0; i--) {
+		if (!regions->data[i].isNull()) {
+			regions->data[i].render(m_d3dContext.Get());
+		}
+	}
+
+	/*VertexPositionColor v1(Vector3(0.f, 0.5f, 0.5f), Colors::Yellow);
+	VertexPositionColor v2(Vector3(0.5f, -0.5f, 0.5f), Colors::Yellow);
+	VertexPositionColor v3(Vector3(-0.5f, -0.5f, 0.5f), Colors::Yellow);
+	const VertexPositionColor vertices[] = { v3,v2,v1 };
+	const uint16_t indices[] = { 0,1,2 };
+	m_batch->DrawIndexed(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,indices,3,vertices,3);*/
+
+	m_batch->End();
+
     Present();
 }
+// creates a new world file
+void Game::createWorld(int seed, string name) {
+	int regionWidth = 1024;
+	// create the relative path
+	m_workingPath = "saves/" + name + "/";
+	// create the save directory
+	CreateDirectory(wstring(m_workingPath.begin(), m_workingPath.end()).c_str(), NULL);
+	unsigned int regionSize = (regionWidth + 1)*(regionWidth + 1) * sizeof(short);
+	// seed the RNG
+	srand(seed);
+	// generate the terrain distribution maps
+	Distribution *continentMap = new Distribution(16, 0.4, 2, true);
+	Distribution *biomeMap = new Distribution(64, 1.0, 2, false);
+	Distribution *terrain = new Distribution(16, 0.4, 5, continentMap, biomeMap);
 
+	//-------------------------------
+	// save terrain to binary file
+	//-------------------------------
+
+	unsigned int bufferSize = regionSize*(terrain->getWidth() / regionWidth)*(terrain->getWidth() / regionWidth);
+	unsigned char *terrainBuffer = new unsigned char[bufferSize];
+	// iterate through each region
+	unsigned int index = 0;
+	for (unsigned short regionY = 0; regionY < (terrain->getWidth() / regionWidth); regionY++) {
+		for (unsigned short regionX = 0; regionX < (terrain->getWidth() / regionWidth); regionX++) {
+			// push each vertex in the region
+			for (unsigned short vertY = 0; vertY <= regionWidth; vertY++) {
+				for (unsigned short vertX = 0; vertX <= regionWidth; vertX++) {
+					short vertex = short(terrain->points[regionX*regionWidth + vertX][regionY*regionWidth + vertY] * 10);
+					terrainBuffer[index] = vertex & 0xff;
+					terrainBuffer[index + 1] = (vertex >> 8) & 0xff;
+					index += 2;
+				}
+			}
+		}
+	}
+	//-----------------------------------------------
+	// output file stream
+	//-----------------------------------------------
+	ofstream file(m_workingPath + "terrain.bin", ios::binary);
+	file.seekp(0);
+	if (file.is_open()) {
+		// write the data
+		file.write((const char *)terrainBuffer, bufferSize);
+	}
+	// close the stream
+	file.close();
+	delete[] terrainBuffer;
+}
+void Game::createPlayer(string name) {
+
+}
+void Game::loadWorld() {
+	m_world->init(shared_ptr<ID3D11Device>(m_d3dDevice.Get()),1024, 64, 4, "saves/testWorld/" );
+}
 // Helper method to clear the back buffers.
 void Game::Clear()
 {
@@ -234,25 +318,25 @@ void Game::CreateDevice()
         (void)m_d3dContext.As(&m_d3dContext1);
 
     // TODO: Initialize device dependent objects here (independent of window size).
+	m_states = std::make_unique<CommonStates>(m_d3dDevice.Get());
+
+	m_effect = std::make_unique<BasicEffect>(m_d3dDevice.Get());
+	m_effect->SetVertexColorEnabled(true);
+
+	void const* shaderByteCode;
+	size_t byteCodeLength;
+
+	m_effect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
+
 	DX::ThrowIfFailed(
-		CreateWICTextureFromFile(m_d3dDevice.Get(), L"cat.png", nullptr,
-			m_texture.ReleaseAndGetAddressOf()));
-	m_spriteBatch = std::make_unique<SpriteBatch>(m_d3dContext.Get());
+		m_d3dDevice->CreateInputLayout(VertexPositionColor::InputElements,
+			VertexPositionColor::InputElementCount,
+			shaderByteCode, byteCodeLength,
+			m_inputLayout.ReleaseAndGetAddressOf()));
 
-	ComPtr<ID3D11Resource> resource;
-	DX::ThrowIfFailed(
-		CreateWICTextureFromFile(m_d3dDevice.Get(), L"cat.png",
-			resource.GetAddressOf(),
-			m_texture.ReleaseAndGetAddressOf()));
+	m_batch = std::make_unique<PrimitiveBatch<VertexPositionColor>>(m_d3dContext.Get());
 
-	ComPtr<ID3D11Texture2D> cat;
-	DX::ThrowIfFailed(resource.As(&cat));
-
-	CD3D11_TEXTURE2D_DESC catDesc;
-	cat->GetDesc(&catDesc);
-
-	m_origin.x = float(catDesc.Width / 2);
-	m_origin.y = float(catDesc.Height / 2);
+	m_worldMatrix = Matrix::Identity;
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -372,15 +456,22 @@ void Game::CreateResources()
     DX::ThrowIfFailed(m_d3dDevice->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
 
     // TODO: Initialize windows-size dependent objects here.
-	m_screenPos.x = backBufferWidth / 2.f;
-	m_screenPos.y = backBufferHeight / 2.f;
+	m_viewMatrix = Matrix::CreateLookAt(Vector3(0.f, 0.f, 0.f),
+		Vector3(0.f, 2.f, 2.f), Vector3::UnitY);
+	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(XM_PI / 4.f,
+		float(backBufferWidth) / float(backBufferHeight), 0.1f, 10.f);
+
+	m_effect->SetView(m_viewMatrix);
+	m_effect->SetProjection(m_projMatrix);
 }
 
 void Game::OnDeviceLost()
 {
     // TODO: Add Direct3D resource cleanup here.
-	m_texture.Reset();
-	m_spriteBatch.reset();
+	m_states.reset();
+	m_effect.reset();
+	m_batch.reset();
+	m_inputLayout.Reset();
 
     m_depthStencilView.Reset();
     m_renderTargetView.Reset();

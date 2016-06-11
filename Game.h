@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include "World.h"
+#include "Distribution.h"
+#include "Utility.h"
 #include "StepTimer.h"
 
 
@@ -17,6 +20,13 @@ public:
 
     // Initialization and management
     void Initialize(HWND window, int width, int height);
+
+	// generator
+	void createWorld(int seed, string name);
+	void createPlayer(string name);
+
+	// loading from files
+	void loadWorld();
 
     // Basic game loop
     void Tick();
@@ -37,7 +47,11 @@ public:
     void GetDefaultSize( int& width, int& height ) const;
 
 private:
-
+	string m_workingPath;
+	//---------------------------
+	// The currently loaded world
+	unique_ptr<World> m_world;
+	//---------------------------
     void Update(DX::StepTimer const& timer);
 
     void CreateDevice();
@@ -60,11 +74,16 @@ private:
     Microsoft::WRL::ComPtr<IDXGISwapChain1>         m_swapChain1;
     Microsoft::WRL::ComPtr<ID3D11RenderTargetView>  m_renderTargetView;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView>  m_depthStencilView;
+	// Tutorials
+	DirectX::SimpleMath::Matrix												m_worldMatrix;
+	DirectX::SimpleMath::Matrix												m_viewMatrix;
+	DirectX::SimpleMath::Matrix												m_projMatrix;
+	
+	std::unique_ptr<DirectX::CommonStates>									m_states;
+	std::unique_ptr<DirectX::BasicEffect>									m_effect;
+	std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>	m_batch;
+	Microsoft::WRL::ComPtr<ID3D11InputLayout>								m_inputLayout;
 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture;
-	std::unique_ptr<DirectX::SpriteBatch> m_spriteBatch;
-	DirectX::SimpleMath::Vector2 m_screenPos;
-	DirectX::SimpleMath::Vector2 m_origin;
     // Rendering loop timer.
     DX::StepTimer                                   m_timer;
 };

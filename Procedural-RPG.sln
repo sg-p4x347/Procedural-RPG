@@ -6,9 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Procedural-RPG", "Procedural-RPG.vcxproj", "{6B331F62-D0CD-4CEE-94F9-5EE44F184A6C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A240DB47-6FD0-46B3-8046-5DF4E6956A7D}"
-	ProjectSection(SolutionItems) = preProject
-		cat.png = cat.png
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
