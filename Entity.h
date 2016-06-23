@@ -29,7 +29,7 @@ class Entity {
 		XMFLOAT3 velocity = XMFLOAT3(0, 0, 0);
 		XMFLOAT3 acceleration = XMFLOAT3(0, -9.8, 0);
 		// angular properties
-		XMFLOAT3 rotation = XMFLOAT3(0, 0, 0);
+		XMFLOAT3 rotation = XMFLOAT3(0, 0, 0); // (yaw,pitch,roll)
 		XMFLOAT3 angularVelocity = XMFLOAT3(0, 0, 0);
 		XMFLOAT3 angularAcceleration = XMFLOAT3(0, 0, 0);
 		// physical properties

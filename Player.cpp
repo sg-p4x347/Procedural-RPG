@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Player.h"
 
+using namespace DirectX::SimpleMath;
+
 Player::Player() {
 
 }
@@ -11,39 +13,53 @@ Player::Player(XMFLOAT3 POSITION, float MASS) : NPC(POSITION,MASS) {
 
 Player::~Player() {
 }
-void Player::update() {
-	// set velocity based on user input
+void Player::update(float elapsed, DirectX::Mouse::State mouse, DirectX::Keyboard::State keyboard) {
+	// mouse
+	if (mouse.positionMode == Mouse::MODE_RELATIVE) {
+		XMFLOAT3 delta = XMFLOAT3(float(mouse.x), float(mouse.y), 0.f)*0.01f;
+
+		rotation.y -= delta.y;
+		rotation.x -= delta.x;
+
+		// limit pitch to straight up or straight down
+		// with a little fudge-factor to avoid gimbal lock
+		float limit = XM_PI / 2.0f - 0.01f;
+		rotation.y = std::max(-limit, rotation.y);
+		rotation.y = std::min(limit, rotation.y);
+
+		// keep longitude in sane range by wrapping
+		if (rotation.x > XM_PI)
+		{
+			rotation.x -= XM_PI * 2.0f;
+		}
+		else if (rotation.x < -XM_PI)
+		{
+			rotation.x += XM_PI * 2.0f;
+		}
+	}
+	// keyboard
+	Vector3 movement = Vector3::Zero;
+
+	if (keyboard.Up || keyboard.W)
+		movement.z += 1.f;
+
+	if (keyboard.Down || keyboard.S)
+		movement.z -= 1.f;
+
+	if (keyboard.Left || keyboard.A)
+		movement.x += 1.f;
+
+	if (keyboard.Right || keyboard.D)
+		movement.x -= 1.f;
+
+	if (keyboard.PageUp || keyboard.Space)
+		movement.y -= 1.f;
+
+	if (keyboard.PageDown || keyboard.LeftShift)
+		movement.y += 1.f;
+	move(movement);
 	
-	//// forward
-	//float vel = 50;
-	//if (input->IsForwardPressed() && !input->IsBackPressed()) {
-	//	moveForward();
-	//} else if (input->IsBackPressed() && !input->IsForwardPressed()) {
-	//	moveBackward();
-	//} else {
-	//	stop();
-	//}
-	//// Up
-	//if (input->IsSpacePressed()) {
-	//	velocity.y += vel;
-	//}
-	//
-	//// Pitch
-	//if (input->IsUpArrowPressed()) {
-	//	angularVelocity.y = -0.5;
-	//} else if (input->IsDownArrowPressed()) {
-	//	angularVelocity.y = 0.5;
-	//} else {
-	//	angularVelocity.y = 0;
-	//}
-	//// yaw 
-	//if (input->IsLeftArrowPressed()) {
-	//	angularVelocity.x = -0.5;
-	//} else if (input->IsRightArrowPressed()) {
-	//	angularVelocity.x = 0.5;
-	//} else {
-	//	angularVelocity.x = 0;
-	//}
+
 }
 void Player::render() {
 	XMFLOAT3 up, lookAt;
@@ -83,9 +99,16 @@ void Player::render() {
 	viewMatrix = XMMatrixLookAtLH(positionVector, lookAtVector, upVector);
 }
 
-void Player::getViewMatrix(XMMATRIX& returnViewMatrix) {
-	returnViewMatrix = viewMatrix;
-	return;
+XMMATRIX Player::getViewMatrix() {
+	float y = sinf(rotation.y);
+	float r = cosf(rotation.y);
+	float z = r*cosf(rotation.x);
+	float x = r*sinf(rotation.x);
+
+	XMVECTOR lookAt = Vector3(position) + Vector3(x,y,z);
+
+	XMMATRIX view = XMMatrixLookAtRH(Vector3(position), lookAt, Vector3(0.f,1.f,0.f));
+	return view;
 }
 
 void Player::renderBaseViewMatrix() {

@@ -64,8 +64,8 @@ Distribution::Distribution(float maxDeviation, const float deviationDecrease, co
 		int gridWidth = (mapWidth / pow(2, iteration)) / 2;
 		for (int x = gridWidth; x < mapWidth; x += gridWidth * 2) {
 			for (int y = gridWidth; y < mapWidth; y += gridWidth * 2) {
-				float flatConstant = 0.2;
-				float biomeConstant = 0.2;
+				float flatConstant = 0.1;
+				float biomeConstant = 0.1;
 
 				// NOTE --------------------------------------------------------------------------------------------------------
 				/* zoom level in continent generation refers to the iteration at which control points will stop being taken from 
@@ -177,9 +177,9 @@ float Distribution::biomeDeviation(float zValue, int iteration, int zoom) {
 	a*e^-(((x+b)^2)/(2c^2))
 	*/
 	// width of the bell curve
-	float width = 4;
+	float width = 8;
 	// height of the bell curve
-	float height = 8;
+	float height = 16;
 	float deviationDecrease = pow(M_E, -((zValue)*(zValue)) / (2 * width*width));
 	float initialDeviation = height * deviationDecrease;
 	float maxDeviation = initialDeviation*pow(deviationDecrease, iteration - zoom);

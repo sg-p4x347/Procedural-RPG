@@ -20,22 +20,28 @@ class Region {
 		Region();
 		~Region();
 		// initialize
-		void init(shared_ptr<ID3D11Device> device, int x, int z, unsigned int worldWidthIn, unsigned int regionWidthIn, string workingPathIn);
+		void init(ID3D11Device * device, int x, int z, unsigned int worldWidthIn, unsigned int regionWidthIn, string workingPathIn);
 		// put buffers on graphics pipeline
-		void render(ID3D11DeviceContext* deviceContext);
-		vector<VertexPositionColor> vertices;
+		void render(Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext, PrimitiveBatch<DirectX::VertexPositionColor> * batch);
 		// getters
+		Microsoft::WRL::ComPtr<ID3D11Buffer> getTerrainVB();
+		Microsoft::WRL::ComPtr<ID3D11Buffer> getTerrainIB();
 		int getIndexCount();
 		bool isNull();
 	private:
-		shared_ptr<ID3D11Device> m_device;
+		ID3D11Device * m_device;
 		// nullness
 		bool Null = true;
+
 		// vertex buffers
-		ID3D11Buffer * terrainVB;
+		Microsoft::WRL::ComPtr<ID3D11Buffer> terrainVB;
+		//vector<VertexPositionNormalTangentColorTexture> terrainVertices;
+		VertexPositionNormalTangentColorTexture * m_terrainVertices;
 		// index buffers
-		ID3D11Buffer * terrainIB;
-		int indexCount;
+		Microsoft::WRL::ComPtr<ID3D11Buffer> terrainIB;
+		//vector<unsigned int> terrainIndices;
+		unsigned int * m_terrainIndices;
+
 		// properties
 		unsigned short regionX;
 		unsigned short regionZ;

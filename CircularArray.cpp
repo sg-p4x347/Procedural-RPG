@@ -20,7 +20,7 @@ void CircularArray::zeroOffsets() {
 Region * CircularArray::get(int x, int y) {
 	return &data[getIndex(x, y)];
 }
-void CircularArray::set(int x, int y, shared_ptr<ID3D11Device> device, int regX, int regZ, unsigned int worldWidthIn, unsigned int regionWidthIn, string workingPathIn) {
+void CircularArray::set(int x, int y, ID3D11Device * device, int regX, int regZ, unsigned int worldWidthIn, unsigned int regionWidthIn, string workingPathIn) {
 	data[getIndex(x,y)].init(device,regX,regZ,worldWidthIn,regionWidthIn,workingPathIn);
 }
 // get properties
@@ -35,15 +35,18 @@ int CircularArray::size() {
 }
 int CircularArray::getIndex(int x, int y) {
 	// calculates x and y position based off of offsets
-	return abs((x + xOffset) % m_width) + (abs((y + yOffset) % m_height)*m_width);
+	return mod((x + xOffset), m_width) + (mod((y + yOffset), m_height)*m_width);
 }
 // shift methods
 void CircularArray::offsetX(int offset) {
-	xOffset = abs((xOffset + offset) % m_width);
+	xOffset = mod((xOffset + offset), m_width);
 }
 void CircularArray::offsetY(int offset) {
-	yOffset = abs((yOffset + offset) % m_height);
+	yOffset = mod((yOffset + offset), m_height);
 }
 CircularArray::~CircularArray() {
 	//delete[] data;
+}
+int CircularArray::mod(int k, int n) {
+	return ((k %= n) < 0) ? k + n : k;
 }

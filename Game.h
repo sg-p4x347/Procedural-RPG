@@ -8,8 +8,6 @@
 #include "Distribution.h"
 #include "Utility.h"
 #include "StepTimer.h"
-
-
 // A basic game implementation that creates a D3D11 device and
 // provides a game loop.
 class Game
@@ -74,16 +72,24 @@ private:
     Microsoft::WRL::ComPtr<IDXGISwapChain1>         m_swapChain1;
     Microsoft::WRL::ComPtr<ID3D11RenderTargetView>  m_renderTargetView;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView>  m_depthStencilView;
-	// Tutorials
+	// Matricies
 	DirectX::SimpleMath::Matrix												m_worldMatrix;
-	DirectX::SimpleMath::Matrix												m_viewMatrix;
+	DirectX::XMMATRIX 														m_viewMatrix;
 	DirectX::SimpleMath::Matrix												m_projMatrix;
-	
+	// DirectX Pipeline
 	std::unique_ptr<DirectX::CommonStates>									m_states;
-	std::unique_ptr<DirectX::BasicEffect>									m_effect;
+	std::unique_ptr<DirectX::DGSLEffect>									m_effect;
+
+	std::unique_ptr<DirectX::GeometricPrimitive>							m_origin;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>						m_texture;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>						m_texture2;
+
 	std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>	m_batch;
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>								m_inputLayout;
-
+	Microsoft::WRL::ComPtr<ID3D11PixelShader>								m_pixelShader;
+	// Input
+	std::unique_ptr<DirectX::Keyboard>				m_keyboard;
+	std::unique_ptr<DirectX::Mouse>					m_mouse;
     // Rendering loop timer.
     DX::StepTimer                                   m_timer;
 };

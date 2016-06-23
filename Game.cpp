@@ -7,7 +7,21 @@
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
-
+//namespace
+//{
+//#include "dgslsphere.inc"
+//}
+const VertexPositionNormalTangentColorTexture g_sphereVB[] = {
+	{ XMFLOAT3(0,-16,0), XMFLOAT3(0,1,0), XMFLOAT4(1,0,0,1),
+	0xFFFFFFFF, XMFLOAT2(0,0) },
+	{ XMFLOAT3(4,-16,0), XMFLOAT3(0,1,0), XMFLOAT4(1,0,0,1),
+	0xFFFFFFFF, XMFLOAT2(1,0) },
+	{ XMFLOAT3(0,-16,4), XMFLOAT3(0,1,0), XMFLOAT4(1,0,0,1),
+	0xFFFFFFFF, XMFLOAT2(0,1) }
+};
+const uint16_t g_sphereIB[] = {
+	0,1,2
+};
 using Microsoft::WRL::ComPtr;
 
 Game::Game() :
@@ -31,6 +45,11 @@ void Game::Initialize(HWND window, int width, int height)
 
     // TODO: Change the timer settings if you want something other than the default variable timestep mode.
     // e.g. for 60 FPS fixed timestep update logic, call:
+	m_keyboard = std::make_unique<Keyboard>();
+	m_mouse = std::make_unique<Mouse>();
+	m_mouse->SetWindow(window);
+	m_mouse->SetMode(DirectX::Mouse::Mode::MODE_RELATIVE);
+	createWorld(347, "testWorld");
 	loadWorld();
     m_timer.SetFixedTimeStep(true);
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
@@ -55,8 +74,14 @@ void Game::Update(DX::StepTimer const& timer)
 
     // TODO: Add your game logic here.
 	float time = float(timer.GetTotalSeconds());
+	// DX Input
+	auto keyboard = m_keyboard->GetState();
+	if (keyboard.Escape)
+		PostQuitMessage(0);
 
-	m_world->update(elapsed);
+	auto mouse = m_mouse->GetState();
+	// Update the world
+	m_world->update(elapsed,mouse,keyboard);
 }
 
 // Draws the scene.
@@ -70,64 +95,56 @@ void Game::Render()
 
     Clear();
 
-    // TODO: Add your rendering code here.
-	//m_world->render();
-
-	m_d3dContext->OMSetBlendState(m_states->Opaque(), nullptr, 0xFFFFFFFF);
-	m_d3dContext->OMSetDepthStencilState(m_states->DepthNone(), 0);
-	m_d3dContext->RSSetState(m_states->CullCounterClockwise());
-
-	m_effect->SetWorld(m_worldMatrix);
-
+    //TODO: Add your rendering code here.
+	
 	m_effect->Apply(m_d3dContext.Get());
 
-	m_d3dContext->IASetInputLayout(m_inputLayout.Get());
-	// begin
-	m_batch->Begin();
-
-	Vector3 xaxis(2.f, 0.f, 0.f);
-	Vector3 yaxis(0.f, 0.f, 2.f);
-	Vector3 origin = Vector3::Zero;
+	
+	// camera
+	m_viewMatrix = m_world->getPlayer()->getViewMatrix();
+	m_effect->SetView(m_viewMatrix);
+	
+	// Render Origin
+	//m_origin->Draw(m_worldMatrix, m_viewMatrix, m_projMatrix);
+	
 	// Render regions
+	auto sampler = m_states->LinearWrap();
+
+	m_d3dContext->PSSetSamplers(0, 1, &sampler);
+	m_d3dContext->RSSetState(m_states->CullCounterClockwise());
+	m_d3dContext->IASetInputLayout(m_inputLayout.Get());
+
 	shared_ptr<CircularArray> regions = m_world->getRegions();
 	for (int i = regions->size() - 1; i >= 0; i--) {
 		if (!regions->data[i].isNull()) {
-			regions->data[i].render(m_d3dContext.Get());
+			regions->data[i].render(m_d3dContext,m_batch.get());
 		}
 	}
-
-	/*VertexPositionColor v1(Vector3(0.f, 0.5f, 0.5f), Colors::Yellow);
-	VertexPositionColor v2(Vector3(0.5f, -0.5f, 0.5f), Colors::Yellow);
-	VertexPositionColor v3(Vector3(-0.5f, -0.5f, 0.5f), Colors::Yellow);
-	const VertexPositionColor vertices[] = { v3,v2,v1 };
-	const uint16_t indices[] = { 0,1,2 };
-	m_batch->DrawIndexed(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,indices,3,vertices,3);*/
-
-	m_batch->End();
-
-    Present();
+	// DO NOT DELETE
+	Present();
 }
 // creates a new world file
 void Game::createWorld(int seed, string name) {
-	int regionWidth = 1024;
+	int regionWidth = 32;
 	// create the relative path
 	m_workingPath = "saves/" + name + "/";
 	// create the save directory
 	CreateDirectory(wstring(m_workingPath.begin(), m_workingPath.end()).c_str(), NULL);
-	unsigned int regionSize = (regionWidth + 1)*(regionWidth + 1) * sizeof(short);
+	
 	// seed the RNG
 	srand(seed);
 	// generate the terrain distribution maps
-	Distribution *continentMap = new Distribution(16, 0.4, 2, true);
-	Distribution *biomeMap = new Distribution(64, 1.0, 2, false);
-	Distribution *terrain = new Distribution(16, 0.4, 5, continentMap, biomeMap);
+	Distribution *continentMap = new Distribution(32, 0.3, 2, true);
+	Distribution *biomeMap = new Distribution(32, 1.0, 3, false);
+	Distribution *terrain = new Distribution(8, 0.45, 5, continentMap, biomeMap);
 
+	unsigned int vertexCount = (regionWidth + 1)*(regionWidth + 1);
+	unsigned int regionCount = (terrain->getWidth() / regionWidth)*(terrain->getWidth() / regionWidth);
 	//-------------------------------
 	// save terrain to binary file
 	//-------------------------------
-
-	unsigned int bufferSize = regionSize*(terrain->getWidth() / regionWidth)*(terrain->getWidth() / regionWidth);
-	unsigned char *terrainBuffer = new unsigned char[bufferSize];
+	unsigned char *terrainBuffer = new unsigned char[vertexCount*regionCount * sizeof(short)];
+	char *normalBuffer = new char[vertexCount*regionCount * 3]; // X (8 bits) Y (8 bits) Z (8 bits)
 	// iterate through each region
 	unsigned int index = 0;
 	for (unsigned short regionY = 0; regionY < (terrain->getWidth() / regionWidth); regionY++) {
@@ -135,10 +152,27 @@ void Game::createWorld(int seed, string name) {
 			// push each vertex in the region
 			for (unsigned short vertY = 0; vertY <= regionWidth; vertY++) {
 				for (unsigned short vertX = 0; vertX <= regionWidth; vertX++) {
-					short vertex = short(terrain->points[regionX*regionWidth + vertX][regionY*regionWidth + vertY] * 10);
-					terrainBuffer[index] = vertex & 0xff;
-					terrainBuffer[index + 1] = (vertex >> 8) & 0xff;
-					index += 2;
+					float vertex = terrain->points[regionX*regionWidth + vertX][regionY*regionWidth + vertY];
+					terrainBuffer[index * 2] = short(vertex*10) & 0xff;
+					terrainBuffer[index * 2 + 1] = (short(vertex*10) >> 8) & 0xff;
+					
+					
+					// normals
+					float left = regionX*regionWidth + vertX - 1 >= 0 ? terrain->points[regionX*regionWidth + vertX - 1][regionY*regionWidth + vertY] : vertex;
+					float right = regionX*regionWidth + vertX + 1 <= terrain->getWidth() ? terrain->points[regionX*regionWidth + vertX + 1][regionY*regionWidth + vertY] : vertex;
+					float up = regionY*regionWidth + vertY + 1 <= terrain->getWidth() ? terrain->points[regionX*regionWidth + vertX][regionY*regionWidth + vertY + 1] : vertex;
+					float down = regionY*regionWidth + vertY - 1 >= 0 ? terrain->points[regionX*regionWidth + vertX][regionY*regionWidth + vertY - 1] : vertex;
+
+					Vector3 normal = Vector3(left - right, 2, down - up);
+					normal.Normalize();
+					// scale the vector up into the characters range
+					normal *= 128;
+					normalBuffer[index * 3] = char(normal.x);
+					normalBuffer[index * 3 + 1] = char(normal.y);
+					normalBuffer[index * 3 + 2] = char(normal.z);
+
+					// update vertex index
+					index++;
 				}
 			}
 		}
@@ -146,21 +180,33 @@ void Game::createWorld(int seed, string name) {
 	//-----------------------------------------------
 	// output file stream
 	//-----------------------------------------------
-	ofstream file(m_workingPath + "terrain.bin", ios::binary);
-	file.seekp(0);
-	if (file.is_open()) {
+
+	// heightMap
+	ofstream terrainFile(m_workingPath + "terrain.bin", ios::binary);
+	terrainFile.seekp(0);
+	if (terrainFile.is_open()) {
 		// write the data
-		file.write((const char *)terrainBuffer, bufferSize);
+		terrainFile.write((const char *)terrainBuffer, vertexCount*regionCount * sizeof(short));
 	}
-	// close the stream
-	file.close();
+	terrainFile.close();
+
+	// normalMap
+	ofstream normalFile(m_workingPath + "normal.bin", ios::binary);
+	normalFile.seekp(0);
+	if (normalFile.is_open()) {
+		// write the data
+		normalFile.write((const char *)normalBuffer, vertexCount*regionCount * 3);
+	}
+	normalFile.close();
+
 	delete[] terrainBuffer;
 }
 void Game::createPlayer(string name) {
 
 }
 void Game::loadWorld() {
-	m_world->init(shared_ptr<ID3D11Device>(m_d3dDevice.Get()),1024, 64, 4, "saves/testWorld/" );
+	m_world = unique_ptr<World>(new World());
+	m_world->init(m_d3dDevice.Get(),512, 32, 16, "saves/testWorld/" );
 }
 // Helper method to clear the back buffers.
 void Game::Clear()
@@ -245,17 +291,13 @@ void Game::CreateDevice()
     creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
-    static const D3D_FEATURE_LEVEL featureLevels [] =
-    {
-        // TODO: Modify for supported Direct3D feature levels (see code below related to 11.1 fallback handling).
-        D3D_FEATURE_LEVEL_11_1,
-        D3D_FEATURE_LEVEL_11_0,
-        D3D_FEATURE_LEVEL_10_1,
-        D3D_FEATURE_LEVEL_10_0,
-        D3D_FEATURE_LEVEL_9_3,
-        D3D_FEATURE_LEVEL_9_2,
-        D3D_FEATURE_LEVEL_9_1,
-    };
+	static const D3D_FEATURE_LEVEL featureLevels[] =
+	{
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_11_0,
+		D3D_FEATURE_LEVEL_10_1,
+		D3D_FEATURE_LEVEL_10_0,
+	};
 
     // Create the DX11 API device object, and get a corresponding context.
     HRESULT hr = D3D11CreateDevice(
@@ -320,22 +362,41 @@ void Game::CreateDevice()
     // TODO: Initialize device dependent objects here (independent of window size).
 	m_states = std::make_unique<CommonStates>(m_d3dDevice.Get());
 
-	m_effect = std::make_unique<BasicEffect>(m_d3dDevice.Get());
+	// Create DGSL Effect
+	auto blob = DX::ReadData(L"Color.cso");
+	DX::ThrowIfFailed(m_d3dDevice->CreatePixelShader(&blob.front(), blob.size(),
+		nullptr, m_pixelShader.ReleaseAndGetAddressOf()));
+
+	m_effect = std::make_unique<DGSLEffect>(m_d3dDevice.Get(), m_pixelShader.Get());
+	m_effect->SetTextureEnabled(true);
 	m_effect->SetVertexColorEnabled(true);
+
+	DX::ThrowIfFailed(
+		CreateDDSTextureFromFile(m_d3dDevice.Get(), L"Texture.dds", nullptr,
+			m_texture.ReleaseAndGetAddressOf()));
+
+	m_effect->SetTexture(m_texture.Get());
+
+	DX::ThrowIfFailed(
+		CreateDDSTextureFromFile(m_d3dDevice.Get(), L"grass.dds", nullptr,
+			m_texture2.ReleaseAndGetAddressOf()));
+
+	m_effect->SetTexture(1, m_texture2.Get());
+
+	m_effect->EnableDefaultLighting();
 
 	void const* shaderByteCode;
 	size_t byteCodeLength;
 
 	m_effect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
 
-	DX::ThrowIfFailed(
-		m_d3dDevice->CreateInputLayout(VertexPositionColor::InputElements,
-			VertexPositionColor::InputElementCount,
-			shaderByteCode, byteCodeLength,
-			m_inputLayout.ReleaseAndGetAddressOf()));
+	DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(
+		VertexPositionNormalTangentColorTexture::InputElements,
+		VertexPositionNormalTangentColorTexture::InputElementCount,
+		shaderByteCode, byteCodeLength,
+		m_inputLayout.ReleaseAndGetAddressOf()));
 
-	m_batch = std::make_unique<PrimitiveBatch<VertexPositionColor>>(m_d3dContext.Get());
-
+	// Matricies
 	m_worldMatrix = Matrix::Identity;
 }
 
@@ -456,10 +517,11 @@ void Game::CreateResources()
     DX::ThrowIfFailed(m_d3dDevice->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
 
     // TODO: Initialize windows-size dependent objects here.
-	m_viewMatrix = Matrix::CreateLookAt(Vector3(0.f, 0.f, 0.f),
-		Vector3(0.f, 2.f, 2.f), Vector3::UnitY);
-	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(XM_PI / 4.f,
-		float(backBufferWidth) / float(backBufferHeight), 0.1f, 10.f);
+	m_origin = GeometricPrimitive::CreateSphere(m_d3dContext.Get());
+	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f),
+		float(backBufferWidth) / float(backBufferHeight), 0.1f, 512.f);
+
+	m_effect->SetViewport(float(backBufferWidth), float(backBufferHeight));
 
 	m_effect->SetView(m_viewMatrix);
 	m_effect->SetProjection(m_projMatrix);
@@ -470,8 +532,10 @@ void Game::OnDeviceLost()
     // TODO: Add Direct3D resource cleanup here.
 	m_states.reset();
 	m_effect.reset();
-	m_batch.reset();
 	m_inputLayout.Reset();
+	m_texture.Reset();
+	m_texture2.Reset();
+	m_pixelShader.Reset();
 
     m_depthStencilView.Reset();
     m_renderTargetView.Reset();

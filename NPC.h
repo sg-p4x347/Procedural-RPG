@@ -8,8 +8,7 @@ class NPC : public Entity {
 	protected:
 		// humanoid stuff that Player also gets
 		float movementSpeed = 50.0;
-		void moveForward();
-		void moveBackward();
+		void move(DirectX::SimpleMath::Vector3 movment);
 		void stop();
 	private:
 		// AI stuff (does not get passed on to Player)

@@ -24,19 +24,20 @@ public:
 	//--------------------------------------------------------
 	// Loading world components
 
-	void init(shared_ptr<ID3D11Device> device,unsigned int worldWidthIn, unsigned int regionWidthIn, unsigned int loadWidthIn, string workingPathIn);
+	void init(ID3D11Device * device,unsigned int worldWidthIn, unsigned int regionWidthIn, float loadWidthIn, string workingPathIn);
 	void fillRegions();
 	void loadPlayer();
 
 	//--------------------------------------------------------
 	// Game Loop
-	void update(float elapsed);
+	void update(float elapsed,DirectX::Mouse::State mouse, DirectX::Keyboard::State keyboard);
 	void render();
 	shared_ptr<CircularArray> getRegions();
-
+	// Player
+	Player* getPlayer();
 	
 private:
-	shared_ptr<ID3D11Device> m_device;
+	ID3D11Device * m_device;
 	//--------------------------------------------------------
 	// updating buffers
 
@@ -56,7 +57,7 @@ private:
 	the players movement, and currently loaded regions*/
 	void loadRegions();
 	
-	unsigned short m_loadWidth;
+	float m_loadWidth;
 
 	//--------------------------------------------------------
 	// World constants

@@ -12,10 +12,10 @@ class Player : public NPC {
 		// Direct X pipeline
 		void render();
 		void renderBaseViewMatrix();
-		void getViewMatrix(XMMATRIX&);
+		XMMATRIX getViewMatrix();
 		void getBaseViewMatrix(XMMATRIX&);
 		// get user input and move accordingly
-		void update();
+		void update(float elapsed, DirectX::Mouse::State mouse, DirectX::Keyboard::State keyboard);
 	private:
 		XMMATRIX viewMatrix;
 		XMMATRIX baseViewMatrix;

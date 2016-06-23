@@ -12,7 +12,7 @@ class Distribution {
 		Distribution (float maxDev, const float devDecrease, const int zoom, Distribution *continentMap,  Distribution *biomeMap);
 		int getWidth();
 		// members
-		float points[1025][1025];
+		float points[513][513];
 		~Distribution();
 	private:
 		// members
@@ -20,7 +20,7 @@ class Distribution {
 		float input_deviationDecrease;
 		int input_zoom;
 		bool input_isMountain;
-		unsigned short mapWidth = 1024;
+		unsigned short mapWidth = 512;
 		// algorithm
 		float diamond(int x, int y, int distance);
 		float square(int x, int y, int distance);

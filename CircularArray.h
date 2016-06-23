@@ -10,7 +10,7 @@ public:
 	~CircularArray();
 	// managing the array
 	Region* get(int x, int y);
-	void set(int x, int y, shared_ptr<ID3D11Device> device, int regX, int regZ,unsigned int worldWidthIn, unsigned int regionWidthIn, string workingPathIn);
+	void set(int x, int y, ID3D11Device * device, int regX, int regZ,unsigned int worldWidthIn, unsigned int regionWidthIn, string workingPathIn);
 	// get properties
 	int getWidth();
 	int getHeight();
@@ -21,7 +21,7 @@ public:
 	void zeroOffsets();
 	Region * data;
 private:
-	
+	int mod(int k, int n);
 	int getIndex(int x, int y);
 	int xOffset = 0;
 	int yOffset = 0;

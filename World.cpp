@@ -3,7 +3,7 @@
 
 World::World() {
 }
-void World::init(shared_ptr<ID3D11Device> device,unsigned int worldWidthIn, unsigned int regionWidthIn, unsigned int loadWidthIn, string workingPathIn) {
+void World::init(ID3D11Device * device,unsigned int worldWidthIn, unsigned int regionWidthIn, float loadWidthIn, string workingPathIn) {
 	// DirectX
 	m_device = device;
 	// regions are regionSize bytes long
@@ -12,7 +12,8 @@ void World::init(shared_ptr<ID3D11Device> device,unsigned int worldWidthIn, unsi
 	m_workingPath = workingPathIn;
 	m_loadWidth = loadWidthIn;
 	m_regionSize = (m_regionWidth + 1)*(m_regionWidth + 1) * 2;
-	m_regions->init(m_loadWidth, m_loadWidth);
+	m_regions = unique_ptr<CircularArray>(new CircularArray());
+	m_regions->init(ceil(m_loadWidth), ceil(m_loadWidth));
 	loadPlayer();
 	fillRegions();
 	
@@ -21,19 +22,21 @@ void World::loadRegions() {
 	// calculate displacement
 	int regionX = floor(m_player->getPosition().x / float(m_regionWidth));
 	int regionZ = floor(m_player->getPosition().z / float(m_regionWidth));
-	// get the sector displacement
+	// get the region displacement
 	short displacementX = regionX - m_lastX;
 	short displacementZ = regionZ - m_lastZ;
-	// update the position of last sector
+	// update the position of last region
 	m_lastX = regionX;
 	m_lastZ = regionZ;
 	if (displacementX == 0 && displacementZ == 0) {
 		// don't load anything
 		return;
-	} else if (abs(displacementX) > 0 && abs(displacementZ) > 0) {
+	} else if (abs(displacementX) <= 1 && abs(displacementZ) <= 1) {
 		// roll the new regions into the old one's places
 		m_regions->offsetX(displacementX);
-		if (displacementX == -1 || displacementX == 1) {
+		m_regions->offsetY(displacementZ);
+		if (abs(displacementX) == 1) {
+			
 			// the left or right most collumn is replaced with the new regions
 			int x;
 			if (displacementX == -1) {
@@ -43,11 +46,13 @@ void World::loadRegions() {
 			}
 			for (int z = 0; z < m_loadWidth; z++) {
 				// place the new region into memory
-				m_regions->set(x, z, m_device, regionX + displacementX*(m_loadWidth / 2), regionZ - m_loadWidth / 2 + z, m_worldWidth, m_regionWidth, m_workingPath);
+				//m_regions->set(x, z, m_device, regionX + displacementX*(m_loadWidth / 2), regionZ - m_loadWidth / 2 + z, m_worldWidth, m_regionWidth, m_workingPath);
+				m_regions->set(x, z, m_device, regionX - round(m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_workingPath);
 			}
 		}
-		m_regions->offsetY(displacementZ);
-		if (displacementZ == -1 || displacementZ == 1) {
+		
+		if (abs(displacementZ) == 1) {
+			
 			// the left or right most row is replaced with the new regions
 			int z;
 			if (displacementZ == -1) {
@@ -57,7 +62,8 @@ void World::loadRegions() {
 			}
 			for (int x = 0; x < m_loadWidth; x++) {
 				// place the new region into memory
-				m_regions->set(x, z, m_device, regionX - m_loadWidth / 2 + x, regionZ + displacementZ*(m_loadWidth / 2), m_worldWidth, m_regionWidth, m_workingPath);
+				//m_regions->set(x, z, m_device, regionX - m_loadWidth / 2 + x, regionZ + displacementZ*(m_loadWidth / 2), m_worldWidth, m_regionWidth, m_workingPath);
+				m_regions->set(x, z, m_device, regionX - round( m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_workingPath);
 			}
 		}
 	} else {
@@ -72,18 +78,18 @@ void World::fillRegions() {
 	int regionZ = floor(m_player->getPosition().z / m_regionWidth);
 	int regionX = floor(m_player->getPosition().x / m_regionWidth);
 	// load a grid of regions around the player; loadWidth is the width and height in regions
-	for (int z = regionZ - round(float(m_loadWidth) / 2); z < regionZ + round(float(m_loadWidth) / 2); z++) {
-		for (int x = regionX - round(float(m_loadWidth) / 2); x < regionX + round(float(m_loadWidth) / 2); x++) {
+	for (int z = regionZ - round(float(m_loadWidth) / 2.f); z < regionZ + round(float(m_loadWidth) / 2.f); z++) {
+		for (int x = regionX - round(float(m_loadWidth) / 2.f); x < regionX + round(float(m_loadWidth) / 2.f); x++) {
 			// load a new region for updating
 			m_regions->set(x, z, m_device,x,z, m_worldWidth, m_regionWidth, m_workingPath);
 			index++;
 		}
 	}
 }
-void World::update(float elapsed) {
+void World::update(float elapsed, DirectX::Mouse::State mouse, DirectX::Keyboard::State keyboard) {
 	// update the player's physics
-	//player.update(input);
-	m_player->updatePhysics(elapsed);
+	m_player->update(elapsed,mouse,keyboard);
+	//m_player->updatePhysics(elapsed);
 	// load the regions around the player's position
 	loadRegions();
 	// player collision
@@ -143,11 +149,17 @@ shared_ptr<CircularArray> World::getRegions()
 {
 	return m_regions;
 }
+Player * World::getPlayer()
+{
+	return m_player.get();
+}
 void World::loadPlayer() {
 	ifstream playerFile(m_workingPath + "player.bin", ios::binary);
 	if (playerFile.is_open()) {
 		// read the file into the player class
-		m_player = make_unique<Player>(XMFLOAT3(128,64,128), 100.0f);
+		m_player = make_unique<Player>(XMFLOAT3(128,32,128), 100.0f);
+		m_lastX = floor(m_player->getPosition().x / float(m_regionWidth));
+		m_lastZ = floor(m_player->getPosition().z / float(m_regionWidth));
 	}
 }
 World::~World() {

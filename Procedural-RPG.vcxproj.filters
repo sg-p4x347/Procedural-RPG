@@ -18,6 +18,7 @@
     <ClInclude Include="Region.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="World.h" />
+    <ClInclude Include="ReadData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -39,6 +40,9 @@
     <Image Include="directx.ico">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="Texture.DDS">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest">
@@ -48,5 +52,13 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="myfile.spritefont" />
+    <None Include="saves\testWorld\terrain.bin">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Color.cso" />
+  </ItemGroup>
+  <ItemGroup>
+    <ShaderGraphContentTask Include="MyDGSLShader.dgsl" />
+    <ShaderGraphContentTask Include="Color.dgsl" />
   </ItemGroup>
 </Project>
