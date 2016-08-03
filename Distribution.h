@@ -1,31 +1,45 @@
 #pragma once
 
 #include "Utility.h"
-#include "pch.h"
 
+using namespace std;
 using namespace DirectX;
+using namespace DirectX::SimpleMath;
 using namespace Utility;
 
 class Distribution {
 	public:
-		Distribution (float maxDeviation, const float deviationDecrease, const int zoom, const bool isMountain);
-		Distribution (float maxDev, const float devDecrease, const int zoom, Distribution *continentMap,  Distribution *biomeMap);
-		int getWidth();
-		// members
-		float points[513][513];
+		Distribution();
+		Distribution(const unsigned int width, const unsigned int height);
 		~Distribution();
+		// Generation
+		void DiamondSquare(float maxDeviation, const float deviationDecrease, const int zoom, const bool isMountain);
+		void Continent(int ctrlWidth);
+		void Erosion();
+		// Getters
+		vector< vector<float> > GetPoints();
+		unsigned int GetWidth();
 	private:
 		// members
-		float input_maxDeviation;
-		float input_deviationDecrease;
-		int input_zoom;
-		bool input_isMountain;
-		unsigned short mapWidth = 512;
-		// algorithm
-		float diamond(int x, int y, int distance);
-		float square(int x, int y, int distance);
-		float deviation(float range);
-		// for continents
-		float biomeDeviation(float zValue, int iteration, int zoom);
+		vector< vector<float> > m_points;
+		float m_maxDeviation;
+		float m_deviationDecrease;
+		unsigned int m_zoom;
+		bool m_mountain;
+		unsigned int m_width;
+		unsigned int m_height;
+		// Diamond Square Algorithm -------------------------------------
+		float Diamond(int x, int y, int distance);
+		float Square(int x, int y, int distance);
+		float Deviation(float range);
+		// Interpolation ------------------------------------------------
+		float CubicInterpolate(float p[4], float x);
+		float BicubicInterpolate(float p[4][4], float x, float y);
+		// for continents -----------------------------------------------
+		float BiomeDeviation(float biome, float continent);
+		float Gaussian(float x, float a, float b, float c);
+		float Sigmoid(float x, float a, float b, float c);
+		// Erosion filter for generated terrain
+		
+		float minimum_distance(Vector2 v, Vector2 w, Vector2 p);
 };
-

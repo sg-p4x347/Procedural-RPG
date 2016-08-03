@@ -2,7 +2,7 @@
 
 #include "Region.h"
 
-class CircularArray{
+class CircularArray {
 public:
 	// constructors
 	CircularArray();

@@ -1,45 +1,45 @@
 #include "pch.h"
 #include "Distribution.h"
 
+using namespace DirectX::SimpleMath;
+
+// Initilization
+Distribution::Distribution() {
+	Distribution(256, 256);
+}
+Distribution::Distribution(const unsigned int width, const unsigned int height) {
+	m_width = width;
+	m_height = height;
+	m_points = vector< vector<float> >(m_width + 1, vector<float>(m_height + 1));
+}
 // Diamond Square distribution algorithm
-Distribution::Distribution (float maxDeviation, const float deviationDecrease,const int zoom,const bool isMountain) {
-	input_maxDeviation = maxDeviation;
-	input_deviationDecrease = deviationDecrease;
-	input_zoom = zoom;
-	input_isMountain = isMountain;
+void Distribution::DiamondSquare (float maxDeviation, const float deviationDecrease,const int zoom,const bool isMountain) {
+	m_maxDeviation = maxDeviation;
+	m_deviationDecrease = deviationDecrease;
+	m_zoom = zoom;
+	m_mountain = isMountain;
 	// initialize the corners
-	float corners = isMountain ? -input_maxDeviation : 0.0;
-	points[0][0] = corners;
-	points[0][mapWidth] = corners;
-	points[mapWidth][0] = corners;
-	points[mapWidth][mapWidth] = corners;
+	//float corners = isMountain ? -m_maxDeviation : deviation(maxDeviation);
+	m_points[0][0] = isMountain ? -m_maxDeviation : Deviation(maxDeviation);
+	m_points[0][m_width] = isMountain ? -m_maxDeviation : Deviation(maxDeviation);
+	m_points[m_width][0] = isMountain ? -m_maxDeviation : Deviation(maxDeviation);
+	m_points[m_width][m_width] = isMountain ? -m_maxDeviation : Deviation(maxDeviation);
 	// iterate
-	for (int iteration = 0; iteration < floor(log2(mapWidth)); iteration++) {
-		int gridWidth = (mapWidth / pow(2, iteration))/2;
-		for (int x = gridWidth; x < mapWidth; x += gridWidth*2) {
-			for (int y = gridWidth; y < mapWidth; y += gridWidth*2) {
+	for (int iteration = 0; iteration < floor(log2(m_width)); iteration++) {
+		int gridWidth = (m_width / pow(2, iteration))/2;
+		for (int x = gridWidth; x < m_width; x += gridWidth*2) {
+			for (int y = gridWidth; y < m_width; y += gridWidth*2) {
 				// Diamond
-				points[x][y] = isMountain && iteration == 0 ? input_maxDeviation*4 : diamond(x, y, gridWidth) + deviation(maxDeviation);
+				m_points[x][y] = isMountain && iteration == 0 ? m_maxDeviation : Diamond(x, y, gridWidth) + Deviation(maxDeviation);
 				// Square
-				if (x > 0 && x < mapWidth && y - gridWidth > 0 && y - gridWidth < mapWidth) {
-					points[x][y - gridWidth] = square(x, y - gridWidth, gridWidth) + deviation(maxDeviation);
-				} else {
-					points[x][y - gridWidth] = isMountain ? -input_maxDeviation : square(x, y - gridWidth, gridWidth) + deviation(maxDeviation);
-				}
-				if (x - gridWidth > 0 && x - gridWidth < mapWidth && y > 0 && y < mapWidth) {
-					points[x - gridWidth][y] = square(x - gridWidth, y, gridWidth) + deviation(maxDeviation);
-				} else {
-					points[x - gridWidth][y] = isMountain ? -input_maxDeviation : square(x - gridWidth, y, gridWidth) + deviation(maxDeviation);
-				}
-				if (x > 0 && x < mapWidth && y + gridWidth > 0 && y + gridWidth < mapWidth) {
-					points[x][y + gridWidth] = square(x, y + gridWidth, gridWidth) + deviation(maxDeviation);
-				} else {
-					points[x][y + gridWidth] = isMountain ? -input_maxDeviation : square(x, y + gridWidth, gridWidth) + deviation(maxDeviation);
-				}
-				if (x + gridWidth > 0 && x + gridWidth < mapWidth && y > 0 && y < mapWidth) {
-					points[x + gridWidth][y] = square(x + gridWidth, y, gridWidth) + deviation(maxDeviation);
-				} else {
-					points[x + gridWidth][y] = isMountain ? -input_maxDeviation : square(x + gridWidth, y, gridWidth) + deviation(maxDeviation);
+				for (float rad = 0; rad <= 4; rad += 1) {
+					int pointX = round(x + cos(rad*XM_PI / 2) * gridWidth);
+					int pointY = round(y + sin(rad*XM_PI / 2) * gridWidth);
+					if (isMountain && (pointX == 0 || pointX == m_width || pointY == 0 || pointY == m_width)) {
+						m_points[pointX][pointY] = -m_maxDeviation;
+					} else {
+						m_points[pointX][pointY] = Square(pointX, pointY, gridWidth) + Deviation(maxDeviation);
+					}
 				}
 			}
 		}
@@ -50,146 +50,270 @@ Distribution::Distribution (float maxDeviation, const float deviationDecrease,co
 	}
 }
 // continent generator
-Distribution::Distribution(float maxDeviation, const float deviationDecrease, const int zoom, Distribution * continentMap, Distribution * biomeMap) {
-	input_maxDeviation = maxDeviation;
-	input_deviationDecrease = deviationDecrease;
-	input_zoom = zoom;
+void Distribution::Continent(int ctrlWidth) {
+	// create the base continent map
+	unique_ptr<Distribution> continentDist(new Distribution(m_width, m_height));
+	continentDist->DiamondSquare(m_width / 8, 0.55f, 2, true);
+	vector< vector<float> > continentMap = continentDist->GetPoints();
+	// create the biome distribution map
+	unique_ptr<Distribution> biomeDist(new Distribution(m_width, m_height));
+	biomeDist->DiamondSquare(m_width / 16, 1.0f, 3, false);
+	vector< vector<float> > biomeMap = biomeDist->GetPoints();
+
+	m_maxDeviation = m_width / 16;
+	float maxDeviation = m_maxDeviation;
+	m_deviationDecrease = 0.45f;
+	// amplitude
+	const float landAmplitude = 0.2;
+	const float oceanAmplitude = 0.6;
+	const float biomeDeviationConst = 0.75;
+	const int biomeCutoff = 16;
+	const float offset = 32.f;
 	// initialize the corners
-	points[0][0] = continentMap->points[0][0];
-	points[0][mapWidth] = continentMap->points[0][mapWidth];
-	points[mapWidth][0] = continentMap->points[mapWidth][0];;
-	points[mapWidth][mapWidth] = continentMap->points[mapWidth][mapWidth];
+	m_points[0][0] = continentMap[0][0] * oceanAmplitude;
+	m_points[0][m_width] = continentMap[0][m_width] * oceanAmplitude;
+	m_points[m_width][0] = continentMap[m_width][0] * oceanAmplitude;
+	m_points[m_width][m_width] = continentMap[m_width][m_width] * oceanAmplitude;
 	// iterate
-	for (int iteration = 0; iteration < floor(log2(mapWidth)); iteration++) {
-		int gridWidth = (mapWidth / pow(2, iteration)) / 2;
-		for (int x = gridWidth; x < mapWidth; x += gridWidth * 2) {
-			for (int y = gridWidth; y < mapWidth; y += gridWidth * 2) {
-				float flatConstant = 0.1;
-				float biomeConstant = 0.1;
-
-				// NOTE --------------------------------------------------------------------------------------------------------
-				/* zoom level in continent generation refers to the iteration at which control points will stop being taken from 
-				the continent and biome map, aftwer which, the algorithm reverts to the regular diamond-square algorithm of
-				"average and add random value". The random deviation maximum is determined by the biome map, along with the 
-				continent's default roughness*/
-				// NOTE --------------------------------------------------------------------------------------------------------
-
+	for (int iteration = 0; iteration < floor(log2(m_width)); iteration++) {
+		int gridWidth = (m_width / pow(2, iteration)) / 2;
+		for (int x = gridWidth; x < m_width; x += gridWidth * 2) {
+			for (int y = gridWidth; y < m_width; y += gridWidth * 2) {
 				// Diamond
-				if (iteration <= zoom) {
-					if (continentMap->points[x][y] > 0) {
-						points[x][y] = continentMap->points[x][y] * flatConstant + biomeDeviation(biomeMap->points[x][y], iteration, zoom) + deviation(biomeDeviation(biomeMap->points[x][y], iteration, zoom)*biomeConstant) + deviation(maxDeviation);
+				float points[4][4];
+				if (gridWidth >= ctrlWidth) {
+					float continentZ = continentMap[x][y] + offset;
+					if (continentZ > 0) {
+						continentZ *= landAmplitude;
+					}
+					else {
+						continentZ *= oceanAmplitude;
+					}
+					if (gridWidth >= biomeCutoff) {
+						
+						m_points[x][y] = continentZ;
+						m_points[x][y] += BiomeDeviation(biomeMap[x][y], continentZ) + (Deviation(BiomeDeviation(biomeMap[x][y], continentZ)));
 					} else {
-						points[x][y] = continentMap->points[x][y] + biomeDeviation(biomeMap->points[x][y], iteration, zoom) + deviation(biomeDeviation(biomeMap->points[x][y], iteration, zoom)*biomeConstant) + deviation(maxDeviation);
+						m_points[x][y] = Diamond(x, y, gridWidth) + Deviation(maxDeviation) + (Deviation(maxDeviation) * Deviation(BiomeDeviation(biomeMap[x][y], continentZ))*biomeDeviationConst);
 					}
 				} else {
-					points[x][y] = diamond(x, y, gridWidth) + deviation(biomeDeviation(biomeMap->points[x][y], iteration, zoom)*biomeConstant) + deviation(maxDeviation);
+					// new way
+					// interpolate
+					// https://en.wikipedia.org/wiki/Bicubic_interpolation#Bicubic_convolution_algorithm
+					// find the 16 control points that define the interpolation
+					for (int j = -1; j < 3; j++) {
+						for (int i = -1; i < 3; i++) {
+							int gridX = i*ctrlWidth + floor(x / ctrlWidth)*ctrlWidth;
+							int gridY = j*ctrlWidth + floor(y / ctrlWidth)*ctrlWidth;
+							if (gridX >= 0 && gridX <= m_width && gridY >= 0 && gridY <= m_height) {
+								points[i + 1][j + 1] = m_points[gridX][gridY];
+							} else {
+								points[i + 1][j + 1] = -m_maxDeviation * oceanAmplitude;
+							}
+						}
+					}
+					m_points[x][y] = BicubicInterpolate(points, (x - (floor(x / ctrlWidth)*ctrlWidth)) / ctrlWidth, (y - (floor(y / ctrlWidth)*ctrlWidth)) / ctrlWidth);
 				}
 				// Square
-				if (iteration <= zoom) {
-					if (x > 0 && x < mapWidth && y - gridWidth > 0 && y - gridWidth < mapWidth) {
-						points[x][y - gridWidth] = continentMap->points[x][y - gridWidth] > 0 ?
-							continentMap->points[x][y - gridWidth] * flatConstant + biomeDeviation(biomeMap->points[x][y - gridWidth], iteration, zoom) + deviation(biomeDeviation(biomeMap->points[x][y - gridWidth], iteration, zoom)*biomeConstant) + deviation(maxDeviation) : continentMap->points[x][y - gridWidth] + biomeDeviation(biomeMap->points[x][y - gridWidth], iteration, zoom) + deviation(biomeDeviation(biomeMap->points[x][y - gridWidth], iteration, zoom)*biomeConstant) + deviation(maxDeviation);
-					} else {
-						points[x][y - gridWidth] = continentMap->points[x][y - gridWidth];
-					}
-					if (x - gridWidth > 0 && x - gridWidth < mapWidth && y > 0 && y < mapWidth) {
-						points[x - gridWidth][y] = continentMap->points[x - gridWidth][y] > 0 ?
-							continentMap->points[x - gridWidth][y] * flatConstant + biomeDeviation(biomeMap->points[x - gridWidth][y], iteration, zoom) + deviation(biomeDeviation(biomeMap->points[x - gridWidth][y], iteration, zoom)*biomeConstant) + deviation(maxDeviation) : continentMap->points[x - gridWidth][y] + biomeDeviation(biomeMap->points[x - gridWidth][y], iteration, zoom) + deviation(biomeDeviation(biomeMap->points[x - gridWidth][y], iteration, zoom)*biomeConstant) + deviation(maxDeviation);
-					} else {
-						points[x - gridWidth][y] = continentMap->points[x - gridWidth][y];
-					}
-					if (x > 0 && x < mapWidth && y + gridWidth > 0 && y + gridWidth < mapWidth) {
-						points[x][y + gridWidth] = continentMap->points[x][y + gridWidth] > 0 ?
-							continentMap->points[x][y + gridWidth] * flatConstant + biomeDeviation(biomeMap->points[x][y + gridWidth], iteration, zoom) + deviation(biomeDeviation(biomeMap->points[x][y + gridWidth], iteration, zoom)*biomeConstant) + deviation(maxDeviation) : continentMap->points[x][y + gridWidth] + biomeDeviation(biomeMap->points[x][y + gridWidth], iteration, zoom) + deviation(biomeDeviation(biomeMap->points[x][y + gridWidth], iteration, zoom)*biomeConstant) + deviation(maxDeviation);
-					} else {
-						points[x][y + gridWidth] = continentMap->points[x][y + gridWidth];
-					}
-					if (x + gridWidth > 0 && x + gridWidth < mapWidth && y > 0 && y < mapWidth) {
-						points[x + gridWidth][y] = continentMap->points[x + gridWidth][y] > 0 ?
-							continentMap->points[x + gridWidth][y] * flatConstant + biomeDeviation(biomeMap->points[x + gridWidth][y], iteration, zoom) + deviation(biomeDeviation(biomeMap->points[x + gridWidth][y], iteration, zoom)*biomeConstant) + deviation(maxDeviation) : continentMap->points[x + gridWidth][y] + biomeDeviation(biomeMap->points[x + gridWidth][y], iteration, zoom) + deviation(biomeDeviation(biomeMap->points[x + gridWidth][y], iteration, zoom)*biomeConstant) + deviation(maxDeviation);
-					} else {
-						points[x + gridWidth][y] = continentMap->points[x + gridWidth][y];
+				if (gridWidth >= ctrlWidth) {
+					for (float rad = 0; rad <= 4; rad += 1) {
+						int pointX = round(x + cos(rad*XM_PI / 2) * gridWidth);
+						int pointY = round(y + sin(rad*XM_PI / 2) * gridWidth);
+						float continentZ = continentMap[pointX][pointY] + offset;
+						if (continentZ > 0) {
+							continentZ *= landAmplitude;
+						}
+						else {
+							continentZ *= oceanAmplitude;
+						}
+						if (gridWidth >= biomeCutoff) {
+							m_points[pointX][pointY] = continentZ;
+							m_points[pointX][pointY] += BiomeDeviation(biomeMap[pointX][pointY], continentZ) + (Deviation(BiomeDeviation(biomeMap[pointX][pointY], continentZ)));
+						} else {
+							m_points[pointX][pointY] = Square(pointX, pointY, gridWidth) + Deviation(maxDeviation) + (Deviation(maxDeviation) * Deviation(BiomeDeviation(biomeMap[pointX][pointY], continentZ))*biomeDeviationConst);
+						}
 					}
 				} else {
-					if (x > 0 && x < mapWidth && y - gridWidth > 0 && y - gridWidth < mapWidth) {
-						points[x][y - gridWidth] = true || continentMap->points[x][y - gridWidth] > 0 ? square(x, y - gridWidth, gridWidth) + deviation(biomeDeviation(biomeMap->points[x][y - gridWidth], iteration, zoom)*biomeConstant) + deviation(maxDeviation) : continentMap->points[x][y - gridWidth] + biomeDeviation(biomeMap->points[x][y - gridWidth], iteration, zoom) + deviation(biomeDeviation(biomeMap->points[x][y - gridWidth], iteration, zoom)*biomeConstant) + deviation(maxDeviation);
-					} else {
-						points[x][y - gridWidth] = continentMap->points[x][y - gridWidth];
-					}
-					if (x - gridWidth > 0 && x - gridWidth < mapWidth && y > 0 && y < mapWidth) {
-						points[x - gridWidth][y] = true || continentMap->points[x - gridWidth][y] > 0 ? square(x - gridWidth, y, gridWidth) + deviation(biomeDeviation(biomeMap->points[x - gridWidth][y], iteration, zoom)*biomeConstant) + deviation(maxDeviation) : continentMap->points[x - gridWidth][y] + biomeDeviation(biomeMap->points[x - gridWidth][y], iteration, zoom) + deviation(biomeDeviation(biomeMap->points[x - gridWidth][y], iteration, zoom)*biomeConstant) + deviation(maxDeviation);
-					} else {
-						points[x - gridWidth][y] = continentMap->points[x - gridWidth][y];
-					}
-					if (x > 0 && x < mapWidth && y + gridWidth > 0 && y + gridWidth < mapWidth) {
-						points[x][y + gridWidth] = true || continentMap->points[x][y + gridWidth] > 0 ? square(x, y + gridWidth, gridWidth) + deviation(biomeDeviation(biomeMap->points[x][y + gridWidth], iteration, zoom)*biomeConstant) + deviation(maxDeviation) : continentMap->points[x][y + gridWidth] + biomeDeviation(biomeMap->points[x][y + gridWidth], iteration, zoom) + deviation(biomeDeviation(biomeMap->points[x][y + gridWidth], iteration, zoom)*biomeConstant) + deviation(maxDeviation);
-					} else {
-						points[x][y + gridWidth] = continentMap->points[x][y + gridWidth];
-					}
-					if (x + gridWidth > 0 && x + gridWidth < mapWidth && y > 0 && y < mapWidth) {
-						points[x + gridWidth][y] = true || continentMap->points[x + gridWidth][y] > 0 ? square(x + gridWidth, y, gridWidth) + deviation(biomeDeviation(biomeMap->points[x + gridWidth][y], iteration, zoom)*biomeConstant) + deviation(maxDeviation) : continentMap->points[x + gridWidth][y] + biomeDeviation(biomeMap->points[x + gridWidth][y], iteration, zoom) + deviation(biomeDeviation(biomeMap->points[x + gridWidth][y], iteration, zoom)*biomeConstant) + deviation(maxDeviation);
-					} else {
-						points[x + gridWidth][y] = continentMap->points[x + gridWidth][y];
+					for (float rad = 0; rad <= 4; rad += 1) {
+						int pointX = round(x + cos(rad*XM_PI / 2) * gridWidth);
+						int pointY = round(y + sin(rad*XM_PI / 2) * gridWidth);
+						m_points[pointX][pointY] = BicubicInterpolate(points, (pointX - (floor(pointX / ctrlWidth)*ctrlWidth)) / ctrlWidth, (pointY - (floor(pointY / ctrlWidth)*ctrlWidth)) / ctrlWidth);
 					}
 				}
 			}
 		}
 		// decrease the random deviation range
-		maxDeviation -= deviationDecrease * maxDeviation;
+		maxDeviation -= m_deviationDecrease * maxDeviation;
 	}
+	// Erosion filter
+	//Erosion();
 }
 // Diamond
-float Distribution::diamond(int x, int y, int distance) {
+float Distribution::Diamond(int x, int y, int distance) {
 	float sum = 0;
-	sum += points[x - distance][y - distance];
-	sum += points[x - distance][y + distance];
-	sum += points[x + distance][y - distance];
-	sum += points[x + distance][y + distance];
+	sum += m_points[x - distance][y - distance];
+	sum += m_points[x - distance][y + distance];
+	sum += m_points[x + distance][y - distance];
+	sum += m_points[x + distance][y + distance];
 	return sum / 4;
 }
 // Square
-float Distribution::square(int x, int y, int distance) {
+float Distribution::Square(int x, int y, int distance) {
 	float sum = 0;
 	int denominator = 0;
 	if (y > 0) {
-		sum += points[x][y - distance];
+		sum += m_points[x][y - distance];
 		denominator++;
 	}
-	if (y < mapWidth) {
-		sum += points[x][y + distance];
+	if (y < m_width) {
+		sum += m_points[x][y + distance];
 		denominator++;
 	}
 	if (x > 0) {
-		sum += points[x - distance][y];
+		sum += m_points[x - distance][y];
 		denominator++;
 	}
-	if (x < mapWidth) {
-		sum += points[x + distance][y];
+	if (x < m_width) {
+		sum += m_points[x + distance][y];
 		denominator++;
 	}
 	return sum / denominator;
 }
-float Distribution::deviation(float range) {
+float Distribution::Deviation(float range) {
 	return randWithin(-range / 2, range / 2);
 }
-float Distribution::biomeDeviation(float zValue, int iteration, int zoom) {
-	/* Gaussuian curve function
-	a*e^-(((x+b)^2)/(2c^2))
-	*/
-	// width of the bell curve
-	float width = 8;
-	// height of the bell curve
-	float height = 16;
-	float deviationDecrease = pow(M_E, -((zValue)*(zValue)) / (2 * width*width));
-	float initialDeviation = height * deviationDecrease;
-	float maxDeviation = initialDeviation*pow(deviationDecrease, iteration - zoom);
-	if (maxDeviation > initialDeviation) {
-		maxDeviation = initialDeviation;
-	}
-	return maxDeviation;
+float Distribution::BiomeDeviation(float biome, float continent) {
+	return Gaussian(biome,16.f,0.f,16.f) * Sigmoid(continent,1.f,0.f,4.f);
 }
-int Distribution::getWidth() {
-	return mapWidth;
+// a controls amplituide
+// b controls x displacement
+// c controls width
+float Distribution::Gaussian(float x, float a, float b, float c) {
+	return a * pow(100, -pow((x - b)/c,2));
+}
+float Distribution::Sigmoid(float x, float a, float b, float c) {
+	return a / (1 + pow(100, -((x - b) / c)));
+}
+void Distribution::Erosion() {
+	const float depositK = 0.75;
+	const float erodeK = 0.125;
+	const float frictionK = 0.125;
+	struct Water {
+		Vector3 KE;
+		Vector3 deltaKE;
+		float volume;
+		float deltaV;
+		float soil;
+		float deltaS;
+		Water() {
+			KE = Vector3(0.f, 0.f, 0.f);
+			deltaKE = Vector3(0.f, 0.f, 0.f);
+			volume = 1.f;
+			deltaV = 0.f;
+			soil = 0.f;
+			deltaS = 0.f;
+		}
+	};
+	// create the water map
+	vector< vector<Water> > waterMap = vector< vector<Water> >(m_width + 1, vector<Water>(m_height + 1));
+	// update
+	for (int iteration = 0; iteration < 20; iteration++) {
+		for (int x = 0; x <= m_width; x++) {
+			for (int y = 0; y <= m_width; y++) {
+				float deltaV = 0.f;
+				float soil = 0.f;
+				// add valid ajacent cells to calculation
+				for (int rot = 0; rot < 4; rot++) {
+					int adjX = x + round(cos(rot * XM_PI / 2));
+					int adjY = y + round(sin(rot * XM_PI / 2));
+					if (adjX >= 0 && adjX <= m_width && adjY >= 0 && adjY <= m_width) {
+						float difference = (m_points[adjX][adjY] + waterMap[adjX][adjY].volume) - (m_points[x][y] + waterMap[x][y].volume);
+						float volume = std::max(-waterMap[x][y].volume / 4, std::min(difference / 4, waterMap[adjX][adjY].volume / 4));
+						deltaV += volume;
+						// add gravitational and kinetic energy
+						if (abs(volume) > 0) {
+							if (adjY == y) {
+								waterMap[x][y].deltaKE.x += (volume * 9.8 * difference) + (volume > 0 ? waterMap[adjX][adjY].KE.x * (volume / waterMap[adjX][adjY].volume) : waterMap[x][y].KE.x * (volume / waterMap[x][y].volume));
+							}
+							if (adjX == x) {
+								waterMap[x][y].deltaKE.z += (volume * 9.8 * difference) + (volume > 0 ? waterMap[adjX][adjY].KE.z * (volume / waterMap[adjX][adjY].volume) : waterMap[x][y].KE.z * (volume / waterMap[x][y].volume));
+							}
+						}
+						// soil transfer
+						soil += std::max(-waterMap[x][y].soil / 4, std::min(difference / 4, waterMap[adjX][adjY].soil / 4));
+					}
+				}
+				// set final delta values
+				waterMap[x][y].deltaV += deltaV;
+				waterMap[x][y].deltaS += soil;
+			}
+		}
+		for (int x = 0; x <= m_width; x++) {
+			for (int y = 0; y <= m_width; y++) {
+				// evaporation
+				waterMap[x][y].volume *= 0.75;
+				// add surface water
+				waterMap[x][y].volume += 1;
+				// update cell
+				waterMap[x][y].KE += waterMap[x][y].deltaKE;
+				waterMap[x][y].deltaKE = Vector3(0.f,0.f,0.f);
+				waterMap[x][y].volume += waterMap[x][y].deltaV;
+				waterMap[x][y].deltaV = 0;
+				waterMap[x][y].soil += waterMap[x][y].deltaS;
+				waterMap[x][y].deltaS = 0;
+				// loss of energy
+				waterMap[x][y].KE *= frictionK;
+				// update terrain
+				if (waterMap[x][y].volume > 0) {
+					float soil = 0.f;
+					Vector3 vel(sqrt((2 * waterMap[x][y].KE.x) / waterMap[x][y].volume), 0.f, sqrt((2 * waterMap[x][y].KE.z) / waterMap[x][y].volume));
+					float velocity = vel.Length();
+					// deposit
+					soil = waterMap[x][y].soil * depositK;
+					// erode
+					soil = -std::min(velocity * waterMap[x][y].volume * erodeK, 3.f);
+
+					m_points[x][y] += soil;
+					waterMap[x][y].soil -= soil;
+				}
+			}
+		}
+	}
+	/*for (int x = 0; x <= m_width; x++) {
+		for (int y = 0; y <= m_width; y++) {
+			if (waterMap[x][y].volume >= 4) {
+				m_points[x][y] += waterMap[x][y].volume;
+			}
+		}
+	}*/
+}
+float Distribution::minimum_distance(Vector2 v, Vector2 w, Vector2 p) {
+	// Return minimum distance between line segment vw and point p
+	const float l2 = pow(abs(w.x-v.x) + abs(w.y - v.y),2);  // i.e. |w-v|^2 -  avoid a sqrt
+	// We clamp t from [0,1] to handle points outside the segment vw.
+	float t = (p-v).Dot(w - v) / l2 ;
+	t = t > 1 ? 1 : t < 0 ? 0 : t;
+	const Vector2 projection = v + t * (w - v);  // Projection falls on the segment
+	return p.Distance(p,projection);
+}
+vector< vector<float> > Distribution::GetPoints() {
+	return m_points;
+}
+
+float Distribution::CubicInterpolate(float p[4], float x) {
+	return p[1] + 0.5 * x*(p[2] - p[0] + x*(2.0*p[0] - 5.0*p[1] + 4.0*p[2] - p[3] + x*(3.0*(p[1] - p[2]) + p[3] - p[0])));
+}
+
+float Distribution::BicubicInterpolate(float p[4][4], float x, float y) {
+	float arr[4];
+	arr[0] = CubicInterpolate(p[0], y);
+	arr[1] = CubicInterpolate(p[1], y);
+	arr[2] = CubicInterpolate(p[2], y);
+	arr[3] = CubicInterpolate(p[3], y);
+	return CubicInterpolate(arr, x);
+}
+unsigned int Distribution::GetWidth() {
+	return m_width;
 }
 Distribution::~Distribution() {
 

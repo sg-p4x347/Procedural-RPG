@@ -21,7 +21,7 @@ Region * CircularArray::get(int x, int y) {
 	return &data[getIndex(x, y)];
 }
 void CircularArray::set(int x, int y, ID3D11Device * device, int regX, int regZ, unsigned int worldWidthIn, unsigned int regionWidthIn, string workingPathIn) {
-	data[getIndex(x,y)].init(device,regX,regZ,worldWidthIn,regionWidthIn,workingPathIn);
+	data[getIndex(x,y)].Initialize(device,regX,regZ,worldWidthIn,regionWidthIn,workingPathIn);
 }
 // get properties
 int CircularArray::getWidth() {

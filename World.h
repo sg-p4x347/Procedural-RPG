@@ -24,17 +24,23 @@ public:
 	//--------------------------------------------------------
 	// Loading world components
 
-	void init(ID3D11Device * device,unsigned int worldWidthIn, unsigned int regionWidthIn, float loadWidthIn, string workingPathIn);
-	void fillRegions();
-	void loadPlayer();
+	void Initialize(ID3D11Device * device);
+	// generator
+	void CreateWorld(int seed, string name);
+	void CreatePlayer(string name);
+
+	// loading from files
+	void LoadWorld(string name);
+	void FillRegions();
+	void LoadPlayer();
 
 	//--------------------------------------------------------
 	// Game Loop
-	void update(float elapsed,DirectX::Mouse::State mouse, DirectX::Keyboard::State keyboard);
-	void render();
-	shared_ptr<CircularArray> getRegions();
+	void Update(float elapsed,DirectX::Mouse::State mouse, DirectX::Keyboard::State keyboard);
+	void Render();
+	shared_ptr<CircularArray> GetRegions();
 	// Player
-	Player* getPlayer();
+	Player * GetPlayer();
 	
 private:
 	ID3D11Device * m_device;
@@ -53,32 +59,27 @@ private:
 	//--------------------------------------------------------
 	// Loading regions
 	shared_ptr<CircularArray> m_regions;
-	/* gets called by game loop, decides which loading method is best based on
-	the players movement, and currently loaded regions*/
-	void loadRegions();
+	/* loadRegions() is called by game loop, decides which loading method is best based on
+	the players movement and currently loaded regions*/
+	void LoadRegions();
 	
 	float m_loadWidth;
 
 	//--------------------------------------------------------
 	// World constants
 
-	unsigned int m_worldWidth;
-	unsigned int m_regionWidth;
-	string m_workingPath;
-	unsigned int m_regionSize;
-	int m_seed;
-
-	//--------------------------------------------------------
-	// Storing regions
-
-	
-	unsigned short m_lastX = 0;
-	unsigned short m_lastZ = 0;
+	string			m_name;
+	unsigned int	m_worldWidth;
+	unsigned int	m_regionWidth;
+	unsigned int	m_regionSize;
+	int				m_seed;
 
 	//--------------------------------------------------------
 	// Player
 
 	unique_ptr<Player> m_player;
+	unsigned short m_lastX = 0;
+	unsigned short m_lastZ = 0;
 
 	//--------------------------------------------------------
 	// Collision

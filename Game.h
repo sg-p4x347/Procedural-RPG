@@ -5,9 +5,8 @@
 #pragma once
 
 #include "World.h"
-#include "Distribution.h"
-#include "Utility.h"
 #include "StepTimer.h"
+
 // A basic game implementation that creates a D3D11 device and
 // provides a game loop.
 class Game
@@ -18,13 +17,6 @@ public:
 
     // Initialization and management
     void Initialize(HWND window, int width, int height);
-
-	// generator
-	void createWorld(int seed, string name);
-	void createPlayer(string name);
-
-	// loading from files
-	void loadWorld();
 
     // Basic game loop
     void Tick();
@@ -45,16 +37,13 @@ public:
     void GetDefaultSize( int& width, int& height ) const;
 
 private:
-	string m_workingPath;
-	//---------------------------
 	// The currently loaded world
 	unique_ptr<World> m_world;
-	//---------------------------
     void Update(DX::StepTimer const& timer);
 
+	// DirectX
     void CreateDevice();
     void CreateResources();
-
     void OnDeviceLost();
 
     // Device resources.

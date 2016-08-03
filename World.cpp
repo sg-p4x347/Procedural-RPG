@@ -1,27 +1,115 @@
 #include "pch.h"
 #include "World.h"
+#include "Distribution.h"
+
+using namespace DirectX::SimpleMath;
 
 World::World() {
 }
-void World::init(ID3D11Device * device,unsigned int worldWidthIn, unsigned int regionWidthIn, float loadWidthIn, string workingPathIn) {
-	// DirectX
+void World::Initialize(ID3D11Device * device) {
+	
 	m_device = device;
-	// regions are regionSize bytes long
-	m_worldWidth = worldWidthIn;
-	m_regionWidth = regionWidthIn;
-	m_workingPath = workingPathIn;
-	m_loadWidth = loadWidthIn;
-	m_regionSize = (m_regionWidth + 1)*(m_regionWidth + 1) * 2;
+	m_worldWidth = 512;
+	m_regionWidth = 64;
+	m_loadWidth = 8;
 	m_regions = unique_ptr<CircularArray>(new CircularArray());
 	m_regions->init(ceil(m_loadWidth), ceil(m_loadWidth));
-	loadPlayer();
-	fillRegions();
 	
 }
-void World::loadRegions() {
+// creates a new world file
+void World::CreateWorld(int seed, string name) {
+	// create the relative path
+	string workingPath = "saves/" + name + "/";
+	// create the save directory
+	CreateDirectory(wstring(workingPath.begin(), workingPath.end()).c_str(), NULL);
+
+	// seed the RNG
+	srand(seed);
+	// generate the terrain distribution maps
+	unique_ptr<Distribution> continentDist(new Distribution(m_worldWidth, m_worldWidth));
+	continentDist->Continent(2);
+	//continentDist->DiamondSquare(m_worldWidth / 8, 0.55f, 2, true);
+	//continentDist->Erosion();
+	//continentDist->DiamondSquare(m_worldWidth / 16, 1.0f, 3, false);
+	vector< vector<float> > terrain = continentDist->GetPoints();
+
+	unsigned int vertexCount = (m_regionWidth + 1)*(m_regionWidth + 1);
+	unsigned int regionCount = (continentDist->GetWidth() / m_regionWidth)*(continentDist->GetWidth() / m_regionWidth);
+	
+	//-------------------------------
+	// save terrain to binary file
+	//-------------------------------
+	
+	unsigned char *terrainBuffer = new unsigned char[vertexCount*regionCount * sizeof(short)];
+	char *normalBuffer = new char[vertexCount*regionCount * 3]; // X (8 bits) Y (8 bits) Z (8 bits)
+
+	unsigned int index = 0;
+	// push each vertex in the world
+	for (unsigned short regionZ = 0; regionZ < m_worldWidth / m_regionWidth; regionZ++) {
+		for (unsigned short regionX = 0; regionX < m_worldWidth / m_regionWidth; regionX++) {
+			for (unsigned short vertZ = 0; vertZ <= m_regionWidth; vertZ++) {
+				for (unsigned short vertX = 0; vertX <= m_regionWidth; vertX++) {
+					float vertex = terrain[regionX * m_regionWidth + vertX][regionZ * m_regionWidth + vertZ];
+					terrainBuffer[index * 2] = short(vertex * 10) & 0xff;
+					terrainBuffer[index * 2 + 1] = (short(vertex * 10) >> 8) & 0xff;
+
+					// normals
+					float left = signed(regionX * m_regionWidth + vertX) - 1 >= 0 ? terrain[regionX * m_regionWidth + vertX - 1][regionZ * m_regionWidth + vertZ] : vertex;
+					float right = signed(regionX * m_regionWidth + vertX) + 1 <= signed(m_worldWidth) ? terrain[regionX * m_regionWidth + vertX + 1][regionZ * m_regionWidth + vertZ] : vertex;
+					float up = signed(regionZ * m_regionWidth + vertZ) + 1 <= signed(m_worldWidth) ? terrain[regionX * m_regionWidth + vertX][regionZ * m_regionWidth + vertZ + 1] : vertex;
+					float down = signed(regionZ * m_regionWidth + vertZ) - 1 >= 0 ? terrain[regionX * m_regionWidth + vertX][regionZ * m_regionWidth + vertZ - 1] : vertex;
+
+					Vector3 normal = Vector3(left - right, 2.f, down - up);
+					normal.Normalize();
+					// scale the vector up into the characters range
+					normal *= 128;
+					normalBuffer[index * 3] = char(normal.x);
+					normalBuffer[index * 3 + 1] = char(normal.y);
+					normalBuffer[index * 3 + 2] = char(normal.z);
+
+					// update vertex index
+					index++;
+				}
+			}
+		}
+	}
+	//-----------------------------------------------
+	// output file stream
+	//-----------------------------------------------
+
+	// heightMap
+	ofstream terrainFile(workingPath + "terrain.bin", ios::binary);
+	terrainFile.seekp(0);
+	if (terrainFile.is_open()) {
+		// write the data
+		terrainFile.write((const char *)terrainBuffer, vertexCount*regionCount * sizeof(short));
+	}
+	terrainFile.close();
+
+	// normalMap
+	ofstream normalFile(workingPath + "normal.bin", ios::binary);
+	normalFile.seekp(0);
+	if (normalFile.is_open()) {
+		// write the data
+		normalFile.write((const char *)normalBuffer, vertexCount*regionCount * 3);
+	}
+	normalFile.close();
+
+	delete[] terrainBuffer;
+}
+void World::CreatePlayer(string name) {
+
+}
+void World::LoadWorld(string name) {
+	m_name = name;
+	// load assets
+	LoadPlayer();
+	FillRegions();
+}
+void World::LoadRegions() {
 	// calculate displacement
-	int regionX = floor(m_player->getPosition().x / float(m_regionWidth));
-	int regionZ = floor(m_player->getPosition().z / float(m_regionWidth));
+	int regionX = round(m_player->getPosition().x / float(m_regionWidth));
+	int regionZ = round(m_player->getPosition().z / float(m_regionWidth));
 	// get the region displacement
 	short displacementX = regionX - m_lastX;
 	short displacementZ = regionZ - m_lastZ;
@@ -36,7 +124,6 @@ void World::loadRegions() {
 		m_regions->offsetX(displacementX);
 		m_regions->offsetY(displacementZ);
 		if (abs(displacementX) == 1) {
-			
 			// the left or right most collumn is replaced with the new regions
 			int x;
 			if (displacementX == -1) {
@@ -45,14 +132,11 @@ void World::loadRegions() {
 				x = m_loadWidth - 1;
 			}
 			for (int z = 0; z < m_loadWidth; z++) {
-				// place the new region into memory
-				//m_regions->set(x, z, m_device, regionX + displacementX*(m_loadWidth / 2), regionZ - m_loadWidth / 2 + z, m_worldWidth, m_regionWidth, m_workingPath);
-				m_regions->set(x, z, m_device, regionX - round(m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_workingPath);
+				// place the new region into old one's place
+				m_regions->set(x, z, m_device, regionX - round(m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_name);
 			}
 		}
-		
 		if (abs(displacementZ) == 1) {
-			
 			// the left or right most row is replaced with the new regions
 			int z;
 			if (displacementZ == -1) {
@@ -61,52 +145,36 @@ void World::loadRegions() {
 				z = m_loadWidth - 1;
 			}
 			for (int x = 0; x < m_loadWidth; x++) {
-				// place the new region into memory
-				//m_regions->set(x, z, m_device, regionX - m_loadWidth / 2 + x, regionZ + displacementZ*(m_loadWidth / 2), m_worldWidth, m_regionWidth, m_workingPath);
-				m_regions->set(x, z, m_device, regionX - round( m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_workingPath);
+				// place the new region into old one's place
+				m_regions->set(x, z, m_device, regionX - round( m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_name);
 			}
 		}
 	} else {
 		// load a whole new set of regions and reset the circular array
-		fillRegions();
+		FillRegions();
 	}
 }
-void World::fillRegions() {
+void World::FillRegions() {
 	m_regions->zeroOffsets();
 	int index = 0;
 	// find the region coordinate that the player is located in
-	int regionZ = floor(m_player->getPosition().z / m_regionWidth);
-	int regionX = floor(m_player->getPosition().x / m_regionWidth);
+	int regionZ = round(m_player->getPosition().z / m_regionWidth);
+	int regionX = round(m_player->getPosition().x / m_regionWidth);
 	// load a grid of regions around the player; loadWidth is the width and height in regions
-	for (int z = regionZ - round(float(m_loadWidth) / 2.f); z < regionZ + round(float(m_loadWidth) / 2.f); z++) {
-		for (int x = regionX - round(float(m_loadWidth) / 2.f); x < regionX + round(float(m_loadWidth) / 2.f); x++) {
+	for (int z = 0; z < m_loadWidth; z++) {
+		for (int x = 0; x < m_loadWidth; x++) {
 			// load a new region for updating
-			m_regions->set(x, z, m_device,x,z, m_worldWidth, m_regionWidth, m_workingPath);
+			m_regions->set(x, z, m_device, regionX - round(m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_name);
 			index++;
 		}
 	}
 }
-void World::update(float elapsed, DirectX::Mouse::State mouse, DirectX::Keyboard::State keyboard) {
+void World::Update(float elapsed, DirectX::Mouse::State mouse, DirectX::Keyboard::State keyboard) {
 	// update the player's physics
 	m_player->update(elapsed,mouse,keyboard);
 	//m_player->updatePhysics(elapsed);
 	// load the regions around the player's position
-	loadRegions();
-	// player collision
-	// *note* only on one triangle orientation
-	// find the region coordinate that the player is located in
-	int regionZ = floor(m_player->getPosition().z / m_regionWidth);
-	int regionX = floor(m_player->getPosition().x / m_regionWidth);
-	// current region
-	/*Region * region = regions->get(regionX, regionZ);
-	XMFLOAT3 position = player.getPosition();
-	XMFLOAT3 triangle[3];
-	XMFLOAT3 regionalCoord = globalToRegionCoord(position);
-	triangle[0] = region->vertices[posToIndex(regionalCoord.x, regionalCoord.z, regionWidth + 1)].Pos;
-	triangle[1] = region->vertices[posToIndex(regionalCoord.x + 1, regionalCoord.z, regionWidth + 1)].Pos;
-	triangle[2] = region->vertices[posToIndex(regionalCoord.x, regionalCoord.z + 1, regionWidth + 1)].Pos;
-	float yPos = yOnABC(position.x, position.z, triangle[0], triangle[1], triangle[2]) + 10;
-	player.setPosition(XMFLOAT3(position.x, yPos, position.z));*/
+	LoadRegions();
 }
 XMFLOAT3 World::globalToRegionCoord(XMFLOAT3 position) {
 	return XMFLOAT3(int(floor(position.x)) % (m_regionWidth+1), position.y, int(floor(position.x)) % (m_regionWidth+1));
@@ -119,7 +187,7 @@ float World::yOnABC(float x, float z, XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) {
 	return A.y + ((N.z * V.z) + (N.x * V.x)) / N.y;
 
 }
-void World::render() {
+void World::Render() {
 	//XMMATRIX worldMatrix, viewMatrix, projectionMatrix, baseViewMatrix, orthoMatrix;
 
 	//// Clear the buffers to begin the scene.
@@ -145,22 +213,23 @@ void World::render() {
 	//Direct3D->EndScene();
 
 }
-shared_ptr<CircularArray> World::getRegions()
+shared_ptr<CircularArray> World::GetRegions()
 {
 	return m_regions;
 }
-Player * World::getPlayer()
+Player * World::GetPlayer()
 {
 	return m_player.get();
 }
-void World::loadPlayer() {
-	ifstream playerFile(m_workingPath + "player.bin", ios::binary);
+void World::LoadPlayer() {
+	ifstream playerFile("saves/" + m_name + "/player.bin", ios::binary);
 	if (playerFile.is_open()) {
 		// read the file into the player class
 		m_player = make_unique<Player>(XMFLOAT3(128,32,128), 100.0f);
 		m_lastX = floor(m_player->getPosition().x / float(m_regionWidth));
 		m_lastZ = floor(m_player->getPosition().z / float(m_regionWidth));
 	}
+	playerFile.close();
 }
 World::~World() {
 	

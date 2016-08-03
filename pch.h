@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <exception>
 #include <memory>
+#include <vector>
 #include <stdexcept>
 
 namespace DX

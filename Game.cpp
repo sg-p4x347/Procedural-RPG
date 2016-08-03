@@ -4,24 +4,12 @@
 
 #include "pch.h"
 #include "Game.h"
+#include "Distribution.h"
+#include "Utility.h"
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
-//namespace
-//{
-//#include "dgslsphere.inc"
-//}
-const VertexPositionNormalTangentColorTexture g_sphereVB[] = {
-	{ XMFLOAT3(0,-16,0), XMFLOAT3(0,1,0), XMFLOAT4(1,0,0,1),
-	0xFFFFFFFF, XMFLOAT2(0,0) },
-	{ XMFLOAT3(4,-16,0), XMFLOAT3(0,1,0), XMFLOAT4(1,0,0,1),
-	0xFFFFFFFF, XMFLOAT2(1,0) },
-	{ XMFLOAT3(0,-16,4), XMFLOAT3(0,1,0), XMFLOAT4(1,0,0,1),
-	0xFFFFFFFF, XMFLOAT2(0,1) }
-};
-const uint16_t g_sphereIB[] = {
-	0,1,2
-};
+
 using Microsoft::WRL::ComPtr;
 
 Game::Game() :
@@ -49,11 +37,14 @@ void Game::Initialize(HWND window, int width, int height)
 	m_mouse = std::make_unique<Mouse>();
 	m_mouse->SetWindow(window);
 	m_mouse->SetMode(DirectX::Mouse::Mode::MODE_RELATIVE);
-	createWorld(347, "testWorld");
-	loadWorld();
     m_timer.SetFixedTimeStep(true);
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
     
+	// the World
+	m_world = unique_ptr<World>(new World());
+	m_world->Initialize(m_d3dDevice.Get());
+	m_world->CreateWorld(347, "testWorld");
+	m_world->LoadWorld("testWorld");
 }
 
 // Executes the basic game loop.
@@ -81,7 +72,7 @@ void Game::Update(DX::StepTimer const& timer)
 
 	auto mouse = m_mouse->GetState();
 	// Update the world
-	m_world->update(elapsed,mouse,keyboard);
+	m_world->Update(elapsed,mouse,keyboard);
 }
 
 // Draws the scene.
@@ -101,7 +92,7 @@ void Game::Render()
 
 	
 	// camera
-	m_viewMatrix = m_world->getPlayer()->getViewMatrix();
+	m_viewMatrix = m_world->GetPlayer()->getViewMatrix();
 	m_effect->SetView(m_viewMatrix);
 	
 	// Render Origin
@@ -114,100 +105,16 @@ void Game::Render()
 	m_d3dContext->RSSetState(m_states->CullCounterClockwise());
 	m_d3dContext->IASetInputLayout(m_inputLayout.Get());
 
-	shared_ptr<CircularArray> regions = m_world->getRegions();
+	shared_ptr<CircularArray> regions = m_world->GetRegions();
 	for (int i = regions->size() - 1; i >= 0; i--) {
-		if (!regions->data[i].isNull()) {
-			regions->data[i].render(m_d3dContext,m_batch.get());
+		if (!regions->data[i].IsNull()) {
+			regions->data[i].Render(m_d3dContext,m_batch.get());
 		}
 	}
 	// DO NOT DELETE
 	Present();
 }
-// creates a new world file
-void Game::createWorld(int seed, string name) {
-	int regionWidth = 32;
-	// create the relative path
-	m_workingPath = "saves/" + name + "/";
-	// create the save directory
-	CreateDirectory(wstring(m_workingPath.begin(), m_workingPath.end()).c_str(), NULL);
-	
-	// seed the RNG
-	srand(seed);
-	// generate the terrain distribution maps
-	Distribution *continentMap = new Distribution(32, 0.3, 2, true);
-	Distribution *biomeMap = new Distribution(32, 1.0, 3, false);
-	Distribution *terrain = new Distribution(8, 0.45, 5, continentMap, biomeMap);
 
-	unsigned int vertexCount = (regionWidth + 1)*(regionWidth + 1);
-	unsigned int regionCount = (terrain->getWidth() / regionWidth)*(terrain->getWidth() / regionWidth);
-	//-------------------------------
-	// save terrain to binary file
-	//-------------------------------
-	unsigned char *terrainBuffer = new unsigned char[vertexCount*regionCount * sizeof(short)];
-	char *normalBuffer = new char[vertexCount*regionCount * 3]; // X (8 bits) Y (8 bits) Z (8 bits)
-	// iterate through each region
-	unsigned int index = 0;
-	for (unsigned short regionY = 0; regionY < (terrain->getWidth() / regionWidth); regionY++) {
-		for (unsigned short regionX = 0; regionX < (terrain->getWidth() / regionWidth); regionX++) {
-			// push each vertex in the region
-			for (unsigned short vertY = 0; vertY <= regionWidth; vertY++) {
-				for (unsigned short vertX = 0; vertX <= regionWidth; vertX++) {
-					float vertex = terrain->points[regionX*regionWidth + vertX][regionY*regionWidth + vertY];
-					terrainBuffer[index * 2] = short(vertex*10) & 0xff;
-					terrainBuffer[index * 2 + 1] = (short(vertex*10) >> 8) & 0xff;
-					
-					
-					// normals
-					float left = regionX*regionWidth + vertX - 1 >= 0 ? terrain->points[regionX*regionWidth + vertX - 1][regionY*regionWidth + vertY] : vertex;
-					float right = regionX*regionWidth + vertX + 1 <= terrain->getWidth() ? terrain->points[regionX*regionWidth + vertX + 1][regionY*regionWidth + vertY] : vertex;
-					float up = regionY*regionWidth + vertY + 1 <= terrain->getWidth() ? terrain->points[regionX*regionWidth + vertX][regionY*regionWidth + vertY + 1] : vertex;
-					float down = regionY*regionWidth + vertY - 1 >= 0 ? terrain->points[regionX*regionWidth + vertX][regionY*regionWidth + vertY - 1] : vertex;
-
-					Vector3 normal = Vector3(left - right, 2, down - up);
-					normal.Normalize();
-					// scale the vector up into the characters range
-					normal *= 128;
-					normalBuffer[index * 3] = char(normal.x);
-					normalBuffer[index * 3 + 1] = char(normal.y);
-					normalBuffer[index * 3 + 2] = char(normal.z);
-
-					// update vertex index
-					index++;
-				}
-			}
-		}
-	}
-	//-----------------------------------------------
-	// output file stream
-	//-----------------------------------------------
-
-	// heightMap
-	ofstream terrainFile(m_workingPath + "terrain.bin", ios::binary);
-	terrainFile.seekp(0);
-	if (terrainFile.is_open()) {
-		// write the data
-		terrainFile.write((const char *)terrainBuffer, vertexCount*regionCount * sizeof(short));
-	}
-	terrainFile.close();
-
-	// normalMap
-	ofstream normalFile(m_workingPath + "normal.bin", ios::binary);
-	normalFile.seekp(0);
-	if (normalFile.is_open()) {
-		// write the data
-		normalFile.write((const char *)normalBuffer, vertexCount*regionCount * 3);
-	}
-	normalFile.close();
-
-	delete[] terrainBuffer;
-}
-void Game::createPlayer(string name) {
-
-}
-void Game::loadWorld() {
-	m_world = unique_ptr<World>(new World());
-	m_world->init(m_d3dDevice.Get(),512, 32, 16, "saves/testWorld/" );
-}
 // Helper method to clear the back buffers.
 void Game::Clear()
 {
