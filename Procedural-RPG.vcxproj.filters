@@ -5,6 +5,9 @@
       <UniqueIdentifier>6ec901b1-143f-443d-ad17-b121362b06b0</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dds;dlg;fbx;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{4193cb6b-1cd8-46be-b2c7-a128ba331711}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -60,5 +63,10 @@
   <ItemGroup>
     <ShaderGraphContentTask Include="MyDGSLShader.dgsl" />
     <ShaderGraphContentTask Include="Color.dgsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Terrain.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

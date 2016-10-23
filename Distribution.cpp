@@ -57,7 +57,7 @@ void Distribution::Continent(int ctrlWidth) {
 	vector< vector<float> > continentMap = continentDist->GetPoints();
 	// create the biome distribution map
 	unique_ptr<Distribution> biomeDist(new Distribution(m_width, m_height));
-	biomeDist->DiamondSquare(m_width / 16, 1.0f, 3, false);
+	biomeDist->DiamondSquare(1.f, 1.f, 3, false);
 	vector< vector<float> > biomeMap = biomeDist->GetPoints();
 
 	m_maxDeviation = m_width / 16;
@@ -68,12 +68,14 @@ void Distribution::Continent(int ctrlWidth) {
 	const float oceanAmplitude = 0.6;
 	const float biomeDeviationConst = 0.75;
 	const int biomeCutoff = 16;
-	const float offset = 32.f;
+	const float offset = m_width / 16.f;
 	// initialize the corners
-	m_points[0][0] = continentMap[0][0] * oceanAmplitude;
-	m_points[0][m_width] = continentMap[0][m_width] * oceanAmplitude;
-	m_points[m_width][0] = continentMap[m_width][0] * oceanAmplitude;
-	m_points[m_width][m_width] = continentMap[m_width][m_width] * oceanAmplitude;
+	for (int x = 0; x <= m_width; x += m_width) {
+		for (int y = 0; y <= m_width; y += m_width) {
+			float continentZ = continentMap[x][y] + offset;
+			m_points[x][y] = continentZ * oceanAmplitude + BiomeDeviation(biomeMap[x][y], continentZ) + (Deviation(BiomeDeviation(biomeMap[x][y], continentZ)));
+		}
+	}
 	// iterate
 	for (int iteration = 0; iteration < floor(log2(m_width)); iteration++) {
 		int gridWidth = (m_width / pow(2, iteration)) / 2;
@@ -85,12 +87,10 @@ void Distribution::Continent(int ctrlWidth) {
 					float continentZ = continentMap[x][y] + offset;
 					if (continentZ > 0) {
 						continentZ *= landAmplitude;
-					}
-					else {
+					} else {
 						continentZ *= oceanAmplitude;
 					}
 					if (gridWidth >= biomeCutoff) {
-						
 						m_points[x][y] = continentZ;
 						m_points[x][y] += BiomeDeviation(biomeMap[x][y], continentZ) + (Deviation(BiomeDeviation(biomeMap[x][y], continentZ)));
 					} else {
@@ -146,7 +146,7 @@ void Distribution::Continent(int ctrlWidth) {
 		maxDeviation -= m_deviationDecrease * maxDeviation;
 	}
 	// Erosion filter
-	//Erosion();
+	Erosion();
 }
 // Diamond
 float Distribution::Diamond(int x, int y, int distance) {
@@ -183,7 +183,7 @@ float Distribution::Deviation(float range) {
 	return randWithin(-range / 2, range / 2);
 }
 float Distribution::BiomeDeviation(float biome, float continent) {
-	return Gaussian(biome,16.f,0.f,16.f) * Sigmoid(continent,1.f,0.f,4.f);
+	return Gaussian(biome,16.f,0.f,0.5) * Sigmoid(continent,1.f,0.f,4.f);
 }
 // a controls amplituide
 // b controls x displacement
@@ -195,21 +195,23 @@ float Distribution::Sigmoid(float x, float a, float b, float c) {
 	return a / (1 + pow(100, -((x - b) / c)));
 }
 void Distribution::Erosion() {
-	const float depositK = 0.75;
-	const float erodeK = 0.125;
-	const float frictionK = 0.125;
+	const float depositK = 0.25f;
+	const float erodeK = 1.f;
+	const float frictionK = 0.05;
 	struct Water {
 		Vector3 KE;
 		Vector3 deltaKE;
-		float volume;
-		float deltaV;
+		float water;
+		float deltaW;
 		float soil;
 		float deltaS;
+		float lowestNeighbor;
+		
 		Water() {
 			KE = Vector3(0.f, 0.f, 0.f);
 			deltaKE = Vector3(0.f, 0.f, 0.f);
-			volume = 1.f;
-			deltaV = 0.f;
+			water = 1.f;
+			deltaW = 0.f;
 			soil = 0.f;
 			deltaS = 0.f;
 		}
@@ -217,75 +219,92 @@ void Distribution::Erosion() {
 	// create the water map
 	vector< vector<Water> > waterMap = vector< vector<Water> >(m_width + 1, vector<Water>(m_height + 1));
 	// update
-	for (int iteration = 0; iteration < 20; iteration++) {
+	for (int iteration = 0; iteration < 5; iteration++) {
 		for (int x = 0; x <= m_width; x++) {
 			for (int y = 0; y <= m_width; y++) {
-				float deltaV = 0.f;
-				float soil = 0.f;
+				float volume = waterMap[x][y].water + waterMap[x][y].soil;
+				float deltaW = 0.f;
+				float deltaS = 0.f;
 				// add valid ajacent cells to calculation
+				waterMap[x][y].lowestNeighbor = m_points[x][y];
 				for (int rot = 0; rot < 4; rot++) {
 					int adjX = x + round(cos(rot * XM_PI / 2));
 					int adjY = y + round(sin(rot * XM_PI / 2));
 					if (adjX >= 0 && adjX <= m_width && adjY >= 0 && adjY <= m_width) {
-						float difference = (m_points[adjX][adjY] + waterMap[adjX][adjY].volume) - (m_points[x][y] + waterMap[x][y].volume);
-						float volume = std::max(-waterMap[x][y].volume / 4, std::min(difference / 4, waterMap[adjX][adjY].volume / 4));
-						deltaV += volume;
+						float adjVolume = waterMap[adjX][adjY].water + waterMap[adjX][adjY].soil;
+						if (m_points[adjX][adjY] < waterMap[x][y].lowestNeighbor) {
+							waterMap[x][y].lowestNeighbor = m_points[adjX][adjY];
+						}
+						float difference = (m_points[adjX][adjY] + adjVolume) - (m_points[x][y] + volume);
+						float transferVolume = std::max(-volume / 4, std::min(difference / 4, adjVolume / 4));
+						// material transfer
+						float overlap;
+						if (transferVolume > 0) {
+							deltaW += (waterMap[adjX][adjY].water / adjVolume) * transferVolume;
+							deltaS += (waterMap[adjX][adjY].soil / adjVolume) * transferVolume;
+							overlap = m_points[x][y] + volume - m_points[adjX][adjY];
+						}
+						else {
+							deltaW += (waterMap[x][y].water / volume) * transferVolume;
+							deltaS += (waterMap[x][y].soil / volume) * transferVolume;
+							overlap = m_points[adjX][adjY] + adjVolume - m_points[x][y];
+						}
+						// soil diffusion
+						if (overlap > 0) {
+							deltaS += (((waterMap[adjX][adjY].soil / adjVolume) * overlap) + ((waterMap[x][y].soil / volume) * overlap)) / 2 - ((waterMap[x][y].soil / volume) * overlap);
+						}
 						// add gravitational and kinetic energy
-						if (abs(volume) > 0) {
+						if (abs(transferVolume) > 0) {
 							if (adjY == y) {
-								waterMap[x][y].deltaKE.x += (volume * 9.8 * difference) + (volume > 0 ? waterMap[adjX][adjY].KE.x * (volume / waterMap[adjX][adjY].volume) : waterMap[x][y].KE.x * (volume / waterMap[x][y].volume));
+								waterMap[x][y].deltaKE.x += (transferVolume * 9.8 * difference) + (transferVolume > 0 ? waterMap[adjX][adjY].KE.x * (transferVolume / (waterMap[adjX][adjY].water + waterMap[adjX][adjY].soil)) : waterMap[x][y].KE.x * (transferVolume / (waterMap[x][y].water + waterMap[x][y].soil)));
 							}
 							if (adjX == x) {
-								waterMap[x][y].deltaKE.z += (volume * 9.8 * difference) + (volume > 0 ? waterMap[adjX][adjY].KE.z * (volume / waterMap[adjX][adjY].volume) : waterMap[x][y].KE.z * (volume / waterMap[x][y].volume));
+								waterMap[x][y].deltaKE.z += (transferVolume * 9.8 * difference) + (transferVolume > 0 ? waterMap[adjX][adjY].KE.z * (transferVolume / (waterMap[adjX][adjY].water + waterMap[adjX][adjY].soil)) : waterMap[x][y].KE.z * (transferVolume / (waterMap[x][y].water + waterMap[x][y].soil)));
 							}
 						}
-						// soil transfer
-						soil += std::max(-waterMap[x][y].soil / 4, std::min(difference / 4, waterMap[adjX][adjY].soil / 4));
 					}
 				}
 				// set final delta values
-				waterMap[x][y].deltaV += deltaV;
-				waterMap[x][y].deltaS += soil;
+				waterMap[x][y].deltaW += deltaW;
+				waterMap[x][y].deltaS += deltaS;
 			}
 		}
 		for (int x = 0; x <= m_width; x++) {
 			for (int y = 0; y <= m_width; y++) {
 				// evaporation
-				waterMap[x][y].volume *= 0.75;
+				waterMap[x][y].water *= 0.75;
 				// add surface water
-				waterMap[x][y].volume += 1;
+				waterMap[x][y].water += 1;
 				// update cell
 				waterMap[x][y].KE += waterMap[x][y].deltaKE;
 				waterMap[x][y].deltaKE = Vector3(0.f,0.f,0.f);
-				waterMap[x][y].volume += waterMap[x][y].deltaV;
-				waterMap[x][y].deltaV = 0;
+				waterMap[x][y].water += waterMap[x][y].deltaW;
+				waterMap[x][y].deltaW = 0;
 				waterMap[x][y].soil += waterMap[x][y].deltaS;
 				waterMap[x][y].deltaS = 0;
 				// loss of energy
 				waterMap[x][y].KE *= frictionK;
 				// update terrain
-				if (waterMap[x][y].volume > 0) {
+				if (waterMap[x][y].water > 0) {
+					float volume = waterMap[x][y].water + waterMap[x][y].soil;
 					float soil = 0.f;
-					Vector3 vel(sqrt((2 * waterMap[x][y].KE.x) / waterMap[x][y].volume), 0.f, sqrt((2 * waterMap[x][y].KE.z) / waterMap[x][y].volume));
-					float velocity = vel.Length();
-					// deposit
-					soil = waterMap[x][y].soil * depositK;
+					Vector3 velocity(sqrt((2 * waterMap[x][y].KE.x) / volume), 0.f, sqrt((2 * waterMap[x][y].KE.z) / volume));
+					float speed = velocity.Length();
+					
 					// erode
-					soil = -std::min(velocity * waterMap[x][y].volume * erodeK, 3.f);
-
+					soil = Sigmoid(speed, (waterMap[x][y].lowestNeighbor - m_points[x][y]) * erodeK, 0.f,5.f );
 					m_points[x][y] += soil;
 					waterMap[x][y].soil -= soil;
+					// deposit
+					//if (velocity < 1.f && waterMap[x][y].soil > 3) {
+						soil = (waterMap[x][y].soil * depositK) - Sigmoid(speed, waterMap[x][y].soil * depositK, 0.f, 5.f);
+						m_points[x][y] += soil;
+						waterMap[x][y].soil -= soil;
+					//}
 				}
 			}
 		}
 	}
-	/*for (int x = 0; x <= m_width; x++) {
-		for (int y = 0; y <= m_width; y++) {
-			if (waterMap[x][y].volume >= 4) {
-				m_points[x][y] += waterMap[x][y].volume;
-			}
-		}
-	}*/
 }
 float Distribution::minimum_distance(Vector2 v, Vector2 w, Vector2 p) {
 	// Return minimum distance between line segment vw and point p
@@ -312,9 +331,11 @@ float Distribution::BicubicInterpolate(float p[4][4], float x, float y) {
 	arr[3] = CubicInterpolate(p[3], y);
 	return CubicInterpolate(arr, x);
 }
+
 unsigned int Distribution::GetWidth() {
 	return m_width;
 }
+
 Distribution::~Distribution() {
 
 }

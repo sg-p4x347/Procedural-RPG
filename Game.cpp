@@ -43,7 +43,7 @@ void Game::Initialize(HWND window, int width, int height)
 	// the World
 	m_world = unique_ptr<World>(new World());
 	m_world->Initialize(m_d3dDevice.Get());
-	m_world->CreateWorld(347, "testWorld");
+	//m_world->CreateWorld(4555, "testWorld");
 	m_world->LoadWorld("testWorld");
 }
 
@@ -270,16 +270,16 @@ void Game::CreateDevice()
 	m_states = std::make_unique<CommonStates>(m_d3dDevice.Get());
 
 	// Create DGSL Effect
-	auto blob = DX::ReadData(L"Color.cso");
+	auto blob = DX::ReadData(L"Terrain.cso"); // .cso is the compiled version of the hlsl shader (compiled shader object)
 	DX::ThrowIfFailed(m_d3dDevice->CreatePixelShader(&blob.front(), blob.size(),
 		nullptr, m_pixelShader.ReleaseAndGetAddressOf()));
 
 	m_effect = std::make_unique<DGSLEffect>(m_d3dDevice.Get(), m_pixelShader.Get());
 	m_effect->SetTextureEnabled(true);
 	m_effect->SetVertexColorEnabled(true);
-
+	//---Textures---
 	DX::ThrowIfFailed(
-		CreateDDSTextureFromFile(m_d3dDevice.Get(), L"Texture.dds", nullptr,
+		CreateDDSTextureFromFile(m_d3dDevice.Get(), L"dirt.dds", nullptr,
 			m_texture.ReleaseAndGetAddressOf()));
 
 	m_effect->SetTexture(m_texture.Get());
@@ -289,6 +289,19 @@ void Game::CreateDevice()
 			m_texture2.ReleaseAndGetAddressOf()));
 
 	m_effect->SetTexture(1, m_texture2.Get());
+
+	DX::ThrowIfFailed(
+		CreateDDSTextureFromFile(m_d3dDevice.Get(), L"stone.dds", nullptr,
+			m_texture3.ReleaseAndGetAddressOf()));
+
+	m_effect->SetTexture(2, m_texture3.Get());
+
+	DX::ThrowIfFailed(
+		CreateDDSTextureFromFile(m_d3dDevice.Get(), L"snow.dds", nullptr,
+			m_texture4.ReleaseAndGetAddressOf()));
+
+	m_effect->SetTexture(3, m_texture4.Get());
+	//---Textures---
 
 	m_effect->EnableDefaultLighting();
 
@@ -442,6 +455,7 @@ void Game::OnDeviceLost()
 	m_inputLayout.Reset();
 	m_texture.Reset();
 	m_texture2.Reset();
+	m_texture3.Reset();
 	m_pixelShader.Reset();
 
     m_depthStencilView.Reset();

@@ -28,8 +28,8 @@ void World::CreateWorld(int seed, string name) {
 	// generate the terrain distribution maps
 	unique_ptr<Distribution> continentDist(new Distribution(m_worldWidth, m_worldWidth));
 	continentDist->Continent(2);
-	//continentDist->DiamondSquare(m_worldWidth / 8, 0.55f, 2, true);
-	//continentDist->Erosion();
+	/*continentDist->DiamondSquare(m_worldWidth / 8, 0.55f, 2, true);
+	continentDist->Erosion();*/
 	//continentDist->DiamondSquare(m_worldWidth / 16, 1.0f, 3, false);
 	vector< vector<float> > terrain = continentDist->GetPoints();
 

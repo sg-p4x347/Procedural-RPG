@@ -72,6 +72,8 @@ private:
 	std::unique_ptr<DirectX::GeometricPrimitive>							m_origin;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>						m_texture;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>						m_texture2;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>						m_texture3;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>						m_texture4;
 
 	std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>	m_batch;
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>								m_inputLayout;
