@@ -10,12 +10,11 @@ Region::Region() {
 void Region::Initialize(ID3D11Device * device, int x, int z, unsigned int worldWidth, unsigned int regionWidth, string name) {
 	m_worldWidth = worldWidth;
 	m_regionWidth = regionWidth;
-	m_device = device;
 	// fill the buffers with data from world files
 	if (x >= 0 && z >= 0 && x < signed(m_worldWidth / m_regionWidth) && z < signed(m_worldWidth / m_regionWidth)) {
 		m_regionX = x;
 		m_regionZ = z;
-		LoadTerrain(name);
+		LoadTerrain(device,name);
 		LoadObjects();
 		LoadEntities();
 		m_null = false;
@@ -24,7 +23,7 @@ void Region::Initialize(ID3D11Device * device, int x, int z, unsigned int worldW
 		m_null = true;
 	}
 }
-void Region::LoadTerrain(string name) {
+void Region::LoadTerrain(ID3D11Device * device, string name) {
 	unsigned int regionIndex = posToIndex(m_regionX, m_regionZ, m_worldWidth / m_regionWidth);
 	unsigned int vertexCount = (m_regionWidth + 1)*(m_regionWidth + 1);
 	unsigned int regionSize = vertexCount * sizeof(short);
@@ -158,7 +157,7 @@ void Region::LoadTerrain(string name) {
 		D3D11_SUBRESOURCE_DATA initData = { 0 };
 		initData.pSysMem = m_terrainVertices;
 
-		DX::ThrowIfFailed(m_device->CreateBuffer(&desc, &initData,
+		DX::ThrowIfFailed(device->CreateBuffer(&desc, &initData,
 			m_terrainVB.ReleaseAndGetAddressOf()));
 	}
 	// Create the Index Buffer
@@ -171,7 +170,7 @@ void Region::LoadTerrain(string name) {
 		D3D11_SUBRESOURCE_DATA initData = { 0 };
 		initData.pSysMem = m_terrainIndices;
 
-		DX::ThrowIfFailed(m_device->CreateBuffer(&desc, &initData,
+		DX::ThrowIfFailed(device->CreateBuffer(&desc, &initData,
 			m_terrainIB.ReleaseAndGetAddressOf()));
 	}
 }

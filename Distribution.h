@@ -14,6 +14,10 @@ class Distribution {
 		~Distribution();
 		// Generation
 		void DiamondSquare(float maxDeviation, const float deviationDecrease, const int zoom, const bool isMountain);
+		/*
+		Creates a continent heightmap
+		@param: what resolution to start interpolating points
+		*/
 		void Continent(int ctrlWidth);
 		void Erosion();
 		// Getters

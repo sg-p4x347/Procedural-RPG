@@ -3,4 +3,15 @@
   compilation object save succeeded; see C:\Gage Omega\Programming\Procedural-RPG\Debug\Terrain.cso
   Color.dgsl
   MyDGSLShader.dgsl
+  Skipping... (no relevant changes detected)
+  World.cpp
+  Utility.cpp
+  Region.cpp
+  Player.cpp
+  NPC.cpp
+  Main.cpp
+  Game.cpp
+  Entity.cpp
+  Distribution.cpp
+  CircularArray.cpp
   Procedural-RPG.vcxproj -> C:\Gage Omega\Programming\Procedural-RPG\Debug\Procedural-RPG.exe

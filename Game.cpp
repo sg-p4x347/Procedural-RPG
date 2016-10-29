@@ -95,9 +95,6 @@ void Game::Render()
 	m_viewMatrix = m_world->GetPlayer()->getViewMatrix();
 	m_effect->SetView(m_viewMatrix);
 	
-	// Render Origin
-	//m_origin->Draw(m_worldMatrix, m_viewMatrix, m_projMatrix);
-	
 	// Render regions
 	auto sampler = m_states->LinearWrap();
 
@@ -437,7 +434,6 @@ void Game::CreateResources()
     DX::ThrowIfFailed(m_d3dDevice->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
 
     // TODO: Initialize windows-size dependent objects here.
-	m_origin = GeometricPrimitive::CreateSphere(m_d3dContext.Get());
 	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f),
 		float(backBufferWidth) / float(backBufferHeight), 0.1f, 512.f);
 

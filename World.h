@@ -15,16 +15,16 @@ using namespace std;
 
 class World {
 public:
-	//--------------------------------------------------------
+	//--------------------------------
 	// constructors
 
 	World();
 	~World();
 	
-	//--------------------------------------------------------
+	//--------------------------------
 	// Loading world components
 
-	void Initialize(ID3D11Device * device);
+	void Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device);
 	// generator
 	void CreateWorld(int seed, string name);
 	void CreatePlayer(string name);
@@ -34,7 +34,7 @@ public:
 	void FillRegions();
 	void LoadPlayer();
 
-	//--------------------------------------------------------
+	//--------------------------------
 	// Game Loop
 	void Update(float elapsed,DirectX::Mouse::State mouse, DirectX::Keyboard::State keyboard);
 	void Render();
@@ -43,8 +43,11 @@ public:
 	Player * GetPlayer();
 	
 private:
-	ID3D11Device * m_device;
-	//--------------------------------------------------------
+	//--------------------------------
+	// DirectX
+	Microsoft::WRL::ComPtr<ID3D11Device> m_device;
+
+	//--------------------------------
 	// updating buffers
 
 	// vertex Buffer size (in number of elements)
@@ -56,7 +59,7 @@ private:
 	unsigned int terrainIBSize;
 	unsigned int objectIBSize;
 
-	//--------------------------------------------------------
+	//--------------------------------
 	// Loading regions
 	shared_ptr<CircularArray> m_regions;
 	/* loadRegions() is called by game loop, decides which loading method is best based on
@@ -65,7 +68,7 @@ private:
 	
 	float m_loadWidth;
 
-	//--------------------------------------------------------
+	//--------------------------------
 	// World constants
 
 	string			m_name;
@@ -74,14 +77,14 @@ private:
 	unsigned int	m_regionSize;
 	int				m_seed;
 
-	//--------------------------------------------------------
+	//--------------------------------
 	// Player
 
 	unique_ptr<Player> m_player;
 	unsigned short m_lastX = 0;
 	unsigned short m_lastZ = 0;
 
-	//--------------------------------------------------------
+	//--------------------------------
 	// Collision
 
 	float yOnABC(float x, float y, XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C);

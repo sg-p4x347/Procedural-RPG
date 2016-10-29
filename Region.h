@@ -29,7 +29,6 @@ class Region {
 		int GetIndexCount();
 		bool IsNull();
 	private:
-		ID3D11Device * m_device;
 		// nullness
 		bool m_null = true;
 
@@ -50,7 +49,7 @@ class Region {
 		unsigned int m_regionWidth;
 
 		// load terrain into terrain buffers
-		void LoadTerrain(string name);
+		void LoadTerrain(ID3D11Device * device, string name);
 		// load objects into object buffers
 		void LoadObjects();
 		// load entities into the entity storage vector

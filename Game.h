@@ -1,7 +1,3 @@
-//
-// Game.h
-//
-
 #pragma once
 
 #include "World.h"
@@ -14,14 +10,14 @@ class Game
 public:
 
     Game();
-
+	//--------------------------------
     // Initialization and management
     void Initialize(HWND window, int width, int height);
-
+	//--------------------------------
     // Basic game loop
     void Tick();
     void Render();
-
+	//--------------------------------
     // Rendering helpers
     void Clear();
     void Present();
@@ -37,15 +33,16 @@ public:
     void GetDefaultSize( int& width, int& height ) const;
 
 private:
+	//--------------------------------
 	// The currently loaded world
 	unique_ptr<World> m_world;
     void Update(DX::StepTimer const& timer);
-
+	//--------------------------------
 	// DirectX
     void CreateDevice();
     void CreateResources();
     void OnDeviceLost();
-
+	//--------------------------------
     // Device resources.
     HWND                                            m_window;
     int                                             m_outputWidth;
@@ -69,7 +66,6 @@ private:
 	std::unique_ptr<DirectX::CommonStates>									m_states;
 	std::unique_ptr<DirectX::DGSLEffect>									m_effect;
 
-	std::unique_ptr<DirectX::GeometricPrimitive>							m_origin;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>						m_texture;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>						m_texture2;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>						m_texture3;

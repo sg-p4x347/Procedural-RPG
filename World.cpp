@@ -6,7 +6,7 @@ using namespace DirectX::SimpleMath;
 
 World::World() {
 }
-void World::Initialize(ID3D11Device * device) {
+void World::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device) {
 	
 	m_device = device;
 	m_worldWidth = 512;
@@ -27,7 +27,7 @@ void World::CreateWorld(int seed, string name) {
 	srand(seed);
 	// generate the terrain distribution maps
 	unique_ptr<Distribution> continentDist(new Distribution(m_worldWidth, m_worldWidth));
-	continentDist->Continent(2);
+	continentDist->Continent(1);
 	/*continentDist->DiamondSquare(m_worldWidth / 8, 0.55f, 2, true);
 	continentDist->Erosion();*/
 	//continentDist->DiamondSquare(m_worldWidth / 16, 1.0f, 3, false);
@@ -133,7 +133,7 @@ void World::LoadRegions() {
 			}
 			for (int z = 0; z < m_loadWidth; z++) {
 				// place the new region into old one's place
-				m_regions->set(x, z, m_device, regionX - round(m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_name);
+				m_regions->set(x, z, m_device.Get(), regionX - round(m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_name);
 			}
 		}
 		if (abs(displacementZ) == 1) {
@@ -146,7 +146,7 @@ void World::LoadRegions() {
 			}
 			for (int x = 0; x < m_loadWidth; x++) {
 				// place the new region into old one's place
-				m_regions->set(x, z, m_device, regionX - round( m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_name);
+				m_regions->set(x, z, m_device.Get(), regionX - round( m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_name);
 			}
 		}
 	} else {
@@ -164,7 +164,7 @@ void World::FillRegions() {
 	for (int z = 0; z < m_loadWidth; z++) {
 		for (int x = 0; x < m_loadWidth; x++) {
 			// load a new region for updating
-			m_regions->set(x, z, m_device, regionX - round(m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_name);
+			m_regions->set(x, z, m_device.Get(), regionX - round(m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_name);
 			index++;
 		}
 	}
