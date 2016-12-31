@@ -3,9 +3,12 @@
 
 namespace Utility {
 	float randWithin(float min, float max) {
-		return (float(rand()%1000)/1000.0)*(max - min) + min;
+		return (float(rand())/float(RAND_MAX))*(max - min) + min;
 	}
-	float pythag(float x, float y, float z) {
+	int randWithin(int min, int max) {
+		return rand() % (max - min) + min;
+	}
+	float pythag(double x, double y, double z) {
 		return sqrt(x*x + y*y + z*z);
 	}
 	int posToIndex(int x, int y, int width) {

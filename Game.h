@@ -5,11 +5,20 @@
 
 // A basic game implementation that creates a D3D11 device and
 // provides a game loop.
-class Game
+__declspec(align(16)) class Game
 {
 public:
 
     Game();
+	void* operator new(size_t i)
+	{
+		return _mm_malloc(i, 16);
+	}
+
+	void operator delete(void* p)
+	{
+		_mm_free(p);
+	}
 	//--------------------------------
     // Initialization and management
     void Initialize(HWND window, int width, int height);
@@ -58,22 +67,24 @@ private:
     Microsoft::WRL::ComPtr<IDXGISwapChain1>         m_swapChain1;
     Microsoft::WRL::ComPtr<ID3D11RenderTargetView>  m_renderTargetView;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView>  m_depthStencilView;
-	// Matricies
-	DirectX::SimpleMath::Matrix												m_worldMatrix;
-	DirectX::XMMATRIX 														m_viewMatrix;
-	DirectX::SimpleMath::Matrix												m_projMatrix;
-	// DirectX Pipeline
-	std::unique_ptr<DirectX::CommonStates>									m_states;
-	std::unique_ptr<DirectX::DGSLEffect>									m_effect;
 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>						m_texture;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>						m_texture2;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>						m_texture3;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>						m_texture4;
+	std::unique_ptr<DirectX::CommonStates>		m_states;
+	std::unique_ptr<DirectX::DGSLEffect>		m_effect;
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture2;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture3;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture4;
+
+	// Matricies
+	DirectX::SimpleMath::Matrix	m_worldMatrix;
+	DirectX::XMMATRIX 			m_viewMatrix;
+	DirectX::SimpleMath::Matrix	m_projMatrix;
 
 	std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>	m_batch;
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>								m_inputLayout;
 	Microsoft::WRL::ComPtr<ID3D11PixelShader>								m_pixelShader;
+	
 	// Input
 	std::unique_ptr<DirectX::Keyboard>				m_keyboard;
 	std::unique_ptr<DirectX::Mouse>					m_mouse;

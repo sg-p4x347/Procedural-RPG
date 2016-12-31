@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Distribution.h"
-
+#include "ConfigParser.h"
+#include <chrono>
 using namespace DirectX::SimpleMath;
 
 // Initilization
@@ -19,25 +20,27 @@ void Distribution::DiamondSquare (float maxDeviation, const float deviationDecre
 	m_zoom = zoom;
 	m_mountain = isMountain;
 	// initialize the corners
-	//float corners = isMountain ? -m_maxDeviation : deviation(maxDeviation);
 	m_points[0][0] = isMountain ? -m_maxDeviation : Deviation(maxDeviation);
 	m_points[0][m_width] = isMountain ? -m_maxDeviation : Deviation(maxDeviation);
 	m_points[m_width][0] = isMountain ? -m_maxDeviation : Deviation(maxDeviation);
 	m_points[m_width][m_width] = isMountain ? -m_maxDeviation : Deviation(maxDeviation);
 	// iterate
-	for (int iteration = 0; iteration < floor(log2(m_width)); iteration++) {
-		int gridWidth = (m_width / pow(2, iteration))/2;
-		for (int x = gridWidth; x < m_width; x += gridWidth*2) {
-			for (int y = gridWidth; y < m_width; y += gridWidth*2) {
+	int finalIteration = floor(log2(m_width));
+	for (int iteration = 0; iteration < finalIteration; iteration++) {
+		int gridWidth = (m_width / pow(2, iteration)) * 0.5;
+		for (int x = gridWidth; x < m_width; x += gridWidth * 2) {
+			for (int y = gridWidth; y < m_width; y += gridWidth * 2) {
 				// Diamond
 				m_points[x][y] = isMountain && iteration == 0 ? m_maxDeviation : Diamond(x, y, gridWidth) + Deviation(maxDeviation);
 				// Square
-				for (float rad = 0; rad <= 4; rad += 1) {
-					int pointX = round(x + cos(rad*XM_PI / 2) * gridWidth);
-					int pointY = round(y + sin(rad*XM_PI / 2) * gridWidth);
+				for (float rad = (x == m_width - gridWidth || y == m_width - gridWidth ? 0.f : 2.f); rad < 4.f; rad++) {
+					int pointX = round(x + cos(rad * XM_PI * 0.5f) * gridWidth);
+					int pointY = round(y + sin(rad * XM_PI * 0.5f) * gridWidth);
 					if (isMountain && (pointX == 0 || pointX == m_width || pointY == 0 || pointY == m_width)) {
-						m_points[pointX][pointY] = -m_maxDeviation;
+						// point is on the edge of the mountain
+						m_points[pointX][pointY] = -m_maxDeviation; 
 					} else {
+						// use the square method to calculate the elevation
 						m_points[pointX][pointY] = Square(pointX, pointY, gridWidth) + Deviation(maxDeviation);
 					}
 				}
@@ -49,26 +52,64 @@ void Distribution::DiamondSquare (float maxDeviation, const float deviationDecre
 		}
 	}
 }
+// Diamond
+float Distribution::Diamond(int x, int y, int distance) {
+	float sum = 0.f;
+	sum += m_points[x - distance][y - distance];
+	sum += m_points[x - distance][y + distance];
+	sum += m_points[x + distance][y - distance];
+	sum += m_points[x + distance][y + distance];
+	return sum * 0.25f;
+}
+// Square
+// Two of the square calculations are unecessary, as they get overridden by the adjacent pass
+float Distribution::Square(int x, int y, int distance) {
+	float sum = 0;
+	int denominator = 0;
+	if (y > 0) {
+		sum += m_points[x][y - distance];
+		denominator++;
+	}
+	if (y < m_width) {
+		sum += m_points[x][y + distance];
+		denominator++;
+	}
+	if (x > 0) {
+		sum += m_points[x - distance][y];
+		denominator++;
+	}
+	if (x < m_width) {
+		sum += m_points[x + distance][y];
+		denominator++;
+	}
+	return sum / denominator;
+}
 // continent generator
 void Distribution::Continent(int ctrlWidth) {
+	ConfigParser config("config/continent.cfg");
 	// create the base continent map
+
 	unique_ptr<Distribution> continentDist(new Distribution(m_width, m_height));
-	continentDist->DiamondSquare(m_width / 8, 0.55f, 2, true);
+	auto start = std::chrono::high_resolution_clock::now();
+	continentDist->DiamondSquare(m_width * config.GetDouble("CM_initialDeviation"), config.GetDouble("CM_roughness"), config.GetInt("CM_zoom"), true);
+	auto end = std::chrono::high_resolution_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	
 	vector< vector<float> > continentMap = continentDist->GetPoints();
 	// create the biome distribution map
 	unique_ptr<Distribution> biomeDist(new Distribution(m_width, m_height));
-	biomeDist->DiamondSquare(1.f, 1.f, 3, false);
+	biomeDist->DiamondSquare(config.GetDouble("BM_initialDeviation"), config.GetDouble("BM_roughness"), config.GetInt("BM_zoom"), false);
 	vector< vector<float> > biomeMap = biomeDist->GetPoints();
 
-	m_maxDeviation = m_width / 16;
+	m_maxDeviation = m_width * config.GetDouble("TM_initialDeviation");
+	m_deviationDecrease = config.GetDouble("TM_roughness");
 	float maxDeviation = m_maxDeviation;
-	m_deviationDecrease = 0.45f;
 	// amplitude
-	const float landAmplitude = 0.2;
-	const float oceanAmplitude = 0.6;
-	const float biomeDeviationConst = 0.75;
-	const int biomeCutoff = 16;
-	const float offset = m_width / 16.f;
+	const double landAmplitude = config.GetDouble("landAmplitude");
+	const double oceanAmplitude = config.GetDouble("oceanAmplitude");
+	const double biomeDeviationConst = config.GetDouble("biomeDeviationConst");
+	const int biomeCutoff = config.GetInt("biomeCutoff");
+	const double offset = m_maxDeviation * config.GetDouble("offset");
 	// initialize the corners
 	for (int x = 0; x <= m_width; x += m_width) {
 		for (int y = 0; y <= m_width; y += m_width) {
@@ -146,38 +187,7 @@ void Distribution::Continent(int ctrlWidth) {
 		maxDeviation -= m_deviationDecrease * maxDeviation;
 	}
 	// Erosion filter
-	Erosion();
-}
-// Diamond
-float Distribution::Diamond(int x, int y, int distance) {
-	float sum = 0;
-	sum += m_points[x - distance][y - distance];
-	sum += m_points[x - distance][y + distance];
-	sum += m_points[x + distance][y - distance];
-	sum += m_points[x + distance][y + distance];
-	return sum / 4;
-}
-// Square
-float Distribution::Square(int x, int y, int distance) {
-	float sum = 0;
-	int denominator = 0;
-	if (y > 0) {
-		sum += m_points[x][y - distance];
-		denominator++;
-	}
-	if (y < m_width) {
-		sum += m_points[x][y + distance];
-		denominator++;
-	}
-	if (x > 0) {
-		sum += m_points[x - distance][y];
-		denominator++;
-	}
-	if (x < m_width) {
-		sum += m_points[x + distance][y];
-		denominator++;
-	}
-	return sum / denominator;
+	//Erosion();
 }
 float Distribution::Deviation(float range) {
 	return randWithin(-range / 2, range / 2);

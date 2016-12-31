@@ -8,6 +8,10 @@
 #include <algorithm>
 #include <iterator>
 #include "CircularArray.h"
+#include "NameGenerator.h"
+#include "Distribution.h"
+#include "City.h"
+#include "EntityManager.h"
 
 using namespace DirectX;
 using namespace Utility;
@@ -27,7 +31,9 @@ public:
 	void Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device);
 	// generator
 	void CreateWorld(int seed, string name);
-	void CreatePlayer(string name);
+	shared_ptr<Distribution> CreateTerrain();
+	void CreateCities(shared_ptr<Distribution> terrain);
+	void CreatePlayer();
 
 	// loading from files
 	void LoadWorld(string name);
@@ -38,6 +44,7 @@ public:
 	// Game Loop
 	void Update(float elapsed,DirectX::Mouse::State mouse, DirectX::Keyboard::State keyboard);
 	void Render();
+	void CreateResources(unsigned int backBufferWidth, unsigned int backBufferHeight);
 	shared_ptr<CircularArray> GetRegions();
 	// Player
 	Player * GetPlayer();
@@ -45,19 +52,10 @@ public:
 private:
 	//--------------------------------
 	// DirectX
-	Microsoft::WRL::ComPtr<ID3D11Device> m_device;
+	Microsoft::WRL::ComPtr<ID3D11Device>		m_d3dDevice;
 
-	//--------------------------------
-	// updating buffers
-
-	// vertex Buffer size (in number of elements)
-	unsigned int entityVBSize;
-	unsigned int terrainVBSize;
-	unsigned int objectVBSize;
-	// index Buffer size (in number of elements)
-	unsigned int entityIBSize;
-	unsigned int terrainIBSize;
-	unsigned int objectIBSize;
+	// name generator
+	shared_ptr<NameGenerator> m_NG;
 
 	//--------------------------------
 	// Loading regions
@@ -66,23 +64,34 @@ private:
 	the players movement and currently loaded regions*/
 	void LoadRegions();
 	
-	float m_loadWidth;
+	int m_loadWidth;
 
 	//--------------------------------
 	// World constants
 
 	string			m_name;
+	string			m_path;
 	unsigned int	m_worldWidth;
 	unsigned int	m_regionWidth;
-	unsigned int	m_regionSize;
+	int				m_regionSize;
 	int				m_seed;
+
+	//--------------------------------
+	// Cities
+
+	vector<City>	m_cities;
 
 	//--------------------------------
 	// Player
 
 	unique_ptr<Player> m_player;
-	unsigned short m_lastX = 0;
-	unsigned short m_lastZ = 0;
+	int m_lastX = 0;
+	int m_lastZ = 0;
+
+	//--------------------------------
+	// entities
+	unique_ptr<EntityManager> m_entityManager;
+
 
 	//--------------------------------
 	// Collision

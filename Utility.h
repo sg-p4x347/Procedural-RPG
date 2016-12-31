@@ -3,7 +3,8 @@
 
 namespace Utility {
 	float randWithin(float min, float max);
-	float pythag(float x, float y, float z);
+	int randWithin(int min, int max);
+	float pythag(double x, double y, double z);
 	struct Float4 {
 		float x;
 		float y;

@@ -11,7 +11,7 @@ void Region::Initialize(ID3D11Device * device, int x, int z, unsigned int worldW
 	m_worldWidth = worldWidth;
 	m_regionWidth = regionWidth;
 	// fill the buffers with data from world files
-	if (x >= 0 && z >= 0 && x < signed(m_worldWidth / m_regionWidth) && z < signed(m_worldWidth / m_regionWidth)) {
+	if (x >= 0 && z >= 0 && x < (m_worldWidth / m_regionWidth) && z < (m_worldWidth / m_regionWidth)) {
 		m_regionX = x;
 		m_regionZ = z;
 		LoadTerrain(device,name);
@@ -26,41 +26,44 @@ void Region::Initialize(ID3D11Device * device, int x, int z, unsigned int worldW
 void Region::LoadTerrain(ID3D11Device * device, string name) {
 	unsigned int regionIndex = posToIndex(m_regionX, m_regionZ, m_worldWidth / m_regionWidth);
 	unsigned int vertexCount = (m_regionWidth + 1)*(m_regionWidth + 1);
+	unsigned int rowSize = (m_regionWidth + 1) * sizeof(short);
 	unsigned int regionSize = vertexCount * sizeof(short);
 	string workingPath = "saves/" + name + "/";
 
 	// Load the vertex array with data.
-	float * heightMap = new float[vertexCount];
-	Vector3 * normalMap = new Vector3[vertexCount];
-	ifstream terrain(workingPath + "/terrain.bin", ios::binary);
-	ifstream normal(workingPath + "/normal.bin", ios::binary);
-	if (terrain.is_open() && normal.is_open()) {
+	vector<float> heightMap;
+	vector<Vector3> normalMap;
+	ifstream terrainStream(workingPath + "/terrain.bin", ios::binary);
+	ifstream normalStream(workingPath + "/normal.bin", ios::binary);
+	if (terrainStream.is_open() && normalStream.is_open()) {
 		// stores the exact bytes from the file into memory
 		char *terrainCharBuffer = new char[regionSize];
 		char *normalCharBuffer = new char[vertexCount * 3];
-		// move start position to the region, and proceed to read
-		terrain.seekg(regionSize*regionIndex);
-		terrain.read((char *)terrainCharBuffer, regionSize);
-
-		normal.seekg(vertexCount * 3 * regionIndex);
-		normal.read((char *)normalCharBuffer, vertexCount * 3);
-
-		// Fill up the heightmap and normalmap from the file blob
-		for (unsigned int i = 0; i < vertexCount; i++) {
-			// heightMap
-			unsigned short upper = terrainCharBuffer[(i * 2) + 1] << 8;
-			unsigned char lower = terrainCharBuffer[i * 2];
-			float vertex = short(upper | lower) / 10.f;
-			heightMap[i] = vertex;
-			// normalMap
-			float x = float(normalCharBuffer[i * 3]);
-			float y = float(normalCharBuffer[i * 3 + 1]);
-			float z = float(normalCharBuffer[i * 3 + 2]);
-			normalMap[i] = Vector3(x, y, z);
-			normalMap[i].Normalize();
+		// move start position to the region, and proceed to read each line into the Char buffers
+		for (int vertZ = 0; vertZ <= m_regionWidth; vertZ++) {
+			for (int vertX = 0; vertX <= m_regionWidth; vertX++) {
+				int index = posToIndex(vertX + m_regionX * m_regionWidth, vertZ + m_regionZ * m_regionWidth, m_worldWidth + 1);
+				// heightMap
+				char shortBuffer[2];
+				terrainStream.seekg(index * sizeof(short));
+				terrainStream.read((char *)shortBuffer, sizeof(short));
+				unsigned char lower = (unsigned char) shortBuffer[0];
+				unsigned short upper = (unsigned short) shortBuffer[1] << 8;
+				
+				float vertex = short(upper | lower) / 10.f;
+				heightMap.push_back(vertex);
+				// normalMap
+				char normalBuffer[3];
+				normalStream.seekg(index * 3 * sizeof(char));
+				normalStream.read((char *)normalBuffer, 3 * sizeof(char));
+				Vector3 normal = Vector3(float(normalBuffer[0]), float(normalBuffer[1]), float(normalBuffer[2]));
+				normal.Normalize();
+				normalMap.push_back(normal);
+			}
 		}
-		terrain.close();
-		normal.close();
+
+		terrainStream.close();
+		normalStream.close();
 		delete[] terrainCharBuffer;
 		delete[] normalCharBuffer;
 	}
@@ -68,14 +71,14 @@ void Region::LoadTerrain(ID3D11Device * device, string name) {
 	m_terrainVertices = new VertexPositionNormalTangentColorTexture[m_regionWidth * m_regionWidth * 6];
 	m_terrainIndices = new unsigned int[m_regionWidth * m_regionWidth * 6];
 
-	unsigned int index = 0;
-	for (unsigned int z = 0; z < m_regionWidth; z++) {
-		for (unsigned int x = 0; x < m_regionWidth; x++) {
+	int index = 0;
+	for (int z = 0; z < m_regionWidth; z++) {
+		for (int x = 0; x < m_regionWidth; x++) {
 			// Get the indexes to the four points of the quad.
-			Vector3 vertex1 = Vector3(x + (m_regionX * m_regionWidth), heightMap[((m_regionWidth + 1) * z) + x], z + (m_regionZ * m_regionWidth));          // Upper left.
-			Vector3 vertex2 = Vector3(x + 1 + (m_regionX*m_regionWidth), heightMap[((m_regionWidth + 1) * z) + (x + 1)], z + (m_regionZ * m_regionWidth));      // Upper right.
-			Vector3 vertex3 = Vector3(x + (m_regionX*m_regionWidth), heightMap[((m_regionWidth + 1) * (z + 1)) + x], z + 1 + (m_regionZ * m_regionWidth));      // Bottom left.
-			Vector3 vertex4 = Vector3(x + 1 + (m_regionX*m_regionWidth), heightMap[((m_regionWidth + 1) * (z + 1)) + (x + 1)], z + 1 + (m_regionZ * m_regionWidth));  // Bottom right.
+			Vector3 vertex1 = Vector3(float(x + (m_regionX * m_regionWidth)), heightMap[((m_regionWidth + 1) * z) + x], float(z + (m_regionZ * m_regionWidth)));          // Upper left.
+			Vector3 vertex2 = Vector3(float(x + 1 + (m_regionX*m_regionWidth)), heightMap[((m_regionWidth + 1) * z) + (x + 1)], float(z + (m_regionZ * m_regionWidth)));      // Upper right.
+			Vector3 vertex3 = Vector3(float(x + (m_regionX*m_regionWidth)), heightMap[((m_regionWidth + 1) * (z + 1)) + x], float(z + 1 + (m_regionZ * m_regionWidth)));      // Bottom left.
+			Vector3 vertex4 = Vector3(float(x + 1 + (m_regionX*m_regionWidth)), heightMap[((m_regionWidth + 1) * (z + 1)) + (x + 1)], float(z + 1 + (m_regionZ * m_regionWidth)));  // Bottom right.
 
 			/*
 			1---2
@@ -145,8 +148,6 @@ void Region::LoadTerrain(ID3D11Device * device, string name) {
 			index++;
 		}
 	}
-	delete[] heightMap;
-	delete[] normalMap;
 	// Create the Vertex Buffer
 	{
 		D3D11_BUFFER_DESC desc = { 0 };

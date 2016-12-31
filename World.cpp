@@ -1,104 +1,157 @@
 #include "pch.h"
 #include "World.h"
-#include "Distribution.h"
+#include "ConfigParser.h"
+#include "Utility.h"
 
 using namespace DirectX::SimpleMath;
+using namespace std;
 
 World::World() {
 }
 void World::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device) {
 	
-	m_device = device;
-	m_worldWidth = 512;
-	m_regionWidth = 64;
+	m_d3dDevice = device;
+	m_worldWidth = 1024;
+	m_regionWidth = 128;
 	m_loadWidth = 8;
-	m_regions = unique_ptr<CircularArray>(new CircularArray());
-	m_regions->init(ceil(m_loadWidth), ceil(m_loadWidth));
-	
+	m_NG = shared_ptr<NameGenerator>(new NameGenerator());
+	m_regions = shared_ptr<CircularArray>(new CircularArray());
+	//m_entityManager = unique_ptr<EntityManager>(new EntityManager());
+	m_regions->init(m_loadWidth, m_loadWidth);
+
 }
 // creates a new world file
 void World::CreateWorld(int seed, string name) {
+	m_name = name;
 	// create the relative path
-	string workingPath = "saves/" + name + "/";
+	m_path = "saves/" + name + "/";
 	// create the save directory
-	CreateDirectory(wstring(workingPath.begin(), workingPath.end()).c_str(), NULL);
+	CreateDirectory(wstring(m_path.begin(), m_path.end()).c_str(), NULL);
 
 	// seed the RNG
 	srand(seed);
-	// generate the terrain distribution maps
-	unique_ptr<Distribution> continentDist(new Distribution(m_worldWidth, m_worldWidth));
-	continentDist->Continent(1);
-	/*continentDist->DiamondSquare(m_worldWidth / 8, 0.55f, 2, true);
-	continentDist->Erosion();*/
-	//continentDist->DiamondSquare(m_worldWidth / 16, 1.0f, 3, false);
-	vector< vector<float> > terrain = continentDist->GetPoints();
 
-	unsigned int vertexCount = (m_regionWidth + 1)*(m_regionWidth + 1);
-	unsigned int regionCount = (continentDist->GetWidth() / m_regionWidth)*(continentDist->GetWidth() / m_regionWidth);
+	// generators
+	shared_ptr<Distribution> terrain = CreateTerrain();
+	CreateCities(terrain);
+	CreatePlayer();
 	
+}
+shared_ptr<Distribution> World::CreateTerrain()
+{
+	// generate the heightmap
+	OutputDebugString(L"Generating heightmap...");
+	shared_ptr<Distribution> continentDist(new Distribution(m_worldWidth, m_worldWidth));
+	continentDist->Continent(1);
+	OutputDebugString(L"Finished!\n");
+
+	// generate a biome distriubion map
+	/*OutputDebugString(L"Generating biome map...");
+	shared_ptr<Distribution> biomeDist(new Distribution(m_worldWidth / 4, m_worldWidth / 4));
+	biomeDist->DiamondSquare(1.0f, 1.0f, 2, false);
+	OutputDebugString(L"Finished!\n");*/
+
+	vector< vector<float> > terrain = continentDist->GetPoints();
+	vector< vector<XMFLOAT3> > normals;
+	
+	unsigned int vertexCount = (m_worldWidth + 1)*(m_worldWidth + 1);
+	unsigned int regionCount = (continentDist->GetWidth() / m_regionWidth)*(continentDist->GetWidth() / m_regionWidth);
+
 	//-------------------------------
 	// save terrain to binary file
 	//-------------------------------
-	
-	unsigned char *terrainBuffer = new unsigned char[vertexCount*regionCount * sizeof(short)];
-	char *normalBuffer = new char[vertexCount*regionCount * 3]; // X (8 bits) Y (8 bits) Z (8 bits)
+
+	unique_ptr<unsigned char[]> terrainBuffer(new unsigned char[vertexCount*regionCount * sizeof(short)]);
+	unique_ptr<char[]> normalBuffer(new char[vertexCount*regionCount * 3]); // X (8 bits) Y (8 bits) Z (8 bits)
 
 	unsigned int index = 0;
 	// push each vertex in the world
-	for (unsigned short regionZ = 0; regionZ < m_worldWidth / m_regionWidth; regionZ++) {
-		for (unsigned short regionX = 0; regionX < m_worldWidth / m_regionWidth; regionX++) {
-			for (unsigned short vertZ = 0; vertZ <= m_regionWidth; vertZ++) {
-				for (unsigned short vertX = 0; vertX <= m_regionWidth; vertX++) {
-					float vertex = terrain[regionX * m_regionWidth + vertX][regionZ * m_regionWidth + vertZ];
-					terrainBuffer[index * 2] = short(vertex * 10) & 0xff;
-					terrainBuffer[index * 2 + 1] = (short(vertex * 10) >> 8) & 0xff;
+	for (unsigned short vertZ = 0; vertZ <= m_worldWidth; vertZ++) {
+		vector<XMFLOAT3> row;
+		normals.push_back( row );
+		for (unsigned short vertX = 0; vertX <= m_worldWidth; vertX++) {
+			float vertex = terrain[vertX][vertZ];
+			terrainBuffer.get()[index * 2] = short(vertex * 10) & 0xff;
+			terrainBuffer.get()[index * 2 + 1] = (short(vertex * 10) >> 8) & 0xff;
 
-					// normals
-					float left = signed(regionX * m_regionWidth + vertX) - 1 >= 0 ? terrain[regionX * m_regionWidth + vertX - 1][regionZ * m_regionWidth + vertZ] : vertex;
-					float right = signed(regionX * m_regionWidth + vertX) + 1 <= signed(m_worldWidth) ? terrain[regionX * m_regionWidth + vertX + 1][regionZ * m_regionWidth + vertZ] : vertex;
-					float up = signed(regionZ * m_regionWidth + vertZ) + 1 <= signed(m_worldWidth) ? terrain[regionX * m_regionWidth + vertX][regionZ * m_regionWidth + vertZ + 1] : vertex;
-					float down = signed(regionZ * m_regionWidth + vertZ) - 1 >= 0 ? terrain[regionX * m_regionWidth + vertX][regionZ * m_regionWidth + vertZ - 1] : vertex;
+			// normals
+			float left = signed(vertX) - 1 >= 0 ? terrain[vertX - 1][vertZ] : vertex;
+			float right = signed(vertX) + 1 <= signed(m_worldWidth) ? terrain[vertX + 1][vertZ] : vertex;
+			float up = signed(vertZ) + 1 <= signed(m_worldWidth) ? terrain[vertX][vertZ + 1] : vertex;
+			float down = signed(vertZ) - 1 >= 0 ? terrain[vertX][vertZ - 1] : vertex;
 
-					Vector3 normal = Vector3(left - right, 2.f, down - up);
-					normal.Normalize();
-					// scale the vector up into the characters range
-					normal *= 128;
-					normalBuffer[index * 3] = char(normal.x);
-					normalBuffer[index * 3 + 1] = char(normal.y);
-					normalBuffer[index * 3 + 2] = char(normal.z);
+			Vector3 normal = Vector3(left - right, 2.f, down - up);
+			normal.Normalize();
+			normals[vertZ].push_back(XMFLOAT3(normal.x, normal.y, normal.z));
+					
+			// scale the vector up into the 8-bit range
+			normal *= 128;
+			normalBuffer.get()[index * 3] = char(normal.x);
+			normalBuffer.get()[index * 3 + 1] = char(normal.y);
+			normalBuffer.get()[index * 3 + 2] = char(normal.z);
 
-					// update vertex index
-					index++;
-				}
-			}
+			// update vertex index
+			index++;
 		}
 	}
+	//---------------------------------------------------------
+	OutputDebugString(L"Generating cities...");
+	ConfigParser parser("config/city.cfg");
+	int maxCities = parser.GetInt("maxCities");
+	double maxElevation = parser.GetDouble("maxElevation");
+	double minDistance = parser.GetDouble("minDistance");
+
+	int i = 0;
+	while (i < maxCities) {
+		int x = randWithin(0, m_worldWidth);
+		int z = randWithin(0, m_worldWidth);
+		// check elevation
+		if (terrain[x][z] > 0 && terrain[x][z] < maxElevation) {
+			// check proximity
+			for (unsigned int j = 0; j < m_cities.size(); j++) {
+				if (pythag(m_cities[j].GetPosition().x - x, m_cities[j].GetPosition().z - z, 0.0) < minDistance) {
+					break;
+				}
+			}
+			// check terrain roughness
+
+			terrain[x][z] += 10;
+			m_cities.push_back(City(XMFLOAT3(float(x), terrain[x][z], float(z)), terrain));
+			i++;
+		}
+	}
+	OutputDebugString(L"Finished!\n");
+	//---------------------------------------------------------
 	//-----------------------------------------------
 	// output file stream
 	//-----------------------------------------------
 
 	// heightMap
-	ofstream terrainFile(workingPath + "terrain.bin", ios::binary);
+	ofstream terrainFile(m_path + "terrain.bin", ios::binary);
 	terrainFile.seekp(0);
 	if (terrainFile.is_open()) {
 		// write the data
-		terrainFile.write((const char *)terrainBuffer, vertexCount*regionCount * sizeof(short));
+		terrainFile.write((const char *)terrainBuffer.get(), vertexCount * sizeof(short));
 	}
 	terrainFile.close();
 
 	// normalMap
-	ofstream normalFile(workingPath + "normal.bin", ios::binary);
+	ofstream normalFile(m_path + "normal.bin", ios::binary);
 	normalFile.seekp(0);
 	if (normalFile.is_open()) {
 		// write the data
-		normalFile.write((const char *)normalBuffer, vertexCount*regionCount * 3);
+		normalFile.write((const char *)normalBuffer.get(), vertexCount * 3);
 	}
 	normalFile.close();
 
-	delete[] terrainBuffer;
+	return continentDist;
 }
-void World::CreatePlayer(string name) {
-
+void World::CreateCities(shared_ptr<Distribution> distribution) {
+	vector< vector<float> > terrain = distribution->GetPoints();
+	
+}
+void World::CreatePlayer() {
+	
 }
 void World::LoadWorld(string name) {
 	m_name = name;
@@ -108,11 +161,11 @@ void World::LoadWorld(string name) {
 }
 void World::LoadRegions() {
 	// calculate displacement
-	int regionX = round(m_player->getPosition().x / float(m_regionWidth));
-	int regionZ = round(m_player->getPosition().z / float(m_regionWidth));
+	int regionX = int(round(m_player->getPosition().x / float(m_regionWidth)));
+	int regionZ = int(round(m_player->getPosition().z / float(m_regionWidth)));
 	// get the region displacement
-	short displacementX = regionX - m_lastX;
-	short displacementZ = regionZ - m_lastZ;
+	int displacementX = regionX - m_lastX;
+	int displacementZ = regionZ - m_lastZ;
 	// update the position of last region
 	m_lastX = regionX;
 	m_lastZ = regionZ;
@@ -133,7 +186,7 @@ void World::LoadRegions() {
 			}
 			for (int z = 0; z < m_loadWidth; z++) {
 				// place the new region into old one's place
-				m_regions->set(x, z, m_device.Get(), regionX - round(m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_name);
+				m_regions->set(x, z, m_d3dDevice.Get(), regionX - int(round(m_loadWidth / 2.f)) + x, regionZ - int(round(m_loadWidth / 2.f)) + z, m_worldWidth, m_regionWidth, m_name);
 			}
 		}
 		if (abs(displacementZ) == 1) {
@@ -146,7 +199,7 @@ void World::LoadRegions() {
 			}
 			for (int x = 0; x < m_loadWidth; x++) {
 				// place the new region into old one's place
-				m_regions->set(x, z, m_device.Get(), regionX - round( m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_name);
+				m_regions->set(x, z, m_d3dDevice.Get(), regionX - int(round( m_loadWidth / 2.f)) + x, regionZ - int(round(m_loadWidth / 2.f)) + z, m_worldWidth, m_regionWidth, m_name);
 			}
 		}
 	} else {
@@ -158,13 +211,13 @@ void World::FillRegions() {
 	m_regions->zeroOffsets();
 	int index = 0;
 	// find the region coordinate that the player is located in
-	int regionZ = round(m_player->getPosition().z / m_regionWidth);
-	int regionX = round(m_player->getPosition().x / m_regionWidth);
+	int regionZ = int(round(m_player->getPosition().z / m_regionWidth));
+	int regionX = int(round(m_player->getPosition().x / m_regionWidth));
 	// load a grid of regions around the player; loadWidth is the width and height in regions
 	for (int z = 0; z < m_loadWidth; z++) {
 		for (int x = 0; x < m_loadWidth; x++) {
 			// load a new region for updating
-			m_regions->set(x, z, m_device.Get(), regionX - round(m_loadWidth / 2.f) + x, regionZ - round(m_loadWidth / 2.f) + z, m_worldWidth, m_regionWidth, m_name);
+			m_regions->set(x, z, m_d3dDevice.Get(), regionX - int(round(m_loadWidth / 2.f)) + x, regionZ - int(round(m_loadWidth / 2.f)) + z, m_worldWidth, m_regionWidth, m_name);
 			index++;
 		}
 	}
@@ -174,10 +227,12 @@ void World::Update(float elapsed, DirectX::Mouse::State mouse, DirectX::Keyboard
 	m_player->update(elapsed,mouse,keyboard);
 	//m_player->updatePhysics(elapsed);
 	// load the regions around the player's position
+
+	//initialize thread0data
 	LoadRegions();
 }
 XMFLOAT3 World::globalToRegionCoord(XMFLOAT3 position) {
-	return XMFLOAT3(int(floor(position.x)) % (m_regionWidth+1), position.y, int(floor(position.x)) % (m_regionWidth+1));
+	return XMFLOAT3(float(int(floor(position.x)) % (m_regionWidth+1)), position.y, float(int(floor(position.x)) % (m_regionWidth+1)));
 }
 float World::yOnABC(float x, float z, XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) {
 	XMFLOAT3 u = XMFLOAT3(B.x - A.x, B.y - A.y, B.z - A.z);
@@ -188,30 +243,12 @@ float World::yOnABC(float x, float z, XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) {
 
 }
 void World::Render() {
-	//XMMATRIX worldMatrix, viewMatrix, projectionMatrix, baseViewMatrix, orthoMatrix;
+	
 
-	//// Clear the buffers to begin the scene.
-	//Direct3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
-	//// Generate the view matrix based on the camera's position.
-	//m_player->render();
-
-	//// Get the world, view, and projection matrices from the camera and d3d objects.
-	//Direct3D->GetWorldMatrix(worldMatrix);
-	//m_player->getViewMatrix(viewMatrix);
-	//Direct3D->GetProjectionMatrix(projectionMatrix);
-	//m_player->getBaseViewMatrix(baseViewMatrix);
-	//Direct3D->GetOrthoMatrix(orthoMatrix);
-
-	//// Render regions
-	//for (int i = m_regions->size()-1; i >= 0; i--) {
-	//	if (!m_regions->data[i].isNull()) {
-	//		m_regions->data[i].render(Direct3D->GetDeviceContext());
-	//	}
-	//}
-	//
-	//// Present the rendered scene to the screen.
-	//Direct3D->EndScene();
-
+}
+void World::CreateResources(unsigned int backBufferWidth, unsigned int backBufferHeight)
+{
+	
 }
 shared_ptr<CircularArray> World::GetRegions()
 {
@@ -225,9 +262,9 @@ void World::LoadPlayer() {
 	ifstream playerFile("saves/" + m_name + "/player.bin", ios::binary);
 	if (playerFile.is_open()) {
 		// read the file into the player class
-		m_player = make_unique<Player>(XMFLOAT3(128,32,128), 100.0f);
-		m_lastX = floor(m_player->getPosition().x / float(m_regionWidth));
-		m_lastZ = floor(m_player->getPosition().z / float(m_regionWidth));
+		m_player = make_unique<Player>(XMFLOAT3(0,32,0), 100.0f);
+		m_lastX = int(floor(m_player->getPosition().x / float(m_regionWidth)));
+		m_lastZ = int(floor(m_player->getPosition().z / float(m_regionWidth)));
 	}
 	playerFile.close();
 }

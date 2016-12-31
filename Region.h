@@ -43,10 +43,10 @@ class Region {
 		unsigned int * m_terrainIndices;
 
 		// properties
-		unsigned short m_regionX;
-		unsigned short m_regionZ;
-		unsigned int m_worldWidth;
-		unsigned int m_regionWidth;
+		int m_regionX;
+		int m_regionZ;
+		int m_worldWidth;
+		int m_regionWidth;
 
 		// load terrain into terrain buffers
 		void LoadTerrain(ID3D11Device * device, string name);

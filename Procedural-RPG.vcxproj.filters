@@ -8,6 +8,9 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{4193cb6b-1cd8-46be-b2c7-a128ba331711}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Config">
+      <UniqueIdentifier>{a0034a97-ab0a-4b02-9196-ded993123651}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -22,6 +25,15 @@
     <ClInclude Include="Utility.h" />
     <ClInclude Include="World.h" />
     <ClInclude Include="ReadData.h" />
+    <ClInclude Include="City.h" />
+    <ClInclude Include="Road.h" />
+    <ClInclude Include="Building.h" />
+    <ClInclude Include="NameGenerator.h" />
+    <ClInclude Include="ConfigParser.h" />
+    <ClInclude Include="History.h" />
+    <ClInclude Include="EntityManager.h" />
+    <ClInclude Include="PhysicsComponent.h" />
+    <ClInclude Include="PositionComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -35,6 +47,15 @@
     <ClCompile Include="Region.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="World.cpp" />
+    <ClCompile Include="Building.cpp" />
+    <ClCompile Include="Road.cpp" />
+    <ClCompile Include="City.cpp" />
+    <ClCompile Include="NameGenerator.cpp" />
+    <ClCompile Include="ConfigParser.cpp" />
+    <ClCompile Include="History.cpp" />
+    <ClCompile Include="EntityManager.cpp" />
+    <ClCompile Include="PhysicsComponent.cpp" />
+    <ClCompile Include="PositionComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
@@ -59,6 +80,12 @@
       <Filter>Assets</Filter>
     </None>
     <None Include="Color.cso" />
+    <None Include="config\city.cfg">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="config\continent.cfg">
+      <Filter>Config</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ShaderGraphContentTask Include="MyDGSLShader.dgsl" />

@@ -258,12 +258,15 @@ P2F main(V2P pixel)
 	float snowRatio = clamp(pixel.worldPos.y - 16.0, 0.0, 1.0);
 	// elevation based texturing
 	if (pixel.worldPos.y >= 16) {
+		// highlands
 		color = Transition(Texture4.Sample(TexSampler, pixel.uv).rgb, Texture2.Sample(TexSampler, pixel.uv).rgb, snowRatio);
 	}
 	else if (pixel.worldPos.y >= 0) {
+		// lowlands
 		color = Transition(Texture2.Sample(TexSampler, pixel.uv).rgb, Texture1.Sample(TexSampler, pixel.uv).rgb, landRatio);
 	}
-	else if (pixel.worldPos.y < 0) {
+	else {
+		// uderwater
 		color = Transition(Texture1.Sample(TexSampler, pixel.uv).rgb, Texture3.Sample(TexSampler, pixel.uv).rgb, dirtStrength);
 	}
 	// slope based texturing

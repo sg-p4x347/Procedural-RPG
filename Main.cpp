@@ -7,11 +7,6 @@
 
 using namespace DirectX;
 
-namespace
-{
-    std::unique_ptr<Game> g_game;
-};
-
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 // Entry point
@@ -24,7 +19,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     if (FAILED(hr))
         return 1;
 
-    g_game = std::make_unique<Game>();
+    auto g_game = std::make_unique<Game>();
 
     // Register class and create window
     {

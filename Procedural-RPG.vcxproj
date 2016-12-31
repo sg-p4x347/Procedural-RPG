@@ -151,25 +151,40 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Building.h" />
     <ClInclude Include="CircularArray.h" />
+    <ClInclude Include="City.h" />
+    <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="Distribution.h" />
     <ClInclude Include="Entity.h" />
+    <ClInclude Include="EntityManager.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="History.h" />
+    <ClInclude Include="NameGenerator.h" />
     <ClInclude Include="NPC.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PhysicsComponent.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="PositionComponent.h" />
     <ClInclude Include="ReadData.h" />
     <ClInclude Include="Region.h" />
+    <ClInclude Include="Road.h" />
     <ClInclude Include="StepTimer.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="World.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Building.cpp" />
     <ClCompile Include="CircularArray.cpp" />
+    <ClCompile Include="City.cpp" />
+    <ClCompile Include="ConfigParser.cpp" />
     <ClCompile Include="Distribution.cpp" />
     <ClCompile Include="Entity.cpp" />
+    <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="History.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="NameGenerator.cpp" />
     <ClCompile Include="NPC.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -177,8 +192,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="PhysicsComponent.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="PositionComponent.cpp" />
     <ClCompile Include="Region.cpp" />
+    <ClCompile Include="Road.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="World.cpp" />
   </ItemGroup>
@@ -200,6 +218,8 @@
       <FileType>Document</FileType>
     </ShaderGraphContentTask>
     <None Include="Color.cso" />
+    <None Include="config\city.cfg" />
+    <None Include="config\continent.cfg" />
     <None Include="myfile.spritefont" />
     <None Include="packages.config" />
     <None Include="saves\testWorld\terrain.bin" />
@@ -207,6 +227,10 @@
   <ItemGroup>
     <FxCompile Include="Terrain.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</TreatWarningAsError>
+      <EnableDebuggingInformation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</EnableDebuggingInformation>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0_level_9_3</ShaderModel>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -43,7 +43,7 @@ void Game::Initialize(HWND window, int width, int height)
 	// the World
 	m_world = unique_ptr<World>(new World());
 	m_world->Initialize(m_d3dDevice.Get());
-	//m_world->CreateWorld(4555, "testWorld");
+	m_world->CreateWorld(4555, "testWorld");
 	m_world->LoadWorld("testWorld");
 }
 
@@ -87,14 +87,12 @@ void Game::Render()
     Clear();
 
     //TODO: Add your rendering code here.
-	
 	m_effect->Apply(m_d3dContext.Get());
 
-	
 	// camera
 	m_viewMatrix = m_world->GetPlayer()->getViewMatrix();
 	m_effect->SetView(m_viewMatrix);
-	
+
 	// Render regions
 	auto sampler = m_states->LinearWrap();
 
@@ -102,12 +100,13 @@ void Game::Render()
 	m_d3dContext->RSSetState(m_states->CullCounterClockwise());
 	m_d3dContext->IASetInputLayout(m_inputLayout.Get());
 
-	shared_ptr<CircularArray> regions = m_world->GetRegions();
+	auto regions = m_world->GetRegions();
 	for (int i = regions->size() - 1; i >= 0; i--) {
 		if (!regions->data[i].IsNull()) {
-			regions->data[i].Render(m_d3dContext,m_batch.get());
+			regions->data[i].Render(m_d3dContext, m_batch.get());
 		}
 	}
+	
 	// DO NOT DELETE
 	Present();
 }
@@ -263,7 +262,7 @@ void Game::CreateDevice()
     if (SUCCEEDED(m_d3dDevice.As(&m_d3dDevice1)))
         (void)m_d3dContext.As(&m_d3dContext1);
 
-    // TODO: Initialize device dependent objects here (independent of window size).
+	// TODO: Initialize device dependent objects here (independent of window size).
 	m_states = std::make_unique<CommonStates>(m_d3dDevice.Get());
 
 	// Create DGSL Effect
@@ -315,6 +314,7 @@ void Game::CreateDevice()
 
 	// Matricies
 	m_worldMatrix = Matrix::Identity;
+    
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -433,7 +433,7 @@ void Game::CreateResources()
     CD3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc(D3D11_DSV_DIMENSION_TEXTURE2D);
     DX::ThrowIfFailed(m_d3dDevice->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
 
-    // TODO: Initialize windows-size dependent objects here.
+	// TODO: Initialize windows-size dependent objects here.
 	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f),
 		float(backBufferWidth) / float(backBufferHeight), 0.1f, 512.f);
 
@@ -445,7 +445,7 @@ void Game::CreateResources()
 
 void Game::OnDeviceLost()
 {
-    // TODO: Add Direct3D resource cleanup here.
+	// TODO: Add Direct3D resource cleanup here.
 	m_states.reset();
 	m_effect.reset();
 	m_inputLayout.Reset();

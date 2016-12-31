@@ -3,12 +3,20 @@
 #include <DirectXMath.h>
 using namespace DirectX;
 
-class Player : public NPC {
+__declspec(align(16)) class Player : public NPC {
 	public:
 		Player();
 		Player(XMFLOAT3 POSITION, float MASS);
 		~Player();
+		void* operator new(size_t i)
+		{
+			return _mm_malloc(i, 16);
+		}
 
+		void operator delete(void* p)
+		{
+			_mm_free(p);
+		}
 		// Direct X pipeline
 		void render();
 		void renderBaseViewMatrix();

@@ -13,12 +13,15 @@ class Distribution {
 		Distribution(const unsigned int width, const unsigned int height);
 		~Distribution();
 		// Generation
-		void DiamondSquare(float maxDeviation, const float deviationDecrease, const int zoom, const bool isMountain);
-		/*
-		Creates a continent heightmap
-		@param: what resolution to start interpolating points
-		*/
-		void Continent(int ctrlWidth);
+		// Creates a diamond-square algorithm heightmap
+		void DiamondSquare(
+			float maxDeviation /*maximum range of values*/ , 
+			const float deviationDecrease /*higher is smoother, lower is more rough*/,
+			const int zoom /*scales the scope of the algorithm, delays the deviation decrease effect*/, 
+			const bool isMountain /*sets the center point to the maximum altitude*/);
+		// Creates a continent heightmap
+		void Continent(int ctrlWidth /*what resolution to start interpolating points*/);
+		// filter simulates water erosion over time
 		void Erosion();
 		// Getters
 		vector< vector<float> > GetPoints();
