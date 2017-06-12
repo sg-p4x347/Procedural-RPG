@@ -1,0 +1,157 @@
+// Building generation configuration file
+// These values can be changed, affecting to the way buildings generate
+{
+  "goldenRatio": 1.61803398875,
+
+  "residential": {
+    "divisionDeviation": 0.2,
+    "minFitness": 0.2,
+    "hallWidth": 2,
+    "rooms": [
+      {
+        "type": "hallway",
+        "area": 0,
+        "required": false,
+        "count": 0,
+        "borderRoom": false,
+        "maxLinks": 1000000,
+        "linksTo": [ "hallway" ],
+        "door": false,
+        "wallType": 1,
+        "floorType": 5
+      },
+      {
+        "type": "kitchen",
+        "area": 11.1,
+        "required": true,
+        "count": 1,
+        "borderRoom": false,
+        "maxLinks": 1000000,
+        "linksTo": [ "dining", "living", "foyer", "hallway" ],
+        "door": false,
+        "wallType": 1,
+        "floorType": 5
+      },
+      {
+        "type": "dining",
+        "area": 16.7,
+        "required": true,
+        "count": 1,
+        "borderRoom": false,
+        "maxLinks": 1000000,
+        "linksTo": [ "kitchen", "living", "foyer", "hallway" ],
+        "door": false,
+        "wallType": 1,
+        "floorType": 5
+      },
+      {
+        "type": "foyer",
+        "area": 4.5,
+        "required": true,
+        "count": 1,
+        "borderRoom": true,
+        "maxLinks": 1000000,
+        "linksTo": [ "kitchen", "dining", "living", "hallway" ],
+        "door": false,
+        "wallType": 1,
+        "floorType": 6
+      },
+      {
+        "type": "bedroom",
+        "area": 15.6,
+        "required": true,
+        "count": 1000000,
+        "borderRoom": true,
+        "maxLinks": 1,
+        "linksTo": [ "hallway", "living", "foyer" ],
+        "door": true,
+        "wallType": 1,
+        "floorType": 5
+      },
+      {
+        "type": "living",
+        "area": 29.7,
+        "required": true,
+        "count": 1,
+        "borderRoom": false,
+        "maxLinks": 1000000,
+        "linksTo": [ "foyer", "kitchen", "dining", "hallway" ],
+        "door": true,
+        "wallType": 1,
+        "floorType": 5
+      },
+      {
+        "type": "bathroom",
+        "area": 6,
+        "required": true,
+        "count": 3,
+        "borderRoom": false,
+        "maxLinks": 1,
+        "linksTo": [ "hallway", "kitchen", "foyer", "bedroom" ],
+        "door": true,
+        "wallType": 1,
+        "floorType": 5
+      },
+      {
+        "type": "closet",
+        "area": 1.4,
+        "required": false,
+        "count": 1000000,
+        "borderRoom": false,
+        "maxLinks": 1,
+        "linksTo": [ "bedroom", "foyer", "kitchen", "study", "hallway" ],
+        "door": true,
+        "wallType": 1,
+        "floorType": 5
+      },
+      {
+        "type": "study",
+        "area": 15.6,
+        "required": false,
+        "count": 2,
+        "borderRoom": false,
+        "maxLinks": 1,
+        "linksTo": [ "foyer", "hallway", "living" ],
+        "door": true,
+        "wallType": 1,
+        "floorType": 5
+      },
+      {
+        "type": "library",
+        "area": 20,
+        "required": false,
+        "count": 1,
+        "borderRoom": false,
+        "maxLinks": 1,
+        "linksTo": [ "study", "foyer", "hallway", "living" ],
+        "door": true,
+        "wallType": 1,
+        "floorType": 5
+      },
+      {
+        "type": "greenhouse",
+        "area": 20,
+        "required": false,
+        "count": 1,
+        "borderRoom": true,
+        "maxLinks": 1,
+        "linksTo": [ "foyer", "hallway", "living" ],
+        "door": true,
+        "wallType": 1,
+        "floorType": 5
+      },
+      {
+        "type": "ballroom",
+        "area": 40,
+        "required": false,
+        "count": 1,
+        "borderRoom": false,
+        "maxLinks": 1000000,
+        "linksTo": [ "foyer", "study", "library", "hallway", "living" ],
+        "door": true,
+        "wallType": 1,
+        "floorType": 5
+      }
+    ]
+  }
+}

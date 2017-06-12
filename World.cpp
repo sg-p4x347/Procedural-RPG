@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "World.h"
-#include "ConfigParser.h"
+#include "JsonParser.h"
 #include "Utility.h"
 
 using namespace DirectX::SimpleMath;
@@ -11,9 +11,10 @@ World::World() {
 void World::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device) {
 	
 	m_d3dDevice = device;
-	m_worldWidth = 1024;
-	m_regionWidth = 128;
-	m_loadWidth = 8;
+	JsonParser config(ifstream("config/continent.json"));
+	m_worldWidth = config["terrainMap"]["width"].To<int>();
+	m_regionWidth = 512;
+	m_loadWidth = 2;
 	m_NG = shared_ptr<NameGenerator>(new NameGenerator());
 	m_regions = shared_ptr<CircularArray>(new CircularArray());
 	//m_entityManager = unique_ptr<EntityManager>(new EntityManager());
@@ -32,123 +33,18 @@ void World::CreateWorld(int seed, string name) {
 	srand(seed);
 
 	// generators
-	shared_ptr<Distribution> terrain = CreateTerrain();
-	CreateCities(terrain);
+	CreateTerrain();
+	/*shared_ptr<Continent> terrain = CreateTerrain();
+	CreateCities(terrain);*/
 	CreatePlayer();
 	
 }
-shared_ptr<Distribution> World::CreateTerrain()
+void World::CreateTerrain()
 {
 	// generate the heightmap
 	OutputDebugString(L"Generating heightmap...");
-	shared_ptr<Distribution> continentDist(new Distribution(m_worldWidth, m_worldWidth));
-	continentDist->Continent(1);
+	Continent continent(m_path);
 	OutputDebugString(L"Finished!\n");
-
-	// generate a biome distriubion map
-	/*OutputDebugString(L"Generating biome map...");
-	shared_ptr<Distribution> biomeDist(new Distribution(m_worldWidth / 4, m_worldWidth / 4));
-	biomeDist->DiamondSquare(1.0f, 1.0f, 2, false);
-	OutputDebugString(L"Finished!\n");*/
-
-	vector< vector<float> > terrain = continentDist->GetPoints();
-	vector< vector<XMFLOAT3> > normals;
-	
-	unsigned int vertexCount = (m_worldWidth + 1)*(m_worldWidth + 1);
-	unsigned int regionCount = (continentDist->GetWidth() / m_regionWidth)*(continentDist->GetWidth() / m_regionWidth);
-
-	//-------------------------------
-	// save terrain to binary file
-	//-------------------------------
-
-	unique_ptr<unsigned char[]> terrainBuffer(new unsigned char[vertexCount*regionCount * sizeof(short)]);
-	unique_ptr<char[]> normalBuffer(new char[vertexCount*regionCount * 3]); // X (8 bits) Y (8 bits) Z (8 bits)
-
-	unsigned int index = 0;
-	// push each vertex in the world
-	for (unsigned short vertZ = 0; vertZ <= m_worldWidth; vertZ++) {
-		vector<XMFLOAT3> row;
-		normals.push_back( row );
-		for (unsigned short vertX = 0; vertX <= m_worldWidth; vertX++) {
-			float vertex = terrain[vertX][vertZ];
-			terrainBuffer.get()[index * 2] = short(vertex * 10) & 0xff;
-			terrainBuffer.get()[index * 2 + 1] = (short(vertex * 10) >> 8) & 0xff;
-
-			// normals
-			float left = signed(vertX) - 1 >= 0 ? terrain[vertX - 1][vertZ] : vertex;
-			float right = signed(vertX) + 1 <= signed(m_worldWidth) ? terrain[vertX + 1][vertZ] : vertex;
-			float up = signed(vertZ) + 1 <= signed(m_worldWidth) ? terrain[vertX][vertZ + 1] : vertex;
-			float down = signed(vertZ) - 1 >= 0 ? terrain[vertX][vertZ - 1] : vertex;
-
-			Vector3 normal = Vector3(left - right, 2.f, down - up);
-			normal.Normalize();
-			normals[vertZ].push_back(XMFLOAT3(normal.x, normal.y, normal.z));
-					
-			// scale the vector up into the 8-bit range
-			normal *= 128;
-			normalBuffer.get()[index * 3] = char(normal.x);
-			normalBuffer.get()[index * 3 + 1] = char(normal.y);
-			normalBuffer.get()[index * 3 + 2] = char(normal.z);
-
-			// update vertex index
-			index++;
-		}
-	}
-	//---------------------------------------------------------
-	OutputDebugString(L"Generating cities...");
-	ConfigParser parser("config/city.cfg");
-	int maxCities = parser.GetInt("maxCities");
-	double maxElevation = parser.GetDouble("maxElevation");
-	double minDistance = parser.GetDouble("minDistance");
-
-	int i = 0;
-	while (i < maxCities) {
-		int x = randWithin(0, m_worldWidth);
-		int z = randWithin(0, m_worldWidth);
-		// check elevation
-		if (terrain[x][z] > 0 && terrain[x][z] < maxElevation) {
-			// check proximity
-			for (unsigned int j = 0; j < m_cities.size(); j++) {
-				if (pythag(m_cities[j].GetPosition().x - x, m_cities[j].GetPosition().z - z, 0.0) < minDistance) {
-					break;
-				}
-			}
-			// check terrain roughness
-
-			terrain[x][z] += 10;
-			m_cities.push_back(City(XMFLOAT3(float(x), terrain[x][z], float(z)), terrain));
-			i++;
-		}
-	}
-	OutputDebugString(L"Finished!\n");
-	//---------------------------------------------------------
-	//-----------------------------------------------
-	// output file stream
-	//-----------------------------------------------
-
-	// heightMap
-	ofstream terrainFile(m_path + "terrain.bin", ios::binary);
-	terrainFile.seekp(0);
-	if (terrainFile.is_open()) {
-		// write the data
-		terrainFile.write((const char *)terrainBuffer.get(), vertexCount * sizeof(short));
-	}
-	terrainFile.close();
-
-	// normalMap
-	ofstream normalFile(m_path + "normal.bin", ios::binary);
-	normalFile.seekp(0);
-	if (normalFile.is_open()) {
-		// write the data
-		normalFile.write((const char *)normalBuffer.get(), vertexCount * 3);
-	}
-	normalFile.close();
-
-	return continentDist;
-}
-void World::CreateCities(shared_ptr<Distribution> distribution) {
-	vector< vector<float> > terrain = distribution->GetPoints();
-	
 }
 void World::CreatePlayer() {
 	

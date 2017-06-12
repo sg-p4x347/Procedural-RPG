@@ -1,17 +1,16 @@
 #include "pch.h"
 #include "Distribution.h"
-#include "ConfigParser.h"
+#include "JsonParser.h"
 #include <chrono>
 using namespace DirectX::SimpleMath;
 
 // Initilization
 Distribution::Distribution() {
-	Distribution(256, 256);
+	Distribution(256);
 }
-Distribution::Distribution(const unsigned int width, const unsigned int height) {
+Distribution::Distribution(const unsigned int width) {
 	m_width = width;
-	m_height = height;
-	m_points = vector< vector<float> >(m_width + 1, vector<float>(m_height + 1));
+	m_points = vector< vector<float> >(m_width + 1, vector<float>(m_width + 1));
 }
 // Diamond Square distribution algorithm
 void Distribution::DiamondSquare (float maxDeviation, const float deviationDecrease,const int zoom,const bool isMountain) {
@@ -86,30 +85,32 @@ float Distribution::Square(int x, int y, int distance) {
 }
 // continent generator
 void Distribution::Continent(int ctrlWidth) {
-	ConfigParser config("config/continent.cfg");
-	// create the base continent map
+	JsonParser config("config/continent.cfg");
+	
+	// amplitude
+	const double landAmplitude = config["landAmplitude"].To<double>();
+	const double oceanAmplitude = config["oceanAmplitude"].To<double>();
+	const double biomeDeviationConst = config["biomeDeviationConst"].To<double>();
+	const int sampleWidth = config["sampleWidth"].To<int>();
+	const double offset = m_maxDeviation * config["offset"].To<double>();
 
-	unique_ptr<Distribution> continentDist(new Distribution(m_width, m_height));
-	auto start = std::chrono::high_resolution_clock::now();
-	continentDist->DiamondSquare(m_width * config.GetDouble("CM_initialDeviation"), config.GetDouble("CM_roughness"), config.GetInt("CM_zoom"), true);
-	auto end = std::chrono::high_resolution_clock::now();
-	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	// create the base continent map
+	unique_ptr<Distribution> continentDist(new Distribution(m_width/sampleWidth));
+	//auto start = std::chrono::high_resolution_clock::now();
+	continentDist->DiamondSquare(m_width * config["CM_initialDeviation"].To<double>(), config["CM_roughness"].To<double>(), config["CM_zoom"].To<int>(), true);
+	//auto end = std::chrono::high_resolution_clock::now();
+	//auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 	
 	vector< vector<float> > continentMap = continentDist->GetPoints();
 	// create the biome distribution map
-	unique_ptr<Distribution> biomeDist(new Distribution(m_width, m_height));
-	biomeDist->DiamondSquare(config.GetDouble("BM_initialDeviation"), config.GetDouble("BM_roughness"), config.GetInt("BM_zoom"), false);
+	unique_ptr<Distribution> biomeDist(new Distribution(m_width));
+	biomeDist->DiamondSquare(config["BM_initialDeviation"].To<double>(), config["BM_roughness"].To<double>(), config["BM_zoom"].To<int>(), false);
 	vector< vector<float> > biomeMap = biomeDist->GetPoints();
 
-	m_maxDeviation = m_width * config.GetDouble("TM_initialDeviation");
-	m_deviationDecrease = config.GetDouble("TM_roughness");
+	m_maxDeviation = m_width * config["TM_initialDeviation"].To<int>();
+	m_deviationDecrease = config["TM_roughness"].To<double>();
 	float maxDeviation = m_maxDeviation;
-	// amplitude
-	const double landAmplitude = config.GetDouble("landAmplitude");
-	const double oceanAmplitude = config.GetDouble("oceanAmplitude");
-	const double biomeDeviationConst = config.GetDouble("biomeDeviationConst");
-	const int biomeCutoff = config.GetInt("biomeCutoff");
-	const double offset = m_maxDeviation * config.GetDouble("offset");
+	
 	// initialize the corners
 	for (int x = 0; x <= m_width; x += m_width) {
 		for (int y = 0; y <= m_width; y += m_width) {
@@ -131,32 +132,12 @@ void Distribution::Continent(int ctrlWidth) {
 					} else {
 						continentZ *= oceanAmplitude;
 					}
-					if (gridWidth >= biomeCutoff) {
+					if (gridWidth >= sampleWidth) {
 						m_points[x][y] = continentZ;
 						m_points[x][y] += BiomeDeviation(biomeMap[x][y], continentZ) + (Deviation(BiomeDeviation(biomeMap[x][y], continentZ)));
 					} else {
 						m_points[x][y] = Diamond(x, y, gridWidth) + Deviation(maxDeviation) + (Deviation(maxDeviation) * Deviation(BiomeDeviation(biomeMap[x][y], continentZ))*biomeDeviationConst);
 					}
-				} else {
-					// new way
-					// interpolate
-					// https://en.wikipedia.org/wiki/Bicubic_interpolation#Bicubic_convolution_algorithm
-					// find the 16 control points that define the interpolation
-					for (int j = -1; j < 3; j++) {
-						for (int i = -1; i < 3; i++) {
-							int gridX = i*ctrlWidth + floor(x / ctrlWidth)*ctrlWidth;
-							int gridY = j*ctrlWidth + floor(y / ctrlWidth)*ctrlWidth;
-							if (gridX >= 0 && gridX <= m_width && gridY >= 0 && gridY <= m_height) {
-								points[i + 1][j + 1] = m_points[gridX][gridY];
-							} else {
-								points[i + 1][j + 1] = -m_maxDeviation * oceanAmplitude;
-							}
-						}
-					}
-					m_points[x][y] = BicubicInterpolate(points, (x - (floor(x / ctrlWidth)*ctrlWidth)) / ctrlWidth, (y - (floor(y / ctrlWidth)*ctrlWidth)) / ctrlWidth);
-				}
-				// Square
-				if (gridWidth >= ctrlWidth) {
 					for (float rad = 0; rad <= 4; rad += 1) {
 						int pointX = round(x + cos(rad*XM_PI / 2) * gridWidth);
 						int pointY = round(y + sin(rad*XM_PI / 2) * gridWidth);
@@ -167,13 +148,35 @@ void Distribution::Continent(int ctrlWidth) {
 						else {
 							continentZ *= oceanAmplitude;
 						}
-						if (gridWidth >= biomeCutoff) {
+						if (gridWidth >= sampleWidth) {
 							m_points[pointX][pointY] = continentZ;
 							m_points[pointX][pointY] += BiomeDeviation(biomeMap[pointX][pointY], continentZ) + (Deviation(BiomeDeviation(biomeMap[pointX][pointY], continentZ)));
-						} else {
+						}
+						else {
 							m_points[pointX][pointY] = Square(pointX, pointY, gridWidth) + Deviation(maxDeviation) + (Deviation(maxDeviation) * Deviation(BiomeDeviation(biomeMap[pointX][pointY], continentZ))*biomeDeviationConst);
 						}
 					}
+				} else {
+					// new way
+					// interpolate
+					// https://en.wikipedia.org/wiki/Bicubic_interpolation#Bicubic_convolution_algorithm
+					// find the 16 control points that define the interpolation
+					for (int j = -1; j < 3; j++) {
+						for (int i = -1; i < 3; i++) {
+							int gridX = i*ctrlWidth + floor(x / ctrlWidth)*ctrlWidth;
+							int gridY = j*ctrlWidth + floor(y / ctrlWidth)*ctrlWidth;
+							if (gridX >= 0 && gridX <= m_width && gridY >= 0 && gridY <= m_width) {
+								points[i + 1][j + 1] = m_points[gridX][gridY];
+							} else {
+								points[i + 1][j + 1] = -m_maxDeviation * oceanAmplitude;
+							}
+						}
+					}
+					m_points[x][y] = BicubicInterpolate(points, (x - (floor(x / ctrlWidth)*ctrlWidth)) / ctrlWidth, (y - (floor(y / ctrlWidth)*ctrlWidth)) / ctrlWidth);
+				}
+				// Square
+				if (gridWidth >= ctrlWidth) {
+					
 				} else {
 					for (float rad = 0; rad <= 4; rad += 1) {
 						int pointX = round(x + cos(rad*XM_PI / 2) * gridWidth);
@@ -195,9 +198,6 @@ float Distribution::Deviation(float range) {
 float Distribution::BiomeDeviation(float biome, float continent) {
 	return Gaussian(biome,16.f,0.f,0.5) * Sigmoid(continent,1.f,0.f,4.f);
 }
-// a controls amplituide
-// b controls x displacement
-// c controls width
 float Distribution::Gaussian(float x, float a, float b, float c) {
 	return a * pow(100, -pow((x - b)/c,2));
 }
@@ -227,7 +227,7 @@ void Distribution::Erosion() {
 		}
 	};
 	// create the water map
-	vector< vector<Water> > waterMap = vector< vector<Water> >(m_width + 1, vector<Water>(m_height + 1));
+	vector< vector<Water> > waterMap = vector< vector<Water> >(m_width + 1, vector<Water>(m_width + 1));
 	// update
 	for (int iteration = 0; iteration < 5; iteration++) {
 		for (int x = 0; x <= m_width; x++) {

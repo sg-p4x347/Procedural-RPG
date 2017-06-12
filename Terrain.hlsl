@@ -255,7 +255,7 @@ P2F main(V2P pixel)
 	// merge textures based on slope
 	float3 color;
 	float landRatio = clamp(pixel.worldPos.y, 0.0, 1.0);
-	float snowRatio = clamp(pixel.worldPos.y - 16.0, 0.0, 1.0);
+	float snowRatio = clamp(pixel.worldPos.y - 64.0, 0.0, 1.0);
 	// elevation based texturing
 	if (pixel.worldPos.y >= 16) {
 		// highlands

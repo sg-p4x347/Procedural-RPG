@@ -5,11 +5,29 @@
       <UniqueIdentifier>6ec901b1-143f-443d-ad17-b121362b06b0</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dds;dlg;fbx;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Config">
+      <UniqueIdentifier>{a0034a97-ab0a-4b02-9196-ded993123651}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Economy">
+      <UniqueIdentifier>{0e1b6816-0b70-475b-9e94-3a3f8f945d95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Government">
+      <UniqueIdentifier>{b98916a2-571d-445e-8689-349831bcd453}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{4193cb6b-1cd8-46be-b2c7-a128ba331711}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Config">
-      <UniqueIdentifier>{a0034a97-ab0a-4b02-9196-ded993123651}</UniqueIdentifier>
+    <Filter Include="Social">
+      <UniqueIdentifier>{d6ceef2a-d21d-449f-adf4-72676b183185}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Physical">
+      <UniqueIdentifier>{c3c949ec-8388-423c-a9b0-a1ec5c634fb8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Physical\Building">
+      <UniqueIdentifier>{c34e98c1-f5f3-47a3-ad18-67c08a19459d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Architecture">
+      <UniqueIdentifier>{7d4a7142-fe88-42a1-9c1c-d8d5f51b2207}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -25,15 +43,76 @@
     <ClInclude Include="Utility.h" />
     <ClInclude Include="World.h" />
     <ClInclude Include="ReadData.h" />
-    <ClInclude Include="City.h" />
-    <ClInclude Include="Road.h" />
-    <ClInclude Include="Building.h" />
     <ClInclude Include="NameGenerator.h" />
-    <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="History.h" />
     <ClInclude Include="EntityManager.h" />
     <ClInclude Include="PhysicsComponent.h" />
     <ClInclude Include="PositionComponent.h" />
+    <ClInclude Include="Continent.h" />
+    <ClInclude Include="HeightMap.h" />
+    <ClInclude Include="IdHandler.h" />
+    <ClInclude Include="InventoryItem.h">
+      <Filter>Economy</Filter>
+    </ClInclude>
+    <ClInclude Include="Inventory.h">
+      <Filter>Economy</Filter>
+    </ClInclude>
+    <ClInclude Include="State.h">
+      <Filter>Government</Filter>
+    </ClInclude>
+    <ClInclude Include="Account.h">
+      <Filter>Economy</Filter>
+    </ClInclude>
+    <ClInclude Include="Bank.h">
+      <Filter>Economy</Filter>
+    </ClInclude>
+    <ClInclude Include="Citizen.h">
+      <Filter>Social</Filter>
+    </ClInclude>
+    <ClInclude Include="Culture.h">
+      <Filter>Social</Filter>
+    </ClInclude>
+    <ClInclude Include="Occupation.h">
+      <Filter>Social</Filter>
+    </ClInclude>
+    <ClInclude Include="FederalBank.h">
+      <Filter>Economy</Filter>
+    </ClInclude>
+    <ClInclude Include="PrivateBank.h">
+      <Filter>Economy</Filter>
+    </ClInclude>
+    <ClInclude Include="Local.h">
+      <Filter>Government</Filter>
+    </ClInclude>
+    <ClInclude Include="Federal.h">
+      <Filter>Government</Filter>
+    </ClInclude>
+    <ClInclude Include="Loan.h">
+      <Filter>Economy</Filter>
+    </ClInclude>
+    <ClInclude Include="City.h">
+      <Filter>Physical</Filter>
+    </ClInclude>
+    <ClInclude Include="Road.h">
+      <Filter>Physical</Filter>
+    </ClInclude>
+    <ClInclude Include="JsonParser.h" />
+    <ClInclude Include="Building.h">
+      <Filter>Architecture</Filter>
+    </ClInclude>
+    <ClInclude Include="Line.h">
+      <Filter>Architecture</Filter>
+    </ClInclude>
+    <ClInclude Include="Rectangle.h">
+      <Filter>Architecture</Filter>
+    </ClInclude>
+    <ClInclude Include="Voxel.h">
+      <Filter>Architecture</Filter>
+    </ClInclude>
+    <ClInclude Include="Room.h">
+      <Filter>Architecture</Filter>
+    </ClInclude>
+    <ClInclude Include="JSON.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -47,15 +126,76 @@
     <ClCompile Include="Region.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="World.cpp" />
-    <ClCompile Include="Building.cpp" />
-    <ClCompile Include="Road.cpp" />
-    <ClCompile Include="City.cpp" />
     <ClCompile Include="NameGenerator.cpp" />
-    <ClCompile Include="ConfigParser.cpp" />
     <ClCompile Include="History.cpp" />
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="PhysicsComponent.cpp" />
     <ClCompile Include="PositionComponent.cpp" />
+    <ClCompile Include="Continent.cpp" />
+    <ClCompile Include="HeightMap.cpp" />
+    <ClCompile Include="IdHandler.cpp" />
+    <ClCompile Include="Inventory.cpp">
+      <Filter>Economy</Filter>
+    </ClCompile>
+    <ClCompile Include="InventoryItem.cpp">
+      <Filter>Economy</Filter>
+    </ClCompile>
+    <ClCompile Include="State.cpp">
+      <Filter>Government</Filter>
+    </ClCompile>
+    <ClCompile Include="Account.cpp">
+      <Filter>Economy</Filter>
+    </ClCompile>
+    <ClCompile Include="Bank.cpp">
+      <Filter>Economy</Filter>
+    </ClCompile>
+    <ClCompile Include="Citizen.cpp">
+      <Filter>Social</Filter>
+    </ClCompile>
+    <ClCompile Include="Culture.cpp">
+      <Filter>Social</Filter>
+    </ClCompile>
+    <ClCompile Include="Occupation.cpp">
+      <Filter>Social</Filter>
+    </ClCompile>
+    <ClCompile Include="FederalBank.cpp">
+      <Filter>Economy</Filter>
+    </ClCompile>
+    <ClCompile Include="PrivateBank.cpp">
+      <Filter>Economy</Filter>
+    </ClCompile>
+    <ClCompile Include="Local.cpp">
+      <Filter>Government</Filter>
+    </ClCompile>
+    <ClCompile Include="Federal.cpp">
+      <Filter>Government</Filter>
+    </ClCompile>
+    <ClCompile Include="Loan.cpp">
+      <Filter>Economy</Filter>
+    </ClCompile>
+    <ClCompile Include="City.cpp">
+      <Filter>Physical</Filter>
+    </ClCompile>
+    <ClCompile Include="Road.cpp">
+      <Filter>Physical</Filter>
+    </ClCompile>
+    <ClCompile Include="JsonParser.cpp" />
+    <ClCompile Include="Building.cpp">
+      <Filter>Architecture</Filter>
+    </ClCompile>
+    <ClCompile Include="Line.cpp">
+      <Filter>Architecture</Filter>
+    </ClCompile>
+    <ClCompile Include="Rectangle.cpp">
+      <Filter>Architecture</Filter>
+    </ClCompile>
+    <ClCompile Include="Voxel.cpp">
+      <Filter>Architecture</Filter>
+    </ClCompile>
+    <ClCompile Include="Room.cpp">
+      <Filter>Architecture</Filter>
+    </ClCompile>
+    <ClCompile Include="JSON.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
@@ -74,18 +214,24 @@
     </Manifest>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="myfile.spritefont" />
     <None Include="saves\testWorld\terrain.bin">
       <Filter>Assets</Filter>
     </None>
     <None Include="Color.cso" />
-    <None Include="config\city.cfg">
+    <None Include="config\city.json">
       <Filter>Config</Filter>
     </None>
-    <None Include="config\continent.cfg">
+    <None Include="config\continent.json">
       <Filter>Config</Filter>
     </None>
+    <None Include="config\history.json">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="config\building.json">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ShaderGraphContentTask Include="MyDGSLShader.dgsl" />

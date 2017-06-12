@@ -35,12 +35,12 @@ class Region {
 		// vertex buffers
 		Microsoft::WRL::ComPtr<ID3D11Buffer> m_terrainVB;
 		//vector<VertexPositionNormalTangentColorTexture> terrainVertices;
-		VertexPositionNormalTangentColorTexture * m_terrainVertices;
+		VertexPositionNormalTangentColorTexture * m_terrainVertices = nullptr;
 
 		// index buffers
 		Microsoft::WRL::ComPtr<ID3D11Buffer> m_terrainIB;
 		//vector<unsigned int> terrainIndices;
-		unsigned int * m_terrainIndices;
+		unsigned int * m_terrainIndices = nullptr;
 
 		// properties
 		int m_regionX;

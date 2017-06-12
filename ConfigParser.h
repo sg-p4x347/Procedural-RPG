@@ -16,6 +16,8 @@ public:
 
 	int GetInt(string prop);
 	vector<int> GetIntVector(string prop);
+	// get all property names in an object
+	vector<string> GetPropertyNames(string prop);
 private:
 	string m_path;
 	ifstream m_file;

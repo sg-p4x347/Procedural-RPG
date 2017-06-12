@@ -8,6 +8,10 @@ using namespace Utility;
 Region::Region() {
 }
 void Region::Initialize(ID3D11Device * device, int x, int z, unsigned int worldWidth, unsigned int regionWidth, string name) {
+	// delete the old arrays
+	if (m_terrainVertices && !m_null) delete[] m_terrainVertices;
+	if (m_terrainIndices && !m_null) delete[] m_terrainIndices;
+	// set widths
 	m_worldWidth = worldWidth;
 	m_regionWidth = regionWidth;
 	// fill the buffers with data from world files

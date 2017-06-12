@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="packages\directxtk_desktop_2015.2016.4.26.1\build\native\directxtk_desktop_2015.props" Condition="Exists('packages\directxtk_desktop_2015.2016.4.26.1\build\native\directxtk_desktop_2015.props')" />
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.props" Condition="Exists('packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -23,31 +23,32 @@
     <RootNamespace>Procedural_RPG</RootNamespace>
     <ProjectGuid>{6b331f62-d0cd-4cee-94f9-5ee44f184a6c}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -151,41 +152,78 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Account.h" />
+    <ClInclude Include="Bank.h" />
     <ClInclude Include="Building.h" />
     <ClInclude Include="CircularArray.h" />
+    <ClInclude Include="Citizen.h" />
     <ClInclude Include="City.h" />
-    <ClInclude Include="ConfigParser.h" />
+    <ClInclude Include="JSON.h" />
+    <ClInclude Include="JsonParser.h" />
+    <ClInclude Include="Continent.h" />
+    <ClInclude Include="Culture.h" />
     <ClInclude Include="Distribution.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="EntityManager.h" />
+    <ClInclude Include="Federal.h" />
+    <ClInclude Include="FederalBank.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="HeightMap.h" />
     <ClInclude Include="History.h" />
+    <ClInclude Include="IdHandler.h" />
+    <ClInclude Include="Inventory.h" />
+    <ClInclude Include="InventoryItem.h" />
+    <ClInclude Include="Line.h" />
+    <ClInclude Include="Loan.h" />
+    <ClInclude Include="Local.h" />
     <ClInclude Include="NameGenerator.h" />
     <ClInclude Include="NPC.h" />
+    <ClInclude Include="Occupation.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysicsComponent.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="PositionComponent.h" />
+    <ClInclude Include="PrivateBank.h" />
     <ClInclude Include="ReadData.h" />
+    <ClInclude Include="Rectangle.h" />
     <ClInclude Include="Region.h" />
     <ClInclude Include="Road.h" />
+    <ClInclude Include="Room.h" />
+    <ClInclude Include="State.h" />
     <ClInclude Include="StepTimer.h" />
     <ClInclude Include="Utility.h" />
+    <ClInclude Include="Voxel.h" />
     <ClInclude Include="World.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Account.cpp" />
+    <ClCompile Include="Bank.cpp" />
     <ClCompile Include="Building.cpp" />
     <ClCompile Include="CircularArray.cpp" />
+    <ClCompile Include="Citizen.cpp" />
     <ClCompile Include="City.cpp" />
-    <ClCompile Include="ConfigParser.cpp" />
+    <ClCompile Include="JSON.cpp" />
+    <ClCompile Include="JsonParser.cpp" />
+    <ClCompile Include="Continent.cpp" />
+    <ClCompile Include="Culture.cpp" />
     <ClCompile Include="Distribution.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="EntityManager.cpp" />
+    <ClCompile Include="Federal.cpp" />
+    <ClCompile Include="FederalBank.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="HeightMap.cpp" />
     <ClCompile Include="History.cpp" />
+    <ClCompile Include="IdHandler.cpp" />
+    <ClCompile Include="Inventory.cpp" />
+    <ClCompile Include="InventoryItem.cpp" />
+    <ClCompile Include="Line.cpp" />
+    <ClCompile Include="Loan.cpp" />
+    <ClCompile Include="Local.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="NameGenerator.cpp" />
     <ClCompile Include="NPC.cpp" />
+    <ClCompile Include="Occupation.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -195,9 +233,14 @@
     <ClCompile Include="PhysicsComponent.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PositionComponent.cpp" />
+    <ClCompile Include="PrivateBank.cpp" />
+    <ClCompile Include="Rectangle.cpp" />
     <ClCompile Include="Region.cpp" />
     <ClCompile Include="Road.cpp" />
+    <ClCompile Include="Room.cpp" />
+    <ClCompile Include="State.cpp" />
     <ClCompile Include="Utility.cpp" />
+    <ClCompile Include="Voxel.cpp" />
     <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -218,8 +261,10 @@
       <FileType>Document</FileType>
     </ShaderGraphContentTask>
     <None Include="Color.cso" />
-    <None Include="config\city.cfg" />
-    <None Include="config\continent.cfg" />
+    <None Include="config\building.json" />
+    <None Include="config\city.json" />
+    <None Include="config\continent.json" />
+    <None Include="config\history.json" />
     <None Include="myfile.spritefont" />
     <None Include="packages.config" />
     <None Include="saves\testWorld\terrain.bin" />
@@ -235,14 +280,14 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="packages\directxtk_desktop_2015.2016.4.26.1\build\native\directxtk_desktop_2015.targets" Condition="Exists('packages\directxtk_desktop_2015.2016.4.26.1\build\native\directxtk_desktop_2015.targets')" />
     <Import Project="$(VCTargetsPath)\BuildCustomizations\ShaderGraphContentTask.targets" />
+    <Import Project="packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.targets" Condition="Exists('packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('packages\directxtk_desktop_2015.2016.4.26.1\build\native\directxtk_desktop_2015.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\directxtk_desktop_2015.2016.4.26.1\build\native\directxtk_desktop_2015.props'))" />
-    <Error Condition="!Exists('packages\directxtk_desktop_2015.2016.4.26.1\build\native\directxtk_desktop_2015.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\directxtk_desktop_2015.2016.4.26.1\build\native\directxtk_desktop_2015.targets'))" />
+    <Error Condition="!Exists('packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.props'))" />
+    <Error Condition="!Exists('packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.targets'))" />
   </Target>
 </Project>

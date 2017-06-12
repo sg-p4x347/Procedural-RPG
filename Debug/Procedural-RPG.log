@@ -1,3 +1,40 @@
-﻿  Color.dgsl
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (Procedural RPG.vcxproj, ProceduralRPG.vcxproj, Tutorial04.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  Color.dgsl
   MyDGSLShader.dgsl
+  Building.cpp
+c:\gage omega\programming\procedural-rpg\building.cpp(44): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(143): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(266): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\building.cpp(341): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(379): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(380): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(384): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(385): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(415): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(416): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\jsonparser.h(106): warning C4018: '<': signed/unsigned mismatch
+  c:\gage omega\programming\procedural-rpg\building.cpp(349): note: see reference to function template instantiation 'int JsonParser::IndexOf<std::string>(const T &) const' being compiled
+          with
+          [
+              T=std::string
+          ]
+  Generating Code...
+  Skipping... (no relevant changes detected)
+  World.cpp
+  Voxel.cpp
+  State.cpp
+  Room.cpp
+  Rectangle.cpp
+  Main.cpp
+  Local.cpp
+  JsonParser.cpp
+  JSON.cpp
+  History.cpp
+  Game.cpp
+  Federal.cpp
+  Distribution.cpp
+  Continent.cpp
+  City.cpp
+  Citizen.cpp
   Procedural-RPG.vcxproj -> C:\Gage Omega\Programming\Procedural-RPG\Debug\Procedural-RPG.exe
+  Procedural-RPG.vcxproj -> C:\Gage Omega\Programming\Procedural-RPG\Debug\Procedural-RPG.pdb (Partial PDB)

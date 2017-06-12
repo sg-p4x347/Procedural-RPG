@@ -1,25 +1,35 @@
 #pragma once
 #include <DirectXMath.h>
 #include <vector>
+#include <map>
 
+#include "SimpleMath.h"
 #include "Road.h"
 #include "Building.h"
+#include "HeightMap.h"
 
 using namespace DirectX;
+using namespace SimpleMath;
 using namespace std;
 
 // Defines cities that lie on the continent
  class City {
  public:
-	 City(XMFLOAT3 position,const vector<vector<float>> & terrain);
+	 City();
+	 City(SimpleMath::Rectangle area,const HeightMap & terrain, const HeightMap & biome);
 	 ~City();
-	 XMFLOAT3 GetPosition();
+	 Vector2 GetPosition();
+	 
  private:
 	 // Meta information
 	 string m_name;
-	 XMFLOAT3 m_position;
+	 SimpleMath::Rectangle m_area;
 	 vector<long> m_citizens;
 	 // city construction
 	 vector<Road> m_streets;
-	 vector<Building> m_buildings;
+	 vector<Architecture::Building> m_buildings;
+	 // biome information
+	 map<string, float> m_biomes;
+	 // return the name of the biome that this sample point lies in
+	 string GetBiomeName(float value);
  };

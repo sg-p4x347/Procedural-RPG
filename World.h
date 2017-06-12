@@ -9,7 +9,7 @@
 #include <iterator>
 #include "CircularArray.h"
 #include "NameGenerator.h"
-#include "Distribution.h"
+#include "Continent.h"
 #include "City.h"
 #include "EntityManager.h"
 
@@ -31,8 +31,8 @@ public:
 	void Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device);
 	// generator
 	void CreateWorld(int seed, string name);
-	shared_ptr<Distribution> CreateTerrain();
-	void CreateCities(shared_ptr<Distribution> terrain);
+	void CreateTerrain();
+	void CreateCities(shared_ptr<Continent> terrain);
 	void CreatePlayer();
 
 	// loading from files
@@ -75,6 +75,9 @@ private:
 	unsigned int	m_regionWidth;
 	int				m_regionSize;
 	int				m_seed;
+
+	//--------------------------------
+	// History
 
 	//--------------------------------
 	// Cities

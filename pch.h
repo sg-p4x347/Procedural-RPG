@@ -39,6 +39,7 @@
 #include <exception>
 #include <memory>
 #include <vector>
+#include <climits>
 #include <stdexcept>
 
 namespace DX

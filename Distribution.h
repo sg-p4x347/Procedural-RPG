@@ -10,7 +10,7 @@ using namespace Utility;
 class Distribution {
 	public:
 		Distribution();
-		Distribution(const unsigned int width, const unsigned int height);
+		Distribution(const unsigned int width);
 		~Distribution();
 		// Generation
 		// Creates a diamond-square algorithm heightmap
@@ -34,7 +34,6 @@ class Distribution {
 		unsigned int m_zoom;
 		bool m_mountain;
 		unsigned int m_width;
-		unsigned int m_height;
 		// Diamond Square Algorithm -------------------------------------
 		float Diamond(int x, int y, int distance);
 		float Square(int x, int y, int distance);
@@ -46,7 +45,6 @@ class Distribution {
 		float BiomeDeviation(float biome, float continent);
 		float Gaussian(float x, float a, float b, float c);
 		float Sigmoid(float x, float a, float b, float c);
-		// Erosion filter for generated terrain
 		
 		float minimum_distance(Vector2 v, Vector2 w, Vector2 p);
 };

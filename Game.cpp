@@ -43,7 +43,7 @@ void Game::Initialize(HWND window, int width, int height)
 	// the World
 	m_world = unique_ptr<World>(new World());
 	m_world->Initialize(m_d3dDevice.Get());
-	m_world->CreateWorld(4555, "testWorld");
+	m_world->CreateWorld(236267, "testWorld");
 	m_world->LoadWorld("testWorld");
 }
 
@@ -435,7 +435,7 @@ void Game::CreateResources()
 
 	// TODO: Initialize windows-size dependent objects here.
 	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f),
-		float(backBufferWidth) / float(backBufferHeight), 0.1f, 512.f);
+		float(backBufferWidth) / float(backBufferHeight), 0.1f, 700.f);
 
 	m_effect->SetViewport(float(backBufferWidth), float(backBufferHeight));
 
