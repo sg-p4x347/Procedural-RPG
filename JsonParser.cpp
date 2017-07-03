@@ -3,9 +3,16 @@
 #include <iomanip>
 
 JsonParser::JsonParser() {
-	m_type = JsonType::null;
+	m_type = JsonType::object;
 }
-JsonParser::JsonParser(JsonType & type)
+JsonParser::JsonParser(const JsonParser & other)
+{
+	m_array = other.m_array;
+	m_object = other.m_object;
+	m_type = other.m_type;
+	m_value = other.m_value;
+}
+JsonParser::JsonParser(JsonType type)
 {
 	m_type = type;
 }

@@ -109,9 +109,9 @@ void Voxel::Import(JsonParser & voxel)
 JsonParser Voxel::Export()
 {
 	JsonParser voxel;
-	JsonParser floors;
-	JsonParser walls;
-	JsonParser corners;
+	JsonParser floors(JsonType::array);
+	JsonParser walls(JsonType::array);
+	JsonParser corners(JsonType::array);
 	for (int i = 0; i < 8; i++) {
 		if (i < 4) {
 			floors.Add(m_floors[i]);

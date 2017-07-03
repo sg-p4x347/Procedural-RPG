@@ -4,7 +4,7 @@
 #include <map>
 Federal::Federal(vector<City> cities)
 {
-	JsonParser cfg(ifstream("config/history.json"));
+	JsonParser cfg(std::ifstream("config/history.json"));
 	NameGenerator ng = NameGenerator();
 	m_name = ng.GetFederalName();
 	// Generate the various culture groups
@@ -52,7 +52,7 @@ Federal::Federal(vector<City> cities)
 }
 void Federal::Update()
 {
-	JsonParser historyCfg(ifstream("config/history.json"));
+	JsonParser historyCfg(std::ifstream("config/history.json"));
 	int maxIteration = randWithin(historyCfg["iterations"]["min"].To<int>(), historyCfg["iterations"]["max"].To<int>());
 	// start the iterative process of simulating each year
 	for (int year = 0; year < maxIteration; year++) {

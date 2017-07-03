@@ -3,6 +3,7 @@
 #include "Utility.h"
 #include "Player.h"
 #include "Region.h"
+
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -11,18 +12,21 @@
 #include "NameGenerator.h"
 #include "Continent.h"
 #include "City.h"
+#include "Building.h"
 #include "EntityManager.h"
+#include "JSON.h"
+#include "Federal.h"
 
 using namespace DirectX;
 using namespace Utility;
 using namespace std;
 
-class World {
+class World : public JSON {
 public:
 	//--------------------------------
 	// constructors
 
-	World();
+	World(const string directory);
 	~World();
 	
 	//--------------------------------
@@ -30,29 +34,59 @@ public:
 
 	void Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device);
 	// generator
-	void CreateWorld(int seed, string name);
-	void CreateTerrain();
-	void CreateCities(shared_ptr<Continent> terrain);
+	static unique_ptr<World> CreateWorld(int seed, string directory, string name);
+	shared_ptr<Continent> CreateTerrain(string directory);
+
+
 	void CreatePlayer();
 
 	// loading from files
-	void LoadWorld(string name);
+	void LoadWorld(string directory, string name);
 	void FillRegions();
 	void LoadPlayer();
-
+	// saving to files
+	void SaveWorld(string directory);
 	//--------------------------------
 	// Game Loop
-	void Update(float elapsed,DirectX::Mouse::State mouse, DirectX::Keyboard::State keyboard);
-	void Render();
-	void CreateResources(unsigned int backBufferWidth, unsigned int backBufferHeight);
+	void Update(
+		float elapsed,
+		DirectX::Mouse::State mouse,
+		DirectX::Keyboard::State keyboard
+	);
+	void Render(
+		Microsoft::WRL::ComPtr<ID3D11Device> device,
+		Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
+		std::shared_ptr<DirectX::CommonStates> states
+	);
+	void CreateDevice(Microsoft::WRL::ComPtr<ID3D11Device> device);
+	void CreateResources(unsigned int backBufferWidth, unsigned int backBufferHeight, DirectX::XMMATRIX prjMatrix);
+	void OnDeviceLost();
 	shared_ptr<CircularArray> GetRegions();
 	// Player
 	Player * GetPlayer();
 	
+	// Inherited via JSON
+	virtual void Import(JsonParser & jp) override;
+	virtual JsonParser Export() override;
 private:
 	//--------------------------------
 	// DirectX
-	Microsoft::WRL::ComPtr<ID3D11Device>		m_d3dDevice;
+	Microsoft::WRL::ComPtr<ID3D11Device>									m_d3dDevice;
+	std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>	m_batch;
+	Microsoft::WRL::ComPtr<ID3D11InputLayout>								m_inputLayout;
+	Microsoft::WRL::ComPtr<ID3D11PixelShader>								m_pixelShader;
+	// Matricies
+	DirectX::SimpleMath::Matrix	m_worldMatrix;
+	
+
+	std::unique_ptr<DirectX::DGSLEffect>		m_effect;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture2;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture3;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture4;
+
+	
+	
 
 	// name generator
 	shared_ptr<NameGenerator> m_NG;
@@ -65,26 +99,36 @@ private:
 	void LoadRegions();
 	
 	int m_loadWidth;
+	//----------------------------------------------------------------
+	// Loading Buildings into regions
+	vector<shared_ptr<Architecture::Building>> BuildingsInRegion(const Rectangle & regionArea);
 
 	//--------------------------------
 	// World constants
-
+	const string	m_directory;
 	string			m_name;
-	string			m_path;
 	unsigned int	m_worldWidth;
 	unsigned int	m_regionWidth;
 	int				m_regionSize;
 	int				m_seed;
 
-	//--------------------------------
-	// History
+	// Utility
+	inline Vector2 RegionToWorld(int regionX, int regionZ) {
+		return Vector2((float)regionX*m_regionWidth, (float)regionZ*m_regionWidth);
+	}
 
-	//--------------------------------
+	//----------------------------------------------------------------
+	// History / government
+	void GenerateHistory(vector<City> cities);
+	Federal * m_federal; // federal division of organization (contains states)
+
+	//----------------------------------------------------------------
 	// Cities
-
+	void CreateCities(shared_ptr<Continent> terrain);
+	void LoadCities(string directory);
 	vector<City>	m_cities;
 
-	//--------------------------------
+	//----------------------------------------------------------------
 	// Player
 
 	unique_ptr<Player> m_player;
@@ -93,7 +137,7 @@ private:
 
 	//--------------------------------
 	// entities
-	unique_ptr<EntityManager> m_entityManager;
+	shared_ptr<EntityManager> m_entityManager;
 
 
 	//--------------------------------
@@ -101,5 +145,7 @@ private:
 
 	float yOnABC(float x, float y, XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C);
 	XMFLOAT3 globalToRegionCoord(XMFLOAT3 position);
+
+	
 };
 

@@ -6,7 +6,6 @@
 #include "Game.h"
 #include "Distribution.h"
 #include "Utility.h"
-
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
@@ -41,10 +40,13 @@ void Game::Initialize(HWND window, int width, int height)
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
     
 	// the World
-	m_world = unique_ptr<World>(new World());
+	
+	
+	unique_ptr<World> newWorld = World::CreateWorld(236267, "saves", "testWorld");
+	newWorld->SaveWorld("saves");
+	m_world = unique_ptr<World>(new World("saves/testWorld"));
 	m_world->Initialize(m_d3dDevice.Get());
-	m_world->CreateWorld(236267, "testWorld");
-	m_world->LoadWorld("testWorld");
+	m_world->LoadWorld("saves", "testWorld");
 }
 
 // Executes the basic game loop.
@@ -53,9 +55,8 @@ void Game::Tick()
     m_timer.Tick([&]()
     {
         Update(m_timer);
+		Render();
     });
-
-    Render();
 }
 
 // Updates the world.
@@ -75,74 +76,46 @@ void Game::Update(DX::StepTimer const& timer)
 	m_world->Update(elapsed,mouse,keyboard);
 }
 
-// Draws the scene.
 void Game::Render()
 {
-    // Don't try to render anything before the first Update.
-    if (m_timer.GetFrameCount() == 0)
-    {
-        return;
-    }
-
-    Clear();
-
-    //TODO: Add your rendering code here.
-	m_effect->Apply(m_d3dContext.Get());
-
-	// camera
-	m_viewMatrix = m_world->GetPlayer()->getViewMatrix();
-	m_effect->SetView(m_viewMatrix);
-
-	// Render regions
-	auto sampler = m_states->LinearWrap();
-
-	m_d3dContext->PSSetSamplers(0, 1, &sampler);
-	m_d3dContext->RSSetState(m_states->CullCounterClockwise());
-	m_d3dContext->IASetInputLayout(m_inputLayout.Get());
-
-	auto regions = m_world->GetRegions();
-	for (int i = regions->size() - 1; i >= 0; i--) {
-		if (!regions->data[i].IsNull()) {
-			regions->data[i].Render(m_d3dContext, m_batch.get());
-		}
-	}
-	
+	Clear();
+	m_world->Render(m_d3dDevice, m_d3dContext,m_states);
 	// DO NOT DELETE
 	Present();
-}
-
-// Helper method to clear the back buffers.
-void Game::Clear()
-{
-    // Clear the views.
-    m_d3dContext->ClearRenderTargetView(m_renderTargetView.Get(), Colors::CornflowerBlue);
-    m_d3dContext->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-    m_d3dContext->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
-
-    // Set the viewport.
-    CD3D11_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(m_outputWidth), static_cast<float>(m_outputHeight));
-    m_d3dContext->RSSetViewports(1, &viewport);
 }
 
 // Presents the back buffer contents to the screen.
 void Game::Present()
 {
-    // The first argument instructs DXGI to block until VSync, putting the application
-    // to sleep until the next VSync. This ensures we don't waste any cycles rendering
-    // frames that will never be displayed to the screen.
-    HRESULT hr = m_swapChain->Present(1, 0);
+	// The first argument instructs DXGI to block until VSync, putting the application
+	// to sleep until the next VSync. This ensures we don't waste any cycles rendering
+	// frames that will never be displayed to the screen.
+	HRESULT hr = m_swapChain->Present(1, 0);
 
-    // If the device was reset we must completely reinitialize the renderer.
-    if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
-    {
-        OnDeviceLost();
-    }
-    else
-    {
-        DX::ThrowIfFailed(hr);
-    }
+	// If the device was reset we must completely reinitialize the renderer.
+	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
+	{
+		OnDeviceLost();
+	}
+	else
+	{
+		DX::ThrowIfFailed(hr);
+	}
 }
+// Helper method to clear the back buffers.
+void Game::Clear()
+{
+	// Clear the views.
+	m_d3dContext->ClearRenderTargetView(m_renderTargetView.Get(), Colors::CornflowerBlue);
+	m_d3dContext->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	m_d3dContext->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
+
+	// Set the viewport.
+	CD3D11_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(m_outputWidth), static_cast<float>(m_outputHeight));
+	m_d3dContext->RSSetViewports(1, &viewport);
+}
+
 
 // Message handlers
 void Game::OnActivated()
@@ -265,56 +238,7 @@ void Game::CreateDevice()
 	// TODO: Initialize device dependent objects here (independent of window size).
 	m_states = std::make_unique<CommonStates>(m_d3dDevice.Get());
 
-	// Create DGSL Effect
-	auto blob = DX::ReadData(L"Terrain.cso"); // .cso is the compiled version of the hlsl shader (compiled shader object)
-	DX::ThrowIfFailed(m_d3dDevice->CreatePixelShader(&blob.front(), blob.size(),
-		nullptr, m_pixelShader.ReleaseAndGetAddressOf()));
-
-	m_effect = std::make_unique<DGSLEffect>(m_d3dDevice.Get(), m_pixelShader.Get());
-	m_effect->SetTextureEnabled(true);
-	m_effect->SetVertexColorEnabled(true);
-	//---Textures---
-	DX::ThrowIfFailed(
-		CreateDDSTextureFromFile(m_d3dDevice.Get(), L"dirt.dds", nullptr,
-			m_texture.ReleaseAndGetAddressOf()));
-
-	m_effect->SetTexture(m_texture.Get());
-
-	DX::ThrowIfFailed(
-		CreateDDSTextureFromFile(m_d3dDevice.Get(), L"grass.dds", nullptr,
-			m_texture2.ReleaseAndGetAddressOf()));
-
-	m_effect->SetTexture(1, m_texture2.Get());
-
-	DX::ThrowIfFailed(
-		CreateDDSTextureFromFile(m_d3dDevice.Get(), L"stone.dds", nullptr,
-			m_texture3.ReleaseAndGetAddressOf()));
-
-	m_effect->SetTexture(2, m_texture3.Get());
-
-	DX::ThrowIfFailed(
-		CreateDDSTextureFromFile(m_d3dDevice.Get(), L"snow.dds", nullptr,
-			m_texture4.ReleaseAndGetAddressOf()));
-
-	m_effect->SetTexture(3, m_texture4.Get());
-	//---Textures---
-
-	m_effect->EnableDefaultLighting();
-
-	void const* shaderByteCode;
-	size_t byteCodeLength;
-
-	m_effect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
-
-	DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(
-		VertexPositionNormalTangentColorTexture::InputElements,
-		VertexPositionNormalTangentColorTexture::InputElementCount,
-		shaderByteCode, byteCodeLength,
-		m_inputLayout.ReleaseAndGetAddressOf()));
-
-	// Matricies
-	m_worldMatrix = Matrix::Identity;
-    
+	m_world->CreateDevice(m_d3dDevice);
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -437,22 +361,14 @@ void Game::CreateResources()
 	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f),
 		float(backBufferWidth) / float(backBufferHeight), 0.1f, 700.f);
 
-	m_effect->SetViewport(float(backBufferWidth), float(backBufferHeight));
-
-	m_effect->SetView(m_viewMatrix);
-	m_effect->SetProjection(m_projMatrix);
+	m_world->CreateResources(backBufferWidth,backBufferHeight,m_projMatrix);
 }
 
 void Game::OnDeviceLost()
 {
 	// TODO: Add Direct3D resource cleanup here.
 	m_states.reset();
-	m_effect.reset();
-	m_inputLayout.Reset();
-	m_texture.Reset();
-	m_texture2.Reset();
-	m_texture3.Reset();
-	m_pixelShader.Reset();
+	m_world->OnDeviceLost();
 
     m_depthStencilView.Reset();
     m_renderTargetView.Reset();

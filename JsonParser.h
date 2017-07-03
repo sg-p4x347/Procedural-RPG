@@ -4,22 +4,32 @@
 #include <vector>
 
 using namespace std;
-
+enum JsonType {
+	object,
+	array,
+	primitive,
+	null
+};
 class JsonParser
 {
 public:
-	enum JsonType {
-		object,
-		array,
-		primitive,
-		null
-	};
+	
 	JsonParser();
-	JsonParser(JsonType & type);
+	JsonParser(const JsonParser & other);
+	JsonParser(JsonType type);
 	JsonParser(const string & json);
 	JsonParser(istream & filestream);
 	void Export(ostream & fileStream) const;
 	string ToString() const;
+	// explicit conversions
+	explicit operator short() const { return To<short>(); }
+	explicit operator unsigned short() const { return To<unsigned short>(); }
+	explicit operator int() const { return To<int>(); }
+	explicit operator unsigned int() const { return To<unsigned int>(); }
+	explicit operator float() const { return To<float>(); }
+	explicit operator double() const { return To<double>(); }
+	explicit operator bool() const { return To<bool>(); }
+	explicit operator string() const { return To<string>(); }
 	//===================================
 	// JSON Primitive
 	//===================================

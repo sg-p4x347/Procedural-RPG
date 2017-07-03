@@ -2,16 +2,20 @@
 #include "World.h"
 #include "JsonParser.h"
 #include "Utility.h"
+#include "EntityManager.h"
+#include <iostream>
+#include <filesystem>
 
 using namespace DirectX::SimpleMath;
 using namespace std;
 
-World::World() {
+World::World(const string directory) : m_directory(directory) {
+	m_entityManager = std::make_shared<EntityManager>(EntityManager(m_directory));
 }
 void World::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device) {
 	
 	m_d3dDevice = device;
-	JsonParser config(ifstream("config/continent.json"));
+	JsonParser config(std::ifstream("config/continent.json"));
 	m_worldWidth = config["terrainMap"]["width"].To<int>();
 	m_regionWidth = 512;
 	m_loadWidth = 2;
@@ -19,40 +23,109 @@ void World::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device) {
 	m_regions = shared_ptr<CircularArray>(new CircularArray());
 	//m_entityManager = unique_ptr<EntityManager>(new EntityManager());
 	m_regions->init(m_loadWidth, m_loadWidth);
-
+	
 }
-// creates a new world file
-void World::CreateWorld(int seed, string name) {
-	m_name = name;
+// creates a new world
+unique_ptr<World> World::CreateWorld(int seed,string directory, string name) {
+	string worldDir = directory + '/' + name;
+	unique_ptr<World> world(new World(worldDir));
+	world->m_name = name;
+	
+	CreateFolder(worldDir);
 	// create the relative path
-	m_path = "saves/" + name + "/";
 	// create the save directory
-	CreateDirectory(wstring(m_path.begin(), m_path.end()).c_str(), NULL);
+	// CreateDirectory(wstring(m_path.begin(), m_path.end()).c_str(), NULL);
 
 	// seed the RNG
 	srand(seed);
 
 	// generators
-	CreateTerrain();
-	/*shared_ptr<Continent> terrain = CreateTerrain();
-	CreateCities(terrain);*/
-	CreatePlayer();
+	shared_ptr<Continent> terrain = world->CreateTerrain(worldDir);
+	world->CreateCities(terrain);
+	//GenerateHistory(m_cities);
+	world->CreatePlayer();
+	return world;
 	
 }
-void World::CreateTerrain()
+shared_ptr<Continent> World::CreateTerrain(string directory)
 {
 	// generate the heightmap
 	OutputDebugString(L"Generating heightmap...");
-	Continent continent(m_path);
+	Continent continent(directory);
+	return std::make_shared<Continent>(continent);
 	OutputDebugString(L"Finished!\n");
+}
+void World::CreateCities(shared_ptr<Continent> Continent)
+{
+	OutputDebugString(L"Generating cities...");
+	JsonParser continentCfg(std::ifstream("config/continent.json"));
+	JsonParser cityCfg(std::ifstream("config/city.json"));
+	int maxCities = cityCfg["maxCities"].To<int>();
+	double maxElevation = cityCfg["maxElevation"].To<double>();
+	double minDistance = cityCfg["minDistance"].To<double>();
+	int areaWidth = cityCfg["areaWidth"].To<int>();
+
+	int i = 0;
+	while (i < maxCities) {
+	newCity:
+		Rectangle areaRect = Rectangle(randWithin(0, Continent->GetWidth() - areaWidth), randWithin(0, Continent->GetWidth() - areaWidth), areaWidth, areaWidth);
+		// TEMP
+		City city = City(areaRect, Continent->GetTerrain(), Continent->GetBiome());
+		m_cities.push_back(city);
+		i++;
+		continue;
+		//------------
+		
+		Vector2 pos = areaRect.Center();
+		// check elevation
+		float elevation = Continent->GetTerrain().map[(int)pos.x][(int)pos.y];
+		if (elevation > 0 && elevation < maxElevation) {
+			// check to see if the average of the four corners is close to the center
+			// this ensures that the terrain is not too rough
+			double sum = 0;
+			sum += Continent->GetTerrain().map[areaRect.x][areaRect.y];
+			sum += Continent->GetTerrain().map[areaRect.x + areaRect.width][areaRect.y];
+			sum += Continent->GetTerrain().map[areaRect.x][areaRect.y + areaRect.height];
+			sum += Continent->GetTerrain().map[areaRect.x + areaRect.width][areaRect.y + areaRect.height];
+			sum /= 4;
+			if (abs(Continent->GetTerrain().map[pos.x][pos.y] - sum) > 10.0) {
+				goto newCity;
+			}
+
+			// check proximity to all other cities
+			for (unsigned int j = 0; j < m_cities.size(); j++) {
+				if (abs(m_cities[j].GetPosition().x - pos.x) <= minDistance, abs(m_cities[j].GetPosition().y - pos.y) <= minDistance) {
+					goto newCity;
+				}
+			}
+
+			City city = City(areaRect, Continent->GetTerrain(), Continent->GetBiome());
+			m_cities.push_back(city);
+			i++;
+		}
+	}
+	OutputDebugString(L"Finished!\n");
+	
+}
+void World::LoadCities(string directory)
+{
+	for (auto & p : std::experimental::filesystem::directory_iterator(directory)) {
+		m_cities.push_back(City(JsonParser(std::ifstream(p.path()))));
+	}
+}
+void World::GenerateHistory(vector<City> cities)
+{
+	m_federal = new Federal(cities);
+	m_federal->Update();
 }
 void World::CreatePlayer() {
 	
 }
-void World::LoadWorld(string name) {
+void World::LoadWorld(string directory, string name) {
 	m_name = name;
 	// load assets
 	LoadPlayer();
+	LoadCities(directory + '/' + name + "/cities");
 	FillRegions();
 }
 void World::LoadRegions() {
@@ -81,8 +154,15 @@ void World::LoadRegions() {
 				x = m_loadWidth - 1;
 			}
 			for (int z = 0; z < m_loadWidth; z++) {
-				// place the new region into old one's place
-				m_regions->set(x, z, m_d3dDevice.Get(), regionX - int(round(m_loadWidth / 2.f)) + x, regionZ - int(round(m_loadWidth / 2.f)) + z, m_worldWidth, m_regionWidth, m_name);
+				// Initialize the new region into old one's place
+				Region* region = m_regions->get(x, z);
+				region->Initialize(
+					m_d3dDevice.Get(),
+					regionX - int(round(m_loadWidth / 2.f)) + x,
+					regionZ - int(round(m_loadWidth / 2.f)) + z,
+					m_worldWidth, m_regionWidth, m_name,
+					BuildingsInRegion(region->GetArea())
+				);
 			}
 		}
 		if (abs(displacementZ) == 1) {
@@ -95,13 +175,37 @@ void World::LoadRegions() {
 			}
 			for (int x = 0; x < m_loadWidth; x++) {
 				// place the new region into old one's place
-				m_regions->set(x, z, m_d3dDevice.Get(), regionX - int(round( m_loadWidth / 2.f)) + x, regionZ - int(round(m_loadWidth / 2.f)) + z, m_worldWidth, m_regionWidth, m_name);
+				Region* region = m_regions->get(x, z);
+				region->Initialize(
+					m_d3dDevice.Get(),
+					regionX - int(round(m_loadWidth / 2.f)) + x,
+					regionZ - int(round(m_loadWidth / 2.f)) + z,
+					m_worldWidth, m_regionWidth, m_name,
+					BuildingsInRegion(region->GetArea())
+				);
 			}
 		}
 	} else {
 		// load a whole new set of regions and reset the circular array
 		FillRegions();
 	}
+}
+vector<shared_ptr<Architecture::Building>> World::BuildingsInRegion(const Rectangle & regionArea)
+{
+	vector<shared_ptr<Architecture::Building>> buildings;
+	// for each city
+	for (City & city : m_cities) {
+		if (city.GetArea().Intersects(regionArea)) {
+			// for each buliding
+			for (shared_ptr<Architecture::Building> & building : city.GetBuildings()) {
+				if (regionArea.Contains(building->GetFootprint().Center())) {
+					// this building is in the region
+					buildings.push_back(building);
+				}
+			}
+		}
+	}
+	return buildings;
 }
 void World::FillRegions() {
 	m_regions->zeroOffsets();
@@ -113,22 +217,81 @@ void World::FillRegions() {
 	for (int z = 0; z < m_loadWidth; z++) {
 		for (int x = 0; x < m_loadWidth; x++) {
 			// load a new region for updating
-			m_regions->set(x, z, m_d3dDevice.Get(), regionX - int(round(m_loadWidth / 2.f)) + x, regionZ - int(round(m_loadWidth / 2.f)) + z, m_worldWidth, m_regionWidth, m_name);
+			Region* region = m_regions->get(x, z);
+			region->Initialize(
+				m_d3dDevice.Get(),
+				regionX - int(round(m_loadWidth / 2.f)) + x,
+				regionZ - int(round(m_loadWidth / 2.f)) + z,
+				m_worldWidth, m_regionWidth, m_name,
+				BuildingsInRegion(region->GetArea())
+			);
 			index++;
 		}
 	}
 }
-void World::Update(float elapsed, DirectX::Mouse::State mouse, DirectX::Keyboard::State keyboard) {
-	// update the player's physics
-	m_player->update(elapsed,mouse,keyboard);
-	//m_player->updatePhysics(elapsed);
-	// load the regions around the player's position
 
-	//initialize thread0data
-	LoadRegions();
-}
 XMFLOAT3 World::globalToRegionCoord(XMFLOAT3 position) {
 	return XMFLOAT3(float(int(floor(position.x)) % (m_regionWidth+1)), position.y, float(int(floor(position.x)) % (m_regionWidth+1)));
+}
+void World::Import(JsonParser & jp)
+{
+}
+JsonParser World::Export()
+{
+	return JsonParser();
+}
+void World::CreateDevice(Microsoft::WRL::ComPtr<ID3D11Device> device)
+{
+	// Create DGSL Effect
+	auto blob = DX::ReadData(L"Terrain.cso"); // .cso is the compiled version of the hlsl shader (compiled shader object)
+	DX::ThrowIfFailed(device->CreatePixelShader(&blob.front(), blob.size(),
+		nullptr, m_pixelShader.ReleaseAndGetAddressOf()));
+
+	m_effect = std::make_unique<DGSLEffect>(device.Get(), m_pixelShader.Get());
+	m_effect->SetTextureEnabled(true);
+	m_effect->SetVertexColorEnabled(true);
+	//---Textures---
+	DX::ThrowIfFailed(
+		CreateDDSTextureFromFile(device.Get(), L"dirt.dds", nullptr,
+			m_texture.ReleaseAndGetAddressOf()));
+
+	m_effect->SetTexture(m_texture.Get());
+
+	DX::ThrowIfFailed(
+		CreateDDSTextureFromFile(device.Get(), L"grass.dds", nullptr,
+			m_texture2.ReleaseAndGetAddressOf()));
+
+	m_effect->SetTexture(1, m_texture2.Get());
+
+	DX::ThrowIfFailed(
+		CreateDDSTextureFromFile(device.Get(), L"stone.dds", nullptr,
+			m_texture3.ReleaseAndGetAddressOf()));
+
+	m_effect->SetTexture(2, m_texture3.Get());
+
+	DX::ThrowIfFailed(
+		CreateDDSTextureFromFile(device.Get(), L"snow.dds", nullptr,
+			m_texture4.ReleaseAndGetAddressOf()));
+
+	m_effect->SetTexture(3, m_texture4.Get());
+	//---Textures---
+
+	m_effect->EnableDefaultLighting();
+
+	void const* shaderByteCode;
+	size_t byteCodeLength;
+
+	m_effect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
+
+	DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(
+		VertexPositionNormalTangentColorTexture::InputElements,
+		VertexPositionNormalTangentColorTexture::InputElementCount,
+		shaderByteCode, byteCodeLength,
+		m_inputLayout.ReleaseAndGetAddressOf()));
+
+	// Matricies
+	m_worldMatrix = Matrix::Identity;
+
 }
 float World::yOnABC(float x, float z, XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) {
 	XMFLOAT3 u = XMFLOAT3(B.x - A.x, B.y - A.y, B.z - A.z);
@@ -138,13 +301,65 @@ float World::yOnABC(float x, float z, XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) {
 	return A.y + ((N.z * V.z) + (N.x * V.x)) / N.y;
 
 }
-void World::Render() {
+void World::Update(
+	float elapsed,
+	DirectX::Mouse::State mouse,
+	DirectX::Keyboard::State keyboard
+) {
+	// update the player's physics
+	m_player->update(elapsed, mouse, keyboard);
+	//m_player->updatePhysics(elapsed);
+	// load the regions around the player's position
+
+	//initialize thread0data
+	LoadRegions();
+}
+void World::Render(
+	Microsoft::WRL::ComPtr<ID3D11Device> device,
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
+	std::shared_ptr<DirectX::CommonStates> states
+) {
 	
 
-}
-void World::CreateResources(unsigned int backBufferWidth, unsigned int backBufferHeight)
-{
 	
+
+	//TODO: Add your rendering code here.
+	m_effect->Apply(context.Get());
+
+	// camera
+	m_effect->SetView(m_player->getViewMatrix());
+
+	// Render regions
+	auto sampler = states->LinearWrap();
+
+	context->PSSetSamplers(0, 1, &sampler);
+	context->RSSetState(states->CullCounterClockwise());
+	context->IASetInputLayout(m_inputLayout.Get());
+
+	for (int i = m_regions->size() - 1; i >= 0; i--) {
+		if (!m_regions->data[i].IsNull()) {
+			m_regions->data[i].Render(context, m_batch.get());
+		}
+	}
+
+	
+}
+
+void World::CreateResources(unsigned int backBufferWidth, unsigned int backBufferHeight, DirectX::XMMATRIX projMatrix)
+{
+	m_effect->SetViewport(float(backBufferWidth), float(backBufferHeight));
+
+	m_effect->SetView(GetPlayer()->getViewMatrix());
+	m_effect->SetProjection(projMatrix);
+}
+void World::OnDeviceLost()
+{
+	m_effect.reset();
+	m_inputLayout.Reset();
+	m_texture.Reset();
+	m_texture2.Reset();
+	m_texture3.Reset();
+	m_pixelShader.Reset();
 }
 shared_ptr<CircularArray> World::GetRegions()
 {
@@ -155,7 +370,7 @@ Player * World::GetPlayer()
 	return m_player.get();
 }
 void World::LoadPlayer() {
-	ifstream playerFile("saves/" + m_name + "/player.bin", ios::binary);
+	std::ifstream playerFile("saves/" + m_name + "/player.bin", ios::binary);
 	if (playerFile.is_open()) {
 		// read the file into the player class
 		m_player = make_unique<Player>(XMFLOAT3(0,32,0), 100.0f);
@@ -163,6 +378,15 @@ void World::LoadPlayer() {
 		m_lastZ = int(floor(m_player->getPosition().z / float(m_regionWidth)));
 	}
 	playerFile.close();
+}
+void World::SaveWorld(string directory)
+{
+	// Cities
+	string citiesDir = directory + '/' + m_name + "/cities";
+	CreateFolder(citiesDir);
+	for (City & city : m_cities) {
+		city.SaveCity(citiesDir);
+	}
 }
 World::~World() {
 	

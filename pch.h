@@ -41,7 +41,6 @@
 #include <vector>
 #include <climits>
 #include <stdexcept>
-
 namespace DX
 {
     inline void ThrowIfFailed(HRESULT hr)

@@ -11,8 +11,13 @@ City::City()
 {
 }
 
+City::City(JsonParser & city)
+{
+	Import(city);
+}
+
 City::City(SimpleMath::Rectangle area,const HeightMap & terrain, const HeightMap & biome) {
-	JsonParser continentCfg(ifstream("config/continent.json"));
+	JsonParser continentCfg(std::ifstream("config/continent.json"));
 	m_area = area;
 	m_biomes = map<string, float>();
 	// generate name
@@ -41,7 +46,7 @@ City::City(SimpleMath::Rectangle area,const HeightMap & terrain, const HeightMap
 	}
 
 	// TEMP
-	Building building(Architecture::Rectangle(0l, 0l, 10l, 15l), JsonParser(ifstream("config/building.json")),"residential");
+	m_buildings.push_back(shared_ptr<Building>(new Building(Architecture::Rectangle(0l, 0l, 10l, 15l), JsonParser(std::ifstream("config/building.json")),"residential")));
 }
 
 City::~City() {
@@ -50,6 +55,21 @@ City::~City() {
 Vector2 City::GetPosition()
 {
 	return m_area.Center();
+}
+
+SimpleMath::Rectangle City::GetArea()
+{
+	return m_area;
+}
+
+vector<shared_ptr<Building>> City::GetBuildings()
+{
+	return m_buildings;
+}
+
+void City::SaveCity(string directory)
+{
+	Export().Export(std::ofstream(directory + '/' + m_name + ".json"));
 }
 
 string City::GetBiomeName(float value)
@@ -62,4 +82,24 @@ string City::GetBiomeName(float value)
 		}
 	}
 	return "";
+}
+
+void City::Import(JsonParser & jp)
+{
+	m_name = jp["name"].To<string>();
+	for (JsonParser & building : jp["buildings"].GetElements()) {
+		m_buildings.push_back(shared_ptr<Building>(new Building(building)));
+	}
+}
+
+JsonParser City::Export()
+{
+	JsonParser city;
+	city.Set("name", m_name);
+	JsonParser buildings(JsonType::array);
+	for (shared_ptr<Building> & building : m_buildings) {
+		buildings.Add(building->Export());
+	}
+	city.Set("buildings", buildings);
+	return city;
 }

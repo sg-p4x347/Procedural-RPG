@@ -5,9 +5,9 @@
 using namespace DirectX::SimpleMath;
 using namespace Utility;
 
-Region::Region() {
+Region::Region(const string & directory) : m_directory(directory) {
 }
-void Region::Initialize(ID3D11Device * device, int x, int z, unsigned int worldWidth, unsigned int regionWidth, string name) {
+void Region::Initialize(ID3D11Device * device, int x, int z, unsigned int worldWidth, unsigned int regionWidth, string name, vector<shared_ptr<Architecture::Building>> & buildings) {
 	// delete the old arrays
 	if (m_terrainVertices && !m_null) delete[] m_terrainVertices;
 	if (m_terrainIndices && !m_null) delete[] m_terrainIndices;
@@ -26,6 +26,8 @@ void Region::Initialize(ID3D11Device * device, int x, int z, unsigned int worldW
 	else {
 		m_null = true;
 	}
+	// set the buildings
+	m_buildings = m_buildings;
 }
 void Region::LoadTerrain(ID3D11Device * device, string name) {
 	unsigned int regionIndex = posToIndex(m_regionX, m_regionZ, m_worldWidth / m_regionWidth);
@@ -201,6 +203,13 @@ void Region::Render(Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext, P
 void Region::LoadObjects() {
 
 }
+void Region::RenderModels(Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext)
+{
+	// Render buildings
+	for (std::shared_ptr<Architecture::Building> building : m_buildings) {
+		building->Render(deviceContext);
+	}
+}
 void Region::LoadEntities() {
 
 }
@@ -219,6 +228,14 @@ int Region::GetIndexCount() {
 }
 bool Region::IsNull() {
 	return m_null;
+}
+Rectangle Region::GetArea()
+{
+	return Rectangle(m_regionX * m_regionWidth, m_regionZ * m_regionWidth,m_regionWidth,m_regionWidth);
+}
+string Region::GetDirectory()
+{
+	return m_directory + "/" + std::to_string(m_regionX) + ',' + std::to_string(m_regionZ);
 }
 Region::~Region() {
 	delete[] m_terrainVertices;

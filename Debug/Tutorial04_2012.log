@@ -1,98 +1,40 @@
-﻿Build started 5/27/2016 3:02:41 PM.
-     1>Project "C:\Gage Omega\Programming\Procedural-RPG\Tutorial04_2012.vcxproj" on node 2 (Build target(s)).
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(388,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (ProceduralRPG.vcxproj, Tutorial04.vcxproj).  This can lead to incorrect clean and rebuild behavior.
-     1>FxCompile:
-         C:\Program Files (x86)\Windows Kits\8.1\bin\x86\fxc.exe /nologo /E"PS" /T ps_4_0 /Fo "C:\Gage Omega\Programming\Procedural-RPG\Debug\Tutorial04_PS.cso" Tutorial04_PS.hlsl 
-         compilation object save succeeded; see C:\Gage Omega\Programming\Procedural-RPG\Debug\Tutorial04_PS.cso
-         C:\Program Files (x86)\Windows Kits\8.1\bin\x86\fxc.exe /nologo /E"VS" /T vs_4_0 /Fo "C:\Gage Omega\Programming\Procedural-RPG\Debug\Tutorial04_VS.cso" Tutorial04_VS.hlsl 
-         compilation object save succeeded; see C:\Gage Omega\Programming\Procedural-RPG\Debug\Tutorial04_VS.cso
-       ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W4 /WX- /Od /Oi /Oy- /D WIN32 /D _DEBUG /D DEBUG /D PROFILE /D _WINDOWS /D _WIN32_WINNT=0x0600 /D _UNICODE /D UNICODE /Gm- /EHsc /RTC1 /MDd /GS /arch:SSE2 /fp:fast /Zc:wchar_t /Zc:forScope /openmp- /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt  CircularArray.cpp ColorShader.cpp d3dclass.cpp Distribution.cpp Entity.cpp Game.cpp inputclass.cpp NPC.cpp pch.cpp Player.cpp ProceduralRPG.cpp Region.cpp ShaderManager.cpp TextureShader.cpp Utility.cpp World.cpp
-         CircularArray.cpp
-         ColorShader.cpp
-         d3dclass.cpp
-     1>c:\gage omega\programming\procedural-rpg\d3dclass.cpp(26): warning C4100: 'other' : unreferenced formal parameter
-     1>c:\gage omega\programming\procedural-rpg\d3dclass.cpp(46): warning C4101: 'error' : unreferenced local variable
-     1>c:\gage omega\programming\procedural-rpg\d3dclass.cpp(43): warning C4101: 'stringLength' : unreferenced local variable
-         Distribution.cpp
-     1>c:\gage omega\programming\procedural-rpg\distribution.cpp(10): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\distribution.cpp(17): warning C4244: 'initializing' : conversion from 'double' to 'int', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\distribution.cpp(63): warning C4244: 'initializing' : conversion from 'double' to 'int', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\distribution.cpp(182): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
-         Entity.cpp
-         Game.cpp
-     1>c:\gage omega\programming\procedural-rpg\game.cpp(135): warning C4316: 'D3DClass' : object allocated on the heap may not be aligned 16
-         inputclass.cpp
-     1>c:\gage omega\programming\procedural-rpg\inputclass.cpp(15): warning C4100: 'other' : unreferenced formal parameter
-         NPC.cpp
-         pch.cpp
-         Player.cpp
-         ProceduralRPG.cpp
-         Region.cpp
-     1>c:\gage omega\programming\procedural-rpg\region.cpp(10): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\gage omega\programming\procedural-rpg\region.cpp(11): warning C4244: '=' : conversion from 'int' to 'unsigned short', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\region.cpp(12): warning C4244: '=' : conversion from 'int' to 'unsigned short', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\region.cpp(42): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\gage omega\programming\procedural-rpg\region.cpp(67): warning C4244: 'initializing' : conversion from 'double' to 'int', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\region.cpp(69): warning C4244: 'argument' : conversion from 'unsigned int' to 'float', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\region.cpp(73): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\gage omega\programming\procedural-rpg\region.cpp(75): warning C4244: 'initializing' : conversion from 'double' to 'int', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\region.cpp(77): warning C4018: '<' : signed/unsigned mismatch
-         ShaderManager.cpp
-         TextureShader.cpp
-     1>c:\gage omega\programming\procedural-rpg\textureshader.cpp(86): warning C4100: 'psFilename' : unreferenced formal parameter
-     1>c:\gage omega\programming\procedural-rpg\textureshader.cpp(86): warning C4100: 'vsFilename' : unreferenced formal parameter
-     1>c:\gage omega\programming\procedural-rpg\textureshader.cpp(86): warning C4100: 'hwnd' : unreferenced formal parameter
-         Utility.cpp
-     1>c:\gage omega\programming\procedural-rpg\utility.cpp(5): warning C4244: 'return' : conversion from 'double' to 'float', possible loss of data
-         World.cpp
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(11): warning C4244: '=' : conversion from 'unsigned int' to 'unsigned short', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(17): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(18): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(20): warning C4244: 'initializing' : conversion from 'int' to 'short', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(21): warning C4244: 'initializing' : conversion from 'int' to 'short', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(23): warning C4244: '=' : conversion from 'int' to 'unsigned short', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(24): warning C4244: '=' : conversion from 'int' to 'unsigned short', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(67): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(68): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(70): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(71): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(82): warning C4244: 'argument' : conversion from 'double' to 'float', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(88): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(89): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(88): warning C4189: 'regionZ' : local variable is initialized but not referenced
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(89): warning C4189: 'regionX' : local variable is initialized but not referenced
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(102): warning C4244: 'argument' : conversion from 'unsigned int' to 'float', possible loss of data
-         Generating Code...
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(41): warning C4701: potentially uninitialized local variable 'x' used
-     1>c:\gage omega\programming\procedural-rpg\world.cpp(55): warning C4701: potentially uninitialized local variable 'z' used
-     1>c:\gage omega\programming\procedural-rpg\region.cpp(153): warning C4715: 'Region::loadTerrain' : not all control paths return a value
-     1>c:\gage omega\programming\procedural-rpg\d3dclass.cpp(168): warning C4701: potentially uninitialized local variable 'numerator' used
-     1>c:\gage omega\programming\procedural-rpg\d3dclass.cpp(169): warning C4701: potentially uninitialized local variable 'denominator' used
-       ResourceCompile:
-         C:\Program Files (x86)\Windows Kits\8.1\bin\x86\rc.exe /D _UNICODE /D UNICODE /l"0x0409" /nologo /fo"Debug\Tutorial04.res" Tutorial04.rc 
-       Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Gage Omega\Programming\Procedural-RPG\Debug\Procedural RPG.exe" /INCREMENTAL /NOLOGO d3d11.lib d3dcompiler.lib dxguid.lib winmm.lib comctl32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /manifestinput:"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\Include\Manifest\dpiaware.manifest" /DEBUG /PDB:"C:\Gage Omega\Programming\Procedural-RPG\Debug\Procedural RPG.pdb" /SUBSYSTEM:WINDOWS /LARGEADDRESSAWARE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Gage Omega\Programming\Procedural-RPG\Debug\Procedural RPG.lib" /MACHINE:X86 /SAFESEH  Debug\Tutorial04.res
-         Debug\CircularArray.obj
-         Debug\ColorShader.obj
-         Debug\d3dclass.obj
-         Debug\Distribution.obj
-         Debug\Entity.obj
-         Debug\Game.obj
-         Debug\inputclass.obj
-         Debug\NPC.obj
-         Debug\pch.obj
-         Debug\Player.obj
-         Debug\ProceduralRPG.obj
-         Debug\Region.obj
-         Debug\ShaderManager.obj
-         Debug\TextureShader.obj
-         Debug\Utility.obj
-         Debug\World.obj
-     1>CircularArray.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/SAFESEH' specification
-         Tutorial04_2012.vcxproj -> C:\Gage Omega\Programming\Procedural-RPG\Debug\Procedural RPG.exe
-     1>Done Building Project "C:\Gage Omega\Programming\Procedural-RPG\Tutorial04_2012.vcxproj" (Build target(s)).
-
-Build succeeded.
-
-Time Elapsed 00:00:27.82
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (Procedural-RPG.vcxproj, ProceduralRPG.vcxproj, Tutorial04.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  compilation object save succeeded; see C:\Gage Omega\Programming\Procedural-RPG\Debug\Tutorial04_PS.cso
+  compilation object save succeeded; see C:\Gage Omega\Programming\Procedural-RPG\Debug\Tutorial04_VS.cso
+  CircularArray.cpp
+c:\gage omega\programming\procedural-rpg\pch.h(56): fatal error C1083: Cannot open include file: 'CommonStates.h': No such file or directory
+  ColorShader.cpp
+  d3dclass.cpp
+c:\gage omega\programming\procedural-rpg\d3dclass.cpp(26): warning C4100: 'other': unreferenced formal parameter
+c:\gage omega\programming\procedural-rpg\d3dclass.cpp(46): warning C4101: 'error': unreferenced local variable
+c:\gage omega\programming\procedural-rpg\d3dclass.cpp(43): warning C4101: 'stringLength': unreferenced local variable
+  Distribution.cpp
+c:\gage omega\programming\procedural-rpg\pch.h(56): fatal error C1083: Cannot open include file: 'CommonStates.h': No such file or directory
+  Entity.cpp
+c:\gage omega\programming\procedural-rpg\pch.h(56): fatal error C1083: Cannot open include file: 'CommonStates.h': No such file or directory
+  Game.cpp
+c:\gage omega\programming\procedural-rpg\pch.h(56): fatal error C1083: Cannot open include file: 'CommonStates.h': No such file or directory
+  inputclass.cpp
+c:\gage omega\programming\procedural-rpg\inputclass.cpp(15): warning C4100: 'other': unreferenced formal parameter
+  NPC.cpp
+c:\gage omega\programming\procedural-rpg\pch.h(56): fatal error C1083: Cannot open include file: 'CommonStates.h': No such file or directory
+  pch.cpp
+c:\gage omega\programming\procedural-rpg\pch.h(56): fatal error C1083: Cannot open include file: 'CommonStates.h': No such file or directory
+  Player.cpp
+c:\gage omega\programming\procedural-rpg\pch.h(56): fatal error C1083: Cannot open include file: 'CommonStates.h': No such file or directory
+  ProceduralRPG.cpp
+c:\gage omega\programming\procedural-rpg\pch.h(56): fatal error C1083: Cannot open include file: 'CommonStates.h': No such file or directory
+  Region.cpp
+c:\gage omega\programming\procedural-rpg\pch.h(56): fatal error C1083: Cannot open include file: 'CommonStates.h': No such file or directory
+  ShaderManager.cpp
+  TextureShader.cpp
+c:\gage omega\programming\procedural-rpg\textureshader.cpp(86): warning C4100: 'psFilename': unreferenced formal parameter
+c:\gage omega\programming\procedural-rpg\textureshader.cpp(86): warning C4100: 'vsFilename': unreferenced formal parameter
+c:\gage omega\programming\procedural-rpg\textureshader.cpp(86): warning C4100: 'hwnd': unreferenced formal parameter
+  Utility.cpp
+c:\gage omega\programming\procedural-rpg\pch.h(56): fatal error C1083: Cannot open include file: 'CommonStates.h': No such file or directory
+  World.cpp
+c:\gage omega\programming\procedural-rpg\pch.h(56): fatal error C1083: Cannot open include file: 'CommonStates.h': No such file or directory
+  Generating Code...
+c:\gage omega\programming\procedural-rpg\d3dclass.cpp(168): warning C4701: potentially uninitialized local variable 'numerator' used
+c:\gage omega\programming\procedural-rpg\d3dclass.cpp(169): warning C4701: potentially uninitialized local variable 'denominator' used

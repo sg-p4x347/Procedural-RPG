@@ -71,6 +71,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Gage Omega\Programming\Procedural-RPG\packages\boost.1.64.0.0;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -90,11 +91,14 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <AdditionalIncludeDirectories>C:\Gage Omega\Programming\Procedural-RPG\packages\boost.1.64.0.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d11.lib;dxguid.lib;uuid.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Gage Omega\Programming\boost</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -158,13 +162,14 @@
     <ClInclude Include="CircularArray.h" />
     <ClInclude Include="Citizen.h" />
     <ClInclude Include="City.h" />
+    <ClInclude Include="Component.h" />
+    <ClInclude Include="EntityManager.h" />
     <ClInclude Include="JSON.h" />
     <ClInclude Include="JsonParser.h" />
     <ClInclude Include="Continent.h" />
     <ClInclude Include="Culture.h" />
     <ClInclude Include="Distribution.h" />
     <ClInclude Include="Entity.h" />
-    <ClInclude Include="EntityManager.h" />
     <ClInclude Include="Federal.h" />
     <ClInclude Include="FederalBank.h" />
     <ClInclude Include="Game.h" />
@@ -176,21 +181,24 @@
     <ClInclude Include="Line.h" />
     <ClInclude Include="Loan.h" />
     <ClInclude Include="Local.h" />
+    <ClInclude Include="ModelManager.h" />
     <ClInclude Include="NameGenerator.h" />
     <ClInclude Include="NPC.h" />
     <ClInclude Include="Occupation.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="PhysicsComponent.h" />
+    <ClInclude Include="Movement.h" />
     <ClInclude Include="Player.h" />
-    <ClInclude Include="PositionComponent.h" />
+    <ClInclude Include="Position.h" />
     <ClInclude Include="PrivateBank.h" />
     <ClInclude Include="ReadData.h" />
     <ClInclude Include="Rectangle.h" />
     <ClInclude Include="Region.h" />
     <ClInclude Include="Road.h" />
     <ClInclude Include="Room.h" />
+    <ClInclude Include="ISerialization.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="StepTimer.h" />
+    <ClInclude Include="System.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="Voxel.h" />
     <ClInclude Include="World.h" />
@@ -202,13 +210,14 @@
     <ClCompile Include="CircularArray.cpp" />
     <ClCompile Include="Citizen.cpp" />
     <ClCompile Include="City.cpp" />
+    <ClCompile Include="Component.cpp" />
+    <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="JSON.cpp" />
     <ClCompile Include="JsonParser.cpp" />
     <ClCompile Include="Continent.cpp" />
     <ClCompile Include="Culture.cpp" />
     <ClCompile Include="Distribution.cpp" />
     <ClCompile Include="Entity.cpp" />
-    <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="Federal.cpp" />
     <ClCompile Include="FederalBank.cpp" />
     <ClCompile Include="Game.cpp" />
@@ -221,6 +230,7 @@
     <ClCompile Include="Loan.cpp" />
     <ClCompile Include="Local.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="ModelManager.cpp" />
     <ClCompile Include="NameGenerator.cpp" />
     <ClCompile Include="NPC.cpp" />
     <ClCompile Include="Occupation.cpp" />
@@ -230,15 +240,17 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="PhysicsComponent.cpp" />
+    <ClCompile Include="Movement.cpp" />
     <ClCompile Include="Player.cpp" />
-    <ClCompile Include="PositionComponent.cpp" />
+    <ClCompile Include="Position.cpp" />
     <ClCompile Include="PrivateBank.cpp" />
     <ClCompile Include="Rectangle.cpp" />
     <ClCompile Include="Region.cpp" />
     <ClCompile Include="Road.cpp" />
     <ClCompile Include="Room.cpp" />
+    <ClCompile Include="ISerialization.cpp" />
     <ClCompile Include="State.cpp" />
+    <ClCompile Include="System.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="Voxel.cpp" />
     <ClCompile Include="World.cpp" />

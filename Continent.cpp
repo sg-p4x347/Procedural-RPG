@@ -3,9 +3,9 @@
 #include "JsonParser.h"
 #include <chrono>
 
-Continent::Continent(string path)
+Continent::Continent(string directory)
 {
-	JsonParser config(ifstream("config/continent.json"));
+	JsonParser config(std::ifstream("config/continent.json"));
 	// Mountain settings
 	JsonParser mountains = config["mountains"];
 	m_biomeAmplitude = mountains["biomeAmplitude"].To<double>();
@@ -135,19 +135,18 @@ Continent::Continent(string path)
 	//}
 	// Erosion filter
 	//Erosion();
-	CreateCities();
-	//Save(path);
+	//Save(directory);
 }
 
 Continent::~Continent()
 {
-	delete m_federal;
+	
 }
 union charToFloat {
 	float f;
 	unsigned char c[0];
 };
-void Continent::Save(string path) 
+void Continent::Save(string directory) 
 {
 	
 	//-------------------------------
@@ -164,7 +163,7 @@ void Continent::Save(string path)
 	unsigned int index = 0;
 	unsigned int biomeIndex = 0;
 	// push each vertex in the world
-	ofstream biomeFile(path + "biome.bin", ios::binary);
+	std::ofstream biomeFile(directory + "/biome.bin", ios::binary);
 
 	for (unsigned short vertZ = 0; vertZ <= m_width; vertZ++) {
 		vector<XMFLOAT3> row;
@@ -208,7 +207,7 @@ void Continent::Save(string path)
 	//-----------------------------------------------
 
 	// heightMap
-	ofstream terrainFile(path + "terrain.bin", ios::binary);
+	std::ofstream terrainFile(directory + "/terrain.bin", ios::binary);
 	terrainFile.seekp(0);
 	if (terrainFile.is_open()) {
 		// write the data
@@ -218,13 +217,25 @@ void Continent::Save(string path)
 	// biomeMap
 	biomeFile.close();
 	// normalMap
-	ofstream normalFile(path + "normal.bin", ios::binary);
+	std::ofstream normalFile(directory + "/normal.bin", ios::binary);
 	normalFile.seekp(0);
 	if (normalFile.is_open()) {
 		// write the data
 		normalFile.write((const char *)normalBuffer.get(), vertexCount * 3);
 	}
 	normalFile.close();
+}
+const int & Continent::GetWidth() const
+{
+	return m_width;
+}
+const HeightMap & Continent::GetTerrain() const
+{
+	return m_terrain;
+}
+const HeightMap & Continent::GetBiome() const
+{
+	return m_biome;
 }
 float Continent::Diamond(HeightMap & map, int & x, int & y, int & distance) {
 	float sum = 0.f;
@@ -380,70 +391,14 @@ void Continent::Erosion() {
 	}
 }
 
-void Continent::CreateCities()
-{
-	vector<City> cities;
-	OutputDebugString(L"Generating cities...");
-	JsonParser continentCfg(ifstream("config/continent.json"));
-	JsonParser cityCfg(ifstream("config/city.json"));
-	int maxCities = cityCfg["maxCities"].To<int>();
-	double maxElevation = cityCfg["maxElevation"].To<double>();
-	double minDistance = cityCfg["minDistance"].To<double>();
-	int areaWidth = cityCfg["areaWidth"].To<int>();
 
-	int i = 0;
-	while (i < maxCities) {
-		newCity:
-		Rectangle areaRect = Rectangle(randWithin(0, m_width-areaWidth), randWithin(0, m_width-areaWidth), areaWidth, areaWidth);
-		// TEMP
-		City city = City(areaRect, m_terrain, m_biome);
-		cities.push_back(city);
-		i++;
-		//------------
-		continue;
-		Vector2 pos = areaRect.Center();
-		// check elevation
-		float elevation = m_terrain.map[(int)pos.x][(int)pos.y];
-		if (elevation > 0 && elevation < maxElevation) {
-			// check to see if the average of the four corners is close to the center
-			// this ensures that the terrain is not too rough
-			double sum = 0;
-			sum += m_terrain.map[areaRect.x][areaRect.y];
-			sum += m_terrain.map[areaRect.x + areaRect.width][areaRect.y];
-			sum += m_terrain.map[areaRect.x][areaRect.y+areaRect.height];
-			sum += m_terrain.map[areaRect.x + areaRect.width][areaRect.y + areaRect.height];
-			sum /= 4;
-			if (abs(m_terrain.map[pos.x][pos.y]-sum) > 10.0) {
-				goto newCity;
-			}
-			
-			// check proximity to all other cities
-			for (unsigned int j = 0; j < cities.size(); j++) {
-				if (abs(cities[j].GetPosition().x - pos.x) <= minDistance, abs(cities[j].GetPosition().y - pos.y) <= minDistance) {
-					goto newCity;
-				}
-			}
-			
-			City city = City(areaRect, m_terrain, m_biome);
-			cities.push_back(city);
-			i++;
-		}
-	}
-	OutputDebugString(L"Finished!\n");
-	GenerateHistory(cities);
-}
-void Continent::GenerateHistory(vector<City> cities)
-{
-	m_federal = new Federal(cities);
-	m_federal->Update();
-}
 void Continent::Load() {
 	string workingPath = "saves/testWorld/";
 	int vertexCount = (m_width + 1) * (m_width + 1);
 	int totalSize = vertexCount * sizeof(short);
 	// Load the vertex array with data.
-	ifstream terrainStream(workingPath + "terrain.bin", ios::binary);
-	ifstream biomeStream(workingPath + "biome.bin", ios::binary);
+	std::ifstream terrainStream(workingPath + "terrain.bin", ios::binary);
+	std::ifstream biomeStream(workingPath + "biome.bin", ios::binary);
 	if (terrainStream.is_open()) {
 		// move start position to the region, and proceed to read each line into the Char buffers
 		int index = 0;

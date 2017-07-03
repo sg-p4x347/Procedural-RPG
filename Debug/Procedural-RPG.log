@@ -1,40 +1,171 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (Procedural RPG.vcxproj, ProceduralRPG.vcxproj, Tutorial04.vcxproj).  This can lead to incorrect clean and rebuild behavior.
   Color.dgsl
   MyDGSLShader.dgsl
+  Skipping... (no relevant changes detected)
+  pch.cpp
+  World.cpp
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2065: 'Building': undeclared identifier
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2923: 'std::shared_ptr': 'Building' is not a valid template type argument for parameter '_Ty'
+c:\gage omega\programming\procedural-rpg\city.h(25): error C3203: 'shared_ptr': unspecialized class template can't be used as a template argument for template parameter '_Ty', expected a real type
+c:\gage omega\programming\procedural-rpg\world.h(62): error C2719: 'prjMatrix': formal parameter with requested alignment of 16 won't be aligned
+c:\gage omega\programming\procedural-rpg\world.cpp(88): warning C4244: 'argument': conversion from 'float' to 'const unsigned int', possible loss of data
+c:\gage omega\programming\procedural-rpg\world.cpp(197): error C2440: 'initializing': cannot convert from 'int' to 'std::shared_ptr<Architecture::Building> &'
+c:\gage omega\programming\procedural-rpg\world.cpp(346): error C2719: 'projMatrix': formal parameter with requested alignment of 16 won't be aligned
+  Region.cpp
+  ModelManager.cpp
+  Game.cpp
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2065: 'Building': undeclared identifier
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2923: 'std::shared_ptr': 'Building' is not a valid template type argument for parameter '_Ty'
+c:\gage omega\programming\procedural-rpg\city.h(25): error C3203: 'shared_ptr': unspecialized class template can't be used as a template argument for template parameter '_Ty', expected a real type
+c:\gage omega\programming\procedural-rpg\world.h(62): error C2719: 'prjMatrix': formal parameter with requested alignment of 16 won't be aligned
+c:\gage omega\programming\procedural-rpg\game.cpp(82): error C2660: 'World::Render': function does not take 2 arguments
+  City.cpp
+c:\gage omega\programming\procedural-rpg\building.h(20): error C2653: 'SimpleMath': is not a class or namespace name
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2065: 'Building': undeclared identifier
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2923: 'std::shared_ptr': 'Building' is not a valid template type argument for parameter '_Ty'
+c:\gage omega\programming\procedural-rpg\city.h(25): error C3203: 'shared_ptr': unspecialized class template can't be used as a template argument for template parameter '_Ty', expected a real type
+c:\gage omega\programming\procedural-rpg\city.cpp(33): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\gage omega\programming\procedural-rpg\city.cpp(34): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\gage omega\programming\procedural-rpg\city.cpp(66): error C2556: 'std::vector<std::shared_ptr<Architecture::Building>,std::allocator<_Ty>> City::GetBuildings(void)': overloaded function differs only by return type from 'std::vector<int,std::allocator<_Ty>> City::GetBuildings(void)'
+          with
+          [
+              _Ty=std::shared_ptr<Architecture::Building>
+          ]
+          and
+          [
+              _Ty=int
+          ]
+  c:\gage omega\programming\procedural-rpg\city.h(25): note: see declaration of 'City::GetBuildings'
+c:\gage omega\programming\procedural-rpg\city.cpp(65): error C2371: 'City::GetBuildings': redefinition; different basic types
+  c:\gage omega\programming\procedural-rpg\city.h(25): note: see declaration of 'City::GetBuildings'
   Building.cpp
-c:\gage omega\programming\procedural-rpg\building.cpp(44): warning C4018: '<': signed/unsigned mismatch
-c:\gage omega\programming\procedural-rpg\building.cpp(143): warning C4018: '<': signed/unsigned mismatch
-c:\gage omega\programming\procedural-rpg\building.cpp(266): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\building.cpp(341): warning C4018: '<': signed/unsigned mismatch
-c:\gage omega\programming\procedural-rpg\building.cpp(379): warning C4018: '<': signed/unsigned mismatch
-c:\gage omega\programming\procedural-rpg\building.cpp(380): warning C4018: '<': signed/unsigned mismatch
-c:\gage omega\programming\procedural-rpg\building.cpp(384): warning C4018: '<': signed/unsigned mismatch
-c:\gage omega\programming\procedural-rpg\building.cpp(385): warning C4018: '<': signed/unsigned mismatch
-c:\gage omega\programming\procedural-rpg\building.cpp(415): warning C4018: '<': signed/unsigned mismatch
-c:\gage omega\programming\procedural-rpg\building.cpp(416): warning C4018: '<': signed/unsigned mismatch
-c:\gage omega\programming\procedural-rpg\jsonparser.h(106): warning C4018: '<': signed/unsigned mismatch
-  c:\gage omega\programming\procedural-rpg\building.cpp(349): note: see reference to function template instantiation 'int JsonParser::IndexOf<std::string>(const T &) const' being compiled
+c:\gage omega\programming\procedural-rpg\building.cpp(48): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(159): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(282): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\building.cpp(357): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(395): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(396): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(400): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(401): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(431): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\building.cpp(432): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\jsonparser.h(107): warning C4018: '<': signed/unsigned mismatch
+  c:\gage omega\programming\procedural-rpg\building.cpp(365): note: see reference to function template instantiation 'int JsonParser::IndexOf<std::string>(const T &) const' being compiled
           with
           [
               T=std::string
           ]
   Generating Code...
-  Skipping... (no relevant changes detected)
-  World.cpp
-  Voxel.cpp
-  State.cpp
-  Room.cpp
-  Rectangle.cpp
+  Compiling...
   Main.cpp
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2065: 'Building': undeclared identifier
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2923: 'std::shared_ptr': 'Building' is not a valid template type argument for parameter '_Ty'
+c:\gage omega\programming\procedural-rpg\city.h(25): error C3203: 'shared_ptr': unspecialized class template can't be used as a template argument for template parameter '_Ty', expected a real type
+c:\gage omega\programming\procedural-rpg\world.h(62): error C2719: 'prjMatrix': formal parameter with requested alignment of 16 won't be aligned
+  CircularArray.cpp
+c:\gage omega\programming\procedural-rpg\circulararray.cpp(23): error C2511: 'void CircularArray::set(int,int,ID3D11Device *,int,int,unsigned int,unsigned int,std::string)': overloaded member function not found in 'CircularArray'
+  c:\gage omega\programming\procedural-rpg\circulararray.h(5): note: see declaration of 'CircularArray'
+c:\gage omega\programming\procedural-rpg\circulararray.cpp(24): error C2352: 'CircularArray::getIndex': illegal call of non-static member function
+  c:\gage omega\programming\procedural-rpg\circulararray.h(25): note: see declaration of 'CircularArray::getIndex'
+c:\gage omega\programming\procedural-rpg\circulararray.cpp(24): error C2228: left of '.Initialize' must have class/struct/union
+  Generating Code...
+  Compiling...
+  Citizen.cpp
+c:\gage omega\programming\procedural-rpg\building.h(20): error C2653: 'SimpleMath': is not a class or namespace name
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2065: 'Building': undeclared identifier
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2923: 'std::shared_ptr': 'Building' is not a valid template type argument for parameter '_Ty'
+c:\gage omega\programming\procedural-rpg\city.h(25): error C3203: 'shared_ptr': unspecialized class template can't be used as a template argument for template parameter '_Ty', expected a real type
+  Generating Code...
+  Compiling...
+  Continent.cpp
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2065: 'Building': undeclared identifier
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2923: 'std::shared_ptr': 'Building' is not a valid template type argument for parameter '_Ty'
+c:\gage omega\programming\procedural-rpg\city.h(25): error C3203: 'shared_ptr': unspecialized class template can't be used as a template argument for template parameter '_Ty', expected a real type
+c:\gage omega\programming\procedural-rpg\continent.cpp(11): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(12): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(13): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(14): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(18): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(19): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(20): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(25): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(28): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(29): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(32): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(147): warning C4200: nonstandard extension used: zero-sized array in struct/union
+  c:\gage omega\programming\procedural-rpg\continent.cpp(147): note: This member will be ignored by a defaulted constructor or copy/move assignment operator
+c:\gage omega\programming\procedural-rpg\continent.cpp(315): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(316): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(343): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\continent.cpp(346): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+  Generating Code...
+  Compiling...
+  Federal.cpp
+c:\gage omega\programming\procedural-rpg\building.h(20): error C2653: 'SimpleMath': is not a class or namespace name
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2065: 'Building': undeclared identifier
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2923: 'std::shared_ptr': 'Building' is not a valid template type argument for parameter '_Ty'
+c:\gage omega\programming\procedural-rpg\city.h(25): error C3203: 'shared_ptr': unspecialized class template can't be used as a template argument for template parameter '_Ty', expected a real type
+c:\gage omega\programming\procedural-rpg\federal.cpp(29): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+c:\gage omega\programming\procedural-rpg\federal.cpp(32): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\federal.cpp(38): warning C4018: '<': signed/unsigned mismatch
+  Generating Code...
+  Compiling...
+  History.cpp
+c:\gage omega\programming\procedural-rpg\building.h(20): error C2653: 'SimpleMath': is not a class or namespace name
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2065: 'Building': undeclared identifier
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2923: 'std::shared_ptr': 'Building' is not a valid template type argument for parameter '_Ty'
+c:\gage omega\programming\procedural-rpg\city.h(25): error C3203: 'shared_ptr': unspecialized class template can't be used as a template argument for template parameter '_Ty', expected a real type
+  Generating Code...
+  Compiling...
   Local.cpp
+c:\gage omega\programming\procedural-rpg\building.h(20): error C2653: 'SimpleMath': is not a class or namespace name
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2065: 'Building': undeclared identifier
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2923: 'std::shared_ptr': 'Building' is not a valid template type argument for parameter '_Ty'
+c:\gage omega\programming\procedural-rpg\city.h(25): error C3203: 'shared_ptr': unspecialized class template can't be used as a template argument for template parameter '_Ty', expected a real type
+c:\gage omega\programming\procedural-rpg\local.cpp(36): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\local.cpp(41): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\local.cpp(56): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\local.cpp(60): warning C4018: '<': signed/unsigned mismatch
+  Generating Code...
+  Compiling...
+  State.cpp
+c:\gage omega\programming\procedural-rpg\building.h(20): error C2653: 'SimpleMath': is not a class or namespace name
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2065: 'Building': undeclared identifier
+c:\gage omega\programming\procedural-rpg\city.h(25): error C2923: 'std::shared_ptr': 'Building' is not a valid template type argument for parameter '_Ty'
+c:\gage omega\programming\procedural-rpg\city.h(25): error C3203: 'shared_ptr': unspecialized class template can't be used as a template argument for template parameter '_Ty', expected a real type
+c:\gage omega\programming\procedural-rpg\state.cpp(20): warning C4018: '<': signed/unsigned mismatch
+c:\gage omega\programming\procedural-rpg\state.cpp(23): warning C4018: '<': signed/unsigned mismatch
+  Generating Code...
+  Skipping... (no relevant changes detected)
+  Room.cpp
+  Road.cpp
+  Rectangle.cpp
+  PrivateBank.cpp
+  PositionComponent.cpp
+  Player.cpp
+  PhysicsComponent.cpp
+  Occupation.cpp
+  NPC.cpp
+  Loan.cpp
+  Line.cpp
+  InventoryItem.cpp
+  Inventory.cpp
+  IdHandler.cpp
+  HeightMap.cpp
+  FederalBank.cpp
+  EntityManager.cpp
+  Entity.cpp
   JsonParser.cpp
   JSON.cpp
-  History.cpp
-  Game.cpp
-  Federal.cpp
+  Bank.cpp
+  Account.cpp
+  Voxel.cpp
+  Utility.cpp
+  NameGenerator.cpp
   Distribution.cpp
-  Continent.cpp
-  City.cpp
-  Citizen.cpp
-  Procedural-RPG.vcxproj -> C:\Gage Omega\Programming\Procedural-RPG\Debug\Procedural-RPG.exe
-  Procedural-RPG.vcxproj -> C:\Gage Omega\Programming\Procedural-RPG\Debug\Procedural-RPG.pdb (Partial PDB)
+  Culture.cpp

@@ -36,6 +36,11 @@ namespace Utility {
 	{
 		return abs(integer) / integer;
 	}
+	void CreateFolder(string path)
+	{
+		// create the save directory
+		CreateDirectory(wstring(path.begin(), path.end()).c_str(), NULL);
+	}
 	float pythag(double x, double y, double z) {
 		return sqrt(x*x + y*y + z*z);
 	}

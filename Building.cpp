@@ -13,7 +13,11 @@ using namespace Architecture;
 using namespace Utility;
 
 namespace Architecture {
-Building::Building(Architecture::Rectangle footprint, JsonParser & config, string type)
+	Building::Building(JsonParser & building)
+	{
+		Import(building);
+	}
+	Building::Building(Architecture::Rectangle footprint, JsonParser & config, string type)
 {
 	// initialize configuration settings
 	m_config = config[type];
@@ -70,14 +74,26 @@ Building::Building(Architecture::Rectangle footprint, JsonParser & config, strin
 Building::~Building()
 {
 }
+SimpleMath::Rectangle Building::GetFootprint()
+{
+	return SimpleMath::Rectangle(m_footprint.x,m_footprint.y,m_footprint.width,m_footprint.height);
+}
+void Building::Render(Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext)
+{
+
+}
+void Building::LoadModels(string directory)
+{
+	
+}
 JsonParser Building::Export()
 {
 	JsonParser building;
 	building.Set("type", m_type);
 	building.Set("footprint", m_footprint.Export());
-	JsonParser voxels;
+	JsonParser voxels(JsonType::array);
 	for (vector<Voxel> col : m_voxels) {
-		JsonParser column;
+		JsonParser column(JsonType::array);
 		for (Voxel voxel : col) {
 			column.Add(voxel.Export());
 		}
@@ -90,7 +106,7 @@ void Building::Import(JsonParser & building)
 {
 	m_type = building["type"].To<string>();
 	m_footprint = Rectangle(building["footprint"]);
-	JsonParser voxels;
+	JsonParser voxels(JsonType::array);
 	for (int x = 0; x < building["voxels"].Count(); x++) {
 		m_voxels.push_back(building["voxels"][x].ToVector<Voxel>());
 	}

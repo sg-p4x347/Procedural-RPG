@@ -14,8 +14,12 @@ namespace Architecture {
 class Building : public JSON
 {
 public:
+	Building(JsonParser & building);
 	Building(Rectangle footprint, JsonParser & config,string type);
 	~Building();
+	SimpleMath::Rectangle GetFootprint();
+	void Render(Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext);
+	void LoadModels(string directory);
 	// JSON implimentaion
 	virtual JsonParser Export();
 	virtual void Import(JsonParser & building);

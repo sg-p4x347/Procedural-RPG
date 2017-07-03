@@ -25,11 +25,7 @@ public:
 	//--------------------------------
     // Basic game loop
     void Tick();
-    void Render();
-	//--------------------------------
-    // Rendering helpers
-    void Clear();
-    void Present();
+	
 
     // Messages
     void OnActivated();
@@ -46,11 +42,17 @@ private:
 	// The currently loaded world
 	unique_ptr<World> m_world;
     void Update(DX::StepTimer const& timer);
+	void Render();
 	//--------------------------------
 	// DirectX
     void CreateDevice();
     void CreateResources();
     void OnDeviceLost();
+
+	//--------------------------------
+	// Rendering helpers
+	void Clear();
+	void Present();
 	//--------------------------------
     // Device resources.
     HWND                                            m_window;
@@ -68,22 +70,16 @@ private:
     Microsoft::WRL::ComPtr<ID3D11RenderTargetView>  m_renderTargetView;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView>  m_depthStencilView;
 
-	std::unique_ptr<DirectX::CommonStates>		m_states;
-	std::unique_ptr<DirectX::DGSLEffect>		m_effect;
+	std::shared_ptr<DirectX::CommonStates>		m_states;
+	
+	std::unique_ptr<EffectFactory>				m_fxFactory;
 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture2;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture3;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture4;
+	
 
-	// Matricies
-	DirectX::SimpleMath::Matrix	m_worldMatrix;
+	
+
 	DirectX::XMMATRIX 			m_viewMatrix;
 	DirectX::SimpleMath::Matrix	m_projMatrix;
-
-	std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>	m_batch;
-	Microsoft::WRL::ComPtr<ID3D11InputLayout>								m_inputLayout;
-	Microsoft::WRL::ComPtr<ID3D11PixelShader>								m_pixelShader;
 	
 	// Input
 	std::unique_ptr<DirectX::Keyboard>				m_keyboard;

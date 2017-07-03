@@ -23,11 +23,14 @@
     <Filter Include="Physical">
       <UniqueIdentifier>{c3c949ec-8388-423c-a9b0-a1ec5c634fb8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Physical\Building">
-      <UniqueIdentifier>{c34e98c1-f5f3-47a3-ad18-67c08a19459d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Architecture">
       <UniqueIdentifier>{7d4a7142-fe88-42a1-9c1c-d8d5f51b2207}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Entity Component System">
+      <UniqueIdentifier>{0988f6f3-042f-45de-8314-0bc9ab07cf31}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Entity Component System\Components">
+      <UniqueIdentifier>{4150576b-b7a0-424e-b96a-08926646b170}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -36,7 +39,6 @@
     <ClInclude Include="StepTimer.h" />
     <ClInclude Include="CircularArray.h" />
     <ClInclude Include="Distribution.h" />
-    <ClInclude Include="Entity.h" />
     <ClInclude Include="NPC.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Region.h" />
@@ -45,9 +47,6 @@
     <ClInclude Include="ReadData.h" />
     <ClInclude Include="NameGenerator.h" />
     <ClInclude Include="History.h" />
-    <ClInclude Include="EntityManager.h" />
-    <ClInclude Include="PhysicsComponent.h" />
-    <ClInclude Include="PositionComponent.h" />
     <ClInclude Include="Continent.h" />
     <ClInclude Include="HeightMap.h" />
     <ClInclude Include="IdHandler.h" />
@@ -113,6 +112,24 @@
       <Filter>Architecture</Filter>
     </ClInclude>
     <ClInclude Include="JSON.h" />
+    <ClInclude Include="ModelManager.h" />
+    <ClInclude Include="Entity.h">
+      <Filter>Entity Component System</Filter>
+    </ClInclude>
+    <ClInclude Include="ISerialization.h" />
+    <ClInclude Include="Position.h">
+      <Filter>Entity Component System\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Movement.h">
+      <Filter>Entity Component System\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>Entity Component System\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityManager.h">
+      <Filter>Entity Component System</Filter>
+    </ClInclude>
+    <ClInclude Include="System.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -120,7 +137,6 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="CircularArray.cpp" />
     <ClCompile Include="Distribution.cpp" />
-    <ClCompile Include="Entity.cpp" />
     <ClCompile Include="NPC.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Region.cpp" />
@@ -128,9 +144,6 @@
     <ClCompile Include="World.cpp" />
     <ClCompile Include="NameGenerator.cpp" />
     <ClCompile Include="History.cpp" />
-    <ClCompile Include="EntityManager.cpp" />
-    <ClCompile Include="PhysicsComponent.cpp" />
-    <ClCompile Include="PositionComponent.cpp" />
     <ClCompile Include="Continent.cpp" />
     <ClCompile Include="HeightMap.cpp" />
     <ClCompile Include="IdHandler.cpp" />
@@ -196,6 +209,24 @@
       <Filter>Architecture</Filter>
     </ClCompile>
     <ClCompile Include="JSON.cpp" />
+    <ClCompile Include="ModelManager.cpp" />
+    <ClCompile Include="Entity.cpp">
+      <Filter>Entity Component System</Filter>
+    </ClCompile>
+    <ClCompile Include="ISerialization.cpp" />
+    <ClCompile Include="Position.cpp">
+      <Filter>Entity Component System\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Movement.cpp">
+      <Filter>Entity Component System\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Component.cpp">
+      <Filter>Entity Component System\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityManager.cpp">
+      <Filter>Entity Component System</Filter>
+    </ClCompile>
+    <ClCompile Include="System.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
