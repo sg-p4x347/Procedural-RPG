@@ -5,7 +5,7 @@ Position::Position() : Component()
 {
 }
 
-Position::Position(unsigned int id, XMFLOAT3 pos, XMFLOAT3 rot) : Component(id)
+Position::Position(const unsigned int id, SimpleMath::Vector3 pos, SimpleMath::Vector3 rot) : Component(id)
 {
 	Pos = pos;
 	Rot = rot;
@@ -22,13 +22,13 @@ void Position::Import(std::ifstream & ifs)
 	DeSerialize(x, ifs);
 	DeSerialize(y, ifs);
 	DeSerialize(z, ifs);
-	Pos = XMFLOAT3(x, y, z);
+	Pos = SimpleMath::Vector3(x, y, z);
 
 	float xRot, yRot, zRot;
 	DeSerialize(xRot, ifs);
 	DeSerialize(yRot, ifs);
 	DeSerialize(zRot, ifs);
-	Rot = XMFLOAT3(xRot, yRot, zRot);
+	Rot = SimpleMath::Vector3(xRot, yRot, zRot);
 }
 
 void Position::Export(std::ofstream & ofs)
@@ -48,22 +48,20 @@ vector<Position>& Position::GetComponents()
 	return components;
 }
 
-Component * Position::GetComponent(const unsigned int & id)
+shared_ptr<Component> Position::GetComponent(const unsigned int & id)
 {
 
 	for (Position & position : GetComponents()) {
 		if (position.ID == id) {
-			return &position;
-		}
-		else if (position.ID > id) {
-			return nullptr;
+			return std::make_shared<Component>(&position);
 		}
 	}
+	return nullptr;
 }
 
 void Position::AddComponent(const unsigned int & id)
 {
-	GetComponents().push_back(Position(id,XMFLOAT3(0,0,0),XMFLOAT3(0,0,0)));
+	GetComponents().push_back(Position(id,SimpleMath::Vector3::Zero, SimpleMath::Vector3::Zero));
 }
 
 void Position::Save(string directory)

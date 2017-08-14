@@ -104,7 +104,7 @@ void EntityManager::AddPlayer(string name)
 EntityManager::EntityManager(const string & directory) : m_directory(directory)
 {
 	Load();
-	m_prototypes["Position"] = new Position(0,XMFLOAT3(0,0,0),XMFLOAT3(0,0,0));
+	m_prototypes["Position"] = std::make_unique<Component>(new Position(0,XMFLOAT3(0,0,0),XMFLOAT3(0,0,0)));
 	//m_prototypes["Movement"] = new Movement();
 }
 
@@ -129,8 +129,8 @@ void EntityManager::Save()
 	if (ofs) {
 		JsonParser obj;
 		obj.Set("id", m_ID);
-		// save the region co-ordinates in which the player resides
-		unique_ptr<Position> position = GetComponent<Position>
+		// save the region co-ordinates in which the active camera resides
+		shared_ptr<Position> position = GetComponent<Position>(m_ID);
 		obj.Set("regionX",
 		obj.Export(ofs);
 	}

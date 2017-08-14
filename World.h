@@ -13,7 +13,7 @@
 #include "Continent.h"
 #include "City.h"
 #include "Building.h"
-#include "EntityManager.h"
+#include "SystemManager.h"
 #include "JSON.h"
 #include "Federal.h"
 
@@ -26,7 +26,14 @@ public:
 	//--------------------------------
 	// constructors
 
-	World(const string directory);
+	World(
+		const string directory,
+		Microsoft::WRL::ComPtr<ID3D11Device> device,
+		Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
+		std::shared_ptr<DirectX::CommonStates> states, 
+		DirectX::Mouse::State mouse,
+		DirectX::Keyboard::State keyboard
+	);
 	~World();
 	
 	//--------------------------------
@@ -94,6 +101,8 @@ private:
 	//--------------------------------
 	// Loading regions
 	shared_ptr<CircularArray> m_regions;
+
+
 	/* loadRegions() is called by game loop, decides which loading method is best based on
 	the players movement and currently loaded regions*/
 	void LoadRegions();
@@ -131,13 +140,12 @@ private:
 	//----------------------------------------------------------------
 	// Player
 
-	unique_ptr<Player> m_player;
 	int m_lastX = 0;
 	int m_lastZ = 0;
 
 	//--------------------------------
 	// entities
-	shared_ptr<EntityManager> m_entityManager;
+	unique_ptr<SystemManager> m_systemManager;
 
 
 	//--------------------------------

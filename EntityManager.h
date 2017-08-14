@@ -3,6 +3,7 @@
 #include "Entity.h"
 #include "Position.h"
 #include "Movement.h"
+#include "Input.h"
 
 using std::vector;
 
@@ -76,7 +77,7 @@ private:
 	//	"Movement"
 	//});
 
-	map<string, Component *> m_prototypes;
+	map<string, unique_ptr<Component>> m_prototypes;
 	// Entity list
 	vector<Entity> m_entities;
 };

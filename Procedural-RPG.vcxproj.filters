@@ -32,6 +32,12 @@
     <Filter Include="Entity Component System\Components">
       <UniqueIdentifier>{4150576b-b7a0-424e-b96a-08926646b170}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Entity Component System\Systems">
+      <UniqueIdentifier>{a7ef02a3-7c21-49bc-91b0-981389588382}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Entity Component System\Events">
+      <UniqueIdentifier>{7f24de4f-3487-4219-8679-00a1428136b1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -129,7 +135,29 @@
     <ClInclude Include="EntityManager.h">
       <Filter>Entity Component System</Filter>
     </ClInclude>
-    <ClInclude Include="System.h" />
+    <ClInclude Include="System.h">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemManager.h">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="Event.h">
+      <Filter>Entity Component System\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem.h">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="MovementSystem.h" />
+    <ClInclude Include="NewEntity.h">
+      <Filter>Entity Component System\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Input.h">
+      <Filter>Entity Component System\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="InputSystem.h">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="Physical.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -226,7 +254,26 @@
     <ClCompile Include="EntityManager.cpp">
       <Filter>Entity Component System</Filter>
     </ClCompile>
-    <ClCompile Include="System.cpp" />
+    <ClCompile Include="System.cpp">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemManager.cpp">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem.cpp">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="MovementSystem.cpp" />
+    <ClCompile Include="NewEntity.cpp">
+      <Filter>Entity Component System\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="Input.cpp">
+      <Filter>Entity Component System\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="InputSystem.cpp">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="Physical.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />

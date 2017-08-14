@@ -9,8 +9,15 @@
 using namespace DirectX::SimpleMath;
 using namespace std;
 
-World::World(const string directory) : m_directory(directory) {
-	m_entityManager = std::make_shared<EntityManager>(EntityManager(m_directory));
+World::World(
+	const string directory,
+	Microsoft::WRL::ComPtr<ID3D11Device> device,
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
+	std::shared_ptr<DirectX::CommonStates> states,
+	DirectX::Mouse::State mouse,
+	DirectX::Keyboard::State keyboard
+) : m_directory(directory) {
+	m_systemManager = std::make_unique<SystemManager>(SystemManager(m_directory,device,context,states,mouse,keyboard));
 }
 void World::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device) {
 	
