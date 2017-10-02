@@ -34,6 +34,9 @@ public:
 		DirectX::Mouse::State mouse,
 		DirectX::Keyboard::State keyboard
 	);
+	World(
+		const string directory
+	);
 	~World();
 	
 	//--------------------------------
@@ -100,8 +103,7 @@ private:
 
 	//--------------------------------
 	// Loading regions
-	shared_ptr<CircularArray> m_regions;
-
+	
 
 	/* loadRegions() is called by game loop, decides which loading method is best based on
 	the players movement and currently loaded regions*/

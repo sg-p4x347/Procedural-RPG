@@ -1,5 +1,6 @@
 #pragma once
 #include "System.h"
+#include "VBO.h"
 class RenderSystem :
 	public System
 {
@@ -16,9 +17,19 @@ public:
 private:
 	// Inherited via System
 	virtual void Update() override;
-
-	Microsoft::WRL::ComPtr<ID3D11Device> m_device;
+	virtual void SyncEntities() override;
+	shared_ptr<Entity> m_player;
+	vector<shared_ptr<Entity>> m_regions;
+	// DirectX
+	Microsoft::WRL::ComPtr<ID3D11Device>		m_device;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_context;
-	std::shared_ptr<DirectX::CommonStates> m_states;
+	std::shared_ptr<DirectX::CommonStates>		m_states;
+	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_inputLayout;
+	std::unique_ptr<DirectX::DGSLEffect>		m_effect;
+	std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>	m_batch;
+
+	DirectX::XMMATRIX GetViewMatrix();
+	void RenderVBO(shared_ptr<Component::VBO> vbo, Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext, PrimitiveBatch<DirectX::VertexPositionColor> * batch);
+	
 };
 

@@ -10,9 +10,10 @@ public:
 	vector<Input> & GetComponents();
 
 	// Inherited via Component
-	virtual Component * GetComponent(const unsigned int & id) override;
-	virtual void AddComponent(const unsigned int & id) override;
+	virtual shared_ptr<Component> GetComponent(const unsigned int & id) override;
+	virtual void Attach(const unsigned int & id) override;
 	virtual void Save(string directory) override;
 	virtual void Load(string directory) override;
+	
 };
 

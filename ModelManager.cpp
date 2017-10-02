@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "ModelManager.h"
 
+using namespace DirectX;
+
 ModelManager & ModelManager::Instance()
 {
 	static ModelManager manager;

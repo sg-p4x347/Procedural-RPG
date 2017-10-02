@@ -17,3 +17,9 @@ HeightMap::HeightMap(int w, float i, float d, int z)
 	zoom = z;
 	map = vector< vector<float> >(width + 1, vector<float>(width + 1));
 }
+
+HeightMap HeightMap::Submap(int x, int y, int width)
+{
+	HeightMap submap(width, initialDeviation, initialDeviation, zoom);
+	
+}

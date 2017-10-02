@@ -26,6 +26,8 @@ public:
 	explicit operator unsigned short() const { return To<unsigned short>(); }
 	explicit operator int() const { return To<int>(); }
 	explicit operator unsigned int() const { return To<unsigned int>(); }
+	explicit operator long() const { return To<long>(); }
+	explicit operator unsigned long() const { return To<unsigned long>(); }
 	explicit operator float() const { return To<float>(); }
 	explicit operator double() const { return To<double>(); }
 	explicit operator bool() const { return To<bool>(); }

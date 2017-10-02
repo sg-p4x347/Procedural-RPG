@@ -4,25 +4,36 @@
 
 using namespace DirectX;
 
-struct Position : Component
-{
-	Position();
-	Position(const unsigned int id, SimpleMath::Vector3 pos, SimpleMath::Vector3 rot);
-	Position(std::ifstream & ifs);
-	// Position (x,y,z)
-	SimpleMath::Vector3 Pos;
-	// Rotation (x,y,z)
-	SimpleMath::Vector3 Rot;
+namespace Component {
+	class Position : public Component
+	{
+	public:
 
-	// override base serialization
-	virtual void Import(std::ifstream & ifs) override;
-	virtual void Export(std::ofstream & ofs) override;
+		Position();
+		Position(const unsigned int & id);
+		Position(const unsigned int id, SimpleMath::Vector3 pos, SimpleMath::Vector3 rot);
 
-	vector<Position> & GetComponents();
-	// Inherited via Component
-	virtual shared_ptr<Component> GetComponent(const unsigned int & id) override;
-	virtual void AddComponent(const unsigned int & id) override;
-	virtual void Save(string directory) override;
-	virtual void Load(string directory) override;
-};
+		// Position (x,y,z)
+		SimpleMath::Vector3 Pos;
+		// Rotation (x,y,z)
+		SimpleMath::Vector3 Rot;
+
+		// Prototype
+		virtual shared_ptr<Component> GetComponent(const unsigned int & id) override;
+		virtual void SaveAll(string directory) override;
+
+		virtual string GetName() override;
+	protected:
+		Position(std::ifstream & ifs);
+		// Inherited via Component
+		virtual shared_ptr<Component> Create(std::ifstream & ifs) override;
+		virtual void Attach(shared_ptr<Component> component) override;
+
+		// override base serialization
+		virtual void Import(std::ifstream & ifs) override;
+		virtual void Export(std::ofstream & ofs) override;
+
+		vector<Position> & GetComponents();
+	};
+}
 

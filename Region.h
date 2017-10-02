@@ -18,7 +18,12 @@ using namespace std;
 class Region {
 	public:
 		// constructors
-		Region(const string & directory);
+		Region(
+			int x,
+			int z,
+			unsigned int worldWidth,
+			unsigned int regionWidth
+		);
 		~Region();
 		// initialize
 		void Initialize(ID3D11Device * device, int x, int z, unsigned int worldWidth, unsigned int regionWidth, string name, vector<shared_ptr<Architecture::Building>> & buildings);
@@ -47,7 +52,7 @@ class Region {
 
 		// properties
 		const string m_directory;
-		int m_regionX;
+		int x;
 		int m_regionZ;
 		int m_worldWidth;
 		int m_regionWidth;

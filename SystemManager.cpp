@@ -1,5 +1,8 @@
 #include "pch.h"
 #include "SystemManager.h"
+
+#include "RegionSystem.h"
+#include "RenderSystem.h"
 #include "MovementSystem.h"
 #include "InputSystem.h"
 
@@ -17,6 +20,10 @@ SystemManager::SystemManager(
 	//----------------------------------------------------------------
 	// initialize the systems 
 	
+	// Region
+	m_systems.push_back(std::make_unique<System>(
+		new RegionSystem(m_entityManager, vector<string>({ "Player","Position" }), 120))
+	);
 	// Render
 	m_systems.push_back(std::make_unique<System>(
 		new RenderSystem(m_entityManager, vector<string>({ "Position" }),1,device,context,states))

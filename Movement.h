@@ -2,15 +2,22 @@
 #include "Component.h"
 #include "Movement.h"
 
-using namespace DirectX;
+namespace {
+	class Movement :
+		public Component
+	{
+	public:
+		Movement();
+		DirectX::SimpleMath::Vector3 Velocity;
+		DirectX::SimpleMath::Vector3 Acceleration;
+		DirectX::SimpleMath::Vector3 AngularVelocity;
+		DirectX::SimpleMath::Vector3 AngularAcceleration;
 
-struct Movement : Component
-{
-public:
-	Movement();
-	Vector3 Velocity;
-	Vector3 Acceleration;
-	Vector3 AngularVelocity;
-	Vector3 AngularAcceleration;
-};
+		// Inherited via Component
+		virtual shared_ptr<Component> GetComponent(const unsigned int & id) override;
+		virtual void Attach(const unsigned int & id) override;
+		virtual void Save(string directory) override;
+		virtual void Load(string directory) override;
+	};
+}
 

@@ -1,9 +1,9 @@
 #pragma once
-#include "Region.h"
+
 #include "Entity.h"
-#include "Position.h"
-#include "Movement.h"
-#include "Input.h"
+#include "Region.h"
+
+#include "Filesystem.h"
 
 using std::vector;
 
@@ -12,30 +12,50 @@ class EntityManager
 public:
 	EntityManager(const string & directory);
 	~EntityManager();
-	static EntityManager & Instance(string directory = "");
-	// Load and Save regions of entities
-	void Load(Region & region);
-	void Save(Region & region);
+	// Load and Save components of entities that satisfy the mask
+	void Load(vector<unsigned int> & entities, unsigned long & componentMask);
+	void Save();
 	// Get entity components
-	vector<unique_ptr<Component>> GetComponents(const unsigned int & id, vector<string> & compNames);
-	template <typename CompType>
-	inline unique_ptr<CompType> GetComponent(const unsigned int & id) {
-		return std::make_unique<CompType>(static_cast<CompType*>(CompType::GetComponent(id)));
-	}
+	shared_ptr<Component::Component> GetComponent(const unsigned int & id, string componentName);
+	shared_ptr<Component::Component> GetComponent(const unsigned int & id, unsigned long componentMask);
+	map<string,shared_ptr<Component::Component>> GetComponents(const unsigned int & id, vector<string> componentNames);
+	map<unsigned long, shared_ptr<Component::Component>> GetComponents(const unsigned int & id, unsigned long componentMask);
+	// Add entity components
+	void AttachComponent(shared_ptr<Component::Component> component);
+	
+	// Get entities
+	vector<shared_ptr<Entity>> & Entities();
+	vector<shared_ptr<Entity>> Entities(unsigned long componentMask);
+	shared_ptr<Entity> FindEntity(unsigned long componentMask);
+	void LoadComponents(shared_ptr<Entity> & entity, unsigned long componentMask);
+	// loads
+	vector<shared_ptr<Entity>> EntitiesContaining(string componentName, unsigned long componentMask);
+	//template <typename CompType>
+	//inline unique_ptr<CompType> GetComponent(const unsigned int & id) {
+	//	return std::make_unique<CompType>(static_cast<CompType*>(CompType::GetComponent(id)));
+	//}
+	
+	// Component mapping
+	vector<string> Components(unsigned long componentMask);
+	vector<unsigned long> ComponentMasks(unsigned long componentMask);
+	unsigned long ComponentMask(vector<string> components);
+	unsigned long ComponentMask(string component);
 	// Entity factories
-	Entity & AddEntity(vector<string> & components);
+	unsigned int NewEntity();
 	void AddPlayer(string name);
 private:
-	
-	
 	const string m_directory;
 	// Manage Entity IDs
 	unsigned int m_ID;
-	// Load and Save manager data
-	void Load();
-	void Save();
-	unsigned int NextID;
+	unsigned int m_nextID;
 
+	void AddPrototype(Component::Component* prototype);
+	map<unsigned long, unique_ptr<Component::Component>> m_prototypes;
+	map<string, unsigned long> m_masks;
+	static const int m_maskSize = 64;
+	// Entity list
+	shared_ptr<Entity> FindEntity(const unsigned int & id);
+	vector<shared_ptr<Entity>> m_entities;
 	//// Importing components
 	//template <typename CompType>
 	//inline CompType ImportComponent(std::ifstream & ifs) {
@@ -77,8 +97,6 @@ private:
 	//	"Movement"
 	//});
 
-	map<string, unique_ptr<Component>> m_prototypes;
-	// Entity list
-	vector<Entity> m_entities;
+	
 };
 

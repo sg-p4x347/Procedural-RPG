@@ -29,7 +29,7 @@ Component * Input::GetComponent(const unsigned int & id)
 	}
 }
 
-void Input::AddComponent(const unsigned int & id)
+void Input::Attach(const unsigned int & id)
 {
 	GetComponents().push_back(Input());
 }
@@ -40,4 +40,9 @@ void Input::Save(string directory)
 
 void Input::Load(string directory)
 {
+}
+
+shared_ptr<Component> Input::GetComponent(const unsigned int & id)
+{
+	return shared_ptr<Component>();
 }

@@ -5,7 +5,13 @@
 using namespace DirectX::SimpleMath;
 using namespace Utility;
 
-Region::Region(const string & directory) : m_directory(directory) {
+Region::Region(
+	int x, 
+	int z, 
+	unsigned int worldWidth, 
+	unsigned int regionWidth
+) : x(x),m_regionZ(z),m_worldWidth(worldWidth),m_regionWidth(regionWidth) {
+
 }
 void Region::Initialize(ID3D11Device * device, int x, int z, unsigned int worldWidth, unsigned int regionWidth, string name, vector<shared_ptr<Architecture::Building>> & buildings) {
 	// delete the old arrays
@@ -16,7 +22,7 @@ void Region::Initialize(ID3D11Device * device, int x, int z, unsigned int worldW
 	m_regionWidth = regionWidth;
 	// fill the buffers with data from world files
 	if (x >= 0 && z >= 0 && x < (m_worldWidth / m_regionWidth) && z < (m_worldWidth / m_regionWidth)) {
-		m_regionX = x;
+		x = x;
 		m_regionZ = z;
 		LoadTerrain(device,name);
 		LoadObjects();
@@ -30,7 +36,7 @@ void Region::Initialize(ID3D11Device * device, int x, int z, unsigned int worldW
 	m_buildings = m_buildings;
 }
 void Region::LoadTerrain(ID3D11Device * device, string name) {
-	unsigned int regionIndex = posToIndex(m_regionX, m_regionZ, m_worldWidth / m_regionWidth);
+	unsigned int regionIndex = posToIndex(x, m_regionZ, m_worldWidth / m_regionWidth);
 	unsigned int vertexCount = (m_regionWidth + 1)*(m_regionWidth + 1);
 	unsigned int rowSize = (m_regionWidth + 1) * sizeof(short);
 	unsigned int regionSize = vertexCount * sizeof(short);
@@ -48,7 +54,7 @@ void Region::LoadTerrain(ID3D11Device * device, string name) {
 		// move start position to the region, and proceed to read each line into the Char buffers
 		for (int vertZ = 0; vertZ <= m_regionWidth; vertZ++) {
 			for (int vertX = 0; vertX <= m_regionWidth; vertX++) {
-				int index = posToIndex(vertX + m_regionX * m_regionWidth, vertZ + m_regionZ * m_regionWidth, m_worldWidth + 1);
+				int index = posToIndex(vertX + x * m_regionWidth, vertZ + m_regionZ * m_regionWidth, m_worldWidth + 1);
 				// heightMap
 				char shortBuffer[2];
 				terrainStream.seekg(index * sizeof(short));
@@ -81,10 +87,10 @@ void Region::LoadTerrain(ID3D11Device * device, string name) {
 	for (int z = 0; z < m_regionWidth; z++) {
 		for (int x = 0; x < m_regionWidth; x++) {
 			// Get the indexes to the four points of the quad.
-			Vector3 vertex1 = Vector3(float(x + (m_regionX * m_regionWidth)), heightMap[((m_regionWidth + 1) * z) + x], float(z + (m_regionZ * m_regionWidth)));          // Upper left.
-			Vector3 vertex2 = Vector3(float(x + 1 + (m_regionX*m_regionWidth)), heightMap[((m_regionWidth + 1) * z) + (x + 1)], float(z + (m_regionZ * m_regionWidth)));      // Upper right.
-			Vector3 vertex3 = Vector3(float(x + (m_regionX*m_regionWidth)), heightMap[((m_regionWidth + 1) * (z + 1)) + x], float(z + 1 + (m_regionZ * m_regionWidth)));      // Bottom left.
-			Vector3 vertex4 = Vector3(float(x + 1 + (m_regionX*m_regionWidth)), heightMap[((m_regionWidth + 1) * (z + 1)) + (x + 1)], float(z + 1 + (m_regionZ * m_regionWidth)));  // Bottom right.
+			Vector3 vertex1 = Vector3(float(x + (x * m_regionWidth)), heightMap[((m_regionWidth + 1) * z) + x], float(z + (m_regionZ * m_regionWidth)));          // Upper left.
+			Vector3 vertex2 = Vector3(float(x + 1 + (x*m_regionWidth)), heightMap[((m_regionWidth + 1) * z) + (x + 1)], float(z + (m_regionZ * m_regionWidth)));      // Upper right.
+			Vector3 vertex3 = Vector3(float(x + (x*m_regionWidth)), heightMap[((m_regionWidth + 1) * (z + 1)) + x], float(z + 1 + (m_regionZ * m_regionWidth)));      // Bottom left.
+			Vector3 vertex4 = Vector3(float(x + 1 + (x*m_regionWidth)), heightMap[((m_regionWidth + 1) * (z + 1)) + (x + 1)], float(z + 1 + (m_regionZ * m_regionWidth)));  // Bottom right.
 
 			/*
 			1---2
@@ -231,11 +237,11 @@ bool Region::IsNull() {
 }
 Rectangle Region::GetArea()
 {
-	return Rectangle(m_regionX * m_regionWidth, m_regionZ * m_regionWidth,m_regionWidth,m_regionWidth);
+	return Rectangle(x * m_regionWidth, m_regionZ * m_regionWidth,m_regionWidth,m_regionWidth);
 }
 string Region::GetDirectory()
 {
-	return m_directory + "/" + std::to_string(m_regionX) + ',' + std::to_string(m_regionZ);
+	return "(" + std::to_string(x) + ',' + std::to_string(m_regionZ) + ")";
 }
 Region::~Region() {
 	delete[] m_terrainVertices;

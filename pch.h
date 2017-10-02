@@ -41,6 +41,13 @@
 #include <vector>
 #include <climits>
 #include <stdexcept>
+#include <dirent.h>
+#include <stdio.h>
+using std::vector;
+
+#include <experimental/filesystem>
+#include <filesystem>
+namespace Filesystem = std::experimental::filesystem::v1;
 namespace DX
 {
     inline void ThrowIfFailed(HRESULT hr)
@@ -61,7 +68,7 @@ namespace DX
 #include "GeometricPrimitive.h"
 #include "GraphicsMemory.h"
 #include "Keyboard.h"
-#include "Model.h"
+#include <Model.h>
 #include "Mouse.h"
 #include "PrimitiveBatch.h"
 #include "ScreenGrab.h"

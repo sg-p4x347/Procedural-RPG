@@ -1,25 +1,14 @@
 #pragma once
-#include "NPC.h"
+#include "Component.h"
 #include <DirectXMath.h>
 using namespace DirectX;
-
-__declspec(align(16)) class Player : public NPC {
+namespace Component {
+	class Player :
+		public Component {
 	public:
 		Player();
-		Player(XMFLOAT3 POSITION, float MASS);
-		~Player();
-		void* operator new(size_t i)
-		{
-			return _mm_malloc(i, 16);
-		}
-
-		void operator delete(void* p)
-		{
-			_mm_free(p);
-		}
+		
 		// Direct X pipeline
-		void render();
-		void renderBaseViewMatrix();
 		XMMATRIX getViewMatrix();
 		void getBaseViewMatrix(XMMATRIX&);
 		// get user input and move accordingly
@@ -27,5 +16,5 @@ __declspec(align(16)) class Player : public NPC {
 	private:
 		XMMATRIX viewMatrix;
 		XMMATRIX baseViewMatrix;
-};
-
+	};
+}

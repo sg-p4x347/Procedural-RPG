@@ -27,7 +27,6 @@ namespace Utility {
 			array[i] = value;
 		}
 	}
-	// Create a directory
-	void CreateFolder(string path);
+	
 }
 

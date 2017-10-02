@@ -165,8 +165,12 @@
     <ClInclude Include="Component.h" />
     <ClInclude Include="EntityManager.h" />
     <ClInclude Include="Event.h" />
+    <ClInclude Include="Filesystem.h" />
+    <ClInclude Include="Flag.h" />
     <ClInclude Include="Input.h" />
-    <ClInclude Include="InputSystem.h" />
+    <ClInclude Include="InputSystem.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="JSON.h" />
     <ClInclude Include="JsonParser.h" />
     <ClInclude Include="Continent.h" />
@@ -185,21 +189,27 @@
     <ClInclude Include="Loan.h" />
     <ClInclude Include="Local.h" />
     <ClInclude Include="ModelManager.h" />
-    <ClInclude Include="MovementSystem.h" />
+    <ClInclude Include="MovementSystem.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="NameGenerator.h" />
     <ClInclude Include="NewEntity.h" />
     <ClInclude Include="NPC.h" />
     <ClInclude Include="Occupation.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Movement.h" />
-    <ClInclude Include="Physical.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Position.h" />
     <ClInclude Include="PrivateBank.h" />
     <ClInclude Include="ReadData.h" />
     <ClInclude Include="Rectangle.h" />
     <ClInclude Include="Region.h" />
-    <ClInclude Include="RenderSystem.h" />
+    <ClInclude Include="RegionSystem.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="RenderSystem.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Road.h" />
     <ClInclude Include="Room.h" />
     <ClInclude Include="ISerialization.h" />
@@ -207,7 +217,11 @@
     <ClInclude Include="StepTimer.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="SystemManager.h" />
+    <ClInclude Include="Terrain.h" />
+    <ClInclude Include="TerrainSystem.h" />
     <ClInclude Include="Utility.h" />
+    <ClInclude Include="VBO.h" />
+    <ClInclude Include="VectorMap.h" />
     <ClInclude Include="Voxel.h" />
     <ClInclude Include="World.h" />
   </ItemGroup>
@@ -220,8 +234,12 @@
     <ClCompile Include="City.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="EntityManager.cpp" />
+    <ClCompile Include="Filesystem.cpp" />
+    <ClCompile Include="Flag.cpp" />
     <ClCompile Include="Input.cpp" />
-    <ClCompile Include="InputSystem.cpp" />
+    <ClCompile Include="InputSystem.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="JSON.cpp" />
     <ClCompile Include="JsonParser.cpp" />
     <ClCompile Include="Continent.cpp" />
@@ -241,7 +259,9 @@
     <ClCompile Include="Local.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="ModelManager.cpp" />
-    <ClCompile Include="MovementSystem.cpp" />
+    <ClCompile Include="MovementSystem.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="NameGenerator.cpp" />
     <ClCompile Include="NewEntity.cpp" />
     <ClCompile Include="NPC.cpp" />
@@ -252,21 +272,29 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Movement.cpp" />
-    <ClCompile Include="Physical.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Position.cpp" />
     <ClCompile Include="PrivateBank.cpp" />
     <ClCompile Include="Rectangle.cpp" />
     <ClCompile Include="Region.cpp" />
-    <ClCompile Include="RenderSystem.cpp" />
+    <ClCompile Include="RegionSystem.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="RenderSystem.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Road.cpp" />
     <ClCompile Include="Room.cpp" />
     <ClCompile Include="ISerialization.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="System.cpp" />
     <ClCompile Include="SystemManager.cpp" />
+    <ClCompile Include="Terrain.cpp" />
+    <ClCompile Include="TerrainSystem.cpp" />
     <ClCompile Include="Utility.cpp" />
+    <ClCompile Include="VBO.cpp" />
+    <ClCompile Include="VectorMap.cpp" />
     <ClCompile Include="Voxel.cpp" />
     <ClCompile Include="World.cpp" />
   </ItemGroup>
@@ -290,6 +318,7 @@
     <None Include="Color.cso" />
     <None Include="config\building.json" />
     <None Include="config\city.json" />
+    <None Include="config\components.json" />
     <None Include="config\continent.json" />
     <None Include="config\history.json" />
     <None Include="myfile.spritefont" />
@@ -309,6 +338,7 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\ShaderGraphContentTask.targets" />
     <Import Project="packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.targets" Condition="Exists('packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.targets')" />
+    <Import Project="packages\dirent.1.13.1\build\native\dirent.targets" Condition="Exists('packages\dirent.1.13.1\build\native\dirent.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -316,5 +346,6 @@
     </PropertyGroup>
     <Error Condition="!Exists('packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.props'))" />
     <Error Condition="!Exists('packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.targets'))" />
+    <Error Condition="!Exists('packages\dirent.1.13.1\build\native\dirent.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\dirent.1.13.1\build\native\dirent.targets'))" />
   </Target>
 </Project>

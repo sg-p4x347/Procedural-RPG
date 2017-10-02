@@ -13,5 +13,7 @@ struct HeightMap
 	float squareDeviation;
 	float deviationDecrease;
 	int zoom;
+
+	HeightMap Submap(int x, int y, int width);
 };
 

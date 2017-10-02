@@ -29,14 +29,17 @@
     <Filter Include="Entity Component System">
       <UniqueIdentifier>{0988f6f3-042f-45de-8314-0bc9ab07cf31}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Entity Component System\Components">
-      <UniqueIdentifier>{4150576b-b7a0-424e-b96a-08926646b170}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Entity Component System\Systems">
       <UniqueIdentifier>{a7ef02a3-7c21-49bc-91b0-981389588382}</UniqueIdentifier>
     </Filter>
     <Filter Include="Entity Component System\Events">
       <UniqueIdentifier>{7f24de4f-3487-4219-8679-00a1428136b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Filesystem">
+      <UniqueIdentifier>{bcbdf428-3a00-4135-94d1-ddd69ca4d3be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Entity Component System\Component">
+      <UniqueIdentifier>{4150576b-b7a0-424e-b96a-08926646b170}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -46,7 +49,6 @@
     <ClInclude Include="CircularArray.h" />
     <ClInclude Include="Distribution.h" />
     <ClInclude Include="NPC.h" />
-    <ClInclude Include="Player.h" />
     <ClInclude Include="Region.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="World.h" />
@@ -124,13 +126,10 @@
     </ClInclude>
     <ClInclude Include="ISerialization.h" />
     <ClInclude Include="Position.h">
-      <Filter>Entity Component System\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="Movement.h">
-      <Filter>Entity Component System\Components</Filter>
+      <Filter>Entity Component System\Component</Filter>
     </ClInclude>
     <ClInclude Include="Component.h">
-      <Filter>Entity Component System\Components</Filter>
+      <Filter>Entity Component System\Component</Filter>
     </ClInclude>
     <ClInclude Include="EntityManager.h">
       <Filter>Entity Component System</Filter>
@@ -147,17 +146,41 @@
     <ClInclude Include="RenderSystem.h">
       <Filter>Entity Component System\Systems</Filter>
     </ClInclude>
-    <ClInclude Include="MovementSystem.h" />
     <ClInclude Include="NewEntity.h">
       <Filter>Entity Component System\Events</Filter>
     </ClInclude>
     <ClInclude Include="Input.h">
-      <Filter>Entity Component System\Components</Filter>
+      <Filter>Entity Component System\Component</Filter>
     </ClInclude>
     <ClInclude Include="InputSystem.h">
       <Filter>Entity Component System\Systems</Filter>
     </ClInclude>
-    <ClInclude Include="Physical.h" />
+    <ClInclude Include="Filesystem.h">
+      <Filter>Filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Flag.h">
+      <Filter>Entity Component System\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Entity Component System\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="MovementSystem.h">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Entity Component System\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="RegionSystem.h">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="Terrain.h">
+      <Filter>Entity Component System\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="VectorMap.h" />
+    <ClInclude Include="TerrainSystem.h" />
+    <ClInclude Include="VBO.h">
+      <Filter>Entity Component System\Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -166,7 +189,6 @@
     <ClCompile Include="CircularArray.cpp" />
     <ClCompile Include="Distribution.cpp" />
     <ClCompile Include="NPC.cpp" />
-    <ClCompile Include="Player.cpp" />
     <ClCompile Include="Region.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="World.cpp" />
@@ -243,13 +265,10 @@
     </ClCompile>
     <ClCompile Include="ISerialization.cpp" />
     <ClCompile Include="Position.cpp">
-      <Filter>Entity Component System\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="Movement.cpp">
-      <Filter>Entity Component System\Components</Filter>
+      <Filter>Entity Component System\Component</Filter>
     </ClCompile>
     <ClCompile Include="Component.cpp">
-      <Filter>Entity Component System\Components</Filter>
+      <Filter>Entity Component System\Component</Filter>
     </ClCompile>
     <ClCompile Include="EntityManager.cpp">
       <Filter>Entity Component System</Filter>
@@ -263,17 +282,41 @@
     <ClCompile Include="RenderSystem.cpp">
       <Filter>Entity Component System\Systems</Filter>
     </ClCompile>
-    <ClCompile Include="MovementSystem.cpp" />
     <ClCompile Include="NewEntity.cpp">
       <Filter>Entity Component System\Events</Filter>
     </ClCompile>
     <ClCompile Include="Input.cpp">
-      <Filter>Entity Component System\Components</Filter>
+      <Filter>Entity Component System\Component</Filter>
     </ClCompile>
     <ClCompile Include="InputSystem.cpp">
       <Filter>Entity Component System\Systems</Filter>
     </ClCompile>
-    <ClCompile Include="Physical.cpp" />
+    <ClCompile Include="Filesystem.cpp">
+      <Filter>Filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Flag.cpp">
+      <Filter>Entity Component System\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Entity Component System\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="MovementSystem.cpp">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Entity Component System\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="RegionSystem.cpp">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="Terrain.cpp">
+      <Filter>Entity Component System\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="VectorMap.cpp" />
+    <ClCompile Include="TerrainSystem.cpp" />
+    <ClCompile Include="VBO.cpp">
+      <Filter>Entity Component System\Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
@@ -310,6 +353,7 @@
       <Filter>Config</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="config\components.json" />
   </ItemGroup>
   <ItemGroup>
     <ShaderGraphContentTask Include="MyDGSLShader.dgsl" />
