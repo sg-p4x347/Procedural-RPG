@@ -2,7 +2,7 @@
 #include "JsonParser.h"
 class JSON
 {
-public:
+public: 
 	virtual void Import(JsonParser & jp) = 0;
 	virtual JsonParser Export() = 0;
 };

@@ -43,6 +43,8 @@ private:
 	unique_ptr<World> m_world;
     void Update(DX::StepTimer const& timer);
 	void Render();
+	// Generates a world
+	void GenerateWorld(int seed,string name);
 	//--------------------------------
 	// DirectX
     void CreateDevice();
@@ -79,11 +81,11 @@ private:
 	
 
 	DirectX::XMMATRIX 			m_viewMatrix;
-	DirectX::SimpleMath::Matrix	m_projMatrix;
+	SimpleMath::Matrix  m_projMatrix;
 	
 	// Input
-	std::unique_ptr<DirectX::Keyboard>				m_keyboard;
-	std::unique_ptr<DirectX::Mouse>					m_mouse;
+	std::shared_ptr<DirectX::Keyboard>				m_keyboard;
+	std::shared_ptr<DirectX::Mouse>					m_mouse;
     // Rendering loop timer.
     DX::StepTimer                                   m_timer;
 };

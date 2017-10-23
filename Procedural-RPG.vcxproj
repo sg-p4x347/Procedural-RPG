@@ -91,7 +91,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <AdditionalIncludeDirectories>C:\Gage Omega\Programming\Procedural-RPG\packages\boost.1.64.0.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Gage Omega\Programming\Procedural-RPG\Systems;C:\Gage Omega\Programming\Procedural-RPG\Components;C:\Gage Omega\Programming\Procedural-RPG\packages\boost.1.64.0.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
@@ -159,18 +159,12 @@
     <ClInclude Include="Account.h" />
     <ClInclude Include="Bank.h" />
     <ClInclude Include="Building.h" />
-    <ClInclude Include="CircularArray.h" />
     <ClInclude Include="Citizen.h" />
     <ClInclude Include="City.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="EntityManager.h" />
     <ClInclude Include="Event.h" />
     <ClInclude Include="Filesystem.h" />
-    <ClInclude Include="Flag.h" />
-    <ClInclude Include="Input.h" />
-    <ClInclude Include="InputSystem.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="JSON.h" />
     <ClInclude Include="JsonParser.h" />
     <ClInclude Include="Continent.h" />
@@ -189,27 +183,15 @@
     <ClInclude Include="Loan.h" />
     <ClInclude Include="Local.h" />
     <ClInclude Include="ModelManager.h" />
-    <ClInclude Include="MovementSystem.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="NameGenerator.h" />
     <ClInclude Include="NewEntity.h" />
-    <ClInclude Include="NPC.h" />
     <ClInclude Include="Occupation.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Model.h" />
-    <ClInclude Include="Player.h" />
     <ClInclude Include="Position.h" />
     <ClInclude Include="PrivateBank.h" />
     <ClInclude Include="ReadData.h" />
     <ClInclude Include="Rectangle.h" />
     <ClInclude Include="Region.h" />
-    <ClInclude Include="RegionSystem.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="RenderSystem.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="Road.h" />
     <ClInclude Include="Room.h" />
     <ClInclude Include="ISerialization.h" />
@@ -229,17 +211,11 @@
     <ClCompile Include="Account.cpp" />
     <ClCompile Include="Bank.cpp" />
     <ClCompile Include="Building.cpp" />
-    <ClCompile Include="CircularArray.cpp" />
     <ClCompile Include="Citizen.cpp" />
     <ClCompile Include="City.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="Filesystem.cpp" />
-    <ClCompile Include="Flag.cpp" />
-    <ClCompile Include="Input.cpp" />
-    <ClCompile Include="InputSystem.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="JSON.cpp" />
     <ClCompile Include="JsonParser.cpp" />
     <ClCompile Include="Continent.cpp" />
@@ -259,12 +235,8 @@
     <ClCompile Include="Local.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="ModelManager.cpp" />
-    <ClCompile Include="MovementSystem.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="NameGenerator.cpp" />
     <ClCompile Include="NewEntity.cpp" />
-    <ClCompile Include="NPC.cpp" />
     <ClCompile Include="Occupation.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -272,18 +244,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Model.cpp" />
-    <ClCompile Include="Player.cpp" />
     <ClCompile Include="Position.cpp" />
     <ClCompile Include="PrivateBank.cpp" />
     <ClCompile Include="Rectangle.cpp" />
     <ClCompile Include="Region.cpp" />
-    <ClCompile Include="RegionSystem.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="RenderSystem.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="Road.cpp" />
     <ClCompile Include="Room.cpp" />
     <ClCompile Include="ISerialization.cpp" />
@@ -315,6 +279,7 @@
     <ShaderGraphContentTask Include="MyDGSLShader.dgsl">
       <FileType>Document</FileType>
     </ShaderGraphContentTask>
+    <None Include="ClassDiagram.cd" />
     <None Include="Color.cso" />
     <None Include="config\building.json" />
     <None Include="config\city.json" />

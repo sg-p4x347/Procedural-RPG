@@ -6,18 +6,18 @@ class System
 {
 public:
 	System(shared_ptr<EntityManager> & entityManager, vector<string> & components, unsigned short updatePeriod);
+	virtual ~System() {}
 	void Tick(double & elapsed);
 	virtual void Initialize();
 	// Called before Update()
 	virtual void SyncEntities() = 0;
 	virtual string Name() = 0;
-	~System();
 protected:
 	virtual void Update() = 0;
 	double m_elapsed;				// seconds elapsed since last update
-	shared_ptr<EntityManager> m_entityManager;
+	shared_ptr<EntityManager> EM;
 	unsigned long m_componentMask;
-	vector<shared_ptr<Entity>> m_entities;
+	vector<unsigned int> m_entities;
 	//----------------------------------------------------------------
 	// Helper functions
 private:

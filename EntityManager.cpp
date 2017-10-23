@@ -4,70 +4,84 @@
 #include <bitset>
 // Concrete Component types
 #include "Position.h"
-#include "Movement.h"
-#include "Input.h"
-#include "Flag.h"
+//#include "Movement.h"
+//#include "Input.h"
+//#include "Flag.h"
 #include "Terrain.h"
 
-shared_ptr<Component::Component> EntityManager::GetComponent(const unsigned int & id, string componentName)
+shared_ptr<Components::Component> EntityManager::GetComponent(const unsigned int & id, string componentName)
 {
 	return GetComponent(id, m_masks[componentName]);
 }
 
-shared_ptr<Component::Component> EntityManager::GetComponent(const unsigned int & id, unsigned long componentMask)
+shared_ptr<Components::Component> EntityManager::GetComponent(const unsigned int & id, unsigned long componentMask)
 {
-	shared_ptr<Component::Component> component = m_prototypes[componentMask]->GetComponent(id);
-	if (!component) component = m_prototypes[componentMask]->Load(m_directory, id);
-	return component;
+	/*for (auto & component : m_components[m_masks[componentMask]]) {
+		if (component->ID == id && ) {
+			return component;
+		}
+	}*/
+	return nullptr;
+	/*shared_ptr<Components::Component> component = m_prototypes[componentMask]->GetComponent(id);
+	if (!component) component = m_prototypes[componentMask]->Load(m_directory.string(), id);
+	return component;*/
 }
 
-map<string, shared_ptr<Component::Component>> EntityManager::GetComponents(const unsigned int & id, vector<string> componentNames)
+map<string, shared_ptr<Components::Component>> EntityManager::GetComponents(const unsigned int & id, vector<string> componentNames)
 {
-	map<string, shared_ptr<Component::Component>> components;
+	map<string, shared_ptr<Components::Component>> components;
 	for (string & componentName : componentNames) {
-		components.insert(std::pair<string, shared_ptr<Component::Component>>(componentName, GetComponent(id, componentName)));
+		components.insert(std::pair<string, shared_ptr<Components::Component>>(componentName, GetComponent(id, componentName)));
 	}
 	return components;
 }
 
-map<unsigned long, shared_ptr<Component::Component>> EntityManager::GetComponents(const unsigned int & id, unsigned long componentMask)
+map<unsigned long, shared_ptr<Components::Component>> EntityManager::GetComponents(const unsigned int & id, unsigned long componentMask)
 {
-	map<unsigned long, shared_ptr<Component::Component>> components;
+	map<unsigned long, shared_ptr<Components::Component>> components;
 
 	std::bitset<m_maskSize> masks(componentMask);
 	for (int i = 0; i < m_maskSize; i++) {
 		if (masks[i]) {
 			unsigned long mask = std::pow(2, i);
-			components.insert(std::pair<unsigned long, shared_ptr<Component::Component>>(mask, m_prototypes[mask]->GetComponent(id)));
+			components.insert(std::pair<unsigned long, shared_ptr<Components::Component>>(mask, m_prototypes[mask]->GetComponent(id)));
 		}
 	}
 	return components;
 }
-
-void EntityManager::AttachComponent(shared_ptr<Component::Component> component)
+shared_ptr<Components::Component> EntityManager::AddComponent(const unsigned int & id, unsigned long componentMask)
 {
-	m_prototypes[ComponentMask(component->GetName())]->Attach(component);
+	return m_prototypes[(int)std::log2(componentMask)]->Add(id);
+}
+bool EntityManager::HasComponents(const unsigned int & id, unsigned long & componentMask)
+{
+	return componentMask == (componentMask & ComponentMaskOf(id));
 }
 
-vector<shared_ptr<Entity>>& EntityManager::Entities()
+unsigned long EntityManager::MissingComponents(const unsigned int & id, unsigned long & componentMask)
+{
+	// first xor yields difference, second removes extra components
+	return (componentMask ^ ComponentMaskOf(id)) ^ ComponentMaskOf(id);
+}
+
+vector<unsigned int>& EntityManager::Entities()
 {
 	return m_entities;
 }
 
-vector<shared_ptr<Entity>> EntityManager::Entities(unsigned long componentMask)
+vector<unsigned int> EntityManager::Entities(unsigned long componentMask)
 {
-	vector<shared_ptr<Entity>> subset;
-	for (shared_ptr<Entity> & entity : m_entities) {
-		LoadComponents(entity, componentMask);
-		if (entity->HasComponents(componentMask)) subset.push_back(entity);
+	vector<unsigned int> subset;
+	for (unsigned int & entity : m_entities) {
+		if (HasComponents(entity,componentMask)) subset.push_back(entity);
 	}
 	return subset;
 }
 
-shared_ptr<Entity> EntityManager::FindEntity(unsigned long componentMask)
+unsigned int EntityManager::FindEntity(unsigned long componentMask)
 {
-	for (shared_ptr<Entity> & entity : m_entities) {
-		if (entity->HasComponents(componentMask)) return entity;
+	for (unsigned int & entity : m_entities) {
+		if (HasComponents(entity,componentMask)) return entity;
 	}
 }
 
@@ -81,23 +95,22 @@ void EntityManager::LoadComponents(shared_ptr<Entity>& entity, unsigned long com
 	}
 }
 
-vector<shared_ptr<Entity>> EntityManager::EntitiesContaining(string componentName, unsigned long componentMask)
+unsigned int EntityManager::Player()
 {
-	vector<shared_ptr<Entity>> entities;
-	// get each entity ID that has the specified component on disk
-	for (string & file : Filesystem::FilesIn(m_directory)) {
-		unsigned int id = std::stoi(file);
-		// check to see if this entity is being tracked
-		shared_ptr<Entity> entity = FindEntity(id);
-		if (!entity) {
-			entity = shared_ptr<Entity>(new Entity(id));
-			// Track a new entity
-			m_entities.push_back(entity);
-		}
-		// Update the entity
-		LoadComponents(entity, componentMask);
-		entities.push_back(entity);
+	if (!m_player) {
+		m_player = FindEntity(ComponentMask("Player"));
 	}
+	return m_player;
+}
+
+vector<unsigned int> EntityManager::EntitiesContaining(string componentName, unsigned long componentMask)
+{
+	vector<unsigned int> entities;
+	// get each entity ID that has the specified component on disk
+	for (string & file : FileSystemHelpers::FilesIn(m_directory.string())) {
+		entities.push_back(std::stoi(file));
+	}
+	return entities;
 }
 
 
@@ -147,7 +160,7 @@ vector<string> EntityManager::Components(unsigned long componentMask)
 	vector<string> componentNames;
 	
 	std::bitset<m_maskSize> mask(componentMask);
-	for (int i = 0; i < m_maskSize; i++) {
+	for (int i = 0; i < m_prototypes.size(); i++) {
 		if (mask[i]) {
 			componentNames.push_back(m_prototypes[i]->GetName());
 		}
@@ -160,7 +173,7 @@ vector<unsigned long> EntityManager::ComponentMasks(unsigned long componentMask)
 	vector<unsigned long> componentMasks;
 
 	std::bitset<m_maskSize> mask(componentMask);
-	for (int i = 0; i < m_maskSize; i++) {
+	for (int i = 0; i < m_prototypes.size(); i++) {
 		if (mask[i]) {
 			componentMasks.push_back(mask[i]);
 		}
@@ -179,10 +192,21 @@ unsigned long EntityManager::ComponentMask(vector<string> components)
 
 unsigned long EntityManager::ComponentMask(string component)
 {
-	unsigned long mask = 0;
-	for (int i = 0; i < m_maskSize; i++) {
+	for (int i = 0; i < m_prototypes.size(); i++) {
+		unsigned long mask = (unsigned long)std::pow(2, i);
 		if (m_prototypes[i]->GetName() == component) {
-			mask |= (unsigned long)std::pow(i, 2);
+			return mask;
+		}
+	}
+	return 0;
+}
+
+unsigned long EntityManager::ComponentMaskOf(const unsigned int & id)
+{
+	unsigned long mask = 0;
+	for (auto& component : Filesystem::directory_iterator(m_directory)) {
+		if (Filesystem::exists(component.path() / (std::to_string(id) + ".dat"))) {
+			mask |= ComponentMask(component.path().filename().string());
 		}
 	}
 	return mask;
@@ -209,10 +233,12 @@ unsigned int EntityManager::NewEntity()
 	return m_nextID++;
 }
 
-EntityManager::EntityManager(const string & directory) : m_directory(directory)
+EntityManager::EntityManager(Filesystem::path & directory) : m_directory(directory / "Component"), m_nextID(0)
 {
-	AddPrototype(new Component::Position());
-	AddPrototype(new Component::Terrain());
+	Filesystem::create_directory(m_directory);
+
+	AddComponentVector("Position");
+	AddComponentVector("Terrain");
 	//AddPrototype(new Movement());
 	//AddPrototype(new Input());
 	//AddPrototype(new Flag("Player"));
@@ -242,17 +268,12 @@ void EntityManager::Save()
 	
 }
 
-void EntityManager::AddPrototype(Component::Component* prototype)
+void EntityManager::AddComponentVector(string name)
 {
-	unsigned long mask = std::pow(2, m_prototypes.size());
-	m_prototypes.insert(std::pair<unsigned long, unique_ptr<Component::Component>>(mask, std::make_unique<Component::Component>(prototype)));
-	m_masks.insert(std::pair<string, unsigned long>(prototype->GetName(), mask));
+	unsigned int index = m_components.size();
+	unsigned long mask = std::pow(2, index);
+	m_masks.insert(std::pair<string, unsigned long>(name, mask));
+	m_indices.insert(std::pair<unsigned long, unsigned int>(mask, index));
+	m_components.push_back(vector<shared_ptr<Components::Component>>());
 }
 
-shared_ptr<Entity> EntityManager::FindEntity(const unsigned int & id)
-{
-	for (shared_ptr<Entity> & entity : m_entities) {
-		if (entity->ID() == id) return entity;
-	}
-	return shared_ptr<Entity>(nullptr);
-}

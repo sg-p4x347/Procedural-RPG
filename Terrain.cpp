@@ -1,9 +1,13 @@
 #include "pch.h"
 #include "Terrain.h"
 
-namespace Component {
+namespace Components {
 	
 	Terrain::Terrain()
+	{
+	}
+
+	Terrain::Terrain(const Terrain & other) : Terrain::Terrain(other.ID)
 	{
 	}
 
@@ -22,11 +26,11 @@ namespace Component {
 		// Query in-memory list
 		for (Terrain & terrain : GetComponents()) {
 			if (terrain.ID == id) {
-				return std::make_shared<Component>(&terrain);
+				return std::shared_ptr<Component>(&terrain);
 			}
 		}
 		// Not found
-		return shared_ptr<Component>(nullptr);
+		return nullptr;
 	}
 
 	void Terrain::SaveAll(string directory)
@@ -36,20 +40,19 @@ namespace Component {
 		}
 	}
 
-	void Terrain::Attach(shared_ptr<Component> component)
-	{
-		GetComponents().push_back(*dynamic_cast<Terrain*>(component.get()));
-	}
 
 	string Terrain::GetName()
 	{
 		return "Terrain";
 	}
 
-	shared_ptr<Component> Terrain::Create(std::ifstream & ifs)
+	shared_ptr<Component> Components::Terrain::Add(const unsigned int & id)
 	{
-		return shared_ptr<Component>(new Terrain(ifs));
+		Terrain component = Terrain(id);
+		GetComponents().push_back(component);
+		return std::shared_ptr<Component>(&component);
 	}
+
 
 	Terrain::Terrain(std::ifstream & ifs)
 	{

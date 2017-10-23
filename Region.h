@@ -3,7 +3,7 @@
 #include "VertexTypes.h"
 #include "Utility.h"
 #include "Entity.h"
-#include "NPC.h"
+//#include "NPC.h"
 #include <fstream>
 #include <iostream>
 #include <string>

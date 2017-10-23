@@ -5,9 +5,9 @@ System::System(
 	shared_ptr<EntityManager> & entityManager,
 	vector<string> & components,
 	unsigned short updatePeriod
-) : m_entityManager(entityManager), m_updatePeriod(updatePeriod), m_ticksLeft(updatePeriod)
+) : EM(entityManager), m_updatePeriod(updatePeriod), m_ticksLeft(updatePeriod)
 {
-	m_componentMask = m_entityManager->ComponentMask(components);
+	m_componentMask = EM->ComponentMask(components);
 }
 
 void System::Tick(double & elapsed)
@@ -22,8 +22,5 @@ void System::Tick(double & elapsed)
 	}
 }
 void System::Initialize()
-{
-}
-System::~System()
 {
 }

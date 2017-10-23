@@ -1,34 +1,24 @@
 #include "pch.h"
 #include "Position.h"
 
-namespace Component {
-	Position::Position() : Component()
+namespace Components {
+	Position::Position() : Component::Component()
 	{
-		Pos = SimpleMath::Vector3::Zero;
-		Rot = SimpleMath::Vector3::Zero;
+	}
+	Position::Position(const Position & other) : Position::Position(other.ID,other.Pos,other.Rot)
+	{
+	}
+	Position::Position(const unsigned int & id) : Position::Position(id, SimpleMath::Vector3::Zero,SimpleMath::Vector3::Zero)
+	{
 	}
 
-	Position::Position(const unsigned int & id) : Position()
-	{
-		ID = id;
-	}
 
-	Position::Position(const unsigned int id, SimpleMath::Vector3 pos, SimpleMath::Vector3 rot) : Component(id)
+	Position::Position(const unsigned int id, SimpleMath::Vector3 pos, SimpleMath::Vector3 rot) : Component::Component(id)
 	{
 		Pos = pos;
 		Rot = rot;
 	}
 
-
-	Position::Position(std::ifstream & ifs)
-	{
-		Import(ifs);
-	}
-
-	shared_ptr<Component> Position::Create(std::ifstream & ifs)
-	{
-		return shared_ptr<Component>(new Position(ifs));
-	}
 
 	void Position::Import(std::ifstream & ifs)
 	{
@@ -64,16 +54,23 @@ namespace Component {
 		return components;
 	}
 
+	shared_ptr<Component> Position::Add(const unsigned int & id)
+	{
+		Position component = Position(id);
+		GetComponents().push_back(component);
+		return std::shared_ptr<Component>(&component);
+	}
+
 	shared_ptr<Component> Position::GetComponent(const unsigned int & id)
 	{
 		// Query in-memory list
 		for (Position & position : GetComponents()) {
 			if (position.ID == id) {
-				return std::make_shared<Component>(&position);
+				return std::shared_ptr<Component>(&position);
 			}
 		}
 		// Not found
-		return std::make_shared<Component>(nullptr);
+		return nullptr;
 	}
 
 	void Position::SaveAll(string directory)
@@ -86,10 +83,5 @@ namespace Component {
 	string Position::GetName()
 	{
 		return "Position";
-	}
-
-	void Position::Attach(shared_ptr<Component> component)
-	{
-		GetComponents().push_back(*dynamic_cast<Position*>(component.get()));
 	}
 }

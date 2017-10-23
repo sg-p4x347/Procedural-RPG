@@ -19,7 +19,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     if (FAILED(hr))
         return 1;
 
-    auto g_game = std::make_unique<Game>();
+    auto game = std::make_unique<Game>();
 
     // Register class and create window
     {
@@ -42,7 +42,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
         // Create window
         int w, h;
-        g_game->GetDefaultSize(w, h);
+        game->GetDefaultSize(w, h);
 
         RECT rc;
         rc.top = 0;
@@ -64,13 +64,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         ShowWindow(hwnd, nCmdShow);
         // TODO: Change nCmdShow to SW_SHOWMAXIMIZED to default to fullscreen.
 
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(g_game.get()) );
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(game.get()) );
 
         GetClientRect(hwnd, &rc);
 
-        g_game->Initialize(hwnd, rc.right - rc.left, rc.bottom - rc.top);
+        game->Initialize(hwnd, rc.right - rc.left, rc.bottom - rc.top);
     }
-
     // Main message loop
     MSG msg = { 0 };
 	while (true) {
@@ -80,9 +79,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 			DispatchMessage(&msg);
 		}
 		if (WM_QUIT == msg.message) break;
-		g_game->Tick();
+		game->Tick();
 	}
-    g_game.reset();
+    game.reset();
 
     CoUninitialize();
 

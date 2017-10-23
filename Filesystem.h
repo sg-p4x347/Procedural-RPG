@@ -1,6 +1,6 @@
 #pragma once
 using namespace std;
-namespace Filesystem {
+namespace FileSystemHelpers {
 	// Create a directory
 	string CreateFolder(string path);
 	// Get file by path

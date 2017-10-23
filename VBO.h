@@ -1,14 +1,12 @@
 #pragma once
 #include "Component.h"
-namespace Component {
+namespace Components {
 	class VBO :
 		public Component
 	{
 	public:
-		VBO();
 		VBO(const unsigned int & id);
-		~VBO();
-
+		VBO(const VBO & other);
 		void CreateBuffers(shared_ptr<ID3D11Device> device);
 
 		// Vertex Buffer
@@ -21,13 +19,13 @@ namespace Component {
 		// Inherited via Component
 		virtual shared_ptr<Component> GetComponent(const unsigned int & id) override;
 		virtual void SaveAll(string directory) override;
-		virtual void Attach(shared_ptr<Component> component) override;
 		virtual string GetName() override;
-		virtual shared_ptr<Component> Create(std::ifstream & ifs) override;
+		virtual shared_ptr<Component> Add(const unsigned int & id) override;
 	protected:
 		void CreateVB(shared_ptr<ID3D11Device> device);
 		void CreateIB(shared_ptr<ID3D11Device> device);
 		vector<VBO> & GetComponents();
+
 	};
 }
 

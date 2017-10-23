@@ -2,7 +2,8 @@
 #include "System.h"
 #include "HeightMap.h"
 #include "Position.h"
-
+#include "VBO.h"
+#include "Position.h"
 class TerrainSystem :
 	public System
 {
@@ -11,7 +12,7 @@ public:
 		shared_ptr<EntityManager> & entityManager, 
 		vector<string> & components, 
 		unsigned short updatePeriod, 
-		unsigned int regionWidth,
+		int regionWidth,
 		Filesystem::path directory
 	);
 	~TerrainSystem();
@@ -21,15 +22,18 @@ public:
 	virtual void SyncEntities() override;
 	virtual void Update() override;
 	virtual string Name() override;
-private:
-	shared_ptr<Component::Position> m_player;
+protected:
+	//----------------------------------------------------------------
+	// Entity helpers
+	shared_ptr<Components::Position> PlayerPos();
+
 	//----------------------------------------------------------------
 	// Loading and Updating Regions
 
 	// Creates all terrain regions in the world
 	void CreateTerrainEntities();
-	void UpdateRegions(Vector3 center);
-	void UpdateTerrainVBO(shared_ptr<Component::VBO> vbo, int x, int z, int lod);
+	void UpdateRegions(DirectX::SimpleMath::Vector3 center);
+	void UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int x, int z, int lod);
 	int LOD(double distance, unsigned int modelWidth);
 	void NewTerrain(DirectX::SimpleMath::Vector3 & position);
 	
@@ -38,7 +42,7 @@ private:
 	HeightMap m_terrain;
 	HeightMap m_biome;
 	int m_width; // The total width of the continent (in meters)
-	unsigned int m_regionWidth; // Width of region divisions (in meters)
+	const int m_regionWidth; // Width of region divisions (in meters)
 	Filesystem::path m_directory;
 
 	//----------------------------------------------------------------

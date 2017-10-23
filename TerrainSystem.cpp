@@ -3,18 +3,21 @@
 #include "Terrain.h"
 #include "Position.h"
 #include "VBO.h"
+#include "Utility.h"
+
+using namespace DirectX::SimpleMath;
 
 TerrainSystem::TerrainSystem(
 	shared_ptr<EntityManager> & entityManager, 
 	vector<string> & components, 
 	unsigned short updatePeriod, 
-	unsigned int regionWidth,
+	int regionWidth,
 	Filesystem::path directory
 )
 	: System(entityManager,components,updatePeriod), 
 	m_regionWidth(regionWidth)
 {
-	m_directory = directory.append(Name());
+	m_directory = directory / Name();
 	Filesystem::create_directory(m_directory);
 }
 
@@ -40,7 +43,7 @@ void TerrainSystem::Generate()
 	const float biomeDeviationConst = config["biomeDeviationConst"].To<double>();
 
 	// Terrain map
-	JsonParser terrainMap = config["m_terrain"];
+	JsonParser terrainMap = config["terrainMap"];
 	m_width = terrainMap["width"].To<int>();
 	m_terrain = HeightMap(m_width, m_width * terrainMap["initialDeviation"].To<double>(), terrainMap["deviationDecrease"].To<double>(), 0);
 	// Continent map
@@ -48,7 +51,7 @@ void TerrainSystem::Generate()
 	const float CM_offset = continentMap["offset"].To<double>();
 	HeightMap continent = HeightMap(m_terrain.width / m_sampleSpacing, (m_terrain.width / m_sampleSpacing) * continentMap["initialDeviation"].To<double>(), continentMap["deviationDecrease"].To<double>(), continentMap["zoom"].To<int>());
 	// Biome map
-	JsonParser biomeMap = config["m_biome"];
+	JsonParser biomeMap = config["biomeMap"];
 	m_biome = HeightMap(m_terrain.width / m_sampleSpacing, biomeMap["initialDeviation"].To<double>(), biomeMap["deviationDecrease"].To<double>(), biomeMap["zoom"].To<int>());
 
 	//Load(); TEMP
@@ -155,26 +158,29 @@ void TerrainSystem::Generate()
 	}
 	// Erosion filter
 	//Erosion();
+	SaveTerrain();
+	CreateTerrainEntities();
 }
 
 void TerrainSystem::SyncEntities()
 {
-	if (!m_player) {
-		m_player = m_entityManager->FindEntity(
-			m_entityManager->ComponentMask(vector<string>{ "Player", "Position" })
-		);
-	}
+	
 	
 }
 
 void TerrainSystem::Update()
 {
-	UpdateRegions(m_player->Pos);
+	UpdateRegions(PlayerPos()->Pos);
 }
 
 string TerrainSystem::Name()
 {
 	return "Terrain";
+}
+
+shared_ptr<Components::Position> TerrainSystem::PlayerPos()
+{
+	return EM->CastComponent<Components::Position>(EM->GetComponent(EM->Player(), "Position"));
 }
 
 void TerrainSystem::SaveTerrain()
@@ -239,57 +245,57 @@ void TerrainSystem::SaveTerrain()
 	//-----------------------------------------------
 
 	// m_terrain
-	ofstream terrain(m_directory.append("terrain.dat"));
+	ofstream terrain(m_directory / "terrain.dat");
 	terrain.write((const char *)terrainBuffer.get(), vertexCount * sizeof(short));
 	terrain.close();
 	// m_biome
-	ofstream biome(m_directory.append("biome.dat"));
+	ofstream biome(m_directory / "biome.dat");
 	biome.write((const char *)biomeBuffer.get(), sampleCount * sizeof(float));
 	biome.close();
 	// NormalMap
-	ofstream normal(m_directory.append("normal.dat"));
+	ofstream normal(m_directory / "normal.dat");
 	normal.write((const char *)normalBuffer.get(), vertexCount * 3);
 	normal.close();
 }
 
 void TerrainSystem::CreateTerrainEntities()
 {
-	for (int x = 0; x < m_width / m_regionWidth; x++) {
-		for (int z = 0; z < m_width / m_regionWidth; z++) {
+	for (int x = 0; x < m_width / (int)m_regionWidth; x++) {
+		for (int z = 0; z < m_width / (int)m_regionWidth; z++) {
 			Vector3 position(
-				((double)x + (double)m_regionWidth*0.5) * (double)m_regionWidth,
+				((double)x + (double)(int)m_regionWidth*0.5) * (double)(int)m_regionWidth,
 				0.0,
-				((double)z + (double)m_regionWidth*0.5) * (double)m_regionWidth
+				((double)z + (double)(int)m_regionWidth*0.5) * (double)(int)m_regionWidth
 			);
 			NewTerrain(position);
 		}
 	}
-	m_entities = m_entityManager->EntitiesContaining(
+	m_entities = EM->EntitiesContaining(
 		"Terrain",
-		m_entityManager->ComponentMask(vector<string>{"Position", "VBO"})
+		EM->ComponentMask(vector<string>{"Position", "VBO"})
 	);
 }
 
 void TerrainSystem::UpdateRegions(Vector3 center)
 {
-	center.y = 0;
-	for (shared_ptr<Entity> & entity : m_entities) {
-		Vector3 position = entity->GetComponent<Component::Position>("Position")->Pos;
+	/*center.y = 0;
+	for (unsigned int & entity : m_entities) {
+		Vector3 position = entity->GetComponent<Components::Position>("Position")->Pos;
 		position.y = 0;
 		double distance = Vector3::Distance(center, position);
-		int lod = LOD(distance, m_regionWidth);
-		shared_ptr<Component::VBO> vbo = entity->GetComponent<Component::VBO>("VBO");
-		int x = (int)std::floor(position.x / (double)m_regionWidth);
-		int z = (int)std::floor(position.z / (double)m_regionWidth);
+		int lod = LOD(distance, (int)m_regionWidth);
+		shared_ptr<Components::VBO> vbo = entity->GetComponent<Components::VBO>("VBO");
+		int x = (int)std::floor(position.x / (double)(int)m_regionWidth);
+		int z = (int)std::floor(position.z / (double)(int)m_regionWidth);
 		UpdateTerrainVBO(vbo, x, z, lod);
-	}
+	}*/
 }
 
-void TerrainSystem::UpdateTerrainVBO(shared_ptr<Component::VBO> vbo, int x, int z, int lod)
+void TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int regionX, int regionZ, int lod)
 {
-	unsigned int regionIndex = posToIndex(x, z, m_width / m_regionWidth);
-	unsigned int vertexCount = (m_regionWidth + 1)*(m_regionWidth + 1);
-	unsigned int rowSize = (m_regionWidth + 1) * sizeof(short);
+	unsigned int regionIndex = Utility::posToIndex(regionX, regionZ, m_width / (int)m_regionWidth);
+	unsigned int vertexCount = ((int)m_regionWidth + 1)*((int)m_regionWidth + 1);
+	unsigned int rowSize = ((int)m_regionWidth + 1) * sizeof(short);
 	unsigned int regionSize = vertexCount * sizeof(short);
 
 	// Load the vertex array with data.
@@ -302,9 +308,11 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Component::VBO> vbo, int x, int 
 		char *terrainCharBuffer = new char[regionSize];
 		char *normalCharBuffer = new char[vertexCount * 3];
 		// move start position to the region, and proceed to read each line into the Char buffers
-		for (int vertZ = 0; vertZ <= m_regionWidth; vertZ++) {
-			for (int vertX = 0; vertX <= m_regionWidth; vertX++) {
-				int index = posToIndex(vertX + x * m_regionWidth, vertZ + z * m_regionWidth, m_width + 1);
+		for (int vertZ = 0; vertZ <= (int)m_regionWidth; vertZ++) {
+			for (int vertX = 0; vertX <= (int)m_regionWidth; vertX++) {
+				int worldX = vertX + (int)m_regionWidth * regionX;
+				int worldZ = vertZ + (int)m_regionWidth * regionZ;
+				int index = Utility::posToIndex(worldX, worldZ, m_width + 1);
 				// heightMap
 				char shortBuffer[2];
 				terrainStream.seekg(index * sizeof(short));
@@ -330,17 +338,17 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Component::VBO> vbo, int x, int 
 		delete[] normalCharBuffer;
 	}
 	// create 2 triangles (6 vertices) for every quad in the region
-	vbo->Vertices.resize(m_regionWidth * m_regionWidth * 6);
-	vbo->Indices.resize(m_regionWidth * m_regionWidth * 6);
+	vbo->Vertices.resize(6 * (int)m_regionWidth * (int)m_regionWidth);
+	vbo->Indices.resize((int)m_regionWidth * (int)m_regionWidth * 6);
 
 	int index = 0;
-	for (int z = 0; z < m_regionWidth; z++) {
-		for (int x = 0; x < m_regionWidth; x++) {
+	for (int z = 0; z < (int)m_regionWidth; z++) {
+		for (int x = 0; x < (int)m_regionWidth; x++) {
 			// Get the indexes to the four points of the quad.
-			Vector3 vertex1 = Vector3(float(x + (x * m_regionWidth)), heightMap[((m_regionWidth + 1) * z) + x], float(z + (z * m_regionWidth)));          // Upper left.
-			Vector3 vertex2 = Vector3(float(x + 1 + (x*m_regionWidth)), heightMap[((m_regionWidth + 1) * z) + (x + 1)], float(z + (z * m_regionWidth)));      // Upper right.
-			Vector3 vertex3 = Vector3(float(x + (x*m_regionWidth)), heightMap[((m_regionWidth + 1) * (z + 1)) + x], float(z + 1 + (z * m_regionWidth)));      // Bottom left.
-			Vector3 vertex4 = Vector3(float(x + 1 + (x*m_regionWidth)), heightMap[((m_regionWidth + 1) * (z + 1)) + (x + 1)], float(z + 1 + (z * m_regionWidth)));  // Bottom right.
+			Vector3 vertex1(float(x + (x * (int)m_regionWidth)), float(heightMap[(((int)m_regionWidth + 1) * z) + x]), float(z + (z * (int)m_regionWidth)));          // Upper left.
+			Vector3 vertex2(float(x + 1 + (x*(int)m_regionWidth)), float(heightMap[(((int)m_regionWidth + 1) * z) + (x + 1)]), float(z + (z * (int)m_regionWidth)));      // Upper right.
+			Vector3 vertex3(float(x + (x*(int)m_regionWidth)), float(heightMap[(((int)m_regionWidth + 1) * (z + 1)) + x]), float(z + 1 + (z * (int)m_regionWidth)));      // Bottom left.
+			Vector3 vertex4(float(x + 1 + (x*(int)m_regionWidth)), float(heightMap[(((int)m_regionWidth + 1) * (z + 1)) + (x + 1)]), float(z + 1 + (z * (int)m_regionWidth)));  // Bottom right.
 
 			/*
 			1---2
@@ -352,7 +360,7 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Component::VBO> vbo, int x, int 
 			// Triangle 1 - Upper left
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex1),										// position
-				XMFLOAT3(normalMap[posToIndex(x,z,m_regionWidth + 1)]),	// normal
+				XMFLOAT3(normalMap[Utility::posToIndex(x,z,(int)m_regionWidth + 1)]),	// normal
 				XMFLOAT4(1.f,0.f,0.f,1.f),								// tangent
 				XMFLOAT4(1.f,255.f,1.f,1.f),							// color
 				XMFLOAT2(0.f,0.f)										// texture
@@ -362,7 +370,7 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Component::VBO> vbo, int x, int 
 			// Triangle 1 - Bottom right.
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex4),												// position
-				XMFLOAT3(normalMap[posToIndex(x + 1,z + 1,m_regionWidth + 1)]),	// normal
+				XMFLOAT3(normalMap[Utility::posToIndex(x + 1,z + 1,(int)m_regionWidth + 1)]),	// normal
 				XMFLOAT4(1.f,0.f,0.f,1.f),										// tangent
 				XMFLOAT4(1.f,255.f,1.f,1.f),									// color
 				XMFLOAT2(1.f,1.f)												// texture
@@ -372,7 +380,7 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Component::VBO> vbo, int x, int 
 			// Triangle 1 - Bottom left.
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex3),											// position
-				XMFLOAT3(normalMap[posToIndex(x,z + 1,m_regionWidth + 1)]),	// normal
+				XMFLOAT3(normalMap[Utility::posToIndex(x,z + 1,(int)m_regionWidth + 1)]),	// normal
 				XMFLOAT4(1.f,0.f,0.f,1.f),									// tangent
 				XMFLOAT4(1.f,255.f,1.f,1.f),								// color
 				XMFLOAT2(0.f,1.f)											// texture
@@ -382,17 +390,17 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Component::VBO> vbo, int x, int 
 			// Triangle 2 - Upper left.
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex1),										// position
-				XMFLOAT3(normalMap[posToIndex(x,z,m_regionWidth + 1)]),	// normal
+				XMFLOAT3(normalMap[Utility::posToIndex(x,z,(int)m_regionWidth + 1)]),	// normal
 				XMFLOAT4(1.f,0.f,0.f,1.f),								// tangent
 				XMFLOAT4(1.f,255.f,1.f,1.f),							// color
 				XMFLOAT2(0.f,0.f)										// texture
 			};
-			vbo->Indices[index] = index;
+			vbo ->Indices[index] = index;
 			index++;
 			// Triangle 2 - Upper right.
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex2),											// position
-				XMFLOAT3(normalMap[posToIndex(x + 1,z,m_regionWidth + 1)]),	// normal
+				XMFLOAT3(normalMap[Utility::posToIndex(x + 1,z,(int)m_regionWidth + 1)]),	// normal
 				XMFLOAT4(1.f,0.f,0.f,1.f),									// tangent
 				XMFLOAT4(1.f,255.f,1.f,1.f),								// color
 				XMFLOAT2(1.f,0.f)											// texture
@@ -402,7 +410,7 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Component::VBO> vbo, int x, int 
 			// Triangle 2 - Bottom right.
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex4),												// position
-				XMFLOAT3(normalMap[posToIndex(x + 1,z + 1,m_regionWidth + 1)]),	// normal
+				XMFLOAT3(normalMap[Utility::posToIndex(x + 1,z + 1,(int)m_regionWidth + 1)]),	// normal
 				XMFLOAT4(1.f,0.f,0.f,1.f),										// tangent
 				XMFLOAT4(1.f,255.f,1.f,1.f),									// color
 				XMFLOAT2(1.f,1.f)												// texture
@@ -420,10 +428,10 @@ int TerrainSystem::LOD(double distance, unsigned int modelWidth)
 
 void TerrainSystem::NewTerrain(DirectX::SimpleMath::Vector3 & position)
 {
-	unsigned int id = m_entityManager->NewEntity();
-	m_entityManager->AttachComponent(shared_ptr<Component::Position>(new Component::Position(id,position, DirectX::SimpleMath::Vector3::Zero)));
-	m_entityManager->AttachComponent(shared_ptr<Component::Terrain>(new Component::Terrain(id)));
-	m_entityManager->AttachComponent(shared_ptr<Component::VBO>(new Component::VBO(id)));
+	unsigned int id = EM->NewEntity();
+	EM->CastComponent<Components::Position>(EM->AddComponent(id,EM->ComponentMask("Position")))->Pos = position;
+	EM->AddComponent(id, EM->ComponentMask("Terrain"));
+	EM->AddComponent(id, EM->ComponentMask("VBO"));
 }
 
 float TerrainSystem::Diamond(HeightMap & map, int & x, int & y, int & distance) {
@@ -456,7 +464,7 @@ float TerrainSystem::Square(HeightMap & map, int & x, int & y, int & distance) {
 	return sum / denominator;
 }
 float TerrainSystem::Deviation(float range, float offset) {
-	return randWithin(-range * 0.5f + offset, range * 0.5f + offset);
+	return Utility::randWithin(-range * 0.5f + offset, range * 0.5f + offset);
 }
 float TerrainSystem::BiomeDeviation(float biome, float continent) {
 	return Gaussian(biome, m_biomeAmplitude, m_biomeShift, m_biomeWidth) * Sigmoid(continent, 1.f, m_continentShift, m_continentWidth);

@@ -5,54 +5,47 @@
 #include "EntityManager.h"
 #include <iostream>
 #include "Filesystem.h"
+#include "TerrainSystem.h"
 
 using namespace DirectX::SimpleMath;
 using namespace std;
 
 World::World(
-	const string directory,
+	string directory,
 	Microsoft::WRL::ComPtr<ID3D11Device> device,
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
 	std::shared_ptr<DirectX::CommonStates> states,
-	DirectX::Mouse::State mouse,
-	DirectX::Keyboard::State keyboard
+	std::shared_ptr<DirectX::Mouse> mouse,
+	std::shared_ptr<DirectX::Keyboard> keyboard
 ) : m_directory(directory) {
 	m_systemManager = std::make_unique<SystemManager>(SystemManager(m_directory,device,context,states,mouse,keyboard));
-}
-World::World(const string directory) : m_directory(directory)
-{
-
-}
-void World::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device) {
-	
+	CreateDevice(device);
 	m_d3dDevice = device;
 	JsonParser config(std::ifstream("config/continent.json"));
 	m_worldWidth = config["terrainMap"]["width"].To<int>();
 	m_regionWidth = 512;
 	m_loadWidth = 2;
 	m_NG = shared_ptr<NameGenerator>(new NameGenerator());
-	
+}
+World::World(const string directory) : m_directory(directory)
+{
+
 }
 // creates a new world
-unique_ptr<World> World::CreateWorld(int seed,string directory, string name) {
-	string worldDir = directory + '/' + name;
-	unique_ptr<World> world(new World(worldDir));
-	world->m_name = name;
-	
-	Filesystem::CreateFolder(worldDir);
-	// create the relative path
-	// create the save directory
-	// CreateDirectory(wstring(m_path.begin(), m_path.end()).c_str(), NULL);
+void World::Generate(int seed) {
+	// Create the world directory
+	Filesystem::create_directory(m_directory);
 
 	// seed the RNG
 	srand(seed);
 
 	// generators
-	shared_ptr<Continent> terrain = world->CreateTerrain(worldDir);
-	world->CreateCities(terrain);
+
+	((TerrainSystem*)m_systemManager->m_systems["Terrain"].get())->Generate();
+	//shared_ptr<Continent> terrain = world->CreateTerrain(worldDir);
+	//world->CreateCities(terrain);
 	//GenerateHistory(m_cities);
-	world->CreatePlayer();
-	return world;
+	//world->CreatePlayer();
 	
 }
 shared_ptr<Continent> World::CreateTerrain(string directory)
@@ -126,9 +119,9 @@ void World::CreatePlayer() {
 void World::LoadWorld(string directory, string name) {
 	m_name = name;
 	// load assets
-	LoadPlayer();
-	LoadCities(directory + '/' + name + "/cities");
-	FillRegions();
+	//LoadPlayer();
+	//LoadCities(directory + '/' + name + "/cities");
+	//FillRegions();
 }
 void World::LoadRegions() {
 	
@@ -205,7 +198,7 @@ void World::CreateDevice(Microsoft::WRL::ComPtr<ID3D11Device> device)
 
 	m_effect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
 
-	DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(
+	DX::ThrowIfFailed(device->CreateInputLayout(
 		VertexPositionNormalTangentColorTexture::InputElements,
 		VertexPositionNormalTangentColorTexture::InputElementCount,
 		shaderByteCode, byteCodeLength,
@@ -224,12 +217,12 @@ float World::yOnABC(float x, float z, XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) {
 
 }
 
-void World::CreateResources(unsigned int backBufferWidth, unsigned int backBufferHeight, DirectX::XMMATRIX projMatrix)
+void World::CreateResources(unsigned int backBufferWidth, unsigned int backBufferHeight, SimpleMath::Matrix & projMatrix)
 {
-	m_effect->SetViewport(float(backBufferWidth), float(backBufferHeight));
+	/*m_effect->SetViewport(float(backBufferWidth), float(backBufferHeight));
 
 	m_effect->SetView(GetPlayer()->getViewMatrix());
-	m_effect->SetProjection(projMatrix);
+	m_effect->SetProjection(projMatrix);*/
 }
 void World::OnDeviceLost()
 {

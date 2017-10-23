@@ -3,41 +3,40 @@
 #include <experimental/filesystem>
 #include <filesystem>
 
-namespace Filesystem = std::experimental::filesystem::v1;
+using namespace std::experimental::filesystem::v1;
 
-namespace Filesystem {
-	string CreateFolder(string path)
+	string FileSystemHelpers::CreateFolder(string path)
 	{
 		CreateDirectory(wstring(path.begin(), path.end()).c_str(), NULL);
 		return path;
 	}
-	bool GetOutput(string path, ofstream & ofs)
+	bool FileSystemHelpers::GetOutput(string path, ofstream & ofs)
 	{
 		ofs = ofstream(path);
 		return ofs.is_open();
 	}
-	bool GetInput(string path, ifstream & ifs)
+	bool FileSystemHelpers::GetInput(string path, ifstream & ifs)
 	{
 		ifs = ifstream(path);
 		return ifs.is_open();
 	}
-	vector<string> FilesIn(string dir)
+	vector<string> FileSystemHelpers::FilesIn(string dir)
 	{
 		vector<string> paths;
 		for (auto & p : directory_iterator(dir)) {
 			paths.push_back(p.path().filename().string());
 		}
+		return paths;
 	}
-	string StripExtension(string path) {
-		string filename = "";
+	string FileSystemHelpers::StripExtension(string path) {
 		for (int i = path.size() - 1; i >= 0; i--) {
 			if (path[i] == '.') {
 				return path.substr(0,i);
 			}
 		}
+		return "";
 	}
-	string CombinePath(string A, string B)
+	string FileSystemHelpers::CombinePath(string A, string B)
 	{
 		return A + '/' + B;
 	}
-}

@@ -1,18 +1,13 @@
 #include "pch.h"
 #include "VBO.h"
 
-namespace Component {
-	VBO::VBO()
-	{
-	}
+namespace Components {
 
 	VBO::VBO(const unsigned int & id) : Component::Component(id)
 	{
 
 	}
-
-
-	VBO::~VBO()
+	VBO::VBO(const VBO & other) : VBO::VBO(other.ID)
 	{
 	}
 	void VBO::CreateBuffers(shared_ptr<ID3D11Device> device)
@@ -25,26 +20,19 @@ namespace Component {
 		// Query in-memory list
 		for (VBO & vbo : GetComponents()) {
 			if (vbo.ID == id) {
-				return std::make_shared<Component>(&vbo);
+				return std::shared_ptr<Component>(&vbo);
 			}
 		}
 		// Not found
-		return std::make_shared<Component>(nullptr);
+		return nullptr;
 	}
 	void VBO::SaveAll(string directory)
 	{
 	}
-	void VBO::Attach(shared_ptr<Component> component)
-	{
-		GetComponents().push_back(*dynamic_cast<VBO*>(component.get()));
-	}
+
 	string VBO::GetName()
 	{
 		return "VBO";
-	}
-	shared_ptr<Component> VBO::Create(std::ifstream & ifs)
-	{
-		return shared_ptr<Component>(new VBO());
 	}
 	void VBO::CreateVB(shared_ptr<ID3D11Device> device)
 	{
@@ -76,5 +64,11 @@ namespace Component {
 	{
 		static vector<VBO> components;
 		return components;
+	}
+	shared_ptr<Component> Components::VBO::Add(const unsigned int & id)
+	{
+		VBO component = VBO(id);
+		GetComponents().push_back(component);
+		return std::shared_ptr<Component>(&component);
 	}
 }

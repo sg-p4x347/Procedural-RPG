@@ -26,29 +26,15 @@ unsigned long Entity::MissingComponents(unsigned long & componentMask)
 	return (componentMask ^ m_componentMask) ^ m_componentMask;
 }
 
-void Entity::AddComponent(unsigned long componentMask, shared_ptr<Component::Component> component)
+void Entity::AddComponent(unsigned long componentMask, shared_ptr<Components::Component> component)
 {
 	m_componentMask |= componentMask;
-	m_components.insert(std::pair < string, shared_ptr<Component::Component>>(component->GetName(), component));
+	m_components.insert(std::pair < string, shared_ptr<Components::Component>>(component->GetName(), component));
 }
 
-map<string, shared_ptr<Component::Component>>& Entity::GetComponents()
+map<string, shared_ptr<Components::Component>>& Entity::GetComponents()
 {
 	return m_components;
-}
-
-
-void Entity::Import(JsonParser & jp)
-{
-
-}
-
-JsonParser Entity::Export()
-{
-	JsonParser obj(JsonType::object);
-	obj.Set("id", ID());
-	obj.Set("mask", std::to_string(ComponentMask()));
-	obj.Set("components",JsonParser(JsonType::object));
 }
 
 //void Entity::Import(JsonParser & jp)

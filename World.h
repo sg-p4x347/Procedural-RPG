@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Utility.h"
-#include "Player.h"
+//#include "Player.h"
 #include "Region.h"
 
 #include <vector>
@@ -27,12 +27,12 @@ public:
 	// constructors
 
 	World(
-		const string directory,
+		string directory,
 		Microsoft::WRL::ComPtr<ID3D11Device> device,
 		Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
 		std::shared_ptr<DirectX::CommonStates> states, 
-		DirectX::Mouse::State mouse,
-		DirectX::Keyboard::State keyboard
+		std::shared_ptr<DirectX::Mouse> mouse,
+		std::shared_ptr<DirectX::Keyboard> keyboard
 	);
 	World(
 		const string directory
@@ -42,9 +42,8 @@ public:
 	//--------------------------------
 	// Loading world components
 
-	void Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device);
 	// generator
-	static unique_ptr<World> CreateWorld(int seed, string directory, string name);
+	void Generate(int seed);
 	shared_ptr<Continent> CreateTerrain(string directory);
 
 
@@ -52,28 +51,15 @@ public:
 
 	// loading from files
 	void LoadWorld(string directory, string name);
-	void FillRegions();
-	void LoadPlayer();
+	//void FillRegions();
+	//void LoadPlayer();
 	// saving to files
-	void SaveWorld(string directory);
+	//void SaveWorld(string directory);
 	//--------------------------------
 	// Game Loop
-	void Update(
-		float elapsed,
-		DirectX::Mouse::State mouse,
-		DirectX::Keyboard::State keyboard
-	);
-	void Render(
-		Microsoft::WRL::ComPtr<ID3D11Device> device,
-		Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
-		std::shared_ptr<DirectX::CommonStates> states
-	);
 	void CreateDevice(Microsoft::WRL::ComPtr<ID3D11Device> device);
-	void CreateResources(unsigned int backBufferWidth, unsigned int backBufferHeight, DirectX::XMMATRIX prjMatrix);
+	void CreateResources(unsigned int backBufferWidth, unsigned int backBufferHeight, SimpleMath::Matrix & prjMatrix);
 	void OnDeviceLost();
-	shared_ptr<CircularArray> GetRegions();
-	// Player
-	Player * GetPlayer();
 	
 	// Inherited via JSON
 	virtual void Import(JsonParser & jp) override;
@@ -148,7 +134,6 @@ private:
 	//--------------------------------
 	// entities
 	unique_ptr<SystemManager> m_systemManager;
-
 
 	//--------------------------------
 	// Collision

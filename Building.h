@@ -3,6 +3,7 @@
 #include "Room.h"
 #include "Voxel.h"
 #include "JSON.h"
+#include "SimpleMath.h"
 
 namespace Architecture {
 	enum Edge {
@@ -17,7 +18,7 @@ public:
 	Building(JsonParser & building);
 	Building(Rectangle footprint, JsonParser & config,string type);
 	~Building();
-	SimpleMath::Rectangle GetFootprint();
+	DirectX::SimpleMath::Rectangle GetFootprint();
 	void Render(Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext);
 	void LoadModels(string directory);
 	// JSON implimentaion

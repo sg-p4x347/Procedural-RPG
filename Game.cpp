@@ -39,14 +39,7 @@ void Game::Initialize(HWND window, int width, int height)
     m_timer.SetFixedTimeStep(true);
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
     
-	// the World
-	
-	
-	unique_ptr<World> newWorld = World::CreateWorld(236267, "saves", "testWorld");
-	newWorld->SaveWorld("saves");
-	m_world = unique_ptr<World>(new World("saves/testWorld"));
-	m_world->Initialize(m_d3dDevice.Get());
-	m_world->LoadWorld("saves", "testWorld");
+	GenerateWorld(2, "test");
 }
 
 // Executes the basic game loop.
@@ -73,15 +66,22 @@ void Game::Update(DX::StepTimer const& timer)
 
 	auto mouse = m_mouse->GetState();
 	// Update the world
-	m_world->Update(elapsed,mouse,keyboard);
+	//m_world->Update(elapsed,mouse,keyboard);
 }
 
 void Game::Render()
 {
 	Clear();
-	m_world->Render(m_d3dDevice, m_d3dContext,m_states);
+	//m_world->Render(m_d3dDevice, m_d3dContext,m_states);
 	// DO NOT DELETE
 	Present();
+}
+
+
+void Game::GenerateWorld(int seed, string name)
+{
+	m_world = unique_ptr<World>(new World("saves/" + name, m_d3dDevice, m_d3dContext, m_states, m_mouse, m_keyboard));
+	m_world->Generate(seed);
 }
 
 // Presents the back buffer contents to the screen.
@@ -238,7 +238,6 @@ void Game::CreateDevice()
 	// TODO: Initialize device dependent objects here (independent of window size).
 	m_states = std::make_unique<CommonStates>(m_d3dDevice.Get());
 
-	m_world->CreateDevice(m_d3dDevice);
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
