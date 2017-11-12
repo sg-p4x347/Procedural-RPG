@@ -10,12 +10,10 @@
 #include <iterator>
 #include "CircularArray.h"
 #include "NameGenerator.h"
-#include "Continent.h"
 #include "City.h"
 #include "Building.h"
 #include "SystemManager.h"
 #include "JSON.h"
-#include "Federal.h"
 
 using namespace DirectX;
 using namespace Utility;
@@ -28,9 +26,7 @@ public:
 
 	World(
 		string directory,
-		Microsoft::WRL::ComPtr<ID3D11Device> device,
-		Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
-		std::shared_ptr<DirectX::CommonStates> states, 
+		HWND window, int width, int height,
 		std::shared_ptr<DirectX::Mouse> mouse,
 		std::shared_ptr<DirectX::Keyboard> keyboard
 	);
@@ -41,11 +37,12 @@ public:
 	
 	//--------------------------------
 	// Loading world components
-
+	void Initialize();
+	unique_ptr<SystemManager> & GetSystemManager();
 	// generator
 	void Generate(int seed);
-	shared_ptr<Continent> CreateTerrain(string directory);
-
+	// Save the world
+	void Save();
 
 	void CreatePlayer();
 
@@ -57,6 +54,7 @@ public:
 	//void SaveWorld(string directory);
 	//--------------------------------
 	// Game Loop
+	void Update(double elapsed);
 	void CreateDevice(Microsoft::WRL::ComPtr<ID3D11Device> device);
 	void CreateResources(unsigned int backBufferWidth, unsigned int backBufferHeight, SimpleMath::Matrix & prjMatrix);
 	void OnDeviceLost();
@@ -98,11 +96,11 @@ private:
 	int m_loadWidth;
 	//----------------------------------------------------------------
 	// Loading Buildings into regions
-	vector<shared_ptr<Architecture::Building>> BuildingsInRegion(const Rectangle & regionArea);
+	//vector<shared_ptr<Architecture::Building>> BuildingsInRegion(const Rectangle & regionArea);
 
 	//--------------------------------
 	// World constants
-	const string	m_directory;
+	Filesystem::path	m_directory;
 	string			m_name;
 	unsigned int	m_worldWidth;
 	unsigned int	m_regionWidth;
@@ -116,14 +114,13 @@ private:
 
 	//----------------------------------------------------------------
 	// History / government
-	void GenerateHistory(vector<City> cities);
-	Federal * m_federal; // federal division of organization (contains states)
+	//void GenerateHistory(vector<City> cities);
+	//Federal * m_federal; // federal division of organization (contains states)
 
 	//----------------------------------------------------------------
 	// Cities
-	void CreateCities(shared_ptr<Continent> terrain);
-	void LoadCities(string directory);
-	vector<City>	m_cities;
+	//void LoadCities(string directory);
+	//vector<City>	m_cities;
 
 	//----------------------------------------------------------------
 	// Player
@@ -133,6 +130,7 @@ private:
 
 	//--------------------------------
 	// entities
+	shared_ptr<EntityManager> m_entityManager;
 	unique_ptr<SystemManager> m_systemManager;
 
 	//--------------------------------

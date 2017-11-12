@@ -3,67 +3,20 @@
 
 namespace Components {
 	
-	Terrain::Terrain()
-	{
-	}
 
 	Terrain::Terrain(const Terrain & other) : Terrain::Terrain(other.ID)
 	{
 	}
 
-	Terrain::Terrain(const unsigned int & id)
-	{
-
-	}
-	
-
-	Terrain::~Terrain()
+	Terrain::Terrain(const unsigned int & id) : Component::Component(id)
 	{
 	}
-
-	shared_ptr<Component> Terrain::GetComponent(const unsigned int & id)
-	{
-		// Query in-memory list
-		for (Terrain & terrain : GetComponents()) {
-			if (terrain.ID == id) {
-				return std::shared_ptr<Component>(&terrain);
-			}
-		}
-		// Not found
-		return nullptr;
-	}
-
-	void Terrain::SaveAll(string directory)
-	{
-		for (Terrain & terrain : GetComponents()) {
-			terrain.Save(directory);
-		}
-	}
-
 
 	string Terrain::GetName()
 	{
 		return "Terrain";
 	}
 
-	shared_ptr<Component> Components::Terrain::Add(const unsigned int & id)
-	{
-		Terrain component = Terrain(id);
-		GetComponents().push_back(component);
-		return std::shared_ptr<Component>(&component);
-	}
-
-
-	Terrain::Terrain(std::ifstream & ifs)
-	{
-		Import(ifs);
-	}
-
-	vector<Terrain>& Terrain::GetComponents()
-	{
-		static vector<Terrain> components;
-		return components;
-	}
 	void Terrain::Import(std::ifstream & ifs)
 	{
 		//Component::Import(ifs);
@@ -99,22 +52,22 @@ namespace Components {
 		//for (unsigned short vertZ = 0; vertZ <= TerrainMap.width; vertZ++) {
 		//	for (unsigned short vertX = 0; vertX <= TerrainMap.width; vertX++) {
 		//		// verticies
-		//		float vertex = TerrainMap.map[vertX][vertZ];
+		//		float vertex = TerrainMap.Map[vertX][vertZ];
 		//		terrainBuffer.get()[index * sizeof(short)] = short(vertex * 10) & 0xff;
 		//		terrainBuffer.get()[index * sizeof(short) + 1] = (short(vertex * 10) >> 8) & 0xff;
 		//		// biome
 		//		if (vertZ % sampleSpacing == 0 && vertX % sampleSpacing == 0) {
-		//			float floatValue = BiomeMap.map[vertX / sampleSpacing][vertZ / sampleSpacing];
+		//			float floatValue = BiomeMap.Map[vertX / sampleSpacing][vertZ / sampleSpacing];
 		//			memcpy(&biomeBuffer.get()[biomeIndex * sizeof(float)], &floatValue, sizeof(float));
 		//			/*biomeFile.seekp(biomeIndex * sizeof(float));
 		//			biomeFile.write((char *)charValue, sizeof(float));*/
 		//			biomeIndex++;
 		//		}
 		//		// normals
-		//		float left = signed(vertX) - 1 >= 0 ? TerrainMap.map[vertX - 1][vertZ] : vertex;
-		//		float right = signed(vertX) + 1 <= signed(TerrainMap.width) ? TerrainMap.map[vertX + 1][vertZ] : vertex;
-		//		float up = signed(vertZ) + 1 <= signed(TerrainMap.width) ? TerrainMap.map[vertX][vertZ + 1] : vertex;
-		//		float down = signed(vertZ) - 1 >= 0 ? TerrainMap.map[vertX][vertZ - 1] : vertex;
+		//		float left = signed(vertX) - 1 >= 0 ? TerrainMap.Map[vertX - 1][vertZ] : vertex;
+		//		float right = signed(vertX) + 1 <= signed(TerrainMap.width) ? TerrainMap.Map[vertX + 1][vertZ] : vertex;
+		//		float up = signed(vertZ) + 1 <= signed(TerrainMap.width) ? TerrainMap.Map[vertX][vertZ + 1] : vertex;
+		//		float down = signed(vertZ) - 1 >= 0 ? TerrainMap.Map[vertX][vertZ - 1] : vertex;
 
 		//		DirectX::SimpleMath::Vector3 normal = DirectX::SimpleMath::Vector3(left - right, 2.f, down - up);
 		//		normal.Normalize();

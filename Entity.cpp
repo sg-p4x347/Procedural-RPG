@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Entity.h"
 
-Entity::Entity(unsigned int id) : m_id(id)
+Entity::Entity(unsigned int id, unsigned long componentMask) : m_id(id), m_cachedMask(0), m_componentMask(componentMask)
 {
 }
 
@@ -15,7 +15,12 @@ unsigned long Entity::ComponentMask()
 	return m_componentMask;
 }
 
-bool Entity::HasComponents(unsigned long & componentMask)
+unsigned long Entity::CachedMask()
+{
+	return m_cachedMask;
+}
+
+bool Entity::HasComponents(unsigned long componentMask)
 {
 	return componentMask == (componentMask & m_componentMask);
 }
@@ -28,14 +33,33 @@ unsigned long Entity::MissingComponents(unsigned long & componentMask)
 
 void Entity::AddComponent(unsigned long componentMask, shared_ptr<Components::Component> component)
 {
+	m_cachedMask |= componentMask;
 	m_componentMask |= componentMask;
-	m_components.insert(std::pair < string, shared_ptr<Components::Component>>(component->GetName(), component));
+	m_components.insert(std::pair < unsigned long, shared_ptr<Components::Component>>(componentMask, component));
 }
 
-map<string, shared_ptr<Components::Component>>& Entity::GetComponents()
+void Entity::Save(Filesystem::path directory)
+{
+	for (std::map<unsigned long, shared_ptr<Components::Component>>::iterator it = m_components.begin(); it != m_components.end(); ++it) {
+		it->second->Save(directory);
+	}
+}
+
+map<unsigned long, shared_ptr<Components::Component>> & Entity::Components()
 {
 	return m_components;
 }
+
+//shared_ptr<Components::Component> Entity::GetComponent(unsigned long & mask)
+//{
+//	// search the cache
+//	map<unsigned long, shared_ptr<Components::Component>>::iterator it = m_components.find(mask);
+//	if (it != m_components.end()) {
+//		return it->second;
+//	}
+//	// load the component
+//	return EM->GetComponent(mask, shared_ptr<Entity>(this));
+//}
 
 //void Entity::Import(JsonParser & jp)
 //{

@@ -39,12 +39,18 @@
 #include <exception>
 #include <memory>
 #include <vector>
+#include <map>
+#include <unordered_map>
+#include <unordered_set>
 #include <climits>
 #include <stdexcept>
 #include <dirent.h>
 #include <stdio.h>
+using std::string;
 using std::vector;
-
+using std::map;
+using std::unordered_map;
+using std::unordered_set;
 #include <experimental/filesystem>
 #include <filesystem>
 namespace Filesystem = std::experimental::filesystem::v1;

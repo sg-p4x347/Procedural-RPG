@@ -12,15 +12,28 @@ System::System(
 
 void System::Tick(double & elapsed)
 {
-	if (--m_ticksLeft <= 0) {
-		SyncEntities();
-		Update();
-		m_ticksLeft = m_updatePeriod;
-		m_elapsed = 0;
-	} else {
-		m_elapsed += elapsed;
+	if (m_updatePeriod != 0) {
+		if (--m_ticksLeft <= 0) {
+
+			Update(elapsed);
+			m_ticksLeft = m_updatePeriod;
+			m_elapsed = 0;
+		}
+		else {
+			m_elapsed += elapsed;
+		}
 	}
 }
 void System::Initialize()
 {
+	SyncEntities();
+}
+
+void System::Save()
+{
+}
+
+void System::SyncEntities()
+{
+	m_entities = EM->FindEntities(m_componentMask);
 }

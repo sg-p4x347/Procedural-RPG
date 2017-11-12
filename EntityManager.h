@@ -13,35 +13,37 @@ public:
 	EntityManager(Filesystem::path & directory);
 	~EntityManager();
 	// Load and Save components of entities that satisfy the mask
-	void Load(vector<unsigned int> & entities, unsigned long & componentMask);
+	//void Load(vector<unsigned int> & entities, unsigned long & componentMask);
 	void Save();
 	// Get entity components
 	shared_ptr<Components::Component> GetComponent(const unsigned int & id, string componentName);
 	shared_ptr<Components::Component> GetComponent(const unsigned int & id, unsigned long componentMask);
 	map<string,shared_ptr<Components::Component>> GetComponents(const unsigned int & id, vector<string> componentNames);
 	map<unsigned long, shared_ptr<Components::Component>> GetComponents(const unsigned int & id, unsigned long componentMask);
+	// Loads the secified component for the entity
+	shared_ptr<Components::Component> GetComponent(unsigned long & mask, shared_ptr<Entity> entity);
 
 	template <typename CompType>
-	inline shared_ptr<CompType> GetComponent(string name, const unsigned int & id) {
-		return dynamic_pointer_cast<CompType>(m_components[m_indices[m_masks[name]]]);
+	inline shared_ptr<CompType> GetComponent(shared_ptr<Entity> entity, string name) {
+		return std::dynamic_pointer_cast<CompType>(GetComponent(m_masks[name],entity));
 	}
-	// Adds a component to the specified entity
-	shared_ptr<Components::Component> AddComponent(const unsigned int & id, unsigned long componentMask);
+	void AddComponent(string name, shared_ptr<Components::Component> component);
 	// Get entities
-	vector<unsigned int> & Entities();
-	vector<unsigned int> Entities(unsigned long componentMask);
-	void LoadComponents(shared_ptr<Entity> & entity, unsigned long componentMask);
+	//vector<unsigned int> & Entities();
+	//vector<unsigned int> Entities(unsigned long componentMask);
+	//void LoadComponents(unsigned long componentMask);
 	// specific helpers
-	unsigned int Player();
+	shared_ptr<Entity> Player();
 	// loads
-	vector<unsigned int> EntitiesContaining(string componentName, unsigned long componentMask);
+	//vector<unsigned int> EntitiesContaining(string componentName);
 	
 	
 	
 	
 	// Component mapping
-	vector<string> Components(unsigned long componentMask);
+	/*vector<string> Components(unsigned long componentMask);
 	vector<unsigned long> ComponentMasks(unsigned long componentMask);
+	*/
 	unsigned long ComponentMask(vector<string> components);
 	unsigned long ComponentMask(string component);
 
@@ -49,27 +51,30 @@ public:
 	bool HasComponents(const unsigned int & id, unsigned long & componentMask);
 	unsigned long MissingComponents(const unsigned int & id, unsigned long & componentMask);
 	// Entity factories
-	unsigned int NewEntity();
+	shared_ptr<Entity> NewEntity();
+	// Entity list
+	vector<shared_ptr<Entity>> FindEntities(unsigned long componentMask);
 private:
 	const Filesystem::path m_directory;
 	// Manage Entity IDs
 	unsigned int m_ID;
 	unsigned int m_nextID;
+	const static string m_nextEntityFile; 
 
 	void AddComponentVector(string name);
-	vector<shared_ptr<Components::Component>> m_prototypes;
 	// Name, mask
 	map<string, unsigned long> m_masks;
+	map<unsigned long, string> m_names;
 	// Mask, index
 	map<unsigned long, unsigned int> m_indices;
 	static const int m_maskSize = 64;
-	// Entity list
-	unsigned int FindEntity(unsigned long componentMask);
-	vector<unsigned int> m_entities;
+	
 
-	unsigned int m_player;
+	shared_ptr<Entity> m_player;
 	// Component type is indexed by the first vector
-	vector<vector<shared_ptr<Components::Component>>> m_components;
+	//vector<vector<shared_ptr<Components::Component>>> m_components;
+
+	unordered_map<unsigned int, shared_ptr<Entity>> m_entities;
 	//// Importing components
 	//template <typename CompType>
 	//inline CompType ImportComponent(std::ifstream & ifs) {

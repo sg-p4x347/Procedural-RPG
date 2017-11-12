@@ -2,9 +2,6 @@
 #include "Position.h"
 
 namespace Components {
-	Position::Position() : Component::Component()
-	{
-	}
 	Position::Position(const Position & other) : Position::Position(other.ID,other.Pos,other.Rot)
 	{
 	}
@@ -17,6 +14,11 @@ namespace Components {
 	{
 		Pos = pos;
 		Rot = rot;
+	}
+
+	Position::~Position()
+	{
+		Save(Component::GetDirectory());
 	}
 
 
@@ -47,39 +49,6 @@ namespace Components {
 		Serialize(Rot.y, ofs);
 		Serialize(Rot.z, ofs);
 	}
-
-	vector<Position>& Position::GetComponents()
-	{
-		static vector<Position> components;
-		return components;
-	}
-
-	shared_ptr<Component> Position::Add(const unsigned int & id)
-	{
-		Position component = Position(id);
-		GetComponents().push_back(component);
-		return std::shared_ptr<Component>(&component);
-	}
-
-	shared_ptr<Component> Position::GetComponent(const unsigned int & id)
-	{
-		// Query in-memory list
-		for (Position & position : GetComponents()) {
-			if (position.ID == id) {
-				return std::shared_ptr<Component>(&position);
-			}
-		}
-		// Not found
-		return nullptr;
-	}
-
-	void Position::SaveAll(string directory)
-	{
-		for (Position & position : GetComponents()) {
-			position.Save(directory);
-		}
-	}
-
 	string Position::GetName()
 	{
 		return "Position";

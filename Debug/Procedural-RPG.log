@@ -2,37 +2,34 @@
   Color.dgsl
   MyDGSLShader.dgsl
   TerrainSystem.cpp
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(34): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(35): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(36): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(38): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(41): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(41): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(42): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(42): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(43): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(43): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(48): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(51): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(51): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(39): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(40): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(42): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(43): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(46): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(46): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(47): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(47): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(48): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(48): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
 c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(52): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(55): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(73): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(114): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(115): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(269): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(512): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(513): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(540): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(543): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(55): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(55): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(56): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(59): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(77): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(118): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(119): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(307): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(349): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(638): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(639): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\gage omega\programming\procedural-rpg\terrainsystem.cpp(680): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  SystemManager.cpp
   Generating Code...
   Skipping... (no relevant changes detected)
   World.cpp
-  SystemManager.cpp
-  System.cpp
-  Main.cpp
-  Game.cpp
-  EntityManager.cpp
+  InfrastructureSystem.cpp
   Procedural-RPG.vcxproj -> C:\Gage Omega\Programming\Procedural-RPG\Debug\Procedural-RPG.exe
   Procedural-RPG.vcxproj -> C:\Gage Omega\Programming\Procedural-RPG\Debug\Procedural-RPG.pdb (Partial PDB)

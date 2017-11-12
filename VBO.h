@@ -6,8 +6,7 @@ namespace Components {
 	{
 	public:
 		VBO(const unsigned int & id);
-		VBO(const VBO & other);
-		void CreateBuffers(shared_ptr<ID3D11Device> device);
+		void CreateBuffers(Microsoft::WRL::ComPtr<ID3D11Device> device);
 
 		// Vertex Buffer
 		Microsoft::WRL::ComPtr<ID3D11Buffer> VB;
@@ -15,17 +14,14 @@ namespace Components {
 		// Index Buffer
 		Microsoft::WRL::ComPtr<ID3D11Buffer> IB;
 		vector<unsigned int> Indices;
-
+		// Level Of Detail
+		int LOD;
+		bool LODchanged;
 		// Inherited via Component
-		virtual shared_ptr<Component> GetComponent(const unsigned int & id) override;
-		virtual void SaveAll(string directory) override;
 		virtual string GetName() override;
-		virtual shared_ptr<Component> Add(const unsigned int & id) override;
 	protected:
-		void CreateVB(shared_ptr<ID3D11Device> device);
-		void CreateIB(shared_ptr<ID3D11Device> device);
-		vector<VBO> & GetComponents();
-
+		void CreateVB(Microsoft::WRL::ComPtr<ID3D11Device> device);
+		void CreateIB(Microsoft::WRL::ComPtr<ID3D11Device> device);
 	};
 }
 

@@ -2,38 +2,34 @@
 #include "SystemManager.h"
 
 #include "TerrainSystem.h"
-//#include "RenderSystem.h"
-//#include "MovementSystem.h"
-//#include "InputSystem.h"
+#include "PlayerSystem.h"
+#include "RenderSystem.h"
+#include "MovementSystem.h"
+#include "InfrastructureSystem.h"
 
 SystemManager::SystemManager(
 	Filesystem::path directory,
-	Microsoft::WRL::ComPtr<ID3D11Device> device,
-	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
-	std::shared_ptr<DirectX::CommonStates> states,
+	std::shared_ptr<EntityManager> entityManager,
+	HWND window, int width, int height,
 	std::shared_ptr<DirectX::Mouse> mouse,
 	std::shared_ptr<DirectX::Keyboard> keyboard
-) : m_device(device), m_context(context)
+) : m_entityManager(entityManager)
 {
+	 
+	Filesystem::create_directories(directory);
 	//----------------------------------------------------------------
-	// initialize the entity manager
-	
-	m_entityManager = shared_ptr<EntityManager>(new EntityManager(directory));
-	//----------------------------------------------------------------
-	// initialize the systems 
-	Filesystem::path systemDir = directory / "System";
-	Filesystem::create_directories(systemDir);
-	// Terrain
-	AddSystem(std::shared_ptr<System>(new TerrainSystem(m_entityManager, vector<string>({ "Player","Position" }), 120, 64, systemDir)));
+	// Construct the systems 
 
-	//// Render
-	//m_systems.push_back(std::make_unique<System>(
-	//	new RenderSystem(m_entityManager, vector<string>({ "Position" }),1,device,context,states))
-	//);
-	// Input
-	/*m_systems.push_back(std::make_unique<System>(
-		new InputSystem(m_entityManager, vector<string>({ "Input","Movement" }), 1, mouse,keyboard))
-	);*/
+	AddSystem(std::shared_ptr<System>(new TerrainSystem(m_entityManager, vector<string>{ "Terrain","Position","VBO" }, 120, 1024, directory)));
+	AddSystem(std::shared_ptr<System>(new PlayerSystem(m_entityManager, vector<string>{ "Player","Position" }, 1,mouse,keyboard)));
+	AddSystem(std::shared_ptr<System>(new RenderSystem(m_entityManager, vector<string>{"VBO"}, 1, window, width, height)));
+	AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Movement"}, 1)));
+	AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Infrastructure"}, 0)));
+
+	//----------------------------------------------------------------
+	// Initialize the systems
+
+	//GetSystem<InfrastructureSystem>("Infrastructure")->SetTerrainSystem(GetSystem<TerrainSystem>("Terrain"));
 }
 
 SystemManager::~SystemManager()
@@ -45,6 +41,16 @@ void SystemManager::Tick(double & elapsed)
 	for (auto & systemEntry : m_systems) {
 		systemEntry.second->Tick(elapsed);
 	}
+}
+
+void SystemManager::Initialize()
+{
+	for (auto & system : m_systems) system.second->Initialize();
+}
+
+void SystemManager::Save()
+{
+	for (auto & system : m_systems) system.second->Save();
 }
 
 void SystemManager::AddSystem(shared_ptr<System> system)

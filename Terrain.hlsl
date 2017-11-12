@@ -273,8 +273,12 @@ P2F main(V2P pixel)
 	color = Transition(color, Texture3.Sample(TexSampler, pixel.uv).rgb, dirtStrength);
 	// lighting
 	color = LambertLighting(tangentLightDir, mul(worldNormal, worldToTangent), MaterialAmbient.rgb, AmbientLight.rgb, LightColor[0].rgb, color);
-	color *= Sigmoid(distance(EyePosition, pixel.worldPos), 0.25, 128.0, 256.0) + 1;
-	color.b += Sigmoid(distance(EyePosition, pixel.worldPos), 0.25, 128.0, 256.0);
+
+	float distanceWeight = Sigmoid(distance(EyePosition, pixel.worldPos), 1, 256.0, 512.0);
+	color *= (1- distanceWeight * 0.25);
+	color.r += distanceWeight * 0.1;
+	color.g += distanceWeight * 0.1;
+	color.b += distanceWeight * 0.35;
 	result.fragment = CombineRGBWithAlpha(color, 1.0);
 
     if (result.fragment.a == 0.0f) discard;

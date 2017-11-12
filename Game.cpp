@@ -6,6 +6,7 @@
 #include "Game.h"
 #include "Distribution.h"
 #include "Utility.h"
+#include "RenderSystem.h"
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
@@ -13,8 +14,8 @@ using Microsoft::WRL::ComPtr;
 
 Game::Game() :
     m_window(0),
-    m_outputWidth(800),
-    m_outputHeight(600),
+    m_outputWidth(1920),
+    m_outputHeight(1080),
     m_featureLevel(D3D_FEATURE_LEVEL_9_1)
 {
 }
@@ -22,51 +23,54 @@ Game::Game() :
 // Initialize the Direct3D resources required to run.
 void Game::Initialize(HWND window, int width, int height)
 {
-    m_window = window;
+    /*m_window = window;
     m_outputWidth = std::max(width, 1);
     m_outputHeight = std::max(height, 1);
 
     CreateDevice();
 
-    CreateResources();
+    CreateResources();*/
 
     // TODO: Change the timer settings if you want something other than the default variable timestep mode.
     // e.g. for 60 FPS fixed timestep update logic, call:
-	m_keyboard = std::make_unique<Keyboard>();
-	m_mouse = std::make_unique<Mouse>();
+	m_keyboard = std::make_shared<Keyboard>();
+	m_mouse = std::make_shared<Mouse>();
 	m_mouse->SetWindow(window);
 	m_mouse->SetMode(DirectX::Mouse::Mode::MODE_RELATIVE);
+	//m_mouse->SetDpi(DisplayInformation::GetForCurrentView()->LogicalDpi);
     m_timer.SetFixedTimeStep(true);
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
     
-	GenerateWorld(2, "test");
+
+	GenerateWorld(42, "test",window,width,height);
+	//LoadWorld("test", window, width, height);
 }
 
 // Executes the basic game loop.
 void Game::Tick()
 {
+	m_world->Initialize();
     m_timer.Tick([&]()
     {
         Update(m_timer);
-		Render();
+		//Render();
     });
 }
 
 // Updates the world.
 void Game::Update(DX::StepTimer const& timer)
 {
-    float elapsed = float(timer.GetElapsedSeconds());
+    double elapsed = timer.GetElapsedSeconds();
 
     // TODO: Add your game logic here.
-	float time = float(timer.GetTotalSeconds());
+	double time = timer.GetTotalSeconds();
 	// DX Input
 	auto keyboard = m_keyboard->GetState();
 	if (keyboard.Escape)
 		PostQuitMessage(0);
 
-	auto mouse = m_mouse->GetState();
 	// Update the world
-	//m_world->Update(elapsed,mouse,keyboard);
+	m_world->Update(elapsed);
 }
 
 void Game::Render()
@@ -78,10 +82,18 @@ void Game::Render()
 }
 
 
-void Game::GenerateWorld(int seed, string name)
+void Game::GenerateWorld(int seed, string name, HWND window, int width, int height)
 {
-	m_world = unique_ptr<World>(new World("saves/" + name, m_d3dDevice, m_d3dContext, m_states, m_mouse, m_keyboard));
+	Filesystem::remove_all("saves/" + name);
+	m_world = unique_ptr<World>(new World("saves/" + name, window, width, height, m_mouse, m_keyboard));
 	m_world->Generate(seed);
+	Tick();
+}
+
+void Game::LoadWorld(string name, HWND window, int width, int height)
+{
+	m_world = unique_ptr<World>(new World("saves/" + name, window, width, height, m_mouse, m_keyboard));
+	Tick();
 }
 
 // Presents the back buffer contents to the screen.
@@ -144,8 +156,8 @@ void Game::OnWindowSizeChanged(int width, int height)
 {
     m_outputWidth = std::max(width, 1);
     m_outputHeight = std::max(height, 1);
-
-    CreateResources();
+	m_world->GetSystemManager()->GetSystem<RenderSystem>("Render")->SetViewport(width, height);
+    //CreateResources();
 
     // TODO: Game window is being resized.
 }
@@ -357,10 +369,8 @@ void Game::CreateResources()
     DX::ThrowIfFailed(m_d3dDevice->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
 
 	// TODO: Initialize windows-size dependent objects here.
-	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f),
-		float(backBufferWidth) / float(backBufferHeight), 0.1f, 700.f);
-
-	m_world->CreateResources(backBufferWidth,backBufferHeight,m_projMatrix);
+	
+	//m_world->CreateResources(backBufferWidth,backBufferHeight,m_projMatrix);
 }
 
 void Game::OnDeviceLost()
@@ -378,7 +388,7 @@ void Game::OnDeviceLost()
     m_d3dDevice1.Reset();
     m_d3dDevice.Reset();
 
-    CreateDevice();
+    /*CreateDevice();
 
-    CreateResources();
+    CreateResources();*/
 }

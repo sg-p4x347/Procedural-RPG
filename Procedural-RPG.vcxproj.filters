@@ -8,20 +8,8 @@
     <Filter Include="Config">
       <UniqueIdentifier>{a0034a97-ab0a-4b02-9196-ded993123651}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Economy">
-      <UniqueIdentifier>{0e1b6816-0b70-475b-9e94-3a3f8f945d95}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Government">
-      <UniqueIdentifier>{b98916a2-571d-445e-8689-349831bcd453}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{4193cb6b-1cd8-46be-b2c7-a128ba331711}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Social">
-      <UniqueIdentifier>{d6ceef2a-d21d-449f-adf4-72676b183185}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Physical">
-      <UniqueIdentifier>{c3c949ec-8388-423c-a9b0-a1ec5c634fb8}</UniqueIdentifier>
     </Filter>
     <Filter Include="Architecture">
       <UniqueIdentifier>{7d4a7142-fe88-42a1-9c1c-d8d5f51b2207}</UniqueIdentifier>
@@ -53,54 +41,8 @@
     <ClInclude Include="ReadData.h" />
     <ClInclude Include="NameGenerator.h" />
     <ClInclude Include="History.h" />
-    <ClInclude Include="Continent.h" />
     <ClInclude Include="HeightMap.h" />
     <ClInclude Include="IdHandler.h" />
-    <ClInclude Include="InventoryItem.h">
-      <Filter>Economy</Filter>
-    </ClInclude>
-    <ClInclude Include="Inventory.h">
-      <Filter>Economy</Filter>
-    </ClInclude>
-    <ClInclude Include="State.h">
-      <Filter>Government</Filter>
-    </ClInclude>
-    <ClInclude Include="Account.h">
-      <Filter>Economy</Filter>
-    </ClInclude>
-    <ClInclude Include="Bank.h">
-      <Filter>Economy</Filter>
-    </ClInclude>
-    <ClInclude Include="Citizen.h">
-      <Filter>Social</Filter>
-    </ClInclude>
-    <ClInclude Include="Culture.h">
-      <Filter>Social</Filter>
-    </ClInclude>
-    <ClInclude Include="Occupation.h">
-      <Filter>Social</Filter>
-    </ClInclude>
-    <ClInclude Include="FederalBank.h">
-      <Filter>Economy</Filter>
-    </ClInclude>
-    <ClInclude Include="PrivateBank.h">
-      <Filter>Economy</Filter>
-    </ClInclude>
-    <ClInclude Include="Local.h">
-      <Filter>Government</Filter>
-    </ClInclude>
-    <ClInclude Include="Federal.h">
-      <Filter>Government</Filter>
-    </ClInclude>
-    <ClInclude Include="Loan.h">
-      <Filter>Economy</Filter>
-    </ClInclude>
-    <ClInclude Include="City.h">
-      <Filter>Physical</Filter>
-    </ClInclude>
-    <ClInclude Include="Road.h">
-      <Filter>Physical</Filter>
-    </ClInclude>
     <ClInclude Include="JsonParser.h" />
     <ClInclude Include="Building.h">
       <Filter>Architecture</Filter>
@@ -125,12 +67,6 @@
     <ClInclude Include="ISerialization.h" />
     <ClInclude Include="EntityManager.h">
       <Filter>Entity Component System</Filter>
-    </ClInclude>
-    <ClInclude Include="Event.h">
-      <Filter>Entity Component System\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="NewEntity.h">
-      <Filter>Entity Component System\Events</Filter>
     </ClInclude>
     <ClInclude Include="Filesystem.h">
       <Filter>Filesystem</Filter>
@@ -157,6 +93,31 @@
     <ClInclude Include="VBO.h">
       <Filter>Entity Component System\Components</Filter>
     </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Entity Component System\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerSystem.h">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem.h">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="MovementSystem.h">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="Movement.h">
+      <Filter>Entity Component System\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskThread.h" />
+    <ClInclude Include="resource1.h" />
+    <ClInclude Include="InfrastructureSystem.h" />
+    <ClInclude Include="City.h">
+      <Filter>Entity Component System\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Road.h">
+      <Filter>Entity Component System\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="ProUtil.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -168,54 +129,7 @@
     <ClCompile Include="World.cpp" />
     <ClCompile Include="NameGenerator.cpp" />
     <ClCompile Include="History.cpp" />
-    <ClCompile Include="Continent.cpp" />
-    <ClCompile Include="HeightMap.cpp" />
     <ClCompile Include="IdHandler.cpp" />
-    <ClCompile Include="Inventory.cpp">
-      <Filter>Economy</Filter>
-    </ClCompile>
-    <ClCompile Include="InventoryItem.cpp">
-      <Filter>Economy</Filter>
-    </ClCompile>
-    <ClCompile Include="State.cpp">
-      <Filter>Government</Filter>
-    </ClCompile>
-    <ClCompile Include="Account.cpp">
-      <Filter>Economy</Filter>
-    </ClCompile>
-    <ClCompile Include="Bank.cpp">
-      <Filter>Economy</Filter>
-    </ClCompile>
-    <ClCompile Include="Citizen.cpp">
-      <Filter>Social</Filter>
-    </ClCompile>
-    <ClCompile Include="Culture.cpp">
-      <Filter>Social</Filter>
-    </ClCompile>
-    <ClCompile Include="Occupation.cpp">
-      <Filter>Social</Filter>
-    </ClCompile>
-    <ClCompile Include="FederalBank.cpp">
-      <Filter>Economy</Filter>
-    </ClCompile>
-    <ClCompile Include="PrivateBank.cpp">
-      <Filter>Economy</Filter>
-    </ClCompile>
-    <ClCompile Include="Local.cpp">
-      <Filter>Government</Filter>
-    </ClCompile>
-    <ClCompile Include="Federal.cpp">
-      <Filter>Government</Filter>
-    </ClCompile>
-    <ClCompile Include="Loan.cpp">
-      <Filter>Economy</Filter>
-    </ClCompile>
-    <ClCompile Include="City.cpp">
-      <Filter>Physical</Filter>
-    </ClCompile>
-    <ClCompile Include="Road.cpp">
-      <Filter>Physical</Filter>
-    </ClCompile>
     <ClCompile Include="JsonParser.cpp" />
     <ClCompile Include="Building.cpp">
       <Filter>Architecture</Filter>
@@ -240,9 +154,6 @@
     <ClCompile Include="ISerialization.cpp" />
     <ClCompile Include="EntityManager.cpp">
       <Filter>Entity Component System</Filter>
-    </ClCompile>
-    <ClCompile Include="NewEntity.cpp">
-      <Filter>Entity Component System\Events</Filter>
     </ClCompile>
     <ClCompile Include="Filesystem.cpp">
       <Filter>Filesystem</Filter>
@@ -269,9 +180,34 @@
     <ClCompile Include="VBO.cpp">
       <Filter>Entity Component System\Components</Filter>
     </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Entity Component System\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerSystem.cpp">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem.cpp">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="MovementSystem.cpp">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="Movement.cpp">
+      <Filter>Entity Component System\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskThread.cpp" />
+    <ClCompile Include="InfrastructureSystem.cpp" />
+    <ClCompile Include="City.cpp">
+      <Filter>Entity Component System\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Road.cpp">
+      <Filter>Entity Component System\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="ProUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
+    <ResourceCompile Include="Procedural-RPG.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico">

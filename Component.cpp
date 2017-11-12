@@ -5,27 +5,40 @@
 using namespace Filesystem;
 
 namespace Components {
-
 	Component::Component(const unsigned int & id) : ID(id) {}
-
-	std::ofstream Component::GetOutputStream(string directory, const unsigned int & id)
+	Filesystem::path Component::m_directory;
+	std::ofstream Component::GetOutputStream(Filesystem::path directory, const unsigned int & id)
 	{
-		return std::ofstream(directory+ '\\' + GetName() + '\\' + std::to_string(id) + ".dat");
+		Filesystem::path componentDir = directory / GetName();
+		Filesystem::create_directory(componentDir);
+		return std::ofstream(componentDir / (std::to_string(id) + ".dat"));
 	}
-	std::ifstream Component::GetInputStream(string directory, const unsigned int & id)
+	std::ifstream Component::GetInputStream(Filesystem::path directory, const unsigned int & id)
 	{
-		return std::ifstream(directory + '\\' + GetName() + '\\' + std::to_string(id) + ".dat");
-	}
-
-	Component::Component()
-	{
+		Filesystem::path componentDir = directory / GetName();
+		Filesystem::create_directory(componentDir);
+		return std::ifstream(componentDir / (std::to_string(id) + ".dat"));
 	}
 
 	Component::Component(Component & other) : Component::Component(other.ID)
 	{
 	}
 
-	void Component::Save(string directory)
+	Component::~Component()
+	{
+	}
+
+	void Component::SetDirectory(Filesystem::path directory)
+	{
+		m_directory = directory;
+	}
+
+	Filesystem::path Component::GetDirectory()
+	{
+		return m_directory;
+	}
+
+	void Component::Save(Filesystem::path directory)
 	{
 		std::ofstream ofs = GetOutputStream(directory, ID);
 		if (ofs) {
@@ -33,29 +46,15 @@ namespace Components {
 			ofs.close();
 		}
 	}
-	shared_ptr<Component> Component::Load(string directory, const unsigned int & id)
+	void Component::Load(Filesystem::path directory, const unsigned int & id)
 	{
 		std::ifstream ifs = GetInputStream(directory, id);
 		if (ifs) {
-			shared_ptr<Component> component = Add(id);
-			component->Import(ifs);
+			Import(ifs);
 			ifs.close();
-			return component;
 		}
-		return nullptr;
 	}
 
-	// JSON
-	void Component::Import(JsonParser & obj)
-	{
-		ID = (unsigned int)obj["id"];
-	}
-	JsonParser Component::Export()
-	{
-		JsonParser obj;
-		obj.Set("id", ID);
-		return obj;
-	}
 	// ISerialization
 	void Component::Import(std::ifstream & ifs)
 	{

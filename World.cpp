@@ -6,113 +6,135 @@
 #include <iostream>
 #include "Filesystem.h"
 #include "TerrainSystem.h"
+#include "PlayerSystem.h"
 
 using namespace DirectX::SimpleMath;
 using namespace std;
 
 World::World(
 	string directory,
-	Microsoft::WRL::ComPtr<ID3D11Device> device,
-	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
-	std::shared_ptr<DirectX::CommonStates> states,
+	HWND window, int width, int height,
 	std::shared_ptr<DirectX::Mouse> mouse,
 	std::shared_ptr<DirectX::Keyboard> keyboard
 ) : m_directory(directory) {
-	m_systemManager = std::make_unique<SystemManager>(SystemManager(m_directory,device,context,states,mouse,keyboard));
-	CreateDevice(device);
-	m_d3dDevice = device;
-	JsonParser config(std::ifstream("config/continent.json"));
-	m_worldWidth = config["terrainMap"]["width"].To<int>();
-	m_regionWidth = 512;
-	m_loadWidth = 2;
-	m_NG = shared_ptr<NameGenerator>(new NameGenerator());
+	//----------------------------------------------------------------
+	// Initialize Filesystem Dependencies
+	Filesystem::create_directory(m_directory);
+
+	//----------------------------------------------------------------
+	// Initialize Managers
+	m_entityManager = std::shared_ptr<EntityManager>(new EntityManager(m_directory / "Component"));
+	m_systemManager = std::unique_ptr<SystemManager>(new SystemManager(m_directory / "System",m_entityManager, window, width, height,mouse,keyboard));
+	
+	//----------------------------------------------------------------
+	// Misc
+	//CreateDevice(device);
+	//m_d3dDevice = device;
+	//JsonParser config(std::ifstream("config/continent.json"));
+	//m_worldWidth = config["terrainMap"]["width"].To<int>();
+	//m_regionWidth = 512;
+	//m_loadWidth = 2;
+	//m_NG = shared_ptr<NameGenerator>(new NameGenerator());
 }
 World::World(const string directory) : m_directory(directory)
 {
 
 }
+void World::Initialize()
+{
+	m_systemManager->Initialize();
+}
+unique_ptr<SystemManager>& World::GetSystemManager()
+{
+	return m_systemManager;
+}
 // creates a new world
 void World::Generate(int seed) {
-	// Create the world directory
-	Filesystem::create_directory(m_directory);
 
 	// seed the RNG
 	srand(seed);
 
 	// generators
 
-	((TerrainSystem*)m_systemManager->m_systems["Terrain"].get())->Generate();
+	m_systemManager->GetSystem<TerrainSystem>("Terrain")->Generate();
+	m_systemManager->GetSystem<PlayerSystem>("Player")->CreatePlayer();
 	//shared_ptr<Continent> terrain = world->CreateTerrain(worldDir);
 	//world->CreateCities(terrain);
 	//GenerateHistory(m_cities);
-	//world->CreatePlayer();
+	CreatePlayer();
+	Save();
 	
 }
-shared_ptr<Continent> World::CreateTerrain(string directory)
+//shared_ptr<Continent> World::CreateTerrain(string directory)
+//{
+//	// generate the heightmap
+//	OutputDebugString(L"Generating heightmap...");
+//	Continent continent(directory);
+//	return std::make_shared<Continent>(continent);
+//	OutputDebugString(L"Finished!\n");
+//}
+void World::Save()
 {
-	// generate the heightmap
-	OutputDebugString(L"Generating heightmap...");
-	Continent continent(directory);
-	return std::make_shared<Continent>(continent);
-	OutputDebugString(L"Finished!\n");
+	m_entityManager->Save();
+	m_systemManager->Save();
 }
-void World::CreateCities(shared_ptr<Continent> Continent)
-{
-	OutputDebugString(L"Generating cities...");
-	JsonParser continentCfg(std::ifstream("config/continent.json"));
-	JsonParser cityCfg(std::ifstream("config/city.json"));
-	int maxCities = cityCfg["maxCities"].To<int>();
-	double maxElevation = cityCfg["maxElevation"].To<double>();
-	double minDistance = cityCfg["minDistance"].To<double>();
-	int areaWidth = cityCfg["areaWidth"].To<int>();
-
-	int i = 0;
-	while (i < maxCities) {
-	newCity:
-		Rectangle areaRect = Rectangle(randWithin(0, Continent->GetWidth() - areaWidth), randWithin(0, Continent->GetWidth() - areaWidth), areaWidth, areaWidth);
-		// TEMP
-		City city = City(areaRect, Continent->GetTerrain(), Continent->GetBiome());
-		m_cities.push_back(city);
-		i++;
-		continue;
-		//------------
-		
-		Vector2 pos = areaRect.Center();
-		// check elevation
-		float elevation = Continent->GetTerrain().map[(int)pos.x][(int)pos.y];
-		if (elevation > 0 && elevation < maxElevation) {
-			// check to see if the average of the four corners is close to the center
-			// this ensures that the terrain is not too rough
-			double sum = 0;
-			sum += Continent->GetTerrain().map[areaRect.x][areaRect.y];
-			sum += Continent->GetTerrain().map[areaRect.x + areaRect.width][areaRect.y];
-			sum += Continent->GetTerrain().map[areaRect.x][areaRect.y + areaRect.height];
-			sum += Continent->GetTerrain().map[areaRect.x + areaRect.width][areaRect.y + areaRect.height];
-			sum /= 4;
-			if (abs(Continent->GetTerrain().map[pos.x][pos.y] - sum) > 10.0) {
-				goto newCity;
-			}
-
-			// check proximity to all other cities
-			for (unsigned int j = 0; j < m_cities.size(); j++) {
-				if (abs(m_cities[j].GetPosition().x - pos.x) <= minDistance, abs(m_cities[j].GetPosition().y - pos.y) <= minDistance) {
-					goto newCity;
-				}
-			}
-
-			City city = City(areaRect, Continent->GetTerrain(), Continent->GetBiome());
-			m_cities.push_back(city);
-			i++;
-		}
-	}
-	OutputDebugString(L"Finished!\n");
-	
-}
-void World::GenerateHistory(vector<City> cities)
-{
-	m_federal = new Federal(cities);
-	m_federal->Update();
-}
+//void World::CreateCities(shared_ptr<Continent> Continent)
+//{
+//	OutputDebugString(L"Generating cities...");
+//	JsonParser continentCfg(std::ifstream("config/continent.json"));
+//	JsonParser cityCfg(std::ifstream("config/city.json"));
+//	int maxCities = cityCfg["maxCities"].To<int>();
+//	double maxElevation = cityCfg["maxElevation"].To<double>();
+//	double minDistance = cityCfg["minDistance"].To<double>();
+//	int areaWidth = cityCfg["areaWidth"].To<int>();
+//
+//	int i = 0;
+//	while (i < maxCities) {
+//	newCity:
+//		Rectangle areaRect = Rectangle(randWithin(0, Continent->GetWidth() - areaWidth), randWithin(0, Continent->GetWidth() - areaWidth), areaWidth, areaWidth);
+//		// TEMP
+//		City city = City(areaRect, Continent->GetTerrain(), Continent->GetBiome());
+//		m_cities.push_back(city);
+//		i++;
+//		continue;
+//		//------------
+//		
+//		Vector2 pos = areaRect.Center();
+//		// check elevation
+//		float elevation = Continent->GetTerrain().Map[(int)pos.x][(int)pos.y];
+//		if (elevation > 0 && elevation < maxElevation) {
+//			// check to see if the average of the four corners is close to the center
+//			// this ensures that the terrain is not too rough
+//			double sum = 0;
+//			sum += Continent->GetTerrain().Map[areaRect.x][areaRect.y];
+//			sum += Continent->GetTerrain().Map[areaRect.x + areaRect.width][areaRect.y];
+//			sum += Continent->GetTerrain().Map[areaRect.x][areaRect.y + areaRect.height];
+//			sum += Continent->GetTerrain().Map[areaRect.x + areaRect.width][areaRect.y + areaRect.height];
+//			sum /= 4;
+//			if (abs(Continent->GetTerrain().Map[pos.x][pos.y] - sum) > 10.0) {
+//				goto newCity;
+//			}
+//
+//			// check proximity to all other cities
+//			for (unsigned int j = 0; j < m_cities.size(); j++) {
+//				if (abs(m_cities[j].GetPosition().x - pos.x) <= minDistance, abs(m_cities[j].GetPosition().y - pos.y) <= minDistance) {
+//					goto newCity;
+//				}
+//			}
+//
+//			City city = City(areaRect, Continent->GetTerrain(), Continent->GetBiome());
+//			m_cities.push_back(city);
+//			i++;
+//		}
+//	}
+//	OutputDebugString(L"Finished!\n");
+//	
+//}
+//void World::GenerateHistory(vector<City> cities)
+//{
+//	m_federal = new Federal(cities);
+//	m_federal->Update();
+//}
 void World::CreatePlayer() {
 	
 }
@@ -126,23 +148,23 @@ void World::LoadWorld(string directory, string name) {
 void World::LoadRegions() {
 	
 }
-vector<shared_ptr<Architecture::Building>> World::BuildingsInRegion(const Rectangle & regionArea)
-{
-	vector<shared_ptr<Architecture::Building>> buildings;
-	// for each city
-	for (City & city : m_cities) {
-		if (city.GetArea().Intersects(regionArea)) {
-			// for each buliding
-			for (shared_ptr<Architecture::Building> & building : city.GetBuildings()) {
-				if (regionArea.Contains(building->GetFootprint().Center())) {
-					// this building is in the region
-					buildings.push_back(building);
-				}
-			}
-		}
-	}
-	return buildings;
-}
+//vector<shared_ptr<Architecture::Building>> World::BuildingsInRegion(const Rectangle & regionArea)
+//{
+//	vector<shared_ptr<Architecture::Building>> buildings;
+//	// for each city
+//	for (City & city : m_cities) {
+//		if (city.GetArea().Intersects(regionArea)) {
+//			// for each buliding
+//			for (shared_ptr<Architecture::Building> & building : city.GetBuildings()) {
+//				if (regionArea.Contains(building->GetFootprint().Center())) {
+//					// this building is in the region
+//					buildings.push_back(building);
+//				}
+//			}
+//		}
+//	}
+//	return buildings;
+//}
 
 
 XMFLOAT3 World::globalToRegionCoord(XMFLOAT3 position) {
@@ -154,6 +176,10 @@ void World::Import(JsonParser & jp)
 JsonParser World::Export()
 {
 	return JsonParser();
+}
+void World::Update(double elapsed)
+{
+	m_systemManager->Tick(elapsed);
 }
 void World::CreateDevice(Microsoft::WRL::ComPtr<ID3D11Device> device)
 {
@@ -219,10 +245,10 @@ float World::yOnABC(float x, float z, XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) {
 
 void World::CreateResources(unsigned int backBufferWidth, unsigned int backBufferHeight, SimpleMath::Matrix & projMatrix)
 {
-	/*m_effect->SetViewport(float(backBufferWidth), float(backBufferHeight));
 
-	m_effect->SetView(GetPlayer()->getViewMatrix());
-	m_effect->SetProjection(projMatrix);*/
+	
+
+	
 }
 void World::OnDeviceLost()
 {

@@ -44,7 +44,9 @@ private:
     void Update(DX::StepTimer const& timer);
 	void Render();
 	// Generates a world
-	void GenerateWorld(int seed,string name);
+	void GenerateWorld(int seed,string name, HWND window, int width, int height);
+	// Loads a world from file
+	void LoadWorld(string name, HWND window, int width, int height);
 	//--------------------------------
 	// DirectX
     void CreateDevice();
@@ -80,8 +82,7 @@ private:
 
 	
 
-	DirectX::XMMATRIX 			m_viewMatrix;
-	SimpleMath::Matrix  m_projMatrix;
+	
 	
 	// Input
 	std::shared_ptr<DirectX::Keyboard>				m_keyboard;
