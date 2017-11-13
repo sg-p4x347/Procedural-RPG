@@ -4,8 +4,8 @@
     // General
     "landAmplitude": 0.1, // scale factor For the continent map above ocean level
     "oceanAmplitude": 0.6, // scale factor For the continent map below ocean level
-    "biomeDeviationConst": 0.02, // scales the ammount Of deviation that mountain ranges have
-    "sampleSpacing": 128, // grid spacing Of component map samples (must be power Of two)
+    "biomeDeviationConst": 0.25, // scales the ammount Of deviation that mountain ranges have
+    "sampleSpacing": 32, // grid spacing Of component map samples (must be power Of two)
 
     // Continent Map (determines the rough shape of the continent, where land and sea are)
     "continentMap": {
@@ -22,17 +22,17 @@
     },
     // Terrain Map (the final terrain mesh generation, incorperating the continent And biome maps)
     "terrainMap": {
-        "width": 8192, // In meters (must be power Of two)
+        "width": 512, // In meters (must be power Of two)
         "initialDeviation": 0.0625, // initial vertical deviation (% Of width)
         "deviationDecrease": 1.15 // roughness (% decrease In deviation per iteration)
     },
     // Mountain configuration
     "mountains": {
-        "biomeAmplitude": 512.0, // how high the mountains are raised above the continental shelf
+        "biomeAmplitude": 64.0, // how high the mountains are raised above the continental shelf
         "biomeShift": 0.0, // shifts the range that Is selected from the biome map
-        "biomeWidth": 0.13, // the range that Is selected from the biome map
+        "biomeWidth": 0.07, // the range that Is selected from the biome map
         "continentShift": 0.0, // shifts the elevation that ocean To land transition takes place
-        "continentWidth": 0.01 // the range Of ocean To land transition For mountain ranges
+        "continentWidth": 0.4 // the range Of ocean To land transition For mountain ranges
     },
     // Biome differentiation (from the biomeMap) -1.......0.......1
     // {the center of the biome; the range of the biome (+ and -) from the center;}

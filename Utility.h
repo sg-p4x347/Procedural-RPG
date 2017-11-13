@@ -27,6 +27,8 @@ namespace Utility {
 			array[i] = value;
 		}
 	}
-	
+	float Gaussian(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
+	float Sigmoid(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
+	float Inverse(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
 }
 

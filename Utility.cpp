@@ -66,4 +66,15 @@ namespace Utility {
 	float Deviation(float range, float offset) {
 		return randWithin(-range * 0.5f + offset, range * 0.5f + offset);
 	}
+	float Gaussian(float x, float a, float b, float c) {
+		return a * exp(-pow((x - b) / (2.f*c), 2));
+	}
+	float Sigmoid(float x, float a, float b, float c) {
+		return a / (1.f + exp(-c * (x - b)));
+	}
+
+	float Inverse(float x, float a, float b, float c)
+	{
+		return a * (1 - 1 / (c * (x - b) + 1));
+	}
 }

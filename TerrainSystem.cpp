@@ -6,6 +6,7 @@
 #include "Movement.h"
 #include "Utility.h"
 #include "TaskThread.h"
+#include "TerrainCell.h"
 #include <thread>
 using namespace DirectX::SimpleMath;
 
@@ -161,7 +162,7 @@ void TerrainSystem::Generate()
 		m_terrain.diamondDeviation *= (0.5f * m_terrain.deviationDecrease);
 	}
 	// Erosion filter
-	//Erosion();
+	Erosion();
 	SaveTerrain();
 	CreateTerrainEntities();
 }
@@ -322,7 +323,7 @@ void TerrainSystem::UpdateRegions(Vector3 center)
 		
 		shared_ptr<Components::VBO> vbo = EM->GetComponent<Components::VBO>(entity, "VBO");
 		// Update the Level Of Detail as a funtion of distance
-		int lod = LOD(distance, (int)m_regionWidth) + 3;
+		int lod = LOD(distance, (int)m_regionWidth);
 		// Only update this VBO if the LOD has changed
 		if (vbo->LOD != lod) {
 			vbo->LOD = lod;
@@ -558,135 +559,119 @@ float TerrainSystem::Deviation(float range, float offset) {
 	return Utility::randWithin(-range * 0.5f + offset, range * 0.5f + offset);
 }
 float TerrainSystem::BiomeDeviation(float biome, float continent) {
-	return Gaussian(biome, m_biomeAmplitude, m_biomeShift, m_biomeWidth) * Sigmoid(continent, 1.f, m_continentShift, m_continentWidth);
-}
-float TerrainSystem::Gaussian(float x, float a, float b, float c) {
-	return a * exp(-pow((x - b) / (2.f*c), 2));
-}
-float TerrainSystem::Sigmoid(float x, float a, float b, float c) {
-	return a / (1.f + exp(-c * (x - b)));
+	return Utility::Gaussian(biome, m_biomeAmplitude, m_biomeShift, m_biomeWidth) * Utility::Sigmoid(continent, 1.f, m_continentShift, m_continentWidth);
 }
 
-float TerrainSystem::Inverse(float x, float a, float b, float c)
-{
-	return a * (1- 1/(c * (x-b)+1));
-}
 
 void TerrainSystem::Erosion() {
-	struct ErosionCell {
-		ErosionCell() {
-			Velocity = Vector3::Zero;
-			Water = 0.0;
-			Soil = 0.0;
-			Dissolved = 0.0;
-			DeltasApplied = false;
-		}
-		float Volume() { return Water + Dissolved; }
-		Vector3 Velocity;
-		int X;
-		int Z;
-		float Water;
-		float Soil;
-		float Dissolved;
-		float Height;
-
-		bool DeltasApplied;
-
-		void operator +=(ErosionCell & deltas) {
-			Velocity += deltas.Velocity;
-			Water += deltas.Water;
-			Soil += deltas.Soil;
-			Dissolved += deltas.Dissolved;
-		}
-		void ApplyDeltas(ErosionCell & deltas) {
-			if (!DeltasApplied) {
-				*this += deltas;
-
-				deltas = ErosionCell();
-				DeltasApplied = true;
-			}
-		}
-	};
-	HeightMap<ErosionCell> erosionMap(m_width,0,0,0);
-	HeightMap<ErosionCell> deltaMap(m_width, 0, 0, 0);
-	const int rainHeight = 32;
-	const int rainQty = 1;
+	HeightMap<TerrainCell> erosionMap(m_width,0,0,0);
+	HeightMap<TerrainCell> deltaMap(m_width, 0, 0, 0);
+	const float rainHeight = 8.f;
+	const float rainQty = 10.f;
 	const float g = 9.8;
+	const float maxDissolved = 0.3;
+	const float inertiaLoss = 0.1;
+	const int iterations = 200;
 	// begin the simulations
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < iterations; i++) {
 		for (int x = 0; x <= m_width; x++) {
 			for (int z = 0; z <= m_width; z++) {
-				ErosionCell & thisCell = erosionMap.Map[x][z];
-				thisCell.Height = m_terrain.Map[x][z];
-				thisCell.X = x;
-				thisCell.Z = z;
-				// add rain
-				if (thisCell.Height >= rainHeight) {
-					deltaMap.Map[x][z].Water += rainQty;
-				}
+				if (m_terrain.Map[x][z] >= 0) {
+					TerrainCell & thisCell = erosionMap.Map[x][z];
+					thisCell.Height = m_terrain.Map[x][z];
+					thisCell.X = x;
+					thisCell.Z = z;
 
-				// iterate over adjacent cells
-				float volume = thisCell.Volume();
+					// add rain
+					if (i == 0 && thisCell.Height > rainHeight) {
+						deltaMap.Map[x][z].Water += rainQty;
+					}
+					
 
-				vector<ErosionCell*> spreadable;
-				
+					// iterate over adjacent cells
+					float volume = thisCell.Volume();
 
-				float height_sum = thisCell.Height + volume;
+					vector<TerrainCell*> spreadable;
 
-				// find the spreadable cells and equalization level
-				for (int rot = 0; rot < 4; rot++) {
-					int adjX = x + round(cos(rot * XM_PI / 2));
-					int adjZ = z + round(sin(rot * XM_PI / 2));
-					if (adjX >= 0 && adjX <= m_terrain.width && adjZ >= 0 && adjZ <= m_terrain.width) {
 
-						// apply deltas
-						erosionMap.Map[adjX][adjZ].ApplyDeltas(deltaMap.Map[adjX][adjZ]);
-						erosionMap.Map[adjX][adjZ].Height = m_terrain.Map[adjX][adjZ];
-						erosionMap.Map[adjX][adjZ].X = adjX;
-						erosionMap.Map[adjX][adjZ].Z = adjZ;
+					float height_sum = thisCell.Height + volume;
 
-						float adjVolume = erosionMap.Map[adjX][adjZ].Volume();
-						if (erosionMap.Map[adjX][adjZ].Height + adjVolume < thisCell.Height + volume) {
-							spreadable.push_back(&erosionMap.Map[adjX][adjZ]);
-							height_sum += erosionMap.Map[adjX][adjZ].Height + adjVolume;
+					// find the spreadable cells and equalization level
+					for (int rot = 0; rot < 4; rot++) {
+						int adjX = x + round(cos(rot * XM_PI / 2));
+						int adjZ = z + round(sin(rot * XM_PI / 2));
+						if (adjX >= 0 && adjX <= m_terrain.width && adjZ >= 0 && adjZ <= m_terrain.width) {
+							erosionMap.Map[adjX][adjZ].Height = m_terrain.Map[adjX][adjZ];
+							erosionMap.Map[adjX][adjZ].X = adjX;
+							erosionMap.Map[adjX][adjZ].Z = adjZ;
+
+							float adjVolume = erosionMap.Map[adjX][adjZ].Volume();
+							if (erosionMap.Map[adjX][adjZ].Height + adjVolume < thisCell.Height + volume) {
+								spreadable.push_back(&erosionMap.Map[adjX][adjZ]);
+								height_sum += erosionMap.Map[adjX][adjZ].Height + adjVolume;
+							}
+						}
+					}
+					float equalization = height_sum / (spreadable.size() + 1);
+					vector<float> dh;
+					float dh_sum = 0.f;
+					float transferVolume = std::min(thisCell.Volume(), thisCell.Height + volume - equalization);
+					// find delta heights
+					for (TerrainCell * cell : spreadable) {
+						float this_dh = std::min(transferVolume, (thisCell.Height + volume) - (cell->Height + cell->Volume()));
+						dh_sum += this_dh;
+						dh.push_back(this_dh);
+					}
+
+					// apply the transfer
+					int c = 0;
+					if (dh_sum > 0.f) {
+						for (TerrainCell * cell : spreadable) {
+							float percent_transfer = (dh[c] / dh_sum) * (transferVolume / volume);
+							float soilTransferred = thisCell.Dissolved * percent_transfer;
+							float waterTransferred = thisCell.Water * percent_transfer;
+							float volumeTransferred = (soilTransferred + waterTransferred);
+							deltaMap.Map[cell->X][cell->Z].Dissolved += soilTransferred;
+							deltaMap.Map[cell->X][cell->Z].Water += waterTransferred;
+							deltaMap.Map[x][z].Dissolved -= soilTransferred;
+							deltaMap.Map[x][z].Water -= waterTransferred;
+
+							// calculate the Inertia that was transferred
+							float drop = thisCell.Height + volume - (cell->Height + cell->Volume() + volumeTransferred);
+							Vector3 inertia(cell->X - x, drop, cell->Z - z);
+							inertia.Normalize();
+							inertia *= std::sqrt(2 * g * drop) * volumeTransferred;
+
+							Vector3 currentInertia = cell->Velocity * (cell->Volume());
+
+							deltaMap.Map[cell->X][cell->Z].Velocity += ((currentInertia + inertia) / (cell->Volume() + volumeTransferred));
+							deltaMap.Map[cell->X][cell->Z].Velocity -= cell->Velocity;
+							deltaMap.Map[cell->X][cell->Z].Velocity *= (1 - inertiaLoss);
+
+							c++;
 						}
 					}
 				}
-				float equalization = height_sum / (spreadable.size() + 1);
-				vector<float> dh;
-				float dh_sum = 0.f;
-				float transferVolume = std::min(thisCell.Volume(), thisCell.Height + volume - equalization);
-				// find delta heights
-				for (ErosionCell * cell : spreadable) {
-					float this_dh = std::min(transferVolume, (thisCell.Height + volume) - (cell->Height + cell->Volume()));
-					dh_sum += this_dh;
-					dh.push_back(this_dh);
-				}
+			}
+		}
+		// Apply deltas
+		for (int x = 0; x <= m_width; x++) {
+			for (int z = 0; z <= m_width; z++) {
+				if (m_terrain.Map[x][z] > 0) {
+					TerrainCell & thisCell = erosionMap.Map[x][z];
+					thisCell.ApplyDeltas(deltaMap.Map[x][z]);
 
-				// apply the transfer
-				int c = 0;
-				for (ErosionCell * cell : spreadable) {
-					float percent_transfer = (dh[c] / dh_sum) * (transferVolume / volume);
-					float soilTransferred = thisCell.Dissolved * percent_transfer;
-					float waterTransferred = thisCell.Water * percent_transfer;
-					float volumeTransferred = (soilTransferred + waterTransferred);
-					deltaMap.Map[cell->X][cell->Z].Dissolved += soilTransferred;
-					deltaMap.Map[cell->X][cell->Z].Water += waterTransferred;
-					deltaMap.Map[x][z].Dissolved -= soilTransferred;
-					deltaMap.Map[x][z].Water -= waterTransferred;
-
-					// calculate the Inertia that was transferred
-					float drop = thisCell.Height + volume - (cell->Height + cell->Volume() + volumeTransferred);
-					Vector3 inertia(cell->X - x, drop , cell->Z - z);
-					inertia.Normalize();
-					inertia *= std::sqrt(2 * g * drop) * volumeTransferred;
-
-					Vector3 currentInertia = cell->Velocity * (cell->Volume());
 					
-					deltaMap.Map[cell->X][cell->Z].Velocity += ((currentInertia + inertia) / (cell->Volume() + volumeTransferred));
-					deltaMap.Map[cell->X][cell->Z].Velocity -= cell->Velocity;
+					//thisCell.Erode();
+					//thisCell.Deposit();
+					m_terrain.Map[x][z] = thisCell.Height;
 
-					c++;
+					// dump all dissolved soil at the end
+					if (i == iterations - 1) {
+						//m_terrain.Map[x][z] += thisCell.Dissolved;
+						m_terrain.Map[x][z] += thisCell.Water;
+					}
+
 				}
 			}
 		}

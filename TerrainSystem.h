@@ -72,11 +72,10 @@ protected:
 	float Deviation(float range, float offset = 0.0);
 	// Continent Generation -----------------------------------------
 	float BiomeDeviation(float biome, float continent);
-	float Gaussian(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
-	float Sigmoid(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
-	float Inverse(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
+	
 	// Erosion filter for generated terrain -------------------------
 	void Erosion();
+
 	void SaveTerrain();
 };
 
