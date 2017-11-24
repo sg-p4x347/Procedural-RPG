@@ -40,10 +40,6 @@ namespace Utility {
 	float pythag(double x, double y, double z) {
 		return sqrt(x*x + y*y + z*z);
 	}
-	float pythag(float x, float y)
-	{
-		return sqrt(x*x + y*y);
-	}
 	int posToIndex(int x, int y, int width) {
 		return (x + (y*width));
 	}
@@ -81,26 +77,15 @@ namespace Utility {
 	{
 		return a * (1 - 1 / (c * (x - b) + 1));
 	}
-
-	void Normalize(std::vector<float> & set)
-	{
-		float sum = 0.f;
+	std::vector<float> Normalize(std::vector<float> set) {
+		float sum = 0.0;
 		for (float value : set) {
-			sum += std::abs(value);
+			sum += value;
 		}
-		if (sum > 0.f) {
-			for (int i = 0; i < set.size(); i++) {
-				set[i] /= sum;
-			}
+		std::vector<float> normalized(set.size());
+		for (int i = 0; i < set.size(); i++) {
+			normalized[i] = set[i] / sum;
 		}
+		return normalized;
 	}
-
-	float InterpolateQuad(float x, float y, float bl, float br, float tr, float tl)
-	{
-		vector<float> distances{ sqrtTwo - pythag(x,y) ,sqrtTwo - pythag(1 - x,y),sqrtTwo - pythag(1 - x,1 - y),sqrtTwo - pythag(x,1 - y) };
-		Utility::Normalize(distances);
-
-		return (distances[0] * bl + distances[1] * br + distances[2] * tr + distances[3] * tl);
-	}
-	
 }

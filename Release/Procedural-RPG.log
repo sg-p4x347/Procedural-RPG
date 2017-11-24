@@ -1,9 +1,0 @@
-﻿  compilation object save succeeded; see C:\Gage Omega\Programming\Procedural-RPG\Release\Terrain.cso
-  Color.dgsl
-  MyDGSLShader.dgsl
-  Generating code
-  0 of 1802 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    3 functions had inline decision re-evaluated but remain unchanged
-  Finished generating code
-  Procedural-RPG.vcxproj -> C:\Gage Omega\Programming\Procedural-RPG\Release\Procedural-RPG.exe
