@@ -49,12 +49,11 @@ Temporary Items
 .db
 .opendb
 .vs
-.pdb
-
+*.ilk
+*.pdb
+*.obj
 /build/
 *.suo
-*.user
-_ReSharper.*/
 *.sdf
 bin/
 obj/
@@ -63,8 +62,5 @@ Release/
 *.opensdf
 *.tlog
 *.log
-TestResult.xml
-*.VisualState.xml
-Version.cs
 Version.h
 Version.cpp
