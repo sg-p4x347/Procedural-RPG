@@ -30,7 +30,7 @@ private:
 	//----------------------------------------------------------------
 	// Entities
 	shared_ptr<EntityManager> m_entityManager;
-
+	
 
 };
 

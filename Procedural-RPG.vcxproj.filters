@@ -254,5 +254,8 @@
     <FxCompile Include="Terrain.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="Water.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

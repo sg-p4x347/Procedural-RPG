@@ -3,7 +3,7 @@
 
 namespace Components {
 
-	VBO::VBO(const unsigned int & id) : Component::Component(id), LOD(-1), LODchanged(false)
+	VBO::VBO(const unsigned int & id) : Component::Component(id), LOD(-1), LODchanged(false), Effect("default")
 	{
 
 	}

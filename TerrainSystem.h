@@ -5,6 +5,7 @@
 #include "Position.h"
 #include "VBO.h"
 #include "Position.h"
+#include "TerrainCell.h"
 using DirectX::SimpleMath::Vector3;
 class TerrainSystem :
 	public System
@@ -31,6 +32,9 @@ public:
 	float Biome(const int & x, const int & z);
 	int Width();
 	DirectX::SimpleMath::Rectangle Area();
+
+	// terrain manipulation (TEMP currently only updates the VBO)
+	void SetVertex(const int & x, const int & z, const float value);
 protected:
 	//----------------------------------------------------------------
 	// Entity helpers
@@ -52,6 +56,7 @@ protected:
 	// 2 dimensional maps -------------------------------------------
 	HeightMap<float> m_terrain;
 	HeightMap<float> m_biome;
+	HeightMap<TerrainCell> m_erosionMap;
 	int m_width; // The total width of the continent (in meters)
 	const int m_regionWidth; // Width of region divisions (in meters)
 	Filesystem::path m_directory;
@@ -75,7 +80,7 @@ protected:
 	
 	// Erosion filter for generated terrain -------------------------
 	void Erosion();
-
+	void InitializeErosionMap();
 	void SaveTerrain();
 };
 

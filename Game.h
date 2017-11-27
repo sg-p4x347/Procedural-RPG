@@ -74,9 +74,9 @@ private:
     Microsoft::WRL::ComPtr<ID3D11RenderTargetView>  m_renderTargetView;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView>  m_depthStencilView;
 
-	std::shared_ptr<DirectX::CommonStates>		m_states;
+	std::shared_ptr<DirectX::CommonStates>			m_states;
 	
-	std::unique_ptr<EffectFactory>				m_fxFactory;
+	std::unique_ptr<DGSLEffectFactory>				m_fxFactory;
 
 	
 

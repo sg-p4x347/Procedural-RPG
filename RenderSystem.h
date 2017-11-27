@@ -13,6 +13,7 @@ public:
 	);
 	// Inherited via System
 	virtual void Update(double & elapsed) override;
+
 	void SetViewport(int width, int height);
 	~RenderSystem();
 private:
@@ -20,8 +21,12 @@ private:
 	shared_ptr<Entity> m_player;
 	// DirectX
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_inputLayout;
+	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_waterLayout;
 	Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_pixelShader;
+	Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_waterShader;
 	std::unique_ptr<DirectX::DGSLEffect>		m_effect;
+	vector<string> m_effectNames;
+
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture2;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture3;
@@ -47,12 +52,13 @@ private:
 
 	std::shared_ptr<DirectX::CommonStates>		m_states;
 
-	std::unique_ptr<EffectFactory>				m_fxFactory;
-
+	std::unique_ptr<DGSLEffectFactory>				m_fxFactory;
+	map<string,shared_ptr<DGSLEffect>> m_effects;
 	// Matricies
 	SimpleMath::Matrix	m_worldMatrix;
 	SimpleMath::Matrix 	m_viewMatrix;
 	SimpleMath::Matrix  m_projMatrix;
+	void UpdateEffectMatricies(int backBufferWidth, int backBufferHeight);
 	// Initializes window-dependent resources
 	void CreateResources();
 	// Initialzies window-independent resources
@@ -61,7 +67,7 @@ private:
 	void OnDeviceLost();
 
 	DirectX::XMMATRIX GetViewMatrix();
-	void RenderVBO(shared_ptr<Components::VBO> vbo, Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext, shared_ptr<PrimitiveBatch<DirectX::VertexPositionColor>> batch);
+	void RenderVBO(shared_ptr<Components::VBO> vbo, Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext, bool first);
 	void Clear();
 	void Present();
 	// Component

@@ -4,7 +4,7 @@ using namespace DirectX;
 
 namespace Utility {
 	float randWithin(float min, float max) {
-		return (float(rand())/float(RAND_MAX))*(max - min) + min;
+		return (float(rand()) / float(RAND_MAX))*(max - min) + min;
 	}
 	int randWithin(int min, int max) {
 		return rand() % (max - min) + min;
@@ -34,11 +34,20 @@ namespace Utility {
 	}
 	int sign(int integer)
 	{
-		return abs(integer) / integer;
+		if (integer != 0) {
+			return abs(integer) / integer;
+		}
+		else {
+			return 0;
+		}
 	}
-	
+
 	float pythag(double x, double y, double z) {
 		return sqrt(x*x + y*y + z*z);
+	}
+	float pythag(float x, float y)
+	{
+		return sqrt(x*x + y*y);
 	}
 	int posToIndex(int x, int y, int width) {
 		return (x + (y*width));
@@ -51,7 +60,11 @@ namespace Utility {
 	}
 	int indexToY(int index, int width)
 	{
-		return floor(index/width);
+		return floor(index / width);
+	}
+	void StringToWchar(string input, wchar_t * output)
+	{
+		MultiByteToWideChar(CP_UTF8, 0, input.c_str(), input.size(),output,-1);
 	}
 	int pnpoly(vector<Vector2> polygon, Vector2 test)
 	{
@@ -77,15 +90,26 @@ namespace Utility {
 	{
 		return a * (1 - 1 / (c * (x - b) + 1));
 	}
-	std::vector<float> Normalize(std::vector<float> set) {
-		float sum = 0.0;
+
+	void Normalize(std::vector<float> & set)
+	{
+		float sum = 0.f;
 		for (float value : set) {
-			sum += value;
+			sum += std::abs(value);
 		}
-		std::vector<float> normalized(set.size());
-		for (int i = 0; i < set.size(); i++) {
-			normalized[i] = set[i] / sum;
+		if (sum > 0.f) {
+			for (int i = 0; i < set.size(); i++) {
+				set[i] /= sum;
+			}
 		}
-		return normalized;
 	}
+
+	float InterpolateQuad(float x, float y, float bl, float br, float tr, float tl)
+	{
+		vector<float> distances{ sqrtTwo - pythag(x,y) ,sqrtTwo - pythag(1 - x,y),sqrtTwo - pythag(1 - x,1 - y),sqrtTwo - pythag(x,1 - y) };
+		Utility::Normalize(distances);
+
+		return (distances[0] * bl + distances[1] * br + distances[2] * tr + distances[3] * tl);
+	}
+
 }

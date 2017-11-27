@@ -1,6 +1,6 @@
 #pragma once
 /*
-Spread model adapted from 
+Spread model adapted from
 
 "Fast Hydraulic Erosion Simulation and Visualization on GPU"
 
@@ -34,6 +34,7 @@ public:
 	void UpdateFlux(float t);
 	void UpdateWater(float t);
 	void Erode(float t);
+	void Deposit(float t);
 	void Transport(float t);
 	void Evaporate(float t);
 private:

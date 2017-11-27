@@ -3,12 +3,12 @@
 #include "Utility.h"
 // water
 const float TerrainCell::rainHeight = 8.f;
-const float TerrainCell::rainQty = 5.f;
+const float TerrainCell::rainQty = 10.f;
 const float TerrainCell::g = 9.8;
 const float TerrainCell::maxDissolved = 0.3;
 static const float rainProbability = 1.f;
-static const float evaporationConstant = 0.0f;
-static const float damping = 0.9f;
+static const float evaporationConstant = 0.1f;
+static const float damping = 1.0f;
 
 // erosion
 static const float capacityConstant = 0.05f;

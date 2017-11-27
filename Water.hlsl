@@ -227,6 +227,9 @@ P2F main(V2P pixel)
 {
 	P2F result;
 	float3 color;
+	color.r = 0.0;
+	color.g = 0.0;
+	color.b = 0.5;
 	// we need to normalize incoming vectors
 	float3 surfaceNormal = normalize(pixel.normal);
 	float3 surfaceTangent = normalize(pixel.tangent.xyz);
@@ -241,52 +244,10 @@ P2F main(V2P pixel)
 	// transform some vectors into tangent space
 	float3 tangentLightDir = normalize(mul(LightDirection[0], worldToTangent));
 	float3 tangentToEyeVec = normalize(mul(toEyeVector, worldToTangent));
-
-	/* float3 local0 = worldNormal;
-	float3 local1 = normalize(mul(local0, worldToTangent));
-	float local3 = float4(pixel.worldPos.r, pixel.worldPos.g, pixel.worldPos.b, 0).g;
-	float local5 = distance(local3, float4(float3(0.000000f,-64.000000f,0.000000f).r, float3(0.000000f,-64.000000f,0.000000f).g, float3(0.000000f,-64.000000f,0.000000f).b, 0));
-	float3 local12 = (local5 >= 64.000000f ? (local5 > 64.000000f ? Texture2.Sample(TexSampler, pixel.uv).rgb : Texture1.Sample(TexSampler, pixel.uv).rgb) : Texture1.Sample(TexSampler, pixel.uv).rgb);
-	float3 local13 = (local5 >= 72.000000f ? (local5 > 72.000000f ? float4(1.000000f,1.000000f,1.000000f,1.000000f).rgb : local12) : local12);
-	float3 local14 = LambertLighting(tangentLightDir, local1, MaterialAmbient.rgb, AmbientLight.rgb, LightColor[0].rgb, local13);*/
-	float angle = acos((dot(surfaceNormal, worldNormal)) / (length(surfaceNormal)*length(worldNormal)));
-	float dirtStrength = (PI / 6.0 - angle) / (PI / 24.0);
-	dirtStrength = clamp(dirtStrength, 0, 1.0);
-	// merge textures based on slope
-
-	float landRatio = clamp(pixel.worldPos.y, 0.0, 1.0);
-	float snowRatio = clamp(pixel.worldPos.y - 64.0, 0.0, 1.0);
-	// elevation based texturing
-	if (pixel.worldPos.y >= 16) {
-		// highlands
-		color = Transition(Texture4.Sample(TexSampler, pixel.uv).rgb, Texture2.Sample(TexSampler, pixel.uv).rgb, snowRatio);
-	}
-	else if (pixel.worldPos.y >= 0) {
-		// lowlands
-		color = Transition(Texture2.Sample(TexSampler, pixel.uv).rgb, Texture1.Sample(TexSampler, pixel.uv).rgb, landRatio);
-	}
-	else {
-		// uderwater
-		color = Transition(Texture1.Sample(TexSampler, pixel.uv).rgb, Texture3.Sample(TexSampler, pixel.uv).rgb, dirtStrength);
-	}
-	// slope based texturing
-	color = Transition(color, Texture3.Sample(TexSampler, pixel.uv).rgb, dirtStrength);
-	// lighting
 	color = LambertLighting(tangentLightDir, mul(worldNormal, worldToTangent), MaterialAmbient.rgb, AmbientLight.rgb, LightColor[0].rgb, color);
-
-	// TEMP water
-
-
-
-
-	float distanceWeight = Sigmoid(distance(EyePosition, pixel.worldPos), 1, 256.0, 512.0);
-	color *= (1 - distanceWeight * 0.25);
-	color.r += distanceWeight * 0.1;
-	color.g += distanceWeight * 0.1;
-	color.b += distanceWeight * 0.35;
-
-	result.fragment = CombineRGBWithAlpha(color, 1);
-
+	
+	color += SpecularContribution(toEyeVector, LightDirection[1], surfaceNormal, float3(1.0, 1.0, 1.0), 2, 0.25, float3(1.0, 1.0, 1.0));
+	result.fragment = CombineRGBWithAlpha(color, 0.5f);
 	if (result.fragment.a == 0.0f) discard;
 
 	return result;

@@ -8,6 +8,8 @@ namespace Components {
 	public:
 		Player(const unsigned int & id);
 		~Player();
+
+
 		// Inherited via Component
 		virtual string GetName() override;
 

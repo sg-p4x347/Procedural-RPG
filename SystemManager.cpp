@@ -20,7 +20,7 @@ SystemManager::SystemManager(
 	//----------------------------------------------------------------
 	// Construct the systems 
 
-	AddSystem(std::shared_ptr<System>(new TerrainSystem(m_entityManager, vector<string>{ "Terrain","Position","VBO" }, 120, 128, directory)));
+	AddSystem(std::shared_ptr<System>(new TerrainSystem(m_entityManager, vector<string>{ "Terrain","Position","VBO" }, 1, 128, directory)));
 	AddSystem(std::shared_ptr<System>(new PlayerSystem(m_entityManager, vector<string>{ "Player","Position" }, 1,mouse,keyboard)));
 	AddSystem(std::shared_ptr<System>(new RenderSystem(m_entityManager, vector<string>{"VBO"}, 1, window, width, height)));
 	AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Movement"}, 1)));
