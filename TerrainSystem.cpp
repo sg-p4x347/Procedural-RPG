@@ -219,14 +219,14 @@ DirectX::SimpleMath::Rectangle TerrainSystem::Area()
 
 void TerrainSystem::SetVertex(const int & x, const int & z, const float value)
 {
-	vector<shared_ptr<Entity>> regions = EM->FindEntities(EM->ComponentMask("Terrain"));
+	/*vector<shared_ptr<Entity>> regions = EM->FindEntities(EM->ComponentMask("Terrain"));
 	for (auto & region : regions) {
 		shared_ptr<Components::Position> pos = EM->GetComponent<Components::Position>(region, "Position");
 
 	}
 	shared_ptr<Components::VBO> terrainVBO = EM->GetComponent<Components::VBO>(region, "VBO");
 
-	if (terrainVBO->Vertices.size() != 0) terrainVBO->Vertices[Utility::posToIndex(z, x, m_width + 1)].position.y = m_erosionMap.Map[x][z].Height;
+	if (terrainVBO->Vertices.size() != 0) terrainVBO->Vertices[Utility::posToIndex(z, x, m_width + 1)].position.y = m_erosionMap.Map[x][z].Height;*/
 }
 
 shared_ptr<Components::Position> TerrainSystem::PlayerPos()
@@ -289,7 +289,6 @@ void TerrainSystem::SaveTerrain()
 			normalBuffer.get()[index * 3] = char(normal.x);
 			normalBuffer.get()[index * 3 + 1] = char(normal.y);
 			normalBuffer.get()[index * 3 + 2] = char(normal.z);
-
 			// update vertex index
 			index++;
 		}
@@ -341,7 +340,7 @@ void TerrainSystem::UpdateRegions(Vector3 center)
 		// Update the Level Of Detail as a funtion of distance
 		int lod = LOD(distance, (int)m_regionWidth);
 		// Only update this VBO if the LOD has changed
-		if (vbo->LOD != lod) {
+		if (true || vbo->LOD != lod) {
 			vbo->LOD = lod;
 			
 			// Get the region coordinates
@@ -372,30 +371,30 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int region
 	ifstream normalStream(m_directory / "normal.dat", ios::binary);
 	
 
-	if (terrainStream.is_open() && normalStream.is_open()) {
-		// stores the exact bytes from the file into memory
-  		//char *terrainCharBuffer = new char[regionSize];
-		//char *normalCharBuffer = new char[vertexCount * 3];
-		// move start position to the region, and proceed to read each line into the Char buffers
-		
-		
-		for (int vertZ = 0; vertZ <= (int)mapWidth; vertZ++) {
-			for (int vertX = 0; vertX <= (int)mapWidth; vertX++) {
-				int worldX = vertX * quadWidth + (int)m_regionWidth * regionX;
-				int worldZ = vertZ * quadWidth + (int)m_regionWidth * regionZ;
-				int index = Utility::posToIndex(worldX, worldZ, m_width + 1);
-				// heightMap
-				heightMap.Map[vertX][vertZ] = InternalHeight(terrainStream, index);
-				// normalMap
-				normalMap.Map[vertX][vertZ] = Normal(normalStream,index);
-			}
-		}
+	//if (terrainStream.is_open() && normalStream.is_open()) {
+	//	// stores the exact bytes from the file into memory
+	// 		//char *terrainCharBuffer = new char[regionSize];
+	//	//char *normalCharBuffer = new char[vertexCount * 3];
+	//	// move start position to the region, and proceed to read each line into the Char buffers
+	//	
+	//	
+	//	for (int vertZ = 0; vertZ <= (int)mapWidth; vertZ++) {
+	//		for (int vertX = 0; vertX <= (int)mapWidth; vertX++) {
+	//			int worldX = vertX * quadWidth + (int)m_regionWidth * regionX;
+	//			int worldZ = vertZ * quadWidth + (int)m_regionWidth * regionZ;
+	//			int index = Utility::posToIndex(worldX, worldZ, m_width + 1);
+	//			// heightMap
+	//			heightMap.Map[vertX][vertZ] = InternalHeight(terrainStream, index);
+	//			// normalMap
+	//			normalMap.Map[vertX][vertZ] = Normal(normalStream,index);
+	//		}
+	//	}
 
-		terrainStream.close();
-		normalStream.close();
-		//delete[] terrainCharBuffer;
-		//delete[] normalCharBuffer;
-	}
+	//	terrainStream.close();
+	//	normalStream.close();
+	//	//delete[] terrainCharBuffer;
+	//	//delete[] normalCharBuffer;
+	//}
 	// create 2 triangles (6 vertices) for every quad in the region
 	vbo->Vertices.resize(6 * mapWidth * mapWidth);
 	vbo->Vertices.shrink_to_fit();
@@ -404,27 +403,40 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int region
 	int index = 0;
 	for (int z = 0; z < mapWidth; z++) {
 		for (int x = 0; x < mapWidth; x++) {
+			if (x != 0 && z != 0) {
+				float vertex = m_terrain.Map[x][z];
+				// normals
+				float left = signed(x) - 1 >= 0 ? m_erosionMap.Map[x - 1][z].Height + m_erosionMap.Map[x - 1][z].Water - 0.1f : vertex;
+				float right = signed(x) + 1 <= signed(m_erosionMap.width) ? m_erosionMap.Map[x + 1][z].Height + m_erosionMap.Map[x + 1][z].Water - 0.1f : vertex;
+				float up = signed(z - 1) + 1 <= signed(m_erosionMap.width) ? m_erosionMap.Map[x][z+1].Height + m_erosionMap.Map[x][z+1].Water - 0.1f : vertex;
+				float down = signed(z - 1) - 1 >= 0 ? m_erosionMap.Map[x][z - 1].Height + m_erosionMap.Map[x][z - 1].Water - 0.1f : vertex;
+
+				DirectX::SimpleMath::Vector3 normal = DirectX::SimpleMath::Vector3(left - right, 2.f, down - up);
+				normal.Normalize();
+
+				normalMap.Map[x][z] = normal;
+			}
 			// Get the indexes to the four points of the quad.
 
 			// Upper left.
 			Vector3 vertex1(
 				(float)(x * quadWidth + regionX * m_regionWidth),
-				heightMap.Map[x][z],
+				m_terrain.Map[x][z],
 				(float)(z * quadWidth + regionZ * m_regionWidth));
 			// Upper right.
 			Vector3 vertex2(
 				(float)((x + 1) * quadWidth + regionX * m_regionWidth),
-				heightMap.Map[x + 1][z],
+				m_terrain.Map[x + 1][z],
 				(float)(z * quadWidth + regionZ * m_regionWidth));
 			// Bottom left.
 			Vector3 vertex3(
 				(float)(x * quadWidth + regionX * m_regionWidth),
-				heightMap.Map[x][z + 1],
+				m_terrain.Map[x][z + 1],
 				(float)((z + 1) * quadWidth + regionZ * m_regionWidth));
 			// Bottom right.
 			Vector3 vertex4(
 				(float)((x + 1) * quadWidth + regionX * m_regionWidth),
-				heightMap.Map[x + 1][z + 1],
+				m_terrain.Map[x + 1][z + 1],
 				(float)((z + 1) * quadWidth + regionZ * m_regionWidth));
 
 			/*
@@ -634,6 +646,7 @@ void TerrainSystem::Erosion() {
 		for (int x = 0; x <= m_width; x++) {
 			TerrainCell & thisCell = m_erosionMap.Map[x][z];
 			if (i % 5 == 0) {
+				
 				thisCell.ApplyDeltas();
 
 				thisCell.Evaporate(timeInterval);
@@ -642,19 +655,19 @@ void TerrainSystem::Erosion() {
 				}
 
 				thisCell.UpdateGradient();
-
 			}
 			else if (i % 5 == 1) {
 				thisCell.UpdateFlux(timeInterval);
 			}
 			else if (i % 5 == 2) {
 				thisCell.UpdateWater(timeInterval);
-
 			}
 			else if (i % 5 == 3) {
+				
+				thisCell.Deposit(timeInterval);
+				
 				thisCell.Erode(timeInterval);
-				//thisCell.Deposit(timeInterval);
-
+				
 			}
 			else if (i % 5 == 4) {
 
@@ -671,6 +684,7 @@ void TerrainSystem::Erosion() {
 						m_erosionMap.Map[quadX][quadZ + 1].Suspended
 					);
 					thisCell.NextSuspended = suspended;
+					//thisCell.NextSuspended = 0.f;
 				}
 			}
 		}
@@ -684,11 +698,12 @@ void TerrainSystem::Erosion() {
 	int vertexBufferIndex = 0;
 	for (int z = 0; z <= m_width; z++) {
 		for (int x = 0; x <= m_width; x++) {
-			
+			// update Terrain
+			m_terrain.Map[x][z] = m_erosionMap.Map[x][z].Height;
 			
 			Vector3 vertex(
 				(float)x,
-				m_erosionMap.Map[x][z].Height + m_erosionMap.Map[x][z].Water - 0.1f,
+				m_erosionMap.Map[x][z].Height + m_erosionMap.Map[x][z].Suspended - 0.1f,
 				(float)z);
 			
 			vbo->Vertices[vertexBufferIndex] = {
@@ -741,6 +756,7 @@ void TerrainSystem::Erosion() {
 		}
 	}
 	vbo->LODchanged = true;
+	// Update VBOS
 	i++;
 }
 //void TerrainSystem::Erosion() {

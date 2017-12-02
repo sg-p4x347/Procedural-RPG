@@ -106,10 +106,10 @@ namespace Utility {
 
 	float InterpolateQuad(float x, float y, float bl, float br, float tr, float tl)
 	{
-		vector<float> distances{ sqrtTwo - pythag(x,y) ,sqrtTwo - pythag(1 - x,y),sqrtTwo - pythag(1 - x,1 - y),sqrtTwo - pythag(x,1 - y) };
+		vector<float> distances{ std::max(0.f,1.f-pythag(x,y)) , std::max(0.f,1.f - pythag(1 - x,y)), std::max(0.f,1.f - pythag(1 - x,1 - y)), std::max(0.f,1.f - pythag(x,1 - y)) };
 		Utility::Normalize(distances);
 
-		return (distances[0] * bl + distances[1] * br + distances[2] * tr + distances[3] * tl);
+		return ((distances[0]) * bl +( distances[1]) * br + (distances[2]) * tr +(distances[3]) * tl);
 	}
 
 }

@@ -7,13 +7,13 @@ const float TerrainCell::rainQty = 10.f;
 const float TerrainCell::g = 9.8;
 const float TerrainCell::maxDissolved = 0.3;
 static const float rainProbability = 1.f;
-static const float evaporationConstant = 0.1f;
-static const float damping = 1.0f;
+static const float evaporationConstant = 0.2f;
+static const float damping = 1.f;
 
 // erosion
 static const float capacityConstant = 0.05f;
 static const float minGradient = 0.25f;
-static const float dissolveConstant = 1.0f;
+static const float dissolveConstant = 1.f;
 static const float depositionConstant = 1.0f;
 
 TerrainCell::TerrainCell()
@@ -75,9 +75,8 @@ void TerrainCell::Rain(float t)
 void TerrainCell::Evaporate(float t)
 {
 	//Water = std::max(0.f, Water - evaporationConstant*t);
-	if (Velocity.Length() < 0.01f) {
-		Water -= Water * evaporationConstant *t;
-	}
+	
+	Water -= Water * evaporationConstant *t;
 }
 
 void TerrainCell::UpdateFlux(float t)
@@ -156,7 +155,7 @@ void TerrainCell::UpdateWater(float t)
 	float finalWater = Water + deltaVolume;
 	float avgWater = (finalWater + Water) / 2.f;
 	// update velocities
-	Velocity = avgWater != 0 ? Vector3(((right - left) / 2.f), 0.f, ((top - bottom)/ 2.f)) : Vector3::Zero;
+	Velocity = avgWater != 0 ? Vector3(((right - left) / 4.f), 0.f, ((top - bottom)/ 4.f)) : Vector3::Zero;
 
 	Water = finalWater;
 }
@@ -164,10 +163,8 @@ void TerrainCell::UpdateWater(float t)
 void TerrainCell::Erode(float t)
 {
 	
-
-	float capacity = Water * capacityConstant * std::max(0.f,(Utility::Sigmoid( Velocity.Length(),
-		1.f,0.f,1.f)-0.5f)*2);
-																		 
+	float capacity = Water * capacityConstant * std::max(0.f, (Utility::Sigmoid(Velocity.Length(),
+		2.f,0.f,2.f)-1.f));
 	// Destroy lone spires ----------
 	/*float average = 0.0;
 	for (int i = 0; i < 4; i++) {
@@ -219,7 +216,7 @@ void TerrainCell::Erode(float t)
 void TerrainCell::Deposit(float t)
 {
 	float capacity = Water * capacityConstant * std::max(0.f, (Utility::Sigmoid(Velocity.Length(),
-		1.f, 0.f, 1.f) - 0.5f) * 2);
+		1.f, 0.f, 0.1f) - 0.5f) * 2);
 
 	//-------------------
 	float difference = Suspended - capacity;
