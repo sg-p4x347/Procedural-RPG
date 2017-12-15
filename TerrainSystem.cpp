@@ -638,7 +638,7 @@ void TerrainSystem::Erosion() {
 
 	const int iterations = 1;
 	const float timeInterval = 0.1f;
-
+	
 
 	static int i = 0;
 
@@ -646,9 +646,33 @@ void TerrainSystem::Erosion() {
 		for (int x = 0; x <= m_width; x++) {
 			TerrainCell & thisCell = m_erosionMap.Map[x][z];
 			if (i % 5 == 0) {
-				
-				thisCell.ApplyDeltas();
+				float sourceX = x - thisCell.Velocity.x * timeInterval * 0.5;
+				float sourceZ = z - thisCell.Velocity.z * timeInterval * 0.5;
+				int quadX = std::floor(sourceX);
+				int quadZ = std::floor(sourceZ);
 
+				//if (quadX > 0 && quadX < m_width-1 && quadZ > 0 && quadZ < m_width-1) {
+				float points[4][4];
+				for (int px = -1; px < 3; px++) {
+					for (int pz = -1; pz < 3; pz++) {
+						if (quadX > 0 && quadX < m_width - 1 && quadZ > 0 && quadZ < m_width - 1) {
+							points[px + 1][pz + 1] = m_erosionMap.Map[quadX + px][quadZ + pz].Suspended;
+						}
+						else {
+							points[px + 1][pz + 1] = 0.f;
+						}
+					}
+				}
+				float suspended = Utility::BicubicInterpolation(points, sourceX - (float)quadX, sourceZ - (float)quadZ);
+
+				/*float suspended = Utility::InterpolateQuad(sourceX - (float)quadX, sourceZ - (float)quadZ,
+				m_erosionMap.Map[quadX][quadZ].Suspended,
+				m_erosionMap.Map[quadX + 1][quadZ].Suspended,
+				m_erosionMap.Map[quadX + 1][quadZ + 1].Suspended,
+				m_erosionMap.Map[quadX][quadZ + 1].Suspended
+				);*/
+				thisCell.NextSuspended += suspended;
+				
 				thisCell.Evaporate(timeInterval);
 				if ((i / 500) % 2 == 0) {
 					if (std::abs(z - m_width / 2) <= 3 && std::abs(x - m_width / 2) <= 3) thisCell.Rain(timeInterval);
@@ -663,33 +687,18 @@ void TerrainSystem::Erosion() {
 				thisCell.UpdateWater(timeInterval);
 			}
 			else if (i % 5 == 3) {
-				
-				thisCell.Deposit(timeInterval);
-				
 				thisCell.Erode(timeInterval);
-				
+				//thisCell.Deposit(timeInterval);
+
 			}
 			else if (i % 5 == 4) {
-
-				float sourceX = x - thisCell.Velocity.x * timeInterval;
-				float sourceZ = z - thisCell.Velocity.z * timeInterval;
-				int quadX = std::floor(sourceX);
-				int quadZ = std::floor(sourceZ);
-
-				if (quadX > 0 && quadX < m_width && quadZ > 0 && quadZ < m_width) {
-					float suspended = Utility::InterpolateQuad(sourceX - (float)quadX, sourceZ - (float)quadZ,
-						m_erosionMap.Map[quadX][quadZ].Suspended,
-						m_erosionMap.Map[quadX + 1][quadZ].Suspended,
-						m_erosionMap.Map[quadX + 1][quadZ + 1].Suspended,
-						m_erosionMap.Map[quadX][quadZ + 1].Suspended
-					);
-					thisCell.NextSuspended = suspended;
+				thisCell.ApplyDeltas();
+				
 					//thisCell.NextSuspended = 0.f;
-				}
+				//}
 			}
 		}
 	}
-
 	
 	// Update the VBO
 	shared_ptr<Components::VBO> vbo = EM->GetComponent<Components::VBO>(waterEntity,"VBO");
@@ -703,7 +712,7 @@ void TerrainSystem::Erosion() {
 			
 			Vector3 vertex(
 				(float)x,
-				m_erosionMap.Map[x][z].Height + m_erosionMap.Map[x][z].Suspended - 0.1f,
+				m_erosionMap.Map[x][z].Height + m_erosionMap.Map[x][z].Water- 0.1f,
 				(float)z);
 			
 			vbo->Vertices[vertexBufferIndex] = {

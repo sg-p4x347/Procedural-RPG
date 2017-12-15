@@ -9,12 +9,13 @@ const float TerrainCell::maxDissolved = 0.3;
 static const float rainProbability = 1.f;
 static const float evaporationConstant = 0.2f;
 static const float damping = 1.f;
-
+static const float viscocity = 8.f;
 // erosion
-static const float capacityConstant = 0.05f;
+const float transferConstant = 1.f;
+static const float capacityConstant = 0.3f;
 static const float minGradient = 0.25f;
-static const float dissolveConstant = 1.f;
-static const float depositionConstant = 1.0f;
+static const float dissolveConstant = 0.2f;
+static const float depositionConstant = 1.f;
 
 TerrainCell::TerrainCell()
 {
@@ -47,11 +48,9 @@ void TerrainCell::UpdateGradient()
 				|| Velocity.x < 0 && i == 2
 				|| Velocity.z > 0 && i == 1
 				|| Velocity.z < 0 && i == 3) {
-				
 			}*/
 			Gradient += std::abs(std::tan(Height - Adjacent[i]->Height));
 			sampleCount++;
-			
 		}
 	}
 	
@@ -60,7 +59,7 @@ void TerrainCell::UpdateGradient()
 
 void TerrainCell::ApplyDeltas()
 {
-	Suspended = NextSuspended;
+	Suspended = NextSuspended * transferConstant;
 	NextSuspended = 0;
 }
 
@@ -155,7 +154,7 @@ void TerrainCell::UpdateWater(float t)
 	float finalWater = Water + deltaVolume;
 	float avgWater = (finalWater + Water) / 2.f;
 	// update velocities
-	Velocity = avgWater != 0 ? Vector3(((right - left) / 4.f), 0.f, ((top - bottom)/ 4.f)) : Vector3::Zero;
+	Velocity = avgWater != 0 ? Vector3(((right - left)/2.f)/viscocity, 0.f, ((top - bottom)/2.f)/viscocity) : Vector3::Zero;
 
 	Water = finalWater;
 }
@@ -163,8 +162,8 @@ void TerrainCell::UpdateWater(float t)
 void TerrainCell::Erode(float t)
 {
 	
-	float capacity = Water * capacityConstant * std::max(0.f, (Utility::Sigmoid(Velocity.Length(),
-		2.f,0.f,2.f)-1.f));
+	float capacity =  Water * capacityConstant * std::max(0.f, (Utility::Sigmoid(Velocity.Length(),
+		2.f,0.f,1.f)-1.f));
 	// Destroy lone spires ----------
 	/*float average = 0.0;
 	for (int i = 0; i < 4; i++) {
@@ -185,16 +184,18 @@ void TerrainCell::Erode(float t)
 	//-------------------
 	float difference = capacity - Suspended;
 	if (capacity > Suspended) {
-		float erodeQty = dissolveConstant * difference;
-		//for (int i = 0; i < 4; i++) {
-		//	if (Adjacent[i] != nullptr) {
-		//		TerrainCell& adjacent = *Adjacent[i];
-		//		adjacent.Height -= erodeQty * 0.2;
-		//	}
-		//}
-		Suspended += erodeQty;
-		//// Erode
-		Height -= erodeQty;
+		Suspended += difference * dissolveConstant;
+		Height -= difference * dissolveConstant;
+		//float erodeQty = dissolveConstant * difference;
+		////for (int i = 0; i < 4; i++) {
+		////	if (Adjacent[i] != nullptr) {
+		////		TerrainCell& adjacent = *Adjacent[i];
+		////		adjacent.Height -= erodeQty * 0.2;
+		////	}
+		////}
+		
+		////// Erode
+		
 		//Suspended += dissolveConstant * difference;
 		//float erodedSoil = std::min(Soil, difference / soilResistance);
 		//difference -= erodedSoil * soilResistance;
@@ -205,18 +206,18 @@ void TerrainCell::Erode(float t)
 
 		//Suspended += (erodedSoil + erodedStone);
 		
+	} 
+	else if (Suspended > capacity) {
+		// Deposit
+		Height += -(depositionConstant * difference);
+		Suspended -= -(depositionConstant * difference);
 	}
-	//else if (Suspended > capacity) {
-	//	// Deposit
-	//	Height += -(depositionConstant * difference);
-	//	Suspended -= -(depositionConstant * difference);
-	//}
 }
 
 void TerrainCell::Deposit(float t)
 {
-	float capacity = Water * capacityConstant * std::max(0.f, (Utility::Sigmoid(Velocity.Length(),
-		1.f, 0.f, 0.1f) - 0.5f) * 2);
+	float capacity = capacityConstant * std::max(0.f, (Utility::Sigmoid(Velocity.Length(),
+		2.f, 0.f, 0.1f) - 1.f));
 
 	//-------------------
 	float difference = Suspended - capacity;

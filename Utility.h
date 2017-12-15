@@ -33,5 +33,7 @@ namespace Utility {
 	float Sigmoid(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
 	float Inverse(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
 	float InterpolateQuad(float x, float y, float bl, float br, float tr, float tl);
+	float CubicInterpolate(float p[4], float x);
+	float BicubicInterpolation(float p[4][4], float x, float y);
 }
 

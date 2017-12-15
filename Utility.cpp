@@ -112,4 +112,16 @@ namespace Utility {
 		return ((distances[0]) * bl +( distances[1]) * br + (distances[2]) * tr +(distances[3]) * tl);
 	}
 
+	float BicubicInterpolation(float p[4][4], float x, float y)
+	{
+		float arr[4];
+		arr[0] = CubicInterpolate(p[0], y);
+		arr[1] = CubicInterpolate(p[1], y);
+		arr[2] = CubicInterpolate(p[2], y);
+		arr[3] = CubicInterpolate(p[3], y);
+		return CubicInterpolate(arr, x);
+	}
+	float CubicInterpolate(float p[4], float x) {
+		return p[1] + 0.5 * x*(p[2] - p[0] + x*(2.0*p[0] - 5.0*p[1] + 4.0*p[2] - p[3] + x*(3.0*(p[1] - p[2]) + p[3] - p[0])));
+	}
 }
