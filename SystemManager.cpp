@@ -15,14 +15,14 @@ SystemManager::SystemManager(
 	std::shared_ptr<DirectX::Keyboard> keyboard
 ) : m_entityManager(entityManager)
 {
-	 
-	Filesystem::create_directories(directory);
+	Filesystem::path systemsDir = directory / "System";
+	Filesystem::create_directories(systemsDir);
 	//----------------------------------------------------------------
 	// Construct the systems 
 
-	AddSystem(std::shared_ptr<System>(new TerrainSystem(m_entityManager, vector<string>{ "Terrain","Position","VBO" }, 1, 128, directory)));
+	AddSystem(std::shared_ptr<System>(new TerrainSystem(m_entityManager, vector<string>{ "Terrain","Position","VBO" }, 1, 128, systemsDir)));
 	AddSystem(std::shared_ptr<System>(new PlayerSystem(m_entityManager, vector<string>{ "Player","Position" }, 1,mouse,keyboard)));
-	AddSystem(std::shared_ptr<System>(new RenderSystem(m_entityManager, vector<string>{"VBO"}, 1, window, width, height)));
+	AddSystem(std::shared_ptr<System>(new RenderSystem(m_entityManager, vector<string>{"VBO"}, 1, window, width, height,directory / "Assets")));
 	AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Movement"}, 1)));
 	AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Infrastructure"}, 0)));
 

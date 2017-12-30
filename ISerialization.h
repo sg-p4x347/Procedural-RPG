@@ -15,6 +15,10 @@ public:
 		}*/
 		delete[] bytes;
 	}
+	template <>
+	inline void Serialize(string & value, std::ofstream & ofs) {
+		ofs.write(value.c_str(), sizeof(char) * (value.length() + 1));
+	}
 	template <typename T>
 	inline void DeSerialize(T & value, std::ifstream & ifs) {
 		char* bytes = new char[sizeof(T)];
@@ -22,6 +26,10 @@ public:
 		memcpy(&value, bytes, sizeof(T));
 		
 		delete[] bytes;
+	}
+	template <>
+	inline void DeSerialize(string & value, std::ifstream & ifs) {
+		std::getline(ifs, value, '\0');
 	}
 };
 

@@ -5,7 +5,10 @@
 #include "Position.h"
 #include "VBO.h"
 #include "Position.h"
-#include "TerrainCell.h"
+#include "WaterCell.h"
+#include "Droplet.h"
+#include "ThermalCell.h"
+
 using DirectX::SimpleMath::Vector3;
 class TerrainSystem :
 	public System
@@ -24,11 +27,13 @@ public:
 	// Inherited via System
 	virtual void Update(double & elapsed) override;
 	virtual string Name() override;
+	virtual void SyncEntities() override;
 	//----------------------------------------------------------------
 	// Public interface
 	void Generate();
 	string GetBiomeName(float sample);
 	float Height(const int & x, const int & z);
+
 	float Biome(const int & x, const int & z);
 	int Width();
 	DirectX::SimpleMath::Rectangle Area();
@@ -37,31 +42,25 @@ public:
 	void SetVertex(const int & x, const int & z, const float value);
 protected:
 	//----------------------------------------------------------------
-	// Entity helpers
+	// Entities
 	shared_ptr<Components::Position> PlayerPos();
+	vector<shared_ptr<Entity>> m_terrainEntities;
+	vector<shared_ptr<Entity>> m_waterEntities;
 	//----------------------------------------------------------------
 	// Threading
 	std::thread m_worker;
-	//TaskThread m_workerThread;
 	//----------------------------------------------------------------
 	// Loading and Updating Regions
-
-	// Creates all terrain regions in the world
-	void CreateTerrainEntities();
-	void UpdateRegions(DirectX::SimpleMath::Vector3 center);
-	void UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int x, int z);
 	int LOD(double distance, unsigned int modelWidth);
-	void NewTerrain(DirectX::SimpleMath::Vector3 & position);
+	
 
 	// 2 dimensional maps -------------------------------------------
-	HeightMap<float> m_terrain;
-	HeightMap<float> m_biome;
-	HeightMap<TerrainCell> m_erosionMap;
-	int m_width; // The total width of the continent (in meters)
-	const int m_regionWidth; // Width of region divisions (in meters)
+	int m_width;				// The total width of the continent (in meters)
+	const int m_regionWidth;	// Width of region divisions (in meters)
 	Filesystem::path m_directory;
-	float InternalHeight(std::ifstream & ifs, const int & index);
+	float InternalHeight(std::ifstream & ifs, const int & index, float precision);
 	Vector3 Normal(std::ifstream & ifs, const int & index);
+	
 	//----------------------------------------------------------------
 	// Generation parameters
 	int m_sampleSpacing;
@@ -71,16 +70,45 @@ protected:
 	float m_continentAmplitude;
 	float m_continentShift;
 	float m_continentWidth;
-	// Diamond Square Algorithm -------------------------------------
-	float Diamond(HeightMap<float> & map, int & x, int & y, int & distance);
-	float Square(HeightMap<float> & map, int & x, int & y, int & distance);
+	//----------------------------------------------------------------
+	// Diamond Square Algorithm
+	float Diamond(HeightMap & map, int & x, int & y, int & distance);
+	float Square(HeightMap & map, int & x, int & y, int & distance);
 	float Deviation(float range, float offset = 0.0);
-	// Continent Generation -----------------------------------------
+	//----------------------------------------------------------------
+	// Continent Generation
 	float BiomeDeviation(float biome, float continent);
 	
-	// Erosion filter for generated terrain -------------------------
-	void Erosion();
-	void InitializeErosionMap();
-	void SaveTerrain();
+	//----------------------------------------------------------------
+	// Droplet and Thermal based erosion
+	shared_ptr<Map<WaterCell>> InitializeErosionMap();
+	shared_ptr<Map<ThermalCell>> InitializeThermalErosionMap();
+	shared_ptr<vector<Droplet>> InitializeDroplets();
+
+	void UpdateDroplets(HeightMap & terrain, shared_ptr<vector<Droplet>> droplets, shared_ptr<Map<ThermalCell>> thermal);
+	void UpdateWater(HeightMap & terrain, shared_ptr<Map<WaterCell>> water);
+	//----------------------------------------------------------------
+	// Updating meshes
+	void UpdateRegions(DirectX::SimpleMath::Vector3 center);
+	shared_ptr<HeightMap> UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int  x, int  z);
+	void UpdateWaterVBO(shared_ptr < Components::VBO> vbo, shared_ptr<HeightMap> terrain, int  x, int z);
+	VertexPositionNormalTangentColorTexture CreateVertex(Vector3 position, Vector3 normal, Vector2 texture);
+	float LowestNeighbor(HeightMap & water,HeightMap & terrain, int x, int z);
+	//----------------------------------------------------------------
+	// Terrain
+	void CreateTerrainEntities();
+	void NewTerrain(DirectX::SimpleMath::Vector3 & position);
+	void SaveTerrain(HeightMap & terrain, HeightMap & biome);
+	//----------------------------------------------------------------
+	// Water
+	void CreateWaterEntities();
+	void NewWater(DirectX::SimpleMath::Vector3 & position);
+	void SaveWater(shared_ptr<Map<WaterCell>> water);
+	//----------------------------------------------------------------
+	// Trees
+	void CreateTreeEntities(HeightMap & terrain, shared_ptr<Map<WaterCell>> water);
+	void NewTree(DirectX::SimpleMath::Vector3 & position,Vector3 & rotation);
+	float TreeGradientProbability(float gradient);
+	float TreeElevationProbability(float elevation);
 };
 

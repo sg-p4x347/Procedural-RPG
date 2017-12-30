@@ -24,7 +24,7 @@ World::World(
 	//----------------------------------------------------------------
 	// Initialize Managers
 	m_entityManager = std::shared_ptr<EntityManager>(new EntityManager(m_directory / "Component"));
-	m_systemManager = std::unique_ptr<SystemManager>(new SystemManager(m_directory / "System",m_entityManager, window, width, height,mouse,keyboard));
+	m_systemManager = std::unique_ptr<SystemManager>(new SystemManager(m_directory,m_entityManager, window, width, height,mouse,keyboard));
 	
 	//----------------------------------------------------------------
 	// Misc
@@ -101,17 +101,17 @@ void World::Save()
 //		
 //		Vector2 pos = areaRect.Center();
 //		// check elevation
-//		float elevation = Continent->GetTerrain().Map[(int)pos.x][(int)pos.y];
+//		float elevation = Continent->GetTerrain().map[(int)pos.x][(int)pos.y];
 //		if (elevation > 0 && elevation < maxElevation) {
 //			// check to see if the average of the four corners is close to the center
 //			// this ensures that the terrain is not too rough
 //			double sum = 0;
-//			sum += Continent->GetTerrain().Map[areaRect.x][areaRect.y];
-//			sum += Continent->GetTerrain().Map[areaRect.x + areaRect.width][areaRect.y];
-//			sum += Continent->GetTerrain().Map[areaRect.x][areaRect.y + areaRect.height];
-//			sum += Continent->GetTerrain().Map[areaRect.x + areaRect.width][areaRect.y + areaRect.height];
+//			sum += Continent->GetTerrain().map[areaRect.x][areaRect.y];
+//			sum += Continent->GetTerrain().map[areaRect.x + areaRect.width][areaRect.y];
+//			sum += Continent->GetTerrain().map[areaRect.x][areaRect.y + areaRect.height];
+//			sum += Continent->GetTerrain().map[areaRect.x + areaRect.width][areaRect.y + areaRect.height];
 //			sum /= 4;
-//			if (abs(Continent->GetTerrain().Map[pos.x][pos.y] - sum) > 10.0) {
+//			if (abs(Continent->GetTerrain().map[pos.x][pos.y] - sum) > 10.0) {
 //				goto newCity;
 //			}
 //
@@ -183,55 +183,55 @@ void World::Update(double elapsed)
 }
 void World::CreateDevice(Microsoft::WRL::ComPtr<ID3D11Device> device)
 {
-	// Create DGSL Effect
-	auto blob = DX::ReadData(L"Terrain.cso"); // .cso is the compiled version of the hlsl shader (compiled shader object)
-	DX::ThrowIfFailed(device->CreatePixelShader(&blob.front(), blob.size(),
-		nullptr, m_pixelShader.ReleaseAndGetAddressOf()));
+	//// Create DGSL Effect
+	//auto blob = DX::ReadData(L"Terrain.cso"); // .cso is the compiled version of the hlsl shader (compiled shader object)
+	//DX::ThrowIfFailed(device->CreatePixelShader(&blob.front(), blob.size(),
+	//	nullptr, m_pixelShader.ReleaseAndGetAddressOf()));
 
-	m_effect = std::make_unique<DGSLEffect>(device.Get(), m_pixelShader.Get());
-	m_effect->SetTextureEnabled(true);
-	m_effect->SetVertexColorEnabled(true);
-	//---Textures---
-	DX::ThrowIfFailed(
-		CreateDDSTextureFromFile(device.Get(), L"dirt.dds", nullptr,
-			m_texture.ReleaseAndGetAddressOf()));
+	//m_effect = std::make_unique<DGSLEffect>(device.Get(), m_pixelShader.Get());
+	//m_effect->SetTextureEnabled(true);
+	//m_effect->SetVertexColorEnabled(true);
+	////---Textures---
+	//DX::ThrowIfFailed(
+	//	CreateDDSTextureFromFile(device.Get(), L"dirt.dds", nullptr,
+	//		m_texture.ReleaseAndGetAddressOf()));
 
-	m_effect->SetTexture(m_texture.Get());
+	//m_effect->SetTexture(m_texture.Get());
 
-	DX::ThrowIfFailed(
-		CreateDDSTextureFromFile(device.Get(), L"grass.dds", nullptr,
-			m_texture2.ReleaseAndGetAddressOf()));
+	//DX::ThrowIfFailed(
+	//	CreateDDSTextureFromFile(device.Get(), L"grass.dds", nullptr,
+	//		m_texture2.ReleaseAndGetAddressOf()));
 
-	m_effect->SetTexture(1, m_texture2.Get());
+	//m_effect->SetTexture(1, m_texture2.Get());
 
-	DX::ThrowIfFailed(
-		CreateDDSTextureFromFile(device.Get(), L"stone.dds", nullptr,
-			m_texture3.ReleaseAndGetAddressOf()));
+	//DX::ThrowIfFailed(
+	//	CreateDDSTextureFromFile(device.Get(), L"stone.dds", nullptr,
+	//		m_texture3.ReleaseAndGetAddressOf()));
 
-	m_effect->SetTexture(2, m_texture3.Get());
+	//m_effect->SetTexture(2, m_texture3.Get());
 
-	DX::ThrowIfFailed(
-		CreateDDSTextureFromFile(device.Get(), L"snow.dds", nullptr,
-			m_texture4.ReleaseAndGetAddressOf()));
+	//DX::ThrowIfFailed(
+	//	CreateDDSTextureFromFile(device.Get(), L"snow.dds", nullptr,
+	//		m_texture4.ReleaseAndGetAddressOf()));
 
-	m_effect->SetTexture(3, m_texture4.Get());
-	//---Textures---
+	//m_effect->SetTexture(3, m_texture4.Get());
+	////---Textures---
 
-	m_effect->EnableDefaultLighting();
+	//m_effect->EnableDefaultLighting();
 
-	void const* shaderByteCode;
-	size_t byteCodeLength;
+	//void const* shaderByteCode;
+	//size_t byteCodeLength;
 
-	m_effect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
+	//m_effect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
 
-	DX::ThrowIfFailed(device->CreateInputLayout(
-		VertexPositionNormalTangentColorTexture::InputElements,
-		VertexPositionNormalTangentColorTexture::InputElementCount,
-		shaderByteCode, byteCodeLength,
-		m_inputLayout.ReleaseAndGetAddressOf()));
+	//DX::ThrowIfFailed(device->CreateInputLayout(
+	//	VertexPositionNormalTangentColorTexture::InputElements,
+	//	VertexPositionNormalTangentColorTexture::InputElementCount,
+	//	shaderByteCode, byteCodeLength,
+	//	m_inputLayout.ReleaseAndGetAddressOf()));
 
-	// Matricies
-	m_worldMatrix = Matrix::Identity;
+	//// Matricies
+	//m_worldMatrix = Matrix::Identity;
 
 }
 float World::yOnABC(float x, float z, XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) {

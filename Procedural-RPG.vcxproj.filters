@@ -29,6 +29,15 @@
     <Filter Include="Entity Component System\Components">
       <UniqueIdentifier>{4150576b-b7a0-424e-b96a-08926646b170}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Erosion">
+      <UniqueIdentifier>{2219550b-d286-4105-b484-2b7184c72a03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="models">
+      <UniqueIdentifier>{1b6b32fb-6beb-42a6-ae40-5b156c1af3d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="textures">
+      <UniqueIdentifier>{4528db37-5026-4770-b8bc-da90a4383f75}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -41,7 +50,6 @@
     <ClInclude Include="ReadData.h" />
     <ClInclude Include="NameGenerator.h" />
     <ClInclude Include="History.h" />
-    <ClInclude Include="HeightMap.h" />
     <ClInclude Include="IdHandler.h" />
     <ClInclude Include="JsonParser.h" />
     <ClInclude Include="Building.h">
@@ -118,7 +126,27 @@
       <Filter>Entity Component System\Components</Filter>
     </ClInclude>
     <ClInclude Include="ProUtil.h" />
-    <ClInclude Include="TerrainCell.h" />
+    <ClInclude Include="Map.h" />
+    <ClInclude Include="HeightMap.h" />
+    <ClInclude Include="Droplet.h">
+      <Filter>Erosion</Filter>
+    </ClInclude>
+    <ClInclude Include="ThermalCell.h">
+      <Filter>Erosion</Filter>
+    </ClInclude>
+    <ClInclude Include="Stratum.h" />
+    <ClInclude Include="WaterCell.h">
+      <Filter>Erosion</Filter>
+    </ClInclude>
+    <ClInclude Include="Tag.h">
+      <Filter>Entity Component System\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="ConversionUtil.h" />
+    <ClInclude Include="AssetManager.h" />
+    <ClInclude Include="Model.h">
+      <Filter>Entity Component System\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="MathConstants.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -205,7 +233,23 @@
       <Filter>Entity Component System\Components</Filter>
     </ClCompile>
     <ClCompile Include="ProUtil.cpp" />
-    <ClCompile Include="TerrainCell.cpp" />
+    <ClCompile Include="HeightMap.cpp" />
+    <ClCompile Include="Droplet.cpp">
+      <Filter>Erosion</Filter>
+    </ClCompile>
+    <ClCompile Include="ThermalCell.cpp">
+      <Filter>Erosion</Filter>
+    </ClCompile>
+    <ClCompile Include="Stratum.cpp" />
+    <ClCompile Include="WaterCell.cpp">
+      <Filter>Erosion</Filter>
+    </ClCompile>
+    <ClCompile Include="Tag.cpp">
+      <Filter>Entity Component System\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="ConversionUtil.cpp" />
+    <ClCompile Include="AssetManager.cpp" />
+    <ClCompile Include="Model.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
@@ -213,9 +257,6 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="Texture.DDS">
       <Filter>Assets</Filter>
     </Image>
   </ItemGroup>
@@ -229,7 +270,6 @@
     <None Include="saves\testWorld\terrain.bin">
       <Filter>Assets</Filter>
     </None>
-    <None Include="Color.cso" />
     <None Include="config\city.json">
       <Filter>Config</Filter>
     </None>
@@ -244,18 +284,38 @@
     </None>
     <None Include="packages.config" />
     <None Include="config\components.json" />
-    <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <ItemGroup>
-    <ShaderGraphContentTask Include="MyDGSLShader.dgsl" />
-    <ShaderGraphContentTask Include="Color.dgsl" />
+    <FxCompile Include="Assets\Shaders\Terrain.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\Water.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Terrain.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Water.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
+    <MeshContentTask Include="Assets\Models\Tree.fbx">
+      <Filter>models</Filter>
+    </MeshContentTask>
+    <MeshContentTask Include="Assets\Models\Test.fbx">
+      <Filter>models</Filter>
+    </MeshContentTask>
+  </ItemGroup>
+  <ItemGroup>
+    <ImageContentTask Include="Assets\Textures\dirt.png">
+      <Filter>textures</Filter>
+    </ImageContentTask>
+    <ImageContentTask Include="Assets\Textures\grass.png">
+      <Filter>textures</Filter>
+    </ImageContentTask>
+    <ImageContentTask Include="Assets\Textures\snow.png">
+      <Filter>textures</Filter>
+    </ImageContentTask>
+    <ImageContentTask Include="Assets\Textures\stone.png">
+      <Filter>textures</Filter>
+    </ImageContentTask>
+    <ImageContentTask Include="Assets\Textures\water.png">
+      <Filter>textures</Filter>
+    </ImageContentTask>
   </ItemGroup>
 </Project>

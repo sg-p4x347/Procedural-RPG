@@ -22,6 +22,7 @@ namespace Utility {
 	bool Chance(float percent);
 	int Probability(vector<float> probabilities);
 	int sign(int integer);
+	// Data tools
 	void Normalize(std::vector<float> & set);
 	template<typename T>
 	inline void InitArray(T * array,const int & size,const T & value) {
@@ -29,11 +30,21 @@ namespace Utility {
 			array[i] = value;
 		}
 	}
+	void Normalize(float * set, int size);
+	// Debug and logging tools
+	void OutputException(string message);
+	void OutputLine(string line);
+	// Mathematical functions
 	float Gaussian(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
 	float Sigmoid(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
+	float SigmoidDecay(float x, float width,float transitionPercent = 1.f); // sigmoid starting at (0.0,~1.0) decaying to (width,~0.0) at a rate given by transitionPercent
 	float Inverse(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
-	float InterpolateQuad(float x, float y, float bl, float br, float tr, float tl);
+	// Interpolation functions
+	float LinearInterpolate(float p[2], float x);
+	float BilinearInterpolate(float p[2][2], float x, float y);
 	float CubicInterpolate(float p[4], float x);
 	float BicubicInterpolation(float p[4][4], float x, float y);
+	// Conversions
+	float DegToRad(float degree);
 }
 

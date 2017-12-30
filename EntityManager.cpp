@@ -7,8 +7,9 @@
 #include "Player.h"
 #include "VBO.h"
 #include "Movement.h"
-
+#include "Tag.h"
 #include "Terrain.h"
+#include "Model.h"
 
 const string EntityManager::m_nextEntityFile = "Next_Entity.txt";
 EntityManager::EntityManager(Filesystem::path & directory) : m_directory(directory), m_nextID(1), m_player(nullptr)
@@ -26,13 +27,20 @@ EntityManager::EntityManager(Filesystem::path & directory) : m_directory(directo
 		
 	//----------------------------------------------------------------
 	// Initialize the component mappings
+	AddComponentVector("Player");
 
 	AddComponentVector("Position");
-	AddComponentVector("Terrain");
-	AddComponentVector("VBO");
-	AddComponentVector("Player");
 	AddComponentVector("Movement");
 
+	AddComponentVector("Terrain");
+
+	AddComponentVector("VBO");
+	AddComponentVector("Model");
+	
+	//----------------------------------------------------------------
+	// Tags
+	AddComponentVector("Tag_Water");
+	AddComponentVector("Tag_Tree");
 }
 
 shared_ptr<Components::Component> EntityManager::GetComponent(const unsigned int & id, string componentName)
@@ -84,21 +92,37 @@ shared_ptr<Components::Component> EntityManager::GetComponent(unsigned long & ma
 	}
 	// load from file
 	shared_ptr<Components::Component> component;
-	if (m_names[mask] == "VBO") {
-		component = shared_ptr<Components::Component>(new Components::VBO(entity->ID()));
+	std::size_t underscorePos = m_names[mask].find('_');
+	if (underscorePos == string::npos) {
+		// Discrete component types
+		if (m_names[mask] == "VBO") {
+			component = shared_ptr<Components::Component>(new Components::VBO(entity->ID()));
+		}
+		else if (m_names[mask] == "Position") {
+			component = shared_ptr<Components::Component>(new Components::Position(entity->ID()));
+		}
+		else if (m_names[mask] == "Player") {
+			component = shared_ptr<Components::Component>(new Components::Player(entity->ID()));
+		}
+		else if (m_names[mask] == "Terrain") {
+			component = shared_ptr<Components::Component>(new Components::Terrain(entity->ID()));
+		}
+		else if (m_names[mask] == "Movement") {
+			component = shared_ptr<Components::Component>(new Components::Movement(entity->ID()));
+		}
+		else if (m_names[mask] == "Model") {
+			component = shared_ptr<Components::Component>(new Components::Model(entity->ID()));
+		}
 	}
-	else if (m_names[mask] == "Position") {
-		component = shared_ptr<Components::Component>(new Components::Position(entity->ID()));
+	else {
+		// Deferred types
+		string discreteType = m_names[mask].substr(0, underscorePos);	// before the '_'
+		string deferredType = m_names[mask].substr(underscorePos+1);	// after the '_'
+		if (discreteType == "Tag") {
+			component = shared_ptr<Components::Component>(new Components::Tag(entity->ID(),deferredType));
+		}
 	}
-	else if (m_names[mask] == "Player") {
-		component = shared_ptr<Components::Component>(new Components::Player(entity->ID()));
-	}
-	else if (m_names[mask] == "Terrain") {
-		component = shared_ptr<Components::Component>(new Components::Terrain(entity->ID()));
-	}
-	else if (m_names[mask] == "Movement") {
-		component = shared_ptr<Components::Component>(new Components::Movement(entity->ID()));
-	}
+
 	if (component) {
 		component->Load(m_directory, entity->ID());
 
@@ -171,6 +195,19 @@ vector<shared_ptr<Entity>> EntityManager::FindEntities(unsigned long componentMa
 		entityVector.push_back(entity);
 	}
 	return entityVector;
+}
+
+bool EntityManager::Find(const unsigned int & id, shared_ptr<Entity> & entity)
+{
+	// search cache
+	if (m_entities.find(id) != m_entities.end()) {
+		entity = m_entities[id];
+		return true;
+	}
+	else {
+		entity = nullptr;
+		return false;
+	}
 }
 
 //void EntityManager::LoadComponents(unsigned long componentMask)

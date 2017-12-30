@@ -59,6 +59,7 @@ private:
 	void Present();
 	//--------------------------------
     // Device resources.
+
     HWND                                            m_window;
     int                                             m_outputWidth;
     int                                             m_outputHeight;

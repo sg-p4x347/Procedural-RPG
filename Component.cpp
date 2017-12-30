@@ -11,13 +11,13 @@ namespace Components {
 	{
 		Filesystem::path componentDir = directory / GetName();
 		Filesystem::create_directory(componentDir);
-		return std::ofstream(componentDir / (std::to_string(id) + ".dat"));
+		return std::ofstream(componentDir / (std::to_string(id) + ".dat"),ios::binary);
 	}
 	std::ifstream Component::GetInputStream(Filesystem::path directory, const unsigned int & id)
 	{
 		Filesystem::path componentDir = directory / GetName();
 		Filesystem::create_directory(componentDir);
-		return std::ifstream(componentDir / (std::to_string(id) + ".dat"));
+		return std::ifstream(componentDir / (std::to_string(id) + ".dat"), ios::binary);
 	}
 
 	Component::Component(Component & other) : Component::Component(other.ID)

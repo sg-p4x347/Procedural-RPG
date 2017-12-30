@@ -34,7 +34,8 @@
 #include <d3d11_1.h>
 #include <DirectXMath.h>
 #include <DirectXColors.h>
-
+#include <stdio.h>
+#include <io.h>
 #include <algorithm>
 #include <exception>
 #include <memory>
@@ -51,6 +52,7 @@ using std::vector;
 using std::map;
 using std::unordered_map;
 using std::unordered_set;
+
 #include <experimental/filesystem>
 #include <filesystem>
 namespace Filesystem = std::experimental::filesystem::v1;
@@ -84,3 +86,6 @@ namespace DX
 #include "VertexTypes.h"
 #include "WICTextureLoader.h"
 #include "ReadData.h"
+#include "ConversionUtil.h"
+#include "Utility.h"
+#include "MathConstants.h"

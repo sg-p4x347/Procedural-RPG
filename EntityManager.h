@@ -54,6 +54,7 @@ public:
 	shared_ptr<Entity> NewEntity();
 	// Entity list
 	vector<shared_ptr<Entity>> FindEntities(unsigned long componentMask);
+	bool Find(const unsigned int & id, shared_ptr<Entity> & entity);
 private:
 	const Filesystem::path m_directory;
 	// Manage Entity IDs

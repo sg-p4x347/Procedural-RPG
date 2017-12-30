@@ -16,6 +16,7 @@ namespace Components {
 		vector<unsigned int> Indices;
 		// Effect to be rendered with
 		string Effect;
+
 		// Level Of Detail
 		int LOD;
 		bool LODchanged;

@@ -1,28 +1,16 @@
 #pragma once
-
-using namespace std;
-template <typename DataType>
-struct HeightMap
+#include "Map.h"
+class HeightMap :
+	public Map<float>
 {
-	HeightMap() : HeightMap::HeightMap(0, 0.0, 0.0, 0) {}
-	HeightMap(int w, float i, float d, int z)
-	{
-		width = w;
-		initialDeviation = i;
-		diamondDeviation = i;
-		squareDeviation = i;
-		deviationDecrease = d;
-		zoom = z;
-		Map = vector< vector<DataType> >(width + 1, vector<DataType>(width + 1));
-	}
-	vector< vector<DataType> > Map;
-	int width;
-	float initialDeviation;
-	float diamondDeviation;
-	float squareDeviation;
-	float deviationDecrease;
-	int zoom;
-
-	HeightMap Submap(int x, int y, int width);
+public:
+	HeightMap();
+	HeightMap(int w, float i, float d, int z);
+	DirectX::SimpleMath::Vector2 GradientDirection(float x, float z);
+	DirectX::SimpleMath::Vector2 GradientDirection(int x, int z);
+	float GradientAngle(float x, float z);
+	float GradientAngle(int x, int z);
+	float Height(float x, float z);
+	float Height(int x, int z);
 };
 

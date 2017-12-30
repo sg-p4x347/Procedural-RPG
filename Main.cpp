@@ -4,11 +4,12 @@
 
 #include "pch.h"
 #include "Game.h"
+#include <fcntl.h>
 
 using namespace DirectX;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-
+void BindStdHandlesToConsole();
 // Entry point
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
@@ -18,7 +19,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     HRESULT hr = CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
     if (FAILED(hr))
         return 1;
-
+	BindStdHandlesToConsole();
     auto game = std::make_unique<Game>();
 
     // Register class and create window
@@ -251,4 +252,70 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
 
     return DefWindowProc(hWnd, message, wParam, lParam);
+}
+// maximum mumber of lines the output console should have
+static const WORD MAX_CONSOLE_LINES = 500;
+void BindStdHandlesToConsole()
+{
+	//AllocConsole();
+	////Redirect unbuffered STDIN to the console
+	//HANDLE stdInHandle = GetStdHandle(STD_INPUT_HANDLE);
+	//if (stdInHandle != INVALID_HANDLE_VALUE)
+	//{
+	//	int fileDescriptor = _open_osfhandle((intptr_t)stdInHandle, _O_TEXT);
+	//	if (fileDescriptor != -1)
+	//	{
+	//		FILE* file = _fdopen(fileDescriptor, "r");
+	//		if (file != NULL)
+	//		{
+	//			*stdin = *file;
+	//			setvbuf(stdin, NULL, _IONBF, 0);
+	//		}
+	//	}
+	//}
+
+	////Redirect unbuffered STDOUT to the console
+	//HANDLE stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	//if (stdOutHandle != INVALID_HANDLE_VALUE)
+	//{
+	//	int fileDescriptor = _open_osfhandle((intptr_t)stdOutHandle, _O_TEXT);
+	//	if (fileDescriptor != -1)
+	//	{
+	//		FILE* file = _fdopen(fileDescriptor, "w");
+	//		if (file != NULL)
+	//		{
+	//			*stdout = *file;
+	//			setvbuf(stdout, NULL, _IONBF, 0);
+	//		}
+	//	}
+	//}
+
+	////Redirect unbuffered STDERR to the console
+	//HANDLE stdErrHandle = GetStdHandle(STD_ERROR_HANDLE);
+	//if (stdErrHandle != INVALID_HANDLE_VALUE)
+	//{
+	//	int fileDescriptor = _open_osfhandle((intptr_t)stdErrHandle, _O_TEXT);
+	//	if (fileDescriptor != -1)
+	//	{
+	//		FILE* file = _fdopen(fileDescriptor, "w");
+	//		if (file != NULL)
+	//		{
+	//			*stderr = *file;
+	//			setvbuf(stderr, NULL, _IONBF, 0);
+	//		}
+	//	}
+	//}
+
+	////Clear the error state for each of the C++ standard stream objects. We need to do this, as
+	////attempts to access the standard streams before they refer to a valid target will cause the
+	////iostream objects to enter an error state. In versions of Visual Studio after 2005, this seems
+	////to always occur during startup regardless of whether anything has been read from or written to
+	////the console or not.
+	//std::wcout.clear();
+	//std::cout.clear();
+	//std::wcerr.clear();
+	//std::cerr.clear();
+	//std::wcin.clear();
+	//std::cin.clear();
+	//printf("%5d", "YOW");
 }

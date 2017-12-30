@@ -1,6 +1,8 @@
 #pragma once
 #include "System.h"
 #include "VBO.h"
+#include "Model.h"
+#include "AssetManager.h"
 class RenderSystem :
 	public System
 {
@@ -9,28 +11,23 @@ public:
 		shared_ptr<EntityManager> & entityManager, 
 		vector<string> & components, 
 		unsigned short updatePeriod,
-		HWND window, int width, int height
+		HWND window, int width, int height,
+		Filesystem::path worldAssets
 	);
 	// Inherited via System
 	virtual void Update(double & elapsed) override;
-
+	virtual void SyncEntities() override;
 	void SetViewport(int width, int height);
 	~RenderSystem();
 private:
 	
 	shared_ptr<Entity> m_player;
+	
 	// DirectX
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_inputLayout;
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_waterLayout;
-	Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_pixelShader;
-	Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_waterShader;
-	std::unique_ptr<DirectX::DGSLEffect>		m_effect;
-	vector<string> m_effectNames;
-
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture2;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture3;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_texture4;
+	vector<string>								m_effectOrder;
+	
 	std::shared_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>	m_batch;
 
 	//--------------------------------
@@ -50,15 +47,14 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView>  m_renderTargetView;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView>  m_depthStencilView;
 
-	std::shared_ptr<DirectX::CommonStates>		m_states;
+	std::shared_ptr<DirectX::CommonStates>			m_states;
 
-	std::unique_ptr<DGSLEffectFactory>				m_fxFactory;
-	map<string,shared_ptr<DGSLEffect>> m_effects;
+	
 	// Matricies
 	SimpleMath::Matrix	m_worldMatrix;
 	SimpleMath::Matrix 	m_viewMatrix;
 	SimpleMath::Matrix  m_projMatrix;
-	void UpdateEffectMatricies(int backBufferWidth, int backBufferHeight);
+	void UpdateEffectMatricies(std::shared_ptr<DGSLEffect> effect, int backBufferWidth, int backBufferHeight);
 	// Initializes window-dependent resources
 	void CreateResources();
 	// Initialzies window-independent resources
@@ -67,11 +63,24 @@ private:
 	void OnDeviceLost();
 
 	DirectX::XMMATRIX GetViewMatrix();
-	void RenderVBO(shared_ptr<Components::VBO> vbo, Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext, bool first);
-	void Clear();
-	void Present();
-	// Component
+	//----------------------------------------------------------------
+	// Components::VBO
 	const unsigned long m_VBOmask;
+	std::map<string, vector<shared_ptr<Components::VBO>>> m_VBOs;
+	
+	void RenderVBO(shared_ptr<Components::VBO> vbo);
+	//----------------------------------------------------------------
+	// Components::Model using DirectX::Model
+	const unsigned long m_ModelMask;
+	std::map<string, vector<shared_ptr<Components::Model>>> m_Models;
+
+	//----------------------------------------------------------------
+	// Rendering
+	void Clear();
+	void SetStates();
+	void Render();
+	void Present();
+
 	// Inherited via System
 	virtual string Name() override;
 

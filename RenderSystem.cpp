@@ -2,6 +2,7 @@
 #include "RenderSystem.h"
 #include "Position.h"
 #include "Utility.h"
+#include "AssetManager.h"
 using namespace DirectX::SimpleMath;
 using Microsoft::WRL::ComPtr;
 
@@ -9,14 +10,18 @@ RenderSystem::RenderSystem(
 	shared_ptr<EntityManager>& entityManager, 
 	vector<string>& components, 
 	unsigned short updatePeriod,
-	HWND window, int width, int height
+	HWND window, int width, int height,
+	Filesystem::path worldAssets
 ) : System(entityManager,components, updatePeriod), 
-m_VBOmask(entityManager->ComponentMask("VBO"))
+m_VBOmask(entityManager->ComponentMask("VBO")),
+m_ModelMask(entityManager->ComponentMask("Model"))
 {
 	m_window = window;
 	m_worldMatrix = Matrix::Identity;
 
 	CreateDevice();
+	AssetManager::Get()->SetProceduralAssetDir(worldAssets);
+	
 	SetViewport(width, height);
 }
 
@@ -28,34 +33,84 @@ void RenderSystem::Update(double & elapsed)
 {
 	//https://stackoverflow.com/questions/17655442/how-can-i-repeat-my-texture-in-dx
 
-
-	// Do the rendering
+	GetViewMatrix();
+	// Clear the screen
 	Clear();
-	bool first = true;
-	/*for (shared_ptr<Entity> entity : m_entities) {
-		if (entity->HasComponents(m_VBOmask)) {
-			
-			RenderVBO(EM->GetComponent<Components::VBO>(entity,"VBO"),m_d3dContext, first);
-			first = false;
+	// Render all Vertex Buffer Objects
+	SetStates();
+	Render();
+	
+	// Present the backbuffer to the screen
+	Present();
+}
+void RenderSystem::Render()
+{
+	for (string & effectName : m_effectOrder) {
+		// Bind this effect
+		shared_ptr<DGSLEffect> effect;
+		if (AssetManager::Get()->GetEffect<DGSLEffect>(effectName, effect)) {
+			// camera
+			UpdateEffectMatricies(effect, m_outputWidth, m_outputHeight);
+			effect->SetView(m_viewMatrix);
+			effect->Apply(m_d3dContext.Get());
+			// Input Layout
+			if (effectName == "Water") {
+				m_d3dContext->IASetInputLayout(m_waterLayout.Get());
+			}
+			else {
+				m_d3dContext->IASetInputLayout(m_inputLayout.Get());
+			}
+			// Render VBOs with the effect
+			if (m_VBOs.find(effectName) != m_VBOs.end()) {
+				for (auto vbo : m_VBOs[effectName]) {
+					RenderVBO(vbo);
+				}
+			}
 		}
-	}*/
-	for (vector<shared_ptr<Entity>>::reverse_iterator i = m_entities.rbegin();
-		i != m_entities.rend(); ++i) {
-		if ((*i)->HasComponents(m_VBOmask)) {
-
-			RenderVBO(EM->GetComponent<Components::VBO>((*i), "VBO"), m_d3dContext, first);
-			first = false;
+		// Render Models with the effect
+		if (m_Models.find(effectName) != m_Models.end()) {
+			for (auto model : m_Models[effectName]) {
+				auto dxModel = AssetManager::Get()->GetModel(model->Path, false);
+				shared_ptr<Entity> entity;
+				if (EM->Find(model->ID, entity)) {
+					auto position = EM->GetComponent<Components::Position>(entity, "Position");
+					XMMATRIX translation = XMMatrixTranslation(position->Pos.x, position->Pos.y, position->Pos.z);
+					XMMATRIX rotation = XMMatrixRotationRollPitchYawFromVector(position->Rot);
+					XMMATRIX final = XMMatrixMultiply(rotation, translation);
+					final = XMMatrixMultiply(final, m_worldMatrix );
+					dxModel->Draw(m_d3dContext.Get(), *m_states, final, m_viewMatrix, m_projMatrix);
+				}
+			}
 		}
 	}
-	Present();
+}
+void RenderSystem::SyncEntities()
+{
+	m_VBOs.clear();
+	
+	for (auto entity : EM->FindEntities(m_VBOmask)) {
+		shared_ptr<Components::VBO> vbo = EM->GetComponent<Components::VBO>(entity, "VBO");
+		if (m_VBOs.find(vbo->Effect) == m_VBOs.end()) {
+			m_VBOs.insert(std::pair<string, vector<shared_ptr<Components::VBO>>>(vbo->Effect, vector<shared_ptr<Components::VBO>>()));
+		}
+		m_VBOs[vbo->Effect].push_back(vbo);
+	}
+	m_Models.clear();
+	for (auto entity : EM->FindEntities(m_ModelMask)) {
+		shared_ptr<Components::Model> model = EM->GetComponent<Components::Model>(entity, "Model");
+		if (m_Models.find(model->Effect) == m_Models.end()) {
+			m_Models.insert(std::pair<string, vector<shared_ptr<Components::Model>>>(model->Effect, vector<shared_ptr<Components::Model>>()));
+		}
+		m_Models[model->Effect].push_back(model);
+	}
 }
 void RenderSystem::SetViewport(int width, int height)
 {
 	m_outputWidth = std::max(width, 1);
 	m_outputHeight = std::max(height, 1);
 	CreateResources();
-	UpdateEffectMatricies(width, height);
 }
+
 void RenderSystem::Clear()
 {
 	// Clear the views.
@@ -87,26 +142,22 @@ void RenderSystem::Present()
 	}
 }
 
-void RenderSystem::UpdateEffectMatricies(int backBufferWidth, int backBufferHeight)
+
+
+void RenderSystem::UpdateEffectMatricies(std::shared_ptr<DGSLEffect> effect, int backBufferWidth, int backBufferHeight)
 {
 	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f),
 		float(backBufferWidth) / float(backBufferHeight), 0.1f, 8000.f);
-	for (auto pair : m_effects) {
 		/*DGSLEffectFactory::DGSLEffectInfo info;
 	    wchar_t* wide = nullptr;
 		Utility::StringToWchar(effectKey, wide);
 		info.name = wide;
 		shared_ptr<DGSLEffect> effect = std::dynamic_pointer_cast<DGSLEffect>(m_fxFactory->CreateEffect(info, m_d3dContext.Get()));
 		*/
-		pair.second->SetViewport(float(backBufferWidth), float(backBufferHeight));
+		effect->SetViewport(float(backBufferWidth), float(backBufferHeight));
 		
-		pair.second->SetProjection(m_projMatrix);
-		pair.second->SetWorld(m_worldMatrix);
-	}
-	m_effect->SetViewport(float(backBufferWidth), float(backBufferHeight));
-
-	m_effect->SetProjection(m_projMatrix);
-	m_effect->SetWorld(m_worldMatrix);
+		effect->SetProjection(m_projMatrix);
+		effect->SetWorld(m_worldMatrix);
 }
 
 void RenderSystem::CreateResources()
@@ -306,51 +357,16 @@ void RenderSystem::CreateDevice()
 		(void)m_d3dContext.As(&m_d3dContext1);
 
 	// TODO: Initialize device dependent objects here (independent of window size).
-	m_states = std::make_unique<CommonStates>(m_d3dDevice.Get());
-	
-	// Create DGSL Effect
-	auto blob = DX::ReadData(L"Terrain.cso"); // .cso is the compiled version of the hlsl shader (compiled shader object)
-	DX::ThrowIfFailed(m_d3dDevice->CreatePixelShader(&blob.front(), blob.size(),
-		nullptr, m_pixelShader.ReleaseAndGetAddressOf()));
+	AssetManager::Get()->SetDevice(m_d3dDevice);
+	AssetManager::Get()->CreateEffects(m_d3dContext);
 
-	m_effect = std::make_unique<DGSLEffect>(m_d3dDevice.Get(), m_pixelShader.Get());
-
-
-
-	m_effect->SetTextureEnabled(true);
-	m_effect->SetVertexColorEnabled(true);
-	//---Textures---
-	DX::ThrowIfFailed(
-		CreateDDSTextureFromFile(m_d3dDevice.Get(), L"dirt.dds", nullptr,
-			m_texture.ReleaseAndGetAddressOf()));
-
-	m_effect->SetTexture(m_texture.Get());
-
-	DX::ThrowIfFailed(
-		CreateDDSTextureFromFile(m_d3dDevice.Get(), L"grass.dds", nullptr,
-			m_texture2.ReleaseAndGetAddressOf()));
-
-	m_effect->SetTexture(1, m_texture2.Get());
-
-	DX::ThrowIfFailed(
-		CreateDDSTextureFromFile(m_d3dDevice.Get(), L"stone.dds", nullptr,
-			m_texture3.ReleaseAndGetAddressOf()));
-
-	m_effect->SetTexture(2, m_texture3.Get());
-
-	DX::ThrowIfFailed(
-		CreateDDSTextureFromFile(m_d3dDevice.Get(), L"snow.dds", nullptr,
-			m_texture4.ReleaseAndGetAddressOf()));
-
-	m_effect->SetTexture(3, m_texture4.Get());
-	//---Textures---
-
-	m_effect->EnableDefaultLighting();
+	shared_ptr<DGSLEffect> terrain;
+	if (AssetManager::Get()->GetEffect<DGSLEffect>("Terrain", terrain))
 	{
 		void const* shaderByteCode;
 		size_t byteCodeLength;
 
-		m_effect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
+		terrain->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
 
 		DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(
 			VertexPositionNormalTangentColorTexture::InputElements,
@@ -358,24 +374,13 @@ void RenderSystem::CreateDevice()
 			shaderByteCode, byteCodeLength,
 			m_inputLayout.ReleaseAndGetAddressOf()));
 	}
-	// Matricies
-
-	// More effects
-	m_fxFactory = std::make_unique<DGSLEffectFactory>(m_d3dDevice.Get());
-	m_fxFactory->SetDirectory(L".\\x64\\Release");
-	DGSLEffectFactory::DGSLEffectInfo info;
-	info.name = L"Water";
-	info.pixelShader = L"Water.cso";
-	shared_ptr<DGSLEffect> effect = std::dynamic_pointer_cast <DGSLEffect>(m_fxFactory->CreateDGSLEffect(info, m_d3dContext.Get()));
-	effect->SetTexture(*m_texture.GetAddressOf());
-	effect->SetTextureEnabled(true);
-	effect->SetVertexColorEnabled(true);
-	effect->EnableDefaultLighting();
+	shared_ptr<DGSLEffect> water;
+	if (AssetManager::Get()->GetEffect<DGSLEffect>("Water", water))
 	{
 		void const* shaderByteCode;
 		size_t byteCodeLength;
 
-		effect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
+		water->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
 
 		DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(
 			VertexPositionNormalTangentColorTexture::InputElements,
@@ -383,8 +388,10 @@ void RenderSystem::CreateDevice()
 			shaderByteCode, byteCodeLength,
 			m_waterLayout.ReleaseAndGetAddressOf()));
 	}
-	m_effects.insert(std::pair<string,shared_ptr<DGSLEffect>>("Water",effect));
-	m_effectNames.push_back("Water");
+	
+	m_effectOrder = vector<string>{ "Terrain", "Water","Default" };
+
+	
 }
 
 void RenderSystem::OnDeviceLost()
@@ -400,12 +407,7 @@ void RenderSystem::OnDeviceLost()
 	m_d3dDevice.Reset();
 
 
-	m_effect.reset();
 	m_inputLayout.Reset();
-	m_texture.Reset();
-	m_texture2.Reset();
-	m_texture3.Reset();
-	m_pixelShader.Reset();
 }
 
 DirectX::XMMATRIX RenderSystem::GetViewMatrix()
@@ -419,47 +421,24 @@ DirectX::XMMATRIX RenderSystem::GetViewMatrix()
 	XMVECTOR lookAt = position->Pos + SimpleMath::Vector3(x, y, z);
 
 	XMMATRIX view = XMMatrixLookAtRH(position->Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
+	m_viewMatrix = view;
 	return view;
 }
 
-void RenderSystem::RenderVBO(shared_ptr<Components::VBO> vbo, Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext, bool first)
+
+void RenderSystem::SetStates()
 {
+	m_states = std::make_unique<CommonStates>(m_d3dDevice.Get());
 	auto sampler = m_states->LinearWrap();
 	m_d3dContext->PSSetSamplers(0, 1, &sampler);
 	m_d3dContext->RSSetState(m_states->CullCounterClockwise());
 	float alpha[4] = { 0.f,0.f, 0.f, 1.f };
 	m_d3dContext->OMSetBlendState(m_states->AlphaBlend(), alpha, 0xFFFFFFFF);
-	//m_d3dContext->OMSetDepthStencilState(m_states->DepthRead(), 0);
-	static string currentEffect = "";
-	// Swap  effects
-	if (vbo->Effect != currentEffect || first) {
-		if (vbo->Effect != "default") {
-			/*DGSLEffectFactory::DGSLEffectInfo info;
-			wchar_t* wide = L"";
-			Utility::StringToWchar(vbo->Effect, wide);
-			info.name = wide;*/
-			//shared_ptr<DGSLEffect> effect = std::dynamic_pointer_cast<DGSLEffect>(m_fxFactory->CreateEffect(info, m_d3dContext.Get()));
+	m_d3dContext->OMSetDepthStencilState(m_states->DepthDefault(), 0);
+}
 
-			shared_ptr<DGSLEffect> effect = m_effects[vbo->Effect];
-			//effect->SetDiffuseColor(Vector4(0.f, 0.f, 1.f, 1.f));
-			//TODO: Add your rendering code here.
-			
-			
-			// camera
-			effect->SetView(GetViewMatrix());
-			effect->Apply(m_d3dContext.Get());
-
-			m_d3dContext->IASetInputLayout(m_waterLayout.Get());
-		}
-		else {
-			// camera
-			m_effect->SetView(GetViewMatrix());
-			m_effect->Apply(m_d3dContext.Get());
-			
-			m_d3dContext->IASetInputLayout(m_inputLayout.Get());
-		}
-		currentEffect = vbo->Effect;
-	}
+void RenderSystem::RenderVBO(shared_ptr<Components::VBO> vbo)
+{
 	// make sure the buffers have been updated
 	if (vbo->LODchanged && vbo->Vertices.size() != 0) {
 		vbo->CreateBuffers(m_d3dDevice);
@@ -470,16 +449,16 @@ void RenderSystem::RenderVBO(shared_ptr<Components::VBO> vbo, Microsoft::WRL::Co
 	UINT offset = 0;
 
 	// Set the vertex buffer to active in the input assembler so it can be rendered.
-	deviceContext->IASetVertexBuffers(0, 1, vbo->VB.GetAddressOf(), &stride, &offset);
+	m_d3dContext->IASetVertexBuffers(0, 1, vbo->VB.GetAddressOf(), &stride, &offset);
 
 	// Set the index buffer to active in the input assembler so it can be rendered.
-	deviceContext->IASetIndexBuffer(vbo->IB.Get(), DXGI_FORMAT_R32_UINT, 0);
+	m_d3dContext->IASetIndexBuffer(vbo->IB.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 	// Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
-	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_d3dContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// Draw
-	deviceContext->DrawIndexed(vbo->Indices.size(), 0, 0);
+	m_d3dContext->DrawIndexed(vbo->Indices.size(), 0, 0);
 	
 }
 

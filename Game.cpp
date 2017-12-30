@@ -7,6 +7,7 @@
 #include "Distribution.h"
 #include "Utility.h"
 #include "RenderSystem.h"
+#include "AssetManager.h"
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
@@ -18,11 +19,14 @@ Game::Game() :
     m_outputHeight(1080),
     m_featureLevel(D3D_FEATURE_LEVEL_9_1)
 {
+
+	AssetManager::Get()->SetAssetDir("C:/Gage Omega/Programming/Procedural-RPG/Assets");
 }
 
 // Initialize the Direct3D resources required to run.
 void Game::Initialize(HWND window, int width, int height)
 {
+	cout << "Game Initializing...\n";
     /*m_window = window;
     m_outputWidth = std::max(width, 1);
     m_outputHeight = std::max(height, 1);
@@ -42,7 +46,7 @@ void Game::Initialize(HWND window, int width, int height)
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
     
 
-	GenerateWorld(42, "test",window,width,height);
+	GenerateWorld(3324, "test",window,width,height);
 	//LoadWorld("test", window, width, height);
 }
 
@@ -84,8 +88,8 @@ void Game::Render()
 
 void Game::GenerateWorld(int seed, string name, HWND window, int width, int height)
 {
-	Filesystem::remove_all("saves/" + name);
-	m_world = unique_ptr<World>(new World("saves/" + name, window, width, height, m_mouse, m_keyboard));
+	Filesystem::remove_all("Saves/" + name);
+	m_world = unique_ptr<World>(new World("Saves/" + name, window, width, height, m_mouse, m_keyboard));
 	m_world->Generate(seed);
 	Tick();
 }

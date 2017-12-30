@@ -55,6 +55,8 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\ShaderGraphContentTask.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\ImageContentTask.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\MeshContentTask.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -120,6 +122,12 @@
       <ShaderType>Pixel</ShaderType>
       <ShaderModel>4.0_level_9_3</ShaderModel>
     </FxCompile>
+    <ImageContentTask>
+      <ContentOutput>$(ProjectDir)%(Filename).dds</ContentOutput>
+    </ImageContentTask>
+    <MeshContentTask>
+      <ContentOutput>$(ProjectDir)%(Filename).cmo</ContentOutput>
+    </MeshContentTask>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -151,6 +159,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -159,23 +168,38 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>d3d11.lib;dxguid.lib;uuid.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ImageContentTask>
+      <ContentOutput>$(ProjectDir)Assets\%(Filename).dds</ContentOutput>
+    </ImageContentTask>
+    <MeshContentTask>
+      <ContentOutput>$(ProjectDir)Assets\%(Filename).cmo</ContentOutput>
+    </MeshContentTask>
+    <FxCompile>
+      <ObjectFileOutput>$(ProjectDir)Assets\%(Filename).cso</ObjectFileOutput>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AssetManager.h" />
     <ClInclude Include="Building.h" />
     <ClInclude Include="City.h" />
     <ClInclude Include="Component.h" />
+    <ClInclude Include="ConversionUtil.h" />
+    <ClInclude Include="Droplet.h" />
     <ClInclude Include="EntityManager.h" />
     <ClInclude Include="Filesystem.h" />
+    <ClInclude Include="HeightMap.h" />
     <ClInclude Include="InfrastructureSystem.h" />
     <ClInclude Include="JSON.h" />
     <ClInclude Include="JsonParser.h" />
     <ClInclude Include="Distribution.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Game.h" />
-    <ClInclude Include="HeightMap.h" />
+    <ClInclude Include="Map.h" />
     <ClInclude Include="History.h" />
     <ClInclude Include="IdHandler.h" />
     <ClInclude Include="Line.h" />
+    <ClInclude Include="MathConstants.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="ModelManager.h" />
     <ClInclude Include="Movement.h" />
     <ClInclude Include="MovementSystem.h" />
@@ -194,12 +218,15 @@
     <ClInclude Include="Room.h" />
     <ClInclude Include="ISerialization.h" />
     <ClInclude Include="StepTimer.h" />
+    <ClInclude Include="Stratum.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="SystemManager.h" />
+    <ClInclude Include="Tag.h" />
     <ClInclude Include="TaskThread.h" />
     <ClInclude Include="Terrain.h" />
-    <ClInclude Include="TerrainCell.h" />
+    <ClInclude Include="WaterCell.h" />
     <ClInclude Include="TerrainSystem.h" />
+    <ClInclude Include="ThermalCell.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="VBO.h" />
     <ClInclude Include="VectorMap.h" />
@@ -207,11 +234,15 @@
     <ClInclude Include="World.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="Building.cpp" />
     <ClCompile Include="City.cpp" />
     <ClCompile Include="Component.cpp" />
+    <ClCompile Include="ConversionUtil.cpp" />
+    <ClCompile Include="Droplet.cpp" />
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="Filesystem.cpp" />
+    <ClCompile Include="HeightMap.cpp" />
     <ClCompile Include="InfrastructureSystem.cpp" />
     <ClCompile Include="JSON.cpp" />
     <ClCompile Include="JsonParser.cpp" />
@@ -222,6 +253,7 @@
     <ClCompile Include="IdHandler.cpp" />
     <ClCompile Include="Line.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModelManager.cpp" />
     <ClCompile Include="Movement.cpp" />
     <ClCompile Include="MovementSystem.cpp" />
@@ -242,12 +274,15 @@
     <ClCompile Include="Road.cpp" />
     <ClCompile Include="Room.cpp" />
     <ClCompile Include="ISerialization.cpp" />
+    <ClCompile Include="Stratum.cpp" />
     <ClCompile Include="System.cpp" />
     <ClCompile Include="SystemManager.cpp" />
+    <ClCompile Include="Tag.cpp" />
     <ClCompile Include="TaskThread.cpp" />
     <ClCompile Include="Terrain.cpp" />
-    <ClCompile Include="TerrainCell.cpp" />
+    <ClCompile Include="WaterCell.cpp" />
     <ClCompile Include="TerrainSystem.cpp" />
+    <ClCompile Include="ThermalCell.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="VBO.cpp" />
     <ClCompile Include="VectorMap.cpp" />
@@ -259,21 +294,17 @@
     <ResourceCompile Include="resource.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ImageContentTask Include="Assets\Textures\dirt.png" />
+    <ImageContentTask Include="Assets\Textures\grass.png" />
+    <ImageContentTask Include="Assets\Textures\snow.png" />
+    <ImageContentTask Include="Assets\Textures\stone.png" />
+    <ImageContentTask Include="Assets\Textures\water.png" />
     <Image Include="directx.ico" />
-    <Image Include="Texture.DDS" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="settings.manifest" />
   </ItemGroup>
   <ItemGroup>
-    <ShaderGraphContentTask Include="Color.dgsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-    </ShaderGraphContentTask>
-    <ShaderGraphContentTask Include="MyDGSLShader.dgsl">
-      <FileType>Document</FileType>
-    </ShaderGraphContentTask>
-    <None Include="ClassDiagram.cd" />
-    <None Include="Color.cso" />
     <None Include="config\building.json" />
     <None Include="config\city.json" />
     <None Include="config\components.json" />
@@ -284,24 +315,24 @@
     <None Include="saves\testWorld\terrain.bin" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Terrain.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</TreatWarningAsError>
-      <EnableDebuggingInformation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</EnableDebuggingInformation>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0_level_9_3</ShaderModel>
+    <FxCompile Include="Assets\Shaders\Terrain.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="Water.hlsl">
+    <FxCompile Include="Assets\Shaders\Water.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <MeshContentTask Include="Assets\Models\Test.fbx" />
+    <MeshContentTask Include="Assets\Models\Tree.fbx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\ShaderGraphContentTask.targets" />
     <Import Project="packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.targets" Condition="Exists('packages\directxtk_desktop_2015.2017.4.24.1\build\native\directxtk_desktop_2015.targets')" />
     <Import Project="packages\dirent.1.13.1\build\native\dirent.targets" Condition="Exists('packages\dirent.1.13.1\build\native\dirent.targets')" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\ImageContentTask.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\MeshContentTask.targets" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

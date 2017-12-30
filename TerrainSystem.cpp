@@ -4,10 +4,16 @@
 #include "Position.h"
 #include "VBO.h"
 #include "Movement.h"
+#include "ProUtil.h"
 #include "Utility.h"
+#include "Tag.h"
 #include "TaskThread.h"
-#include "TerrainCell.h"
+#include "WaterCell.h"
+#include "Model.h"
 #include <thread>
+
+static const bool g_erosion = false;
+
 using namespace DirectX::SimpleMath;
 static shared_ptr<Entity> waterEntity;
 TerrainSystem::TerrainSystem(
@@ -52,23 +58,23 @@ void TerrainSystem::Generate()
 
 	// Terrain map
 	JsonParser terrainMap = config["terrainMap"];
-	m_terrain = HeightMap<float>(m_width, m_width * terrainMap["initialDeviation"].To<double>(), terrainMap["deviationDecrease"].To<double>(), 0);
+	HeightMap terrain = HeightMap(m_width, m_width * terrainMap["initialDeviation"].To<double>(), terrainMap["deviationDecrease"].To<double>(), 0);
 	// Continent map
 	JsonParser continentMap = config["continentMap"];
 	const float CM_offset = continentMap["offset"].To<double>();
-	HeightMap<float> continent = HeightMap<float>(m_terrain.width / m_sampleSpacing, (m_terrain.width / m_sampleSpacing) * continentMap["initialDeviation"].To<double>(), continentMap["deviationDecrease"].To<double>(), continentMap["zoom"].To<int>());
+	HeightMap continent = HeightMap(terrain.width / m_sampleSpacing, (terrain.width / m_sampleSpacing) * continentMap["initialDeviation"].To<double>(), continentMap["deviationDecrease"].To<double>(), continentMap["zoom"].To<int>());
 	// Biome map
 	JsonParser biomeMap = config["biomeMap"];
-	m_biome = HeightMap<float>(m_terrain.width / m_sampleSpacing, biomeMap["initialDeviation"].To<double>(), biomeMap["deviationDecrease"].To<double>(), biomeMap["zoom"].To<int>());
+	HeightMap biome = HeightMap(terrain.width / m_sampleSpacing, biomeMap["initialDeviation"].To<double>(), biomeMap["deviationDecrease"].To<double>(), biomeMap["zoom"].To<int>());
 
 	//Load(); TEMP
 	// initialize the corners
 	for (int x = 0; x <= continent.width; x += continent.width) {
 		for (int y = 0; y <= continent.width; y += continent.width) {
-			continent.Map[x][y] = -continent.initialDeviation;
-			m_biome.Map[x][y] = Deviation(m_biome.initialDeviation);
-			float continentZ = (continent.Map[x][y] + (CM_offset * continent.initialDeviation)) * m_sampleSpacing;
-			m_terrain.Map[x*m_sampleSpacing][y*m_sampleSpacing] = continentZ * oceanAmplitude + BiomeDeviation(m_biome.Map[x][y], continentZ);
+			continent.map[x][y] = -continent.initialDeviation;
+			biome.map[x][y] = Deviation(biome.initialDeviation);
+			float continentZ = (continent.map[x][y] + (CM_offset * continent.initialDeviation)) * m_sampleSpacing;
+			terrain.map[x*m_sampleSpacing][y*m_sampleSpacing] = continentZ * oceanAmplitude + BiomeDeviation(biome.map[x][y], continentZ);
 		}
 	}
 	//auto start = std::chrono::high_resolution_clock::now();
@@ -76,18 +82,18 @@ void TerrainSystem::Generate()
 	//auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
 	// iterate
-	for (int iteration = 0; iteration < floor(log2(m_terrain.width)); iteration++) {
-		int gridWidth = (m_terrain.width / pow(2, iteration)) / 2;
+	for (int iteration = 0; iteration < floor(log2(terrain.width)); iteration++) {
+		int gridWidth = (terrain.width / pow(2, iteration)) / 2;
 		// decrease deviation for the decrease in distance between points
 		if (iteration >= continent.zoom) {
-			continent.squareDeviation = continent.diamondDeviation * 0.707106781f;
+			continent.squareDeviation = continent.diamondDeviation * 1.4f;//0.707106781f;
 		}
-		if (iteration >= m_biome.zoom) {
-			m_biome.squareDeviation = m_biome.diamondDeviation * 0.707106781f;
+		if (iteration >= biome.zoom) {
+			biome.squareDeviation = biome.diamondDeviation * 1.4f;//0.707106781f;
 		}
-		m_terrain.squareDeviation = m_terrain.diamondDeviation * 0.707106781f;
-		for (int x = gridWidth; x < m_terrain.width; x += gridWidth * 2) {
-			for (int y = gridWidth; y < m_terrain.width; y += gridWidth * 2) {
+		terrain.squareDeviation = terrain.diamondDeviation * 1.4f;//0.707106781f;
+		for (int x = gridWidth; x < terrain.width; x += gridWidth * 2) {
+			for (int y = gridWidth; y < terrain.width; y += gridWidth * 2) {
 				//-----------
 				// Diamond
 				//-----------
@@ -95,29 +101,29 @@ void TerrainSystem::Generate()
 				int sampleY = y / m_sampleSpacing;
 				int sampleGridWidth = gridWidth / m_sampleSpacing;
 				// Continent map
-				continent.Map[sampleX][sampleY] = iteration == 0 ? continent.initialDeviation : Diamond(continent, sampleX, sampleY, sampleGridWidth) + Deviation(continent.diamondDeviation);
+				continent.map[sampleX][sampleY] = iteration == 0 ? continent.initialDeviation : Diamond(continent, sampleX, sampleY, sampleGridWidth) + Deviation(continent.diamondDeviation);
 				// Biome map
-				m_biome.Map[sampleX][sampleY] = Diamond(m_biome, sampleX, sampleY, sampleGridWidth) + Deviation(m_biome.diamondDeviation);
+				biome.map[sampleX][sampleY] = Diamond(biome, sampleX, sampleY, sampleGridWidth) + Deviation(biome.diamondDeviation);
 				// Terrain map
-				float continentSample = (continent.Map[sampleX][sampleY] + (CM_offset * continent.initialDeviation)) * m_sampleSpacing;
-				float biomeSample = m_biome.Map[sampleX][sampleY];
+				float continentSample = (continent.map[sampleX][sampleY] + (CM_offset * continent.initialDeviation)) * m_sampleSpacing;
+				float biomeSample = biome.map[sampleX][sampleY];
 				continentSample *= continentSample > 0 ? landAmplitude : oceanAmplitude; // scale the point for land or ocean
 				float biomeDeviation = BiomeDeviation(biomeSample, continentSample);
 				if (gridWidth >= m_sampleSpacing) {
-					m_terrain.Map[x][y] = continentSample;
-					m_terrain.Map[x][y] += biomeDeviation;
+					terrain.map[x][y] = continentSample;
+					terrain.map[x][y] += biomeDeviation;
 					if (iteration > 2) {
-					m_terrain.Map[x][y] += (m_terrain.diamondDeviation * Deviation(biomeDeviation)*biomeDeviationConst);
+					terrain.map[x][y] += (terrain.diamondDeviation * Deviation(biomeDeviation)*biomeDeviationConst);
 					}
 				} else {
-					m_terrain.Map[x][y] = Diamond(m_terrain, x, y, gridWidth);
-					m_terrain.Map[x][y] += Deviation(m_terrain.diamondDeviation);
-					m_terrain.Map[x][y] += (m_terrain.diamondDeviation * Deviation(biomeDeviation)*biomeDeviationConst);
+					terrain.map[x][y] = Diamond(terrain, x, y, gridWidth);
+					terrain.map[x][y] += Deviation(terrain.diamondDeviation);
+					terrain.map[x][y] += (terrain.diamondDeviation * Deviation(biomeDeviation)*biomeDeviationConst);
 				}
 				//-----------
 				// Square
 				//-----------
-				for (float rad = (x == m_terrain.width - gridWidth || y == m_terrain.width - gridWidth ? 0.f : 2.f); rad < 4.f; rad++) {
+				for (float rad = (x == terrain.width - gridWidth || y == terrain.width - gridWidth ? 0.f : 2.f); rad < 4.f; rad++) {
 					int pointX = round(x + cos(rad*XM_PI / 2) * gridWidth);
 					int pointY = round(y + sin(rad*XM_PI / 2) * gridWidth);
 					sampleX = pointX / m_sampleSpacing;
@@ -125,31 +131,31 @@ void TerrainSystem::Generate()
 					// Continent map
 					if (sampleX == 0 || sampleX == continent.width || sampleY == 0 || sampleY == continent.width) {
 						// point is on the edge of the mountain
-						continent.Map[sampleX][sampleY] = -continent.initialDeviation;
+						continent.map[sampleX][sampleY] = -continent.initialDeviation;
 					}
 					else {
 						// use the square method to calculate the elevation
-						continent.Map[sampleX][sampleY] = Square(continent, sampleX, sampleY, sampleGridWidth);
-						continent.Map[sampleX][sampleY] += Deviation(continent.squareDeviation);
+						continent.map[sampleX][sampleY] = Square(continent, sampleX, sampleY, sampleGridWidth);
+						continent.map[sampleX][sampleY] += Deviation(continent.squareDeviation);
 					}
 					// Biome map
-					m_biome.Map[sampleX][sampleY] = Square(m_biome, sampleX, sampleY, sampleGridWidth);
-					m_biome.Map[sampleX][sampleY] += Deviation(m_biome.squareDeviation);
+					biome.map[sampleX][sampleY] = Square(biome, sampleX, sampleY, sampleGridWidth);
+					biome.map[sampleX][sampleY] += Deviation(biome.squareDeviation);
 					// Terrain map
-					float continentSquareSample = (continent.Map[sampleX][sampleY] + (CM_offset * continent.initialDeviation)) * m_sampleSpacing;
-					float biomeSquareSample = m_biome.Map[sampleX][sampleY];
+					float continentSquareSample = (continent.map[sampleX][sampleY] + (CM_offset * continent.initialDeviation)) * m_sampleSpacing;
+					float biomeSquareSample = biome.map[sampleX][sampleY];
 					continentSquareSample *= continentSquareSample > 0 ? landAmplitude : oceanAmplitude; // scale the point for land or ocean
 					float biomeDeviation = BiomeDeviation(biomeSquareSample, continentSquareSample);
 					if (gridWidth >= m_sampleSpacing) {
-						m_terrain.Map[pointX][pointY] = continentSquareSample;
-						m_terrain.Map[pointX][pointY] += biomeDeviation;
+						terrain.map[pointX][pointY] = continentSquareSample;
+						terrain.map[pointX][pointY] += biomeDeviation;
 						if (iteration > 2) {
-							m_terrain.Map[pointX][pointY] += (m_terrain.squareDeviation *Deviation(biomeDeviation)*biomeDeviationConst);
+							terrain.map[pointX][pointY] += (terrain.squareDeviation *Deviation(biomeDeviation)*biomeDeviationConst);
 						}
 					} else {
-						m_terrain.Map[pointX][pointY] = Square(m_terrain, pointX, pointY, gridWidth);
-						m_terrain.Map[pointX][pointY] += Deviation(m_terrain.squareDeviation);
-						m_terrain.Map[pointX][pointY] += (m_terrain.squareDeviation *Deviation(biomeDeviation)*biomeDeviationConst);
+						terrain.map[pointX][pointY] = Square(terrain, pointX, pointY, gridWidth);
+						terrain.map[pointX][pointY] += Deviation(terrain.squareDeviation);
+						terrain.map[pointX][pointY] += (terrain.squareDeviation *Deviation(biomeDeviation)*biomeDeviationConst);
 					}
 				}
 			}
@@ -158,22 +164,33 @@ void TerrainSystem::Generate()
 		if (iteration >= continent.zoom) {
 			continent.diamondDeviation *= (0.5f * continent.deviationDecrease);
 		}
-		if (iteration >= m_biome.zoom) {
-			m_biome.diamondDeviation *= (0.5f * m_biome.deviationDecrease);
+		if (iteration >= biome.zoom) {
+			biome.diamondDeviation *= (0.5f * biome.deviationDecrease);
 		}
-		m_terrain.diamondDeviation *= (0.5f * m_terrain.deviationDecrease);
+		terrain.diamondDeviation *= (0.5f * terrain.deviationDecrease);
 	}
-	// Erosion filter
-	InitializeErosionMap();
-	
-	SaveTerrain();
+
+	// Erosion
+	if(g_erosion) UpdateDroplets(terrain,InitializeDroplets(), InitializeThermalErosionMap());
+	// Terrain done yay!
 	CreateTerrainEntities();
+	SaveTerrain(terrain,biome);
+
+
+	// Rain simulation
+	shared_ptr<Map<WaterCell>> water = InitializeErosionMap();
+	if (g_erosion) UpdateWater(terrain, water);
+	// Water done yay!
+	CreateWaterEntities();
+	SaveWater(water);
+
+	// Trees
+	CreateTreeEntities(terrain,water);
 }
 
 void TerrainSystem::Update(double & elapsed)
 {
 	Vector3 velocity = EM->GetComponent<Components::Movement>(EM->Player(), "Movement")->Velocity;
-	Erosion();
 	if (velocity.Length() < 10) {
 		UpdateRegions(PlayerPos()->Pos);
 	}
@@ -183,6 +200,14 @@ void TerrainSystem::Update(double & elapsed)
 string TerrainSystem::Name()
 {
 	return "Terrain";
+}
+
+void TerrainSystem::SyncEntities()
+{
+	static unsigned long terrainMask = EM->ComponentMask("Terrain");
+	static unsigned long waterMask = EM->ComponentMask("Tag_Water");
+	m_terrainEntities = EM->FindEntities(terrainMask);
+	m_waterEntities = EM->FindEntities(waterMask);
 }
 
 string TerrainSystem::GetBiomeName(float sample)
@@ -202,7 +227,7 @@ float TerrainSystem::Height(const int & x, const int & z)
 	ifstream terrainStream(m_directory / "terrain.dat", ios::binary);
 	if (terrainStream.is_open()) {
 		int index = Utility::posToIndex(x, z, m_width + 1);
-		return InternalHeight(terrainStream, index);
+		return InternalHeight(terrainStream, index,10.f);
 	}
 	return 0.0;
 }
@@ -226,7 +251,7 @@ void TerrainSystem::SetVertex(const int & x, const int & z, const float value)
 	}
 	shared_ptr<Components::VBO> terrainVBO = EM->GetComponent<Components::VBO>(region, "VBO");
 
-	if (terrainVBO->Vertices.size() != 0) terrainVBO->Vertices[Utility::posToIndex(z, x, m_width + 1)].position.y = m_erosionMap.Map[x][z].Height;*/
+	if (terrainVBO->Vertices.size() != 0) terrainVBO->Vertices[Utility::posToIndex(z, x, m_width + 1)].position.y = water.map[x][z].Height;*/
 }
 
 shared_ptr<Components::Position> TerrainSystem::PlayerPos()
@@ -234,22 +259,22 @@ shared_ptr<Components::Position> TerrainSystem::PlayerPos()
 	return EM->GetComponent<Components::Position>(EM->Player(),"Position");
 }
 
-void TerrainSystem::SaveTerrain()
+void TerrainSystem::SaveTerrain(HeightMap & terrain, HeightMap & biome)
 {
 	//-------------------------------
 	// save terrain to binary file
 	//-------------------------------
 
 	// Terrain Map
-	unsigned int vertexCount = (m_terrain.width + 1) * (m_terrain.width + 1);
+	unsigned int vertexCount = (terrain.width + 1) * (terrain.width + 1);
 	unique_ptr<unsigned char[]> terrainBuffer(new unsigned char[vertexCount * sizeof(short)]);
 
 	// Normal Map
 	unique_ptr<char[]> normalBuffer(new char[vertexCount * 3]); // X (8 bits) Y (8 bits) Z (8 bits)
 
 																// Biome Map
-	unsigned int sampleSpacing = m_terrain.width / m_biome.width;
-	unsigned int sampleCount = (m_biome.width + 1) * (m_biome.width + 1);
+	unsigned int sampleSpacing = terrain.width / biome.width;
+	unsigned int sampleCount = (biome.width + 1) * (biome.width + 1);
 	unique_ptr<unsigned char[]> biomeBuffer(new unsigned char[sampleCount * sizeof(float)]);
 
 
@@ -257,10 +282,10 @@ void TerrainSystem::SaveTerrain()
 	unsigned int index = 0;
 	unsigned int biomeIndex = 0;
 
-	for (unsigned short vertZ = 0; vertZ <= m_terrain.width; vertZ++) {
-		for (unsigned short vertX = 0; vertX <= m_terrain.width; vertX++) {
+	for (unsigned short vertZ = 0; vertZ <= terrain.width; vertZ++) {
+		for (unsigned short vertX = 0; vertX <= terrain.width; vertX++) {
 			// verticies
-			float vertex = m_terrain.Map[vertX][vertZ];
+			float vertex = terrain.map[vertX][vertZ];
 			short vertexShort = (short)(vertex * 10.f);
 			/*char lower = vertexShort & 0xff;
 			char upper = (vertexShort >> 8) & 0xff;
@@ -269,17 +294,17 @@ void TerrainSystem::SaveTerrain()
 			std::memcpy(&terrainBuffer.get()[index * sizeof(short)], &vertexShort, sizeof(short));
 			// biome
 			if (vertZ % sampleSpacing == 0 && vertX % sampleSpacing == 0) {
-				float floatValue = m_biome.Map[vertX / sampleSpacing][vertZ / sampleSpacing];
+				float floatValue = biome.map[vertX / sampleSpacing][vertZ / sampleSpacing];
 				std::memcpy(&biomeBuffer.get()[biomeIndex * sizeof(float)], &floatValue, sizeof(float));
 				/*biomeFile.seekp(biomeIndex * sizeof(float));
 				biomeFile.write((char *)charValue, sizeof(float));*/
 				biomeIndex++;
 			}
 			// normals
-			float left = signed(vertX) - 1 >= 0 ? m_terrain.Map[vertX - 1][vertZ] : vertex;
-			float right = signed(vertX) + 1 <= signed(m_terrain.width) ? m_terrain.Map[vertX + 1][vertZ] : vertex;
-			float up = signed(vertZ) + 1 <= signed(m_terrain.width) ? m_terrain.Map[vertX][vertZ + 1] : vertex;
-			float down = signed(vertZ) - 1 >= 0 ? m_terrain.Map[vertX][vertZ - 1] : vertex;
+			float left = signed(vertX) - 1 >= 0 ? terrain.map[vertX - 1][vertZ] : vertex;
+			float right = signed(vertX) + 1 <= signed(terrain.width) ? terrain.map[vertX + 1][vertZ] : vertex;
+			float up = signed(vertZ) + 1 <= signed(terrain.width) ? terrain.map[vertX][vertZ + 1] : vertex;
+			float down = signed(vertZ) - 1 >= 0 ? terrain.map[vertX][vertZ - 1] : vertex;
 
 			DirectX::SimpleMath::Vector3 normal = DirectX::SimpleMath::Vector3(left - right, 2.f, down - up);
 			normal.Normalize();
@@ -298,18 +323,46 @@ void TerrainSystem::SaveTerrain()
 	// output file stream
 	//-----------------------------------------------
 
-	// m_terrain
-	ofstream terrain(m_directory / "terrain.dat",std::ios::binary);
-	terrain.write((const char *)terrainBuffer.get(), vertexCount * sizeof(short));
-	terrain.close();
-	// m_biome
-	ofstream biome(m_directory / "biome.dat", std::ios::binary);
-	biome.write((const char *)biomeBuffer.get(), sampleCount * sizeof(float));
-	biome.close();
+	// terrain
+	ofstream terrainStream(m_directory / "terrain.dat",std::ios::binary);
+	terrainStream.write((const char *)terrainBuffer.get(), vertexCount * sizeof(short));
+	terrainStream.close();
+	// biome
+	ofstream biomeStream(m_directory / "biome.dat", std::ios::binary);
+	biomeStream.write((const char *)biomeBuffer.get(), sampleCount * sizeof(float));
+	biomeStream.close();
 	// NormalMap
 	ofstream normal(m_directory / "normal.dat", std::ios::binary);
 	normal.write((const char *)normalBuffer.get(), vertexCount * 3);
 	normal.close();
+}
+
+void TerrainSystem::SaveWater(shared_ptr<Map<WaterCell>> water)
+{
+	// Water Map
+	unsigned int vertexCount = (water->width + 1) * (water->width + 1);
+	unique_ptr<unsigned char[]> terrainBuffer(new unsigned char[vertexCount * sizeof(short)]);
+
+	unsigned int index = 0;
+	unsigned int biomeIndex = 0;
+
+	for (unsigned short vertZ = 0; vertZ <= water->width; vertZ++) {
+		for (unsigned short vertX = 0; vertX <= water->width; vertX++) {
+			// verticies
+			float vertex = water->map[vertX][vertZ].Water;
+			short vertexShort = (short)(vertex * 100.f);
+			std::memcpy(&terrainBuffer.get()[index * sizeof(short)], &vertexShort, sizeof(short));
+			// update vertex index
+			index++;
+		}
+	}
+
+	//-----------------------------------------------
+	// output file stream
+	//-----------------------------------------------
+	ofstream waterStream(m_directory / "water.dat", std::ios::binary);
+	waterStream.write((const char *)terrainBuffer.get(), vertexCount * sizeof(short));
+	waterStream.close();
 }
 
 void TerrainSystem::CreateTerrainEntities()
@@ -324,30 +377,110 @@ void TerrainSystem::CreateTerrainEntities()
 			NewTerrain(position);
 		}
 	}
-	//m_entities = EM->EntitiesContaining("Terrain");
+}
+
+void TerrainSystem::CreateWaterEntities()
+{
+	for (int x = 0; x < m_width / m_regionWidth; x++) {
+		for (int z = 0; z < m_width / m_regionWidth; z++) {
+			Vector3 position(
+				((double)x * (double)m_regionWidth) + (double)m_regionWidth * 0.5,
+				0.0,
+				((double)z * (double)m_regionWidth) + (double)m_regionWidth * 0.5
+			);
+			NewWater(position);
+		}
+	}
+}
+
+void TerrainSystem::NewWater(DirectX::SimpleMath::Vector3 & position)
+{
+	shared_ptr<Entity> entity = EM->NewEntity();
+
+	entity->AddComponent(EM->ComponentMask("Position"), std::shared_ptr<Components::Component>(
+		new Components::Position(entity->ID(), position, SimpleMath::Vector3::Zero)));
+	entity->AddComponent(EM->ComponentMask("Tag_Water"), std::shared_ptr<Components::Component>(
+		new Components::Tag(entity->ID(),"Water")));
+	auto vbo = new Components::VBO(entity->ID());
+	vbo->Effect = "Water";
+	entity->AddComponent(EM->ComponentMask("VBO"), std::shared_ptr<Components::Component>(vbo));
+}
+
+void TerrainSystem::CreateTreeEntities(HeightMap & terrain, shared_ptr<Map<WaterCell>> water)
+{
+	Utility::OutputLine("Generating Trees...");
+	static const float density = 0.01f;
+	/*for (int regionX = 0; regionX < m_width / m_regionWidth; regionX++) {
+		for (int regionZ = 0; regionZ < m_width / m_regionWidth; regionZ++) {*/
+	for (int x = 0; x <= m_width; x++) {
+		for (int z = 0; z <= m_width; z++) {
+			if (water->map[x][z].Water == 0.f) {
+				
+				float probability = density;
+				probability *= TreeGradientProbability(terrain.GradientAngle(x, z));
+				probability *= TreeElevationProbability(terrain.Height(x, z));
+				//probability = std::round(probability);
+				if (probability > 0.0001f && Utility::Chance(probability)) {
+					Vector3 pos(x, terrain.Height(x, z), z);
+					Vector3 rot(0.f, Utility::randWithin(0.f, XM_2PI), 0.f);
+					NewTree(pos, rot);
+				}
+			}
+		}
+	}
+	Utility::OutputLine("Finished");
+}
+
+void TerrainSystem::NewTree(DirectX::SimpleMath::Vector3 & position, Vector3 & rotation)
+{
+	shared_ptr<Entity> entity = EM->NewEntity();
+
+	entity->AddComponent(EM->ComponentMask("Position"), std::shared_ptr<Components::Component>(
+		new Components::Position(entity->ID(), position, rotation)));
+	entity->AddComponent(EM->ComponentMask("Tag_Tree"), std::shared_ptr<Components::Component>(
+		new Components::Tag(entity->ID(), "Tree")));
+	entity->AddComponent(EM->ComponentMask("Model"), std::shared_ptr<Components::Component>(
+		new Components::Model(entity->ID(), "Tree", "Default")));
+}
+
+float TerrainSystem::TreeGradientProbability(float gradient)
+{
+	static const float maxGradient = Utility::DegToRad(45);
+	return Utility::SigmoidDecay(gradient, maxGradient);
+}
+
+float TerrainSystem::TreeElevationProbability(float elevation)
+{
+	static const float maxElevation = 128.f;
+	return Utility::SigmoidDecay(elevation, maxElevation,0.1f);
 }
 
 void TerrainSystem::UpdateRegions(Vector3 center)
 {
 	
 	center.y = 0;
-	for (auto & entity : std::vector<shared_ptr<Entity>>(m_entities)) {
-		Vector3 position = EM->GetComponent<Components::Position>(entity,"Position")->Pos;
+	for (int i = 0; i < m_terrainEntities.size(); i++) {
+		auto terrainEntity = m_terrainEntities[i];
+		auto waterEntity = m_waterEntities[i];
+		Vector3 position = EM->GetComponent<Components::Position>(terrainEntity,"Position")->Pos;
 		position.y = 0;
 		double distance = Vector3::Distance(center, position);
 		
-		shared_ptr<Components::VBO> vbo = EM->GetComponent<Components::VBO>(entity, "VBO");
+		shared_ptr<Components::VBO> vbo = EM->GetComponent<Components::VBO>(terrainEntity, "VBO");
+		shared_ptr<Components::VBO> waterVBO = EM->GetComponent<Components::VBO>(waterEntity, "VBO");
 		// Update the Level Of Detail as a funtion of distance
 		int lod = LOD(distance, (int)m_regionWidth);
 		// Only update this VBO if the LOD has changed
-		if (true || vbo->LOD != lod) {
+		if (vbo->LOD != lod) {
 			vbo->LOD = lod;
-			
+			waterVBO->LOD = lod;
 			// Get the region coordinates
 			int x = (int)std::floor(position.x / (double)(int)m_regionWidth);
 			int z = (int)std::floor(position.z / (double)(int)m_regionWidth);
 
-			m_worker = std::thread([this, vbo, x, z]() {UpdateTerrainVBO(vbo, x, z);});
+			m_worker = std::thread([this, vbo,waterVBO, x, z]() {
+				UpdateWaterVBO(waterVBO, UpdateTerrainVBO(vbo, x, z), x, z);
+			});
 			m_worker.detach();
 			//UpdateTerrainVBO(vbo, x, z);
 			
@@ -355,46 +488,176 @@ void TerrainSystem::UpdateRegions(Vector3 center)
 	}
 }
 
-void TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int regionX, int regionZ)
+void TerrainSystem::UpdateWaterVBO(shared_ptr<Components::VBO> vbo, shared_ptr<HeightMap> terrain, int  regionX, int  regionZ)
 {
-	//unsigned int regionIndex = Utility::posToIndex(regionX, regionZ, m_width / (int)m_regionWidth);
-	//unsigned int vertexCount = ((int)m_regionWidth + 1)*((int)m_regionWidth + 1);
-	//unsigned int rowSize = ((int)m_regionWidth + 1) * sizeof(short);
-	//unsigned int regionSize = vertexCount * sizeof(short);
 	// calculate quad size based off of LOD (Level Of Detail)
 	int quadWidth = std::pow(2, vbo->LOD);
 	int mapWidth = m_regionWidth / quadWidth;
 	// Load the vertex array with data.
-	HeightMap<float> heightMap(mapWidth,0.0,0.0,0);
-	HeightMap<Vector3> normalMap(mapWidth, 0.0, 0.0, 0);
+	HeightMap water(terrain->width, 0.0, 0.0, 0);
+	ifstream waterStream(m_directory / "water.dat", ios::binary);
+
+	static const float push = -0.2f;
+	if (waterStream.is_open()) {
+		for (int vertZ = 0; vertZ <= (int)mapWidth; vertZ++) {
+			for (int vertX = 0; vertX <= (int)mapWidth; vertX++) {
+				int worldX = vertX * quadWidth + (int)m_regionWidth * regionX;
+				int worldZ = vertZ * quadWidth + (int)m_regionWidth * regionZ;
+				int index = Utility::posToIndex(worldX, worldZ, m_width + 1);
+				// heightMap
+				water.map[vertX][vertZ] = InternalHeight(waterStream, index, 100.f) + push;
+				
+			}
+		}
+
+		waterStream.close();
+	}
+	vbo->Vertices.clear();
+	vbo->Indices.clear();
+
+	for (int z = 0; z < mapWidth; z++) {
+		for (int x = 0; x < mapWidth; x ++) {	
+			/*
+			Note:
+			It might be possible to correct unstable erosion processes by limiting the amout of erosion
+			to the lowest point in the immediate quad, e.g. do not allow it to dig holes, only push sediment
+			off of a ledge.
+
+			*/
+			const float worldX = x * quadWidth + regionX * m_regionWidth;
+			const float worldZ = z * quadWidth + regionZ * m_regionWidth;
+			bool hasWater[4]{
+				water.map[x][z] > push,
+				water.map[x+1][z] > push,
+				water.map[x][z+1] > push,
+				water.map[x+1][z+1] > push,
+			};
+			Vector3 quad[4] {
+				Vector3(
+					(float)(worldX),
+					terrain->map[x][z] > 0.f ? (water.map[x][z] < 0.f ? LowestNeighbor(water,*terrain, x, z) : water.map[x][z] + terrain->map[x][z]) : 0.f,
+					(float)(z * quadWidth + regionZ * m_regionWidth)
+				),
+				Vector3(
+					(float)(worldX + quadWidth),
+					terrain->map[x+1][z] > 0.f ? (water.map[x+1][z] < 0.f ? LowestNeighbor(water,*terrain, x+1, z) : water.map[x+1][z] + terrain->map[x+1][z] ): 0.f,
+					(float)(worldZ)
+				),
+				
+				Vector3(
+					(float)(worldX),
+					terrain->map[x][z+1] > 0.f ? (water.map[x][z+1] < 0.f ? LowestNeighbor(water,*terrain, x, z+1) : water.map[x][z+1] + terrain->map[x][z+1]) : 0.f,
+					(float)(worldZ + quadWidth)
+				),
+				Vector3(
+					(float)(worldX + quadWidth),
+					terrain->map[x+1][z+1] > 0.f ? (water.map[x+1][z+1] < 0.f ? LowestNeighbor(water,*terrain, x+1, z+1) : water.map[x + 1][z + 1] + terrain->map[x + 1][z + 1]) : 0.f,
+					(float)(worldZ + quadWidth)
+				)
+			};
+			if (x != mapWidth && z != mapWidth) {
+				/*
+				0---1
+				| \ |
+				2---3
+				*/
+				
+				// Left triangle
+				if (hasWater[0] || hasWater[3] || hasWater[2]) {
+					vbo->Indices.push_back(vbo->Vertices.size());
+					vbo->Vertices.push_back(CreateVertex(quad[0],Vector3::UnitY,Vector2::Zero));
+					vbo->Indices.push_back(vbo->Vertices.size());
+					vbo->Vertices.push_back(CreateVertex(quad[3], Vector3::UnitY, Vector2(1.f,1.f)));
+					vbo->Indices.push_back(vbo->Vertices.size());
+					vbo->Vertices.push_back(CreateVertex(quad[2], Vector3::UnitY, Vector2(0.f,1.f)));
+				}
+				// Right
+				if (hasWater[0] || hasWater[1] || hasWater[3]) {
+					vbo->Indices.push_back(vbo->Vertices.size());
+					vbo->Vertices.push_back(CreateVertex(quad[0], Vector3::UnitY, Vector2::Zero));
+					vbo->Indices.push_back(vbo->Vertices.size());
+					vbo->Vertices.push_back(CreateVertex(quad[1], Vector3::UnitY, Vector2(1.f, 0.f)));
+					vbo->Indices.push_back(vbo->Vertices.size());
+					vbo->Vertices.push_back(CreateVertex(quad[3], Vector3::UnitY, Vector2(1.f, 1.f)));
+				}
+			}
+			//if (x != 0 && z != 0) {
+			//	if (terrain->map[x][z - 1] > 0.f) {
+			//		float vertex = terrain->map[x][z - 1] + (water.map[x][z - 1] < 0.05 ? pushDepth : 0.f);
+			//		// normals
+			//		float left = signed(x) - 1 >= 0 ? terrain->map[x - 1][z - 1] + water.map[x - 1][z - 1] : vertex;
+			//		float right = signed(x) + 1 <= signed(terrain->width) ? terrain->map[x + 1][z - 1] + water.map[x + 1][z - 1] : vertex;
+			//		float up = signed(z - 1) + 1 <= signed(terrain->width) ? terrain->map[x][z] + water.map[x][z] : vertex;
+			//		float down = signed(z - 1) - 1 >= 0 ? terrain->map[x][z - 2] + water.map[x][z - 2] : vertex;
+
+			//		DirectX::SimpleMath::Vector3 normal = DirectX::SimpleMath::Vector3(left - right, 2.f, down - up);
+			//		normal.Normalize();
+			//		vbo->Vertices[vertexBufferIndex - (water.width + 1)].normal = normal;
+			//	}
+			//	else {
+			//		vbo->Vertices[vertexBufferIndex - (water.width + 1)].normal = DirectX::SimpleMath::Vector3::Up;
+			//	}
+			//}
+			
+		}
+	}
+	
+	vbo->LODchanged = true;
+}
+
+VertexPositionNormalTangentColorTexture TerrainSystem::CreateVertex(Vector3 position, Vector3 normal, Vector2 texture)
+{
+	return VertexPositionNormalTangentColorTexture(position, normal, XMFLOAT4(), XMFLOAT4(), texture);
+}
+
+float TerrainSystem::LowestNeighbor(HeightMap & water, HeightMap & terrain, int x, int z)
+{
+	float minY = std::numeric_limits<float>::infinity();
+	for (int i = 0; i < 8; i++) {
+		int adjX = (i == 0 || i == 1 || i == 7 ? x + 1 : (i >= 3 && i <= 5 ? x - 1 : x));
+		int adjZ = (i >= 1 && i <= 3 ? z + 1 : (i >= 5 && i <= 7 ? z - 1 : z));
+		if (water.Bounded(adjX, adjZ)) {
+			float worldY = water.map[adjX][adjZ] + terrain.map[adjX][adjZ];
+			if (worldY < minY) minY = worldY;
+		}
+	}
+	return minY;
+}
+
+shared_ptr<HeightMap> TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int  regionX, int regionZ)
+{
+	// calculate quad size based off of LOD (Level Of Detail)
+	int quadWidth = std::pow(2, vbo->LOD);
+	int mapWidth = m_regionWidth / quadWidth;
+	// Load the vertex array with data.
+	shared_ptr<HeightMap> heightMap = std::make_shared<HeightMap>(mapWidth,0.0,0.0,0);
+	Map<Vector3> normalMap(mapWidth, 0.0, 0.0, 0);
 	ifstream terrainStream(m_directory / "terrain.dat", ios::binary);
 	ifstream normalStream(m_directory / "normal.dat", ios::binary);
 	
 
-	//if (terrainStream.is_open() && normalStream.is_open()) {
-	//	// stores the exact bytes from the file into memory
-	// 		//char *terrainCharBuffer = new char[regionSize];
-	//	//char *normalCharBuffer = new char[vertexCount * 3];
-	//	// move start position to the region, and proceed to read each line into the Char buffers
-	//	
-	//	
-	//	for (int vertZ = 0; vertZ <= (int)mapWidth; vertZ++) {
-	//		for (int vertX = 0; vertX <= (int)mapWidth; vertX++) {
-	//			int worldX = vertX * quadWidth + (int)m_regionWidth * regionX;
-	//			int worldZ = vertZ * quadWidth + (int)m_regionWidth * regionZ;
-	//			int index = Utility::posToIndex(worldX, worldZ, m_width + 1);
-	//			// heightMap
-	//			heightMap.Map[vertX][vertZ] = InternalHeight(terrainStream, index);
-	//			// normalMap
-	//			normalMap.Map[vertX][vertZ] = Normal(normalStream,index);
-	//		}
-	//	}
+	if (terrainStream.is_open() && normalStream.is_open()) {
+		// stores the exact bytes from the file into memory
+	 		//char *terrainCharBuffer = new char[regionSize];
+		//char *normalCharBuffer = new char[vertexCount * 3];
+		// move start position to the region, and proceed to read each line into the Char buffers
+		
+		
+		for (int vertZ = 0; vertZ <= (int)mapWidth; vertZ++) {
+			for (int vertX = 0; vertX <= (int)mapWidth; vertX++) {
+				int worldX = vertX * quadWidth + (int)m_regionWidth * regionX;
+				int worldZ = vertZ * quadWidth + (int)m_regionWidth * regionZ;
+				int index = Utility::posToIndex(worldX, worldZ, m_width + 1);
+				// heightMap
+				heightMap->map[vertX][vertZ] = InternalHeight(terrainStream, index,10.f);
+				// normalMap
+				normalMap.map[vertX][vertZ] = Normal(normalStream,index);
+			}
+		}
 
-	//	terrainStream.close();
-	//	normalStream.close();
-	//	//delete[] terrainCharBuffer;
-	//	//delete[] normalCharBuffer;
-	//}
+		terrainStream.close();
+		normalStream.close();
+	}
 	// create 2 triangles (6 vertices) for every quad in the region
 	vbo->Vertices.resize(6 * mapWidth * mapWidth);
 	vbo->Vertices.shrink_to_fit();
@@ -403,40 +666,27 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int region
 	int index = 0;
 	for (int z = 0; z < mapWidth; z++) {
 		for (int x = 0; x < mapWidth; x++) {
-			if (x != 0 && z != 0) {
-				float vertex = m_terrain.Map[x][z];
-				// normals
-				float left = signed(x) - 1 >= 0 ? m_erosionMap.Map[x - 1][z].Height + m_erosionMap.Map[x - 1][z].Water - 0.1f : vertex;
-				float right = signed(x) + 1 <= signed(m_erosionMap.width) ? m_erosionMap.Map[x + 1][z].Height + m_erosionMap.Map[x + 1][z].Water - 0.1f : vertex;
-				float up = signed(z - 1) + 1 <= signed(m_erosionMap.width) ? m_erosionMap.Map[x][z+1].Height + m_erosionMap.Map[x][z+1].Water - 0.1f : vertex;
-				float down = signed(z - 1) - 1 >= 0 ? m_erosionMap.Map[x][z - 1].Height + m_erosionMap.Map[x][z - 1].Water - 0.1f : vertex;
-
-				DirectX::SimpleMath::Vector3 normal = DirectX::SimpleMath::Vector3(left - right, 2.f, down - up);
-				normal.Normalize();
-
-				normalMap.Map[x][z] = normal;
-			}
 			// Get the indexes to the four points of the quad.
 
 			// Upper left.
 			Vector3 vertex1(
 				(float)(x * quadWidth + regionX * m_regionWidth),
-				m_terrain.Map[x][z],
+				heightMap->map[x][z],
 				(float)(z * quadWidth + regionZ * m_regionWidth));
 			// Upper right.
 			Vector3 vertex2(
 				(float)((x + 1) * quadWidth + regionX * m_regionWidth),
-				m_terrain.Map[x + 1][z],
+				heightMap->map[x + 1][z],
 				(float)(z * quadWidth + regionZ * m_regionWidth));
 			// Bottom left.
 			Vector3 vertex3(
 				(float)(x * quadWidth + regionX * m_regionWidth),
-				m_terrain.Map[x][z + 1],
+				heightMap->map[x][z + 1],
 				(float)((z + 1) * quadWidth + regionZ * m_regionWidth));
 			// Bottom right.
 			Vector3 vertex4(
 				(float)((x + 1) * quadWidth + regionX * m_regionWidth),
-				m_terrain.Map[x + 1][z + 1],
+				heightMap->map[x + 1][z + 1],
 				(float)((z + 1) * quadWidth + regionZ * m_regionWidth));
 
 			/*
@@ -448,7 +698,7 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int region
 			// Triangle 1 - Upper left
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex1),										// position
-				XMFLOAT3(normalMap.Map[x][z]),	// normal
+				XMFLOAT3(normalMap.map[x][z]),	// normal
 				XMFLOAT4(1.f,0.f,0.f,1.f),								// tangent
 				XMFLOAT4(0.f,0.f,0.f,1.f),							// color
 				XMFLOAT2(0.f,0.f)										// texture
@@ -458,7 +708,7 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int region
 			// Triangle 1 - Bottom right.
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex4),												// position
-				XMFLOAT3(normalMap.Map[x + 1][z + 1]),	// normal
+				XMFLOAT3(normalMap.map[x + 1][z + 1]),	// normal
 				XMFLOAT4(1.f,0.f,0.f,1.f),										// tangent
 				XMFLOAT4(0.f,0.f,0.f,1.f),									// color
 				XMFLOAT2(1.f,1.f)												// texture
@@ -468,7 +718,7 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int region
 			// Triangle 1 - Bottom left.
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex3),											// position
-				XMFLOAT3(normalMap.Map[x][z + 1]),	// normal
+				XMFLOAT3(normalMap.map[x][z + 1]),	// normal
 				XMFLOAT4(1.f,0.f,0.f,1.f),									// tangent
 				XMFLOAT4(0.f,0.f,0.f,1.f),								// color
 				XMFLOAT2(0.f,1.f)											// texture
@@ -478,7 +728,7 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int region
 			// Triangle 2 - Upper left.
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex1),										// position
-				XMFLOAT3(normalMap.Map[x][z]),	// normal
+				XMFLOAT3(normalMap.map[x][z]),	// normal
 				XMFLOAT4(1.f,0.f,0.f,1.f),								// tangent
 				XMFLOAT4(0.f,0.f,0.f,1.f),							// color
 				XMFLOAT2(0.f,0.f)										// texture
@@ -488,7 +738,7 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int region
 			// Triangle 2 - Upper right.
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex2),											// position
-				XMFLOAT3(normalMap.Map[x + 1][z]),	// normal
+				XMFLOAT3(normalMap.map[x + 1][z]),	// normal
 				XMFLOAT4(1.f,0.f,0.f,1.f),									// tangent
 				XMFLOAT4(0.f,0.f,0.f,1.f),								// color
 				XMFLOAT2(1.f,0.f)											// texture
@@ -498,7 +748,7 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int region
 			// Triangle 2 - Bottom right.
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex4),												// position
-				XMFLOAT3(normalMap.Map[x + 1][z + 1]),	// normal
+				XMFLOAT3(normalMap.map[x + 1][z + 1]),	// normal
 				XMFLOAT4(1.f,0.f,0.f,1.f),										// tangent
 				XMFLOAT4(0.f,0.f,0.f,1.f),									// color
 				XMFLOAT2(1.f,1.f)												// texture
@@ -507,9 +757,9 @@ void TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int region
 			index++;
 		}
 	}
-	normalStream.close();
-	terrainStream.close();
+	
 	vbo->LODchanged = true;
+	return heightMap;
 }
 
 int TerrainSystem::LOD(double distance, unsigned int modelWidth)
@@ -526,8 +776,11 @@ void TerrainSystem::NewTerrain(DirectX::SimpleMath::Vector3 & position)
 		new Components::Position(entity->ID(), position, SimpleMath::Vector3::Zero)));
 	entity->AddComponent(EM->ComponentMask("Terrain"), std::shared_ptr<Components::Component>(
 		new Components::Terrain(entity->ID())));
+
+	Components::VBO * vbo = new Components::VBO(entity->ID());
+	vbo->Effect = "Terrain";
 	entity->AddComponent(EM->ComponentMask("VBO"), std::shared_ptr<Components::Component>(
-		new Components::VBO(entity->ID())));
+		vbo));
 }
 
 Vector3 TerrainSystem::Normal(std::ifstream & ifs, const int & index)
@@ -541,7 +794,7 @@ Vector3 TerrainSystem::Normal(std::ifstream & ifs, const int & index)
 	return normal;
 }
 
-float TerrainSystem::InternalHeight(std::ifstream & ifs, const int & index)
+float TerrainSystem::InternalHeight(std::ifstream & ifs, const int & index,float precision)
 {
 	// heightMap
 	char shortBuffer[2];
@@ -552,34 +805,34 @@ float TerrainSystem::InternalHeight(std::ifstream & ifs, const int & index)
 	//short shortVertex = (short)(lower | upper);
 	short shortVertex = 0;
 	memcpy(&shortVertex, &shortBuffer, sizeof(short));
-	return (float)shortVertex / 10.f;
+	return (float)shortVertex / precision;
 }
 
-float TerrainSystem::Diamond(HeightMap<float> & map, int & x, int & y, int & distance) {
+float TerrainSystem::Diamond(HeightMap & map, int & x, int & y, int & distance) {
 	float sum = 0.f;
-	sum += map.Map[x - distance][y - distance];
-	sum += map.Map[x - distance][y + distance];
-	sum += map.Map[x + distance][y - distance];
-	sum += map.Map[x + distance][y + distance];
+	sum += map.map[x - distance][y - distance];
+	sum += map.map[x - distance][y + distance];
+	sum += map.map[x + distance][y - distance];
+	sum += map.map[x + distance][y + distance];
 	return sum * 0.25f;
 }
-float TerrainSystem::Square(HeightMap<float> & map, int & x, int & y, int & distance) {
+float TerrainSystem::Square(HeightMap & map, int & x, int & y, int & distance) {
 	float sum = 0;
 	int denominator = 0;
 	if (y > 0) {
-		sum += map.Map[x][y - distance];
+		sum += map.map[x][y - distance];
 		denominator++;
 	}
 	if (y < map.width - 1) {
-		sum += map.Map[x][y + distance];
+		sum += map.map[x][y + distance];
 		denominator++;
 	}
 	if (x > 0) {
-		sum += map.Map[x - distance][y];
+		sum += map.map[x - distance][y];
 		denominator++;
 	}
 	if (x < map.width - 1) {
-		sum += map.Map[x + distance][y];
+		sum += map.map[x + distance][y];
 		denominator++;
 	}
 	return sum / denominator;
@@ -591,560 +844,101 @@ float TerrainSystem::BiomeDeviation(float biome, float continent) {
 	return Utility::Gaussian(biome, m_biomeAmplitude, m_biomeShift, m_biomeWidth) * Utility::Sigmoid(continent, 1.f, m_continentShift, m_continentWidth);
 }
 
-void TerrainSystem::InitializeErosionMap()
+shared_ptr<Map<WaterCell>> TerrainSystem::InitializeErosionMap()
 {
-	m_erosionMap = HeightMap<TerrainCell>(m_width, 0.f, 0.f, 0);
-	// Initialize
-	for (int x = 0; x <= m_width; x++) {
-		for (int z = 0; z <= m_width; z++) {
-			m_erosionMap.Map[x][z] = TerrainCell();
-		}
-	}
-	for (int x = 0; x <= m_width; x++) {
-		for (int z = 0; z <= m_width; z++) {
-			m_terrain.Map[x][z] = std::sqrt(std::pow((float)x / 2.f, 2) + std::pow((float)z / 2.f, 2));
+	auto water = std::make_shared<Map<WaterCell>>(m_width, 0.f, 0.f, 0);
 
-			TerrainCell & thisCell = m_erosionMap.Map[x][z];
-			// set terrain height
-			thisCell.Height = m_terrain.Map[x][z];
-			//thisCell.Height = std::sqrt(std::pow((float)x / 2.f, 2) + std::pow((float)z / 2.f, 2));
-			// initialize adjacent mappings
-			for (int rot = 0; rot < 4; rot++) {
-				int adjX = x + round(cos(rot * XM_PI / 2));
-				int adjZ = z + round(sin(rot * XM_PI / 2));
-				if (adjX >= 0 && adjX <= m_width && adjZ >= 0 && adjZ <= m_width) {
-					thisCell.Adjacent[rot] = &m_erosionMap.Map[adjX][adjZ];
+	//// Initialize the water entity
+	//waterEntity = EM->NewEntity();
+	//waterEntity->AddComponent(EM->ComponentMask("VBO"), std::shared_ptr<Components::Component>(
+	//	new Components::VBO(waterEntity->ID())));
+	//shared_ptr<Components::VBO> vbo = EM->GetComponent<Components::VBO>(waterEntity, "VBO");
+	//vbo->Effect = "Water";
+	//// create 2 triangles (6 vertices) for every quad in the world
+	//vbo->Vertices.resize((m_width +1)* (m_width+1));
+	//vbo->Vertices.shrink_to_fit();
+	//vbo->Indices.resize(6 * m_width * m_width);
+	//vbo->Indices.shrink_to_fit();
+	return water;
+}
+
+shared_ptr<Map<ThermalCell>> TerrainSystem::InitializeThermalErosionMap()
+{
+	return std::make_shared<Map<ThermalCell>>(m_width, 0.f, 0.f, 0);
+}
+
+void TerrainSystem::UpdateWater(HeightMap & terrain, shared_ptr<Map<WaterCell>> water) {
+
+	const int iterations = 150;
+	const float rainPortion = 0.3f;
+
+	for (int i = 0; i < iterations * 2; i++) {
+		for (int z = 0; z <= m_width; z++) {
+			for (int x = 0; x <= m_width; x++) {
+				WaterCell & thisCell = water->map[x][z];
+				if (terrain.map[x][z] > 0.f) {
+					if (i % 2 == 0) {
+						thisCell.UpdateFlux(terrain, *water,x,z);
+					}
+					else {
+						thisCell.UpdateWater(terrain, *water, x, z);
+						if ((float)i / (float)(iterations * 2) <= rainPortion) thisCell.Rain();
+						thisCell.Evaporate();
+					}
 				}
-				else {
-					thisCell.Adjacent[rot] = nullptr;
+				else if (i == 0 && terrain.map[x][z] <= 0.f) {
+					thisCell.Water = -terrain.map[x][z];
+					
+				}
+				// bandaide
+				if (std::abs(thisCell.Water) > 1000) {
+					thisCell.Water = 0;
 				}
 			}
 		}
+		OutputDebugStringA(("\nWater Sim @ " + std::to_string((float)i / (float)(iterations * 2.f) * 100.f) + "%").c_str());
 	}
-	// Initialize the water entity
-	waterEntity = EM->NewEntity();
-	waterEntity->AddComponent(EM->ComponentMask("VBO"), std::shared_ptr<Components::Component>(
-		new Components::VBO(waterEntity->ID())));
-	shared_ptr<Components::VBO> vbo = EM->GetComponent<Components::VBO>(waterEntity, "VBO");
-	vbo->Effect = "Water";
-	// create 2 triangles (6 vertices) for every quad in the world
-	vbo->Vertices.resize((m_width +1)* (m_width+1));
-	vbo->Vertices.shrink_to_fit();
-	vbo->Indices.resize(6 * m_width * m_width);
-	vbo->Indices.shrink_to_fit();
 }
-
-void TerrainSystem::Erosion() {
-
-	const int iterations = 1;
-	const float timeInterval = 0.1f;
-	
-
-	static int i = 0;
-
-	for (int z = 0; z <= m_width; z++) {
-		for (int x = 0; x <= m_width; x++) {
-			TerrainCell & thisCell = m_erosionMap.Map[x][z];
-			if (i % 5 == 0) {
-				float sourceX = x - thisCell.Velocity.x * timeInterval * 0.5;
-				float sourceZ = z - thisCell.Velocity.z * timeInterval * 0.5;
-				int quadX = std::floor(sourceX);
-				int quadZ = std::floor(sourceZ);
-
-				//if (quadX > 0 && quadX < m_width-1 && quadZ > 0 && quadZ < m_width-1) {
-				float points[4][4];
-				for (int px = -1; px < 3; px++) {
-					for (int pz = -1; pz < 3; pz++) {
-						if (quadX > 0 && quadX < m_width - 1 && quadZ > 0 && quadZ < m_width - 1) {
-							points[px + 1][pz + 1] = m_erosionMap.Map[quadX + px][quadZ + pz].Suspended;
-						}
-						else {
-							points[px + 1][pz + 1] = 0.f;
+void TerrainSystem::UpdateDroplets(HeightMap & terrain, shared_ptr<vector<Droplet>> droplets, shared_ptr<Map<ThermalCell>> thermal)
+{
+	static const int iterations = 300;
+	static const int thermalPeriod = iterations/20;
+	static const int thermalCutoff = 100;
+	for (int i = 0; i < iterations; i++) {
+		// calculate changes for each drop
+		if (i > thermalCutoff) {
+			for (Droplet & droplet : *droplets) {
+				droplet.Update(terrain);
+			}
+		}  
+		if (i < thermalCutoff || i % thermalPeriod == 0) {
+			// Thermal erosion
+			for (int thermalI = 0; thermalI < 2; thermalI++) {
+				for (int x = 0; x <= m_width; x++) {
+					for (int z = 0; z <= m_width; z++) {
+						if (terrain.map[x][z] >= -100.f) {
+							if (thermalI % 2 == 0) {
+								thermal->map[x][z].UpdateFlux(terrain, *thermal.get(),x,z);
+							}
+							else {
+								thermal->map[x][z].TransferSediment(terrain, *thermal.get(),x,z);
+							}
 						}
 					}
 				}
-				float suspended = Utility::BicubicInterpolation(points, sourceX - (float)quadX, sourceZ - (float)quadZ);
-
-				/*float suspended = Utility::InterpolateQuad(sourceX - (float)quadX, sourceZ - (float)quadZ,
-				m_erosionMap.Map[quadX][quadZ].Suspended,
-				m_erosionMap.Map[quadX + 1][quadZ].Suspended,
-				m_erosionMap.Map[quadX + 1][quadZ + 1].Suspended,
-				m_erosionMap.Map[quadX][quadZ + 1].Suspended
-				);*/
-				thisCell.NextSuspended += suspended;
-				
-				thisCell.Evaporate(timeInterval);
-				if ((i / 500) % 2 == 0) {
-					if (std::abs(z - m_width / 2) <= 3 && std::abs(x - m_width / 2) <= 3) thisCell.Rain(timeInterval);
-				}
-
-				thisCell.UpdateGradient();
-			}
-			else if (i % 5 == 1) {
-				thisCell.UpdateFlux(timeInterval);
-			}
-			else if (i % 5 == 2) {
-				thisCell.UpdateWater(timeInterval);
-			}
-			else if (i % 5 == 3) {
-				thisCell.Erode(timeInterval);
-				//thisCell.Deposit(timeInterval);
-
-			}
-			else if (i % 5 == 4) {
-				thisCell.ApplyDeltas();
-				
-					//thisCell.NextSuspended = 0.f;
-				//}
 			}
 		}
+		OutputDebugStringA(("\nErosion Sim @ " + std::to_string(((float)i / (float)iterations)* 100.f)  + "%").c_str());
 	}
-	
-	// Update the VBO
-	shared_ptr<Components::VBO> vbo = EM->GetComponent<Components::VBO>(waterEntity,"VBO");
-
-	int indexBufferIndex = 0;
-	int vertexBufferIndex = 0;
-	for (int z = 0; z <= m_width; z++) {
-		for (int x = 0; x <= m_width; x++) {
-			// update Terrain
-			m_terrain.Map[x][z] = m_erosionMap.Map[x][z].Height;
-			
-			Vector3 vertex(
-				(float)x,
-				m_erosionMap.Map[x][z].Height + m_erosionMap.Map[x][z].Water- 0.1f,
-				(float)z);
-			
-			vbo->Vertices[vertexBufferIndex] = {
-				XMFLOAT3(vertex),										// position
-				XMFLOAT3(0.f,1.f,0.f),									// normal
-				XMFLOAT4(1.f,0.f,0.f,1.f),								// tangent
-				XMFLOAT4(0.f,0.f,255.f,0.f),							// color
-				XMFLOAT2(0.f,0.f)										// texture
-			};
-
-			if (x != 0 && z != 0) {
-				float vertex = m_erosionMap.Map[x][z - 1].Height + m_erosionMap.Map[x][z - 1].Water - 0.1f;
-				// normals
-				float left = signed(x) - 1 >= 0 ? m_erosionMap.Map[x - 1][z - 1].Height + m_erosionMap.Map[x - 1][z - 1].Water - 0.1f : vertex;
-				float right = signed(x) + 1 <= signed(m_erosionMap.width) ? m_erosionMap.Map[x + 1][z-1].Height  + m_erosionMap.Map[x + 1][z - 1].Water - 0.1f : vertex;
-				float up = signed(z-1) + 1 <= signed(m_erosionMap.width) ? m_erosionMap.Map[x][z].Height + m_erosionMap.Map[x][z].Water - 0.1f : vertex;
-				float down = signed(z-1) - 1 >= 0 ? m_erosionMap.Map[x][z - 2].Height + m_erosionMap.Map[x][z - 2].Water - 0.1f : vertex;
-
-				DirectX::SimpleMath::Vector3 normal = DirectX::SimpleMath::Vector3(left - right, 2.f, down - up);
-				normal.Normalize();
-				vbo->Vertices[vertexBufferIndex - (m_erosionMap.width + 1)].normal = normal;
-			}
-			vertexBufferIndex++;
-			if (x != m_width && z != m_width) {
-				/*
-				1---2
-				| \ |
-				3---4
-				*/
-				int i1 = Utility::posToIndex(x, z, m_width + 1);
-				int i2 = Utility::posToIndex(x+1, z, m_width + 1);
-				int i3 = Utility::posToIndex(x, z+1, m_width + 1);
-				int i4 = Utility::posToIndex(x+1, z + 1, m_width + 1);
-
-				// Left triangle
-				vbo->Indices[indexBufferIndex] = i1;
-				indexBufferIndex++;
-				vbo->Indices[indexBufferIndex] = i4;
-				indexBufferIndex++;
-				vbo->Indices[indexBufferIndex] = i3;
-				indexBufferIndex++;
-				// Right
-				vbo->Indices[indexBufferIndex] = i1;
-				indexBufferIndex++;
-				vbo->Indices[indexBufferIndex] = i2;
-				indexBufferIndex++;
-				vbo->Indices[indexBufferIndex] = i4;
-				indexBufferIndex++;
-			}
-		}
-	}
-	vbo->LODchanged = true;
-	// Update VBOS
-	i++;
 }
-//void TerrainSystem::Erosion() {
-//	HeightMap<TerrainCell> erosionMap(m_width,0,0,0);
-//	HeightMap<TerrainCell> deltaMap(m_width, 0, 0, 0);
-//	const float rainHeight = 8.f;
-//	const float rainQty = 10.f;
-//	const float g = 9.8;
-//	const float maxDissolved = 0.3;
-//	const float inertiaLoss = 0.1;
-//	const int iterations = 10;
-//	// begin the simulations
-//	for (int i = 0; i < iterations; i++) {
-//		for (int x = 0; x <= m_width; x++) {
-//			for (int z = 0; z <= m_width; z++) {
-//				if (m_terrain.Map[x][z] >= -32) {
-//					TerrainCell & thisCell = erosionMap.Map[x][z];
-//					thisCell.Height = m_terrain.Map[x][z];
-//
-//					// add rain
-//					if (i == 0 && thisCell.Height > rainHeight) {
-//						deltaMap.Map[x][z].Water += rainQty;
-//					}
-//
-//					// iterate over adjacent cells
-//					float volume = thisCell.Volume();
-//
-//					vector<TerrainCell*> spreadable;
-//
-//					float height_sum = thisCell.Height + volume;
-//					
-//					// find the spreadable cells and equalization level
-//					for (int rot = 0; rot < 4; rot++) {
-//						int adjX = x + round(cos(rot * XM_PI / 2));
-//						int adjZ = z + round(sin(rot * XM_PI / 2));
-//						if (adjX >= 0 && adjX <= m_terrain.width && adjZ >= 0 && adjZ <= m_terrain.width) {
-//							erosionMap.Map[adjX][adjZ].Height = m_terrain.Map[adjX][adjZ];
-//							erosionMap.Map[adjX][adjZ].X = adjX;
-//							erosionMap.Map[adjX][adjZ].Z = adjZ;
-//
-//							float adjVolume = erosionMap.Map[adjX][adjZ].Volume();
-//							if (erosionMap.Map[adjX][adjZ].Height + adjVolume < thisCell.Height + volume) {
-//								spreadable.push_back(&erosionMap.Map[adjX][adjZ]);
-//								height_sum += erosionMap.Map[adjX][adjZ].Height + adjVolume;
-//							}
-//						}
-//					}
-//					float equalization = height_sum / (spreadable.size() + 1);
-//					vector<float> dh;
-//					float dh_sum = 0.f;
-//					float transferVolume = std::min(thisCell.Volume(), thisCell.Height + volume - equalization);
-//					// find delta heights
-//					for (TerrainCell * cell : spreadable) {
-//						float this_dh = std::min(transferVolume, (thisCell.Height + volume) - (cell->Height + cell->Volume()));
-//						dh_sum += this_dh;
-//						dh.push_back(this_dh);
-//					}
-//
-//					// apply the transfer
-//					int c = 0;
-//					if (dh_sum > 0.f) {
-//						for (TerrainCell * cell : spreadable) {
-//							float directionalBias = 1.0;
-//							if (cell->X - thisCell.X > 0) {
-//								directionalBias +=
-//							}
-//							else if (cell->X - thisCell.X < 0) {
-//								directionalBias -= Utility::Inverse(cell->Velocity.x, 1.0, 0.0, 1.0);
-//							}
-//							if (cell->Z - thisCell.Z > 0) {
-//								directionalBias += Utility::Inverse(cell->Velocity.z, 1.0, 0.0, 1.0);
-//							}
-//							else if (cell->Z - thisCell.Z < 0) {
-//								directionalBias -= Utility::Inverse(cell->Velocity.z, 1.0, 0.0, 1.0);
-//							}
-//
-//							float percent_transfer = (dh[c] / dh_sum) * (transferVolume / volume);
-//							float soilTransferred = thisCell.Dissolved * percent_transfer;
-//							float waterTransferred = thisCell.Water * percent_transfer;
-//							float volumeTransferred = (soilTransferred + waterTransferred);
-//							deltaMap.Map[cell->X][cell->Z].Dissolved += soilTransferred;
-//							deltaMap.Map[cell->X][cell->Z].Water += waterTransferred;
-//							deltaMap.Map[x][z].Dissolved -= soilTransferred;
-//							deltaMap.Map[x][z].Water -= waterTransferred;
-//
-//							// calculate the Inertia that was transferred
-//							float drop = thisCell.Height + volume - (cell->Height + cell->Volume() + volumeTransferred);
-//							Vector3 inertia(cell->X - x, drop, cell->Z - z);
-//							inertia.Normalize();
-//							inertia *= std::sqrt(2 * g * drop) * volumeTransferred;
-//
-//							Vector3 currentInertia = cell->Velocity * (cell->Volume());
-//
-//							deltaMap.Map[cell->X][cell->Z].Velocity += ((currentInertia + inertia) / (cell->Volume() + volumeTransferred));
-//							deltaMap.Map[cell->X][cell->Z].Velocity -= cell->Velocity;
-//							deltaMap.Map[cell->X][cell->Z].Velocity *= (1 - inertiaLoss);
-//
-//							c++;
-//						}
-//					}
-//				}
-//			}
-//		}
-//		// Apply deltas
-//		for (int x = 0; x <= m_width; x++) {
-//			for (int z = 0; z <= m_width; z++) {
-//				if (m_terrain.Map[x][z] > 0) {
-//					TerrainCell & thisCell = erosionMap.Map[x][z];
-//					thisCell.ApplyDeltas(deltaMap.Map[x][z]);
-//
-//					//thisCell.Erode();
-//					//thisCell.Deposit();
-//					m_terrain.Map[x][z] = thisCell.Height;
-//
-//					// dump all dissolved soil at the end
-//					if (i == iterations - 1) {
-//						//m_terrain.Map[x][z] += thisCell.Dissolved;
-//						m_terrain.Map[x][z] += thisCell.Water;
-//					}
-//
-//				}
-//			}
-//		}
-//	}
-//}
-
-//void TerrainSystem::Erosion() {
-//	HeightMap<TerrainCell> erosionMap(m_width, 0, 0, 0);
-//	HeightMap<TerrainCell> deltaMap(m_width, 0, 0, 0);
-//	const float rainHeight = 8.f;
-//	const float rainQty = 10.f;
-//	const float g = 9.8;
-//	const float maxDissolved = 0.3;
-//	const float inertiaLoss = 0.1;
-//	const int iterations = 2;
-//	// begin the simulations
-//	for (int i = 0; i < iterations; i++) {
-//		for (int x = 0; x <= m_width; x++) {
-//			for (int z = 0; z <= m_width; z++) {
-//				if (m_terrain.Map[x][z] >= -32) {
-//					TerrainCell & thisCell = erosionMap.Map[x][z];
-//					thisCell.Height = m_terrain.Map[x][z];
-//					thisCell.X = x;
-//					thisCell.Z = z;
-//
-//					
-//					// add rain
-//					if (i == 0 && thisCell.Height > rainHeight) {
-//						deltaMap.Map[x][z].Water += rainQty;
-//					}
-//
-//					// iterate over adjacent cells
-//					float volume = thisCell.Volume();
-//
-//					vector<TerrainCell> cells;
-//					cells.push_back(thisCell);
-//					// find the spreadable cells and equalization level
-//					for (int rot = 0; rot < 4; rot++) {
-//						int adjX = x + round(cos(rot * XM_PI / 2));
-//						int adjZ = z + round(sin(rot * XM_PI / 2));
-//						if (adjX >= 0 && adjX <= m_terrain.width && adjZ >= 0 && adjZ <= m_terrain.width) {
-//							TerrainCell* adjacent = &erosionMap.Map[adjX][adjZ];
-//							adjacent->Height = m_terrain.Map[adjX][adjZ];
-//							adjacent->X = adjX;
-//							adjacent->Z = adjZ;
-//
-//							volume += adjacent->Volume();
-//							cells.push_back(*adjacent);
-//						}
-//					}
-//					// sort the deltaHeights ascending
-//					std::sort(cells.begin(), cells.end(),TerrainCell::Higher);
-//					// find the equalization heights for each tier
-//					vector<float> eqHeights;
-//					
-//					for (int tier = 0; tier < 5 && volume > 0.f; tier++) {
-//						float eqHeight = 0.0;
-//						if (tier >= cells.size() - 1) {
-//							eqHeight = volume / tier;
-//						}
-//						else {
-//							eqHeight = std::min(volume / tier, cells[tier + 1].Height - cells[tier].Height);
-//						}
-//						volume -= eqHeight * tier;
-//						
-//						eqHeights.push_back(eqHeight);
-//
-//						
-//					}
-//					
-//					for (int j = 0; j < cells.size(); j++) {
-//						if (cells[j].X == thisCell.X && cells[j].Z == thisCell.Z) {
-//							float totalHeight = 0.0;
-//							for (int prev = 0; prev < eqHeights.size() && prev <= j; prev++) {
-//								totalHeight += eqHeights[prev];
-//							}
-//							if (totalHeight > 0.f) {
-//								int test = 0;
-//							}
-//							// set delta height for this cell
-//							deltaMap.Map[cells[j].X][cells[j].Z].Water += totalHeight - cells[j].Volume();
-//						}
-//					}
-//
-//					// set deltas to achieve equalization
-//
-//
-//					vector<float> dh;
-//					float dh_sum = 0.f;
-//					//float transferVolume = std::min(thisCell.Volume(), thisCell.Height + volume - equalization);
-//					//// find delta heights
-//					//for (TerrainCell & cell : cells) {
-//					//	float this_dh = std::min(transferVolume, (thisCell.Height + volume) - (cell.Height + cell.Volume()));
-//					//	dh_sum += this_dh;
-//					//	dh.push_back(this_dh);
-//					//}
-//
-//					//// apply the transfer
-//					//int c = 0;
-//					//if (dh_sum > 0.f) {
-//					//for (TerrainCell & cell : cells) {
-//					//	//float percent_transfer = (dh[c] / dh_sum) * (transferVolume / volume);
-//					//	//float soilTransferred = thisCell.Dissolved * percent_transfer;
-//					//	float waterTransferred = thisCell;
-//					//	//float volumeTransferred = (soilTransferred + waterTransferred);
-//					//	deltaMap.Map[cell.X][cell.Z].Dissolved += soilTransferred;
-//					//	deltaMap.Map[cell.X][cell.Z].Water += waterTransferred;
-//					//	deltaMap.Map[x][z].Dissolved -= soilTransferred;
-//					//	deltaMap.Map[x][z].Water -= waterTransferred;
-//
-//					//	// calculate the Inertia that was transferred
-//					//	float drop = thisCell.Height + volume - (cell.Height + cell.Volume() + volumeTransferred);
-//					//	Vector3 inertia(cell.X - x, drop, cell.Z - z);
-//					//	inertia.Normalize();
-//					//	inertia *= std::sqrt(2 * g * drop) * volumeTransferred;
-//
-//					//	Vector3 currentInertia = cell.Velocity * (cell.Volume());
-//
-//					//	deltaMap.Map[cell.X][cell.Z].Velocity += ((currentInertia + inertia) / (cell.Volume() + volumeTransferred));
-//					//	deltaMap.Map[cell.X][cell.Z].Velocity -= cell.Velocity;
-//					//	deltaMap.Map[cell.X][cell.Z].Velocity *= (1 - inertiaLoss);
-//
-//					//	c++;
-//					//}
-//					
-//				}
-//			}
-//		}
-//		// Apply deltas
-//		for (int x = 0; x <= m_width; x++) {
-//			for (int z = 0; z <= m_width; z++) {
-//				if (m_terrain.Map[x][z] > 0) {
-//					TerrainCell & thisCell = erosionMap.Map[x][z];
-//					thisCell.ApplyDeltas(deltaMap.Map[x][z]);
-//					
-//
-//					//thisCell.Erode();
-//					//thisCell.Deposit();
-//					m_terrain.Map[x][z] = thisCell.Height;
-//
-//					// dump all dissolved soil at the end
-//					if (i == iterations - 1) {
-//						//m_terrain.Map[x][z] += thisCell.Dissolved;
-//						m_terrain.Map[x][z] += thisCell.Water;
-//					}
-//
-//				}
-//			}
-//		}
-//	}
-//}
-
-//const float depositK = 0.25f;
-//const float erodeK = 1.f;
-//const float frictionK = 0.05;
-//struct Water {
-//	Vector3 KE;
-//	Vector3 deltaKE;
-//	float water;
-//	float deltaW;
-//	float soil;
-//	float deltaS;
-//	float lowestNeighbor;
-//
-//	Water() {
-//		KE = Vector3(0.f, 0.f, 0.f);
-//		deltaKE = Vector3(0.f, 0.f, 0.f);
-//		water = 1.f;
-//		deltaW = 0.f;
-//		soil = 0.f;
-//		deltaS = 0.f;
-//	}
-//};
-//// create the water map
-//vector< vector<Water> > waterMap = vector< vector<Water> >(m_terrain.width + 1, vector<Water>(m_terrain.width + 1));
-//// update
-//for (int iteration = 0; iteration < 5; iteration++) {
-//	for (int x = 0; x <= m_terrain.width; x++) {
-//		for (int y = 0; y <= m_terrain.width; y++) {
-//			float volume = waterMap[x][y].water + waterMap[x][y].soil;
-//			float deltaW = 0.f;
-//			float deltaS = 0.f;
-//			// add valid ajacent cells to calculation
-//			waterMap[x][y].lowestNeighbor = m_terrain.Map[x][y];
-//			for (int rot = 0; rot < 4; rot++) {
-//				int adjX = x + round(cos(rot * XM_PI / 2));
-//				int adjY = y + round(sin(rot * XM_PI / 2));
-//				if (adjX >= 0 && adjX <= m_terrain.width && adjY >= 0 && adjY <= m_terrain.width) {
-//					float adjVolume = waterMap[adjX][adjY].water + waterMap[adjX][adjY].soil;
-//					if (m_terrain.Map[adjX][adjY] < waterMap[x][y].lowestNeighbor) {
-//						waterMap[x][y].lowestNeighbor = m_terrain.Map[adjX][adjY];
-//					}
-//					float difference = (m_terrain.Map[adjX][adjY] + adjVolume) - (m_terrain.Map[x][y] + volume);
-//					float transferVolume = std::max(-volume / 4, std::min(difference / 4, adjVolume / 4));
-//					// material transfer
-//					float overlap;
-//					if (transferVolume > 0) {
-//						deltaW += (waterMap[adjX][adjY].water / adjVolume) * transferVolume;
-//						deltaS += (waterMap[adjX][adjY].soil / adjVolume) * transferVolume;
-//						overlap = m_terrain.Map[x][y] + volume - m_terrain.Map[adjX][adjY];
-//					}
-//					else {
-//						deltaW += (waterMap[x][y].water / volume) * transferVolume;
-//						deltaS += (waterMap[x][y].soil / volume) * transferVolume;
-//						overlap = m_terrain.Map[adjX][adjY] + adjVolume - m_terrain.Map[x][y];
-//					}
-//					// soil diffusion
-//					if (overlap > 0) {
-//						deltaS += (((waterMap[adjX][adjY].soil / adjVolume) * overlap) + ((waterMap[x][y].soil / volume) * overlap)) / 2 - ((waterMap[x][y].soil / volume) * overlap);
-//					}
-//					// add gravitational and kinetic energy
-//					if (abs(transferVolume) > 0) {
-//						if (adjY == y) {
-//							waterMap[x][y].deltaKE.x += (transferVolume * 9.8 * difference) + (transferVolume > 0 ? waterMap[adjX][adjY].KE.x * (transferVolume / (waterMap[adjX][adjY].water + waterMap[adjX][adjY].soil)) : waterMap[x][y].KE.x * (transferVolume / (waterMap[x][y].water + waterMap[x][y].soil)));
-//						}
-//						if (adjX == x) {
-//							waterMap[x][y].deltaKE.z += (transferVolume * 9.8 * difference) + (transferVolume > 0 ? waterMap[adjX][adjY].KE.z * (transferVolume / (waterMap[adjX][adjY].water + waterMap[adjX][adjY].soil)) : waterMap[x][y].KE.z * (transferVolume / (waterMap[x][y].water + waterMap[x][y].soil)));
-//						}
-//					}
-//				}
-//			}
-//			// set final delta values
-//			waterMap[x][y].deltaW += deltaW;
-//			waterMap[x][y].deltaS += deltaS;
-//		}
-//	}
-//	for (int x = 0; x <= m_terrain.width; x++) {
-//		for (int y = 0; y <= m_terrain.width; y++) {
-//			// evaporation
-//			waterMap[x][y].water *= 0.75;
-//			// add surface water
-//			waterMap[x][y].water += 1;
-//			// update cell
-//			waterMap[x][y].KE += waterMap[x][y].deltaKE;
-//			waterMap[x][y].deltaKE = Vector3(0.f, 0.f, 0.f);
-//			waterMap[x][y].water += waterMap[x][y].deltaW;
-//			waterMap[x][y].deltaW = 0;
-//			waterMap[x][y].soil += waterMap[x][y].deltaS;
-//			waterMap[x][y].deltaS = 0;
-//			// loss of energy
-//			waterMap[x][y].KE *= frictionK;
-//			// update terrain
-//			if (waterMap[x][y].water > 0) {
-//				float volume = waterMap[x][y].water + waterMap[x][y].soil;
-//				float soil = 0.f;
-//				Vector3 velocity(sqrt((2 * waterMap[x][y].KE.x) / volume), 0.f, sqrt((2 * waterMap[x][y].KE.z) / volume));
-//				float speed = velocity.Length();
-//
-//				// erode
-//				soil = Sigmoid(speed, (waterMap[x][y].lowestNeighbor - m_terrain.Map[x][y]) * erodeK, 0.f, 5.f);
-//				m_terrain.Map[x][y] += soil;
-//				waterMap[x][y].soil -= soil;
-//				// deposit
-//				//if (velocity < 1.f && waterMap[x][y].soil > 3) {
-//				soil = (waterMap[x][y].soil * depositK) - Sigmoid(speed, waterMap[x][y].soil * depositK, 0.f, 5.f);
-//				m_terrain.Map[x][y] += soil;
-//				waterMap[x][y].soil -= soil;
-//				//}
-//			}
-//		}
-//	}
-//}
+shared_ptr<vector<Droplet>> TerrainSystem::InitializeDroplets()
+{
+	const int dropletCount = (int)(0.071f * (float)(m_width * m_width));
+	auto droplets = std::make_shared<vector<Droplet>>();
+	for (int i = 0; i < dropletCount; i++) {
+		Droplet droplet;
+		droplet.Reset(m_width);
+		droplets->push_back(droplet);
+	}
+	return droplets;
+}
