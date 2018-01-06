@@ -8,7 +8,7 @@ void AssetManager::CreateEffects(Microsoft::WRL::ComPtr<ID3D11DeviceContext> con
 	// Terrain Effect
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
 	m_pixelShaders.insert(std::pair<string, Microsoft::WRL::ComPtr<ID3D11PixelShader>>("Terrain", pixelShader));
-	auto blob = DX::ReadData(L"Terrain.cso"); // .cso is the compiled version of the hlsl shader (compiled shader object)
+	auto blob = DX::ReadData(L"Assets\\Terrain.cso"); // .cso is the compiled version of the hlsl shader (compiled shader object)
 	DX::ThrowIfFailed(m_d3dDevice->CreatePixelShader(&blob.front(), blob.size(),
 		nullptr, pixelShader.ReleaseAndGetAddressOf()));
 
@@ -29,7 +29,7 @@ void AssetManager::CreateEffects(Microsoft::WRL::ComPtr<ID3D11DeviceContext> con
 
 	DGSLEffectFactory::DGSLEffectInfo info;
 	info.name = L"Water";
-	info.pixelShader = L"Water.cso";
+	info.pixelShader = L"Assets\\Water.cso";
 	shared_ptr<DGSLEffect> water = std::dynamic_pointer_cast <DGSLEffect>(m_DGSLfxFactory->CreateDGSLEffect(info, context.Get()));
 	water->SetTexture(AssetManager::Get()->GetTexture("water").Get());
 	water->SetTextureEnabled(true);
@@ -118,6 +118,18 @@ std::shared_ptr<Model> AssetManager::GetModel(string path, bool procedural)
 		Filesystem::path fullPath = FullPath(path, procedural, "Models", ".cmo");
 		// Load from file
 		std::shared_ptr<Model> model = std::shared_ptr<Model>(Model::CreateFromCMO(m_d3dDevice.Get(), fullPath.c_str(), *m_fxFactory).release());
+		auto tex = GetTexture("wood");
+		model->UpdateEffects([=](IEffect* effect)
+		{
+			auto basic = dynamic_cast<BasicEffect*>(effect);
+			if (basic)
+			{
+				basic->SetAlpha(0.5);
+				/*basic->SetTextureEnabled(true);
+				basic->SetTexture(tex.Get());
+				basic->EnableDefaultLighting();*/
+			}
+		});
 		m_models.insert(std::pair<string, shared_ptr<Model>>(path, model));
 		return model;
 	}

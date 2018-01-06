@@ -18,6 +18,14 @@ namespace Components {
 	{
 		return "VBO";
 	}
+	void VBO::Export(std::ofstream & ofs)
+	{
+		Serialize(Effect, ofs);
+	}
+	void VBO::Import(std::ifstream & ifs)
+	{
+		DeSerialize(Effect, ifs);
+	}
 	void VBO::CreateVB(Microsoft::WRL::ComPtr<ID3D11Device> device)
 	{
 		D3D11_BUFFER_DESC desc = { 0 };

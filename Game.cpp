@@ -46,14 +46,14 @@ void Game::Initialize(HWND window, int width, int height)
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
     
 
-	GenerateWorld(3324, "test",window,width,height);
-	//LoadWorld("test", window, width, height);
+	//GenerateWorld(3324, "test",window,width,height);
+	LoadWorld("test", window, width, height);
 }
-
+ 
 // Executes the basic game loop.
 void Game::Tick()
 {
-	m_world->Initialize();
+	
     m_timer.Tick([&]()
     {
         Update(m_timer);
@@ -88,15 +88,22 @@ void Game::Render()
 
 void Game::GenerateWorld(int seed, string name, HWND window, int width, int height)
 {
-	Filesystem::remove_all("Saves/" + name);
+	try {
+		Filesystem::remove_all("Saves/" + name);
+	}
+	catch (std::exception ex) {
+		Utility::OutputException(ex.what());
+	}
 	m_world = unique_ptr<World>(new World("Saves/" + name, window, width, height, m_mouse, m_keyboard));
 	m_world->Generate(seed);
+	m_world->Initialize();
 	Tick();
 }
 
 void Game::LoadWorld(string name, HWND window, int width, int height)
 {
 	m_world = unique_ptr<World>(new World("saves/" + name, window, width, height, m_mouse, m_keyboard));
+	m_world->Initialize();
 	Tick();
 }
 

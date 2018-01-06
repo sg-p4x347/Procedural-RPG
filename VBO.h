@@ -22,6 +22,8 @@ namespace Components {
 		bool LODchanged;
 		// Inherited via Component
 		virtual string GetName() override;
+		virtual void Export(std::ofstream & ofs) override;
+		virtual void Import(std::ifstream & ifs) override;
 	protected:
 		void CreateVB(Microsoft::WRL::ComPtr<ID3D11Device> device);
 		void CreateIB(Microsoft::WRL::ComPtr<ID3D11Device> device);

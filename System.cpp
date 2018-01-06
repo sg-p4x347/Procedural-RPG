@@ -35,5 +35,4 @@ void System::Save()
 
 void System::SyncEntities()
 {
-	m_entities = EM->FindEntities(m_componentMask);
 }

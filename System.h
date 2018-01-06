@@ -18,7 +18,6 @@ protected:
 	double m_elapsed;				// seconds elapsed since last update
 	shared_ptr<EntityManager> EM;
 	unsigned long m_componentMask;
-	vector<shared_ptr<Entity>> m_entities;
 	//----------------------------------------------------------------
 	// Helper functions
 

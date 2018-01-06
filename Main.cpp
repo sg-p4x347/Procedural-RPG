@@ -71,6 +71,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
         game->Initialize(hwnd, rc.right - rc.left, rc.bottom - rc.top);
     }
+	
     // Main message loop
     MSG msg = { 0 };
 	while (true) {

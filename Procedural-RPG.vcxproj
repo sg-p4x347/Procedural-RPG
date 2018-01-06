@@ -188,7 +188,6 @@
     <ClInclude Include="EntityManager.h" />
     <ClInclude Include="Filesystem.h" />
     <ClInclude Include="HeightMap.h" />
-    <ClInclude Include="InfrastructureSystem.h" />
     <ClInclude Include="JSON.h" />
     <ClInclude Include="JsonParser.h" />
     <ClInclude Include="Distribution.h" />
@@ -243,7 +242,6 @@
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="Filesystem.cpp" />
     <ClCompile Include="HeightMap.cpp" />
-    <ClCompile Include="InfrastructureSystem.cpp" />
     <ClCompile Include="JSON.cpp" />
     <ClCompile Include="JsonParser.cpp" />
     <ClCompile Include="Distribution.cpp" />
@@ -299,6 +297,9 @@
     <ImageContentTask Include="Assets\Textures\snow.png" />
     <ImageContentTask Include="Assets\Textures\stone.png" />
     <ImageContentTask Include="Assets\Textures\water.png" />
+    <ImageContentTask Include="Assets\Textures\leaves.png" />
+    <ImageContentTask Include="Assets\Textures\leaves2.png" />
+    <ImageContentTask Include="Assets\Textures\wood.png" />
     <Image Include="directx.ico" />
   </ItemGroup>
   <ItemGroup>
@@ -323,8 +324,9 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <MeshContentTask Include="Assets\Models\Test.fbx" />
-    <MeshContentTask Include="Assets\Models\Tree.fbx" />
+    <MeshContentTask Include="Assets\Models\Tree.fbx">
+      <FileType>Document</FileType>
+    </MeshContentTask>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

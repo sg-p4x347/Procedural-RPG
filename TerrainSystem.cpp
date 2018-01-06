@@ -12,7 +12,7 @@
 #include "Model.h"
 #include <thread>
 
-static const bool g_erosion = false;
+static const bool g_erosion = true;
 
 using namespace DirectX::SimpleMath;
 static shared_ptr<Entity> waterEntity;

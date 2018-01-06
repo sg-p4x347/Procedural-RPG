@@ -118,7 +118,6 @@
     </ClInclude>
     <ClInclude Include="TaskThread.h" />
     <ClInclude Include="resource1.h" />
-    <ClInclude Include="InfrastructureSystem.h" />
     <ClInclude Include="City.h">
       <Filter>Entity Component System\Components</Filter>
     </ClInclude>
@@ -225,7 +224,6 @@
       <Filter>Entity Component System\Components</Filter>
     </ClCompile>
     <ClCompile Include="TaskThread.cpp" />
-    <ClCompile Include="InfrastructureSystem.cpp" />
     <ClCompile Include="City.cpp">
       <Filter>Entity Component System\Components</Filter>
     </ClCompile>
@@ -294,14 +292,6 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <MeshContentTask Include="Assets\Models\Tree.fbx">
-      <Filter>models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Test.fbx">
-      <Filter>models</Filter>
-    </MeshContentTask>
-  </ItemGroup>
-  <ItemGroup>
     <ImageContentTask Include="Assets\Textures\dirt.png">
       <Filter>textures</Filter>
     </ImageContentTask>
@@ -317,5 +307,19 @@
     <ImageContentTask Include="Assets\Textures\water.png">
       <Filter>textures</Filter>
     </ImageContentTask>
+    <ImageContentTask Include="Assets\Textures\leaves.png">
+      <Filter>textures</Filter>
+    </ImageContentTask>
+    <ImageContentTask Include="Assets\Textures\leaves2.png">
+      <Filter>textures</Filter>
+    </ImageContentTask>
+    <ImageContentTask Include="Assets\Textures\wood.png">
+      <Filter>textures</Filter>
+    </ImageContentTask>
+  </ItemGroup>
+  <ItemGroup>
+    <MeshContentTask Include="Assets\Models\Tree.fbx">
+      <Filter>models</Filter>
+    </MeshContentTask>
   </ItemGroup>
 </Project>

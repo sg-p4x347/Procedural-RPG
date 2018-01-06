@@ -71,6 +71,7 @@ void RenderSystem::Render()
 		if (m_Models.find(effectName) != m_Models.end()) {
 			for (auto model : m_Models[effectName]) {
 				auto dxModel = AssetManager::Get()->GetModel(model->Path, false);
+
 				shared_ptr<Entity> entity;
 				if (EM->Find(model->ID, entity)) {
 					auto position = EM->GetComponent<Components::Position>(entity, "Position");
@@ -96,7 +97,7 @@ void RenderSystem::SyncEntities()
 		m_VBOs[vbo->Effect].push_back(vbo);
 	}
 	m_Models.clear();
-	for (auto entity : EM->FindEntities(m_ModelMask)) {
+	for (auto entity : EM->FindEntitiesInRange(m_ModelMask,EM->PlayerPos()->Pos,100)) {
 		shared_ptr<Components::Model> model = EM->GetComponent<Components::Model>(entity, "Model");
 		if (m_Models.find(model->Effect) == m_Models.end()) {
 			m_Models.insert(std::pair<string, vector<shared_ptr<Components::Model>>>(model->Effect, vector<shared_ptr<Components::Model>>()));
@@ -433,7 +434,7 @@ void RenderSystem::SetStates()
 	m_d3dContext->PSSetSamplers(0, 1, &sampler);
 	m_d3dContext->RSSetState(m_states->CullCounterClockwise());
 	float alpha[4] = { 0.f,0.f, 0.f, 1.f };
-	m_d3dContext->OMSetBlendState(m_states->AlphaBlend(), alpha, 0xFFFFFFFF);
+	m_d3dContext->OMSetBlendState(m_states->NonPremultiplied(), nullptr, 0xFFFFFFFF);
 	m_d3dContext->OMSetDepthStencilState(m_states->DepthDefault(), 0);
 }
 
