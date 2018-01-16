@@ -10,7 +10,6 @@
 #include <iterator>
 #include "CircularArray.h"
 #include "NameGenerator.h"
-#include "City.h"
 #include "Building.h"
 #include "SystemManager.h"
 #include "JSON.h"
@@ -38,7 +37,6 @@ public:
 	//--------------------------------
 	// Loading world components
 	void Initialize();
-	unique_ptr<SystemManager> & GetSystemManager();
 	// generator
 	void Generate(int seed);
 	// Save the world
@@ -128,10 +126,7 @@ private:
 	int m_lastX = 0;
 	int m_lastZ = 0;
 
-	//--------------------------------
-	// entities
-	shared_ptr<EntityManager> m_entityManager;
-	unique_ptr<SystemManager> m_systemManager;
+	
 
 	//--------------------------------
 	// Collision

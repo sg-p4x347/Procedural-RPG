@@ -7,21 +7,27 @@ class SystemManager
 {
 public:
 	SystemManager(
-		Filesystem::path directory,
-		std::shared_ptr<EntityManager> entityManager,
-		HWND window, int width, int height,
-		std::shared_ptr<DirectX::Mouse> mouse,
-		std::shared_ptr<DirectX::Keyboard> keyboard
+		HWND window, int width, int height
 	);
 	~SystemManager();
 	// Updates systems according to their update period
 	void Tick(double & elapsed);
 	void Initialize();
+	void LoadWorld(Filesystem::path worldDir);
+	void CloseWorld();
 	void Save();
 	template <typename SystemType>
 	inline shared_ptr<SystemType> GetSystem(string name) {
 		return dynamic_pointer_cast<SystemType>(m_systems[name]);
 	}
+	template <typename SystemType>
+	inline void HaltAll() {
+		for (auto & pair : m_systems) {
+			auto worldSystem = dynamic_pointer_cast<WorldSystem>(pair.second);
+			if (worldSystem) worldSystem->Halt();
+		}
+	}
+	void RunAll();
 private:
 	//----------------------------------------------------------------
 	// Systems

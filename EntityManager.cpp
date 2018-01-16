@@ -10,41 +10,21 @@
 #include "Tag.h"
 #include "Terrain.h"
 #include "Model.h"
+#include "Entity.h"
 
 const string EntityManager::m_nextEntityFile = "Next_Entity.txt";
 
-EntityManager::EntityManager(Filesystem::path & directory) : m_directory(directory), m_nextID(1), m_player(nullptr)
+EntityManager::EntityManager() : m_nextID(1), m_player(nullptr)
 {
-	//----------------------------------------------------------------
-	// Initialize filesystem dependencies
-
-	Filesystem::create_directory(m_directory);
-	Components::Component::SetDirectory(m_directory);
-	ifstream nextEntityFile(m_directory / m_nextEntityFile);
-	if (nextEntityFile) {
-		nextEntityFile >> m_nextID;
-	}
-
-		
-	//----------------------------------------------------------------
-	// Initialize the component mappings
-	AddComponentVector("Player");
-
-	AddComponentVector("Position");
-	AddComponentVector("Movement");
-
-	AddComponentVector("Terrain");
-
-	AddComponentVector("VBO");
-	AddComponentVector("Model");
-	
-	//----------------------------------------------------------------
-	// Tags
-	AddComponentVector("Tag_Water");
-	AddComponentVector("Tag_Tree");
+	InitializeComponents();
 }
 
-shared_ptr<Components::Component> EntityManager::GetComponent(unsigned long & mask, shared_ptr<Entity> entity)
+EntityManager::EntityManager(Filesystem::path & directory) : EntityManager::EntityManager()
+{
+	SetDirectory(directory);
+}
+
+shared_ptr<Components::Component> EntityManager::GetComponent(unsigned long & mask, EntityPtr entity)
 {
 	// search the cache
 	map<unsigned long, shared_ptr<Components::Component>>::iterator it = entity->Components().find(mask);
@@ -96,53 +76,55 @@ shared_ptr<Components::Component> EntityManager::GetComponent(unsigned long & ma
 	}
 }
 
-vector<shared_ptr<Entity>> EntityManager::FindEntities(unsigned long componentMask)
+vector<EntityPtr> EntityManager::FindEntities(unsigned long componentMask)
 {
 	
 	// search cache
 	unordered_set<unsigned int> entities;
-	for (unordered_map<unsigned int, shared_ptr<Entity>>::iterator it = m_entities.begin(); it != m_entities.end(); it++) {
+	for (unordered_map<unsigned int, EntityPtr>::iterator it = m_entities.begin(); it != m_entities.end(); it++) {
 		if (it->second->HasComponents(componentMask)) entities.insert(it->first);
 	}
 	// search filesysem
-	unordered_set<unsigned int> unCached;
-	std::bitset<m_maskSize> mask(componentMask);
-	bool firstComp = true;
-	for (int i = 0; i < m_maskSize; i++) {
-		if (mask[i]) {
-			unordered_set<unsigned int> nextMatching;
-			for (auto & dir : Filesystem::directory_iterator(m_directory / m_names[std::pow(2,i)])) {
-				unsigned int id = std::stoi(dir.path().filename());
-				if (firstComp || unCached.count(id)) nextMatching.insert(id);
+	if (Initialized()) {
+		unordered_set<unsigned int> unCached;
+		std::bitset<m_maskSize> mask(componentMask);
+		bool firstComp = true;
+		for (int i = 0; i < m_maskSize; i++) {
+			if (mask[i]) {
+				unordered_set<unsigned int> nextMatching;
+				for (auto & dir : Filesystem::directory_iterator(m_directory / m_names[std::pow(2, i)])) {
+					unsigned int id = std::stoi(dir.path().filename());
+					if (firstComp || unCached.count(id)) nextMatching.insert(id);
+				}
+				unCached = nextMatching;
+				firstComp = false;
 			}
-			unCached = nextMatching;
-			firstComp = false;
+		}
+		for (auto i : unCached) {
+			entities.insert(i);
 		}
 	}
-	for (auto i : unCached) {
-		entities.insert(i);
-	}
 	// convert to vector
-	vector<shared_ptr<Entity>> entityVector;
+	vector<EntityPtr> entityVector;
 	for (const unsigned int & id : entities) {
-		shared_ptr<Entity> entity;
+		EntityPtr entity;
 		if (m_entities.count(id)) {
 			// get from cache
 			entity = m_entities[id];
 		} else {
 			// cache a new entity
-			entity = shared_ptr<Entity>(new Entity(id, ComponentMaskOf(id)));
-			m_entities.insert(std::pair<unsigned int, shared_ptr<Entity>>(id, entity));
+			entity = EntityPtr(new Entity(id, ComponentMaskOf(id)));
+			m_entities.insert(std::pair<unsigned int, EntityPtr>(id, entity));
 		}
 		entityVector.push_back(entity);
 	}
 	return entityVector;
 }
 
-vector<shared_ptr<Entity>> EntityManager::FindEntitiesInRange(unsigned long componentMask, Vector3 center, float range)
+vector<EntityPtr> EntityManager::FindEntitiesInRange(unsigned long componentMask, Vector3 center, float range)
 {
 	auto entities = FindEntities(componentMask | ComponentMask("Position"));
-	vector<shared_ptr<Entity>> finalSet;
+	vector<EntityPtr> finalSet;
 	for (auto & entity : entities) {
 		if (Vector3::Distance(GetComponent<Components::Position>(entity, "Position")->Pos,center) <= range) {
 			finalSet.push_back(entity);
@@ -151,7 +133,7 @@ vector<shared_ptr<Entity>> EntityManager::FindEntitiesInRange(unsigned long comp
 	return finalSet;
 }
 
-bool EntityManager::Find(const unsigned int & id, shared_ptr<Entity> & entity)
+bool EntityManager::Find(const unsigned int & id, EntityPtr & entity)
 {
 	// search cache
 	if (m_entities.find(id) != m_entities.end()) {
@@ -164,7 +146,7 @@ bool EntityManager::Find(const unsigned int & id, shared_ptr<Entity> & entity)
 	}
 }
 
-shared_ptr<Entity> EntityManager::Player()
+EntityPtr EntityManager::Player()
 {
 	if (!m_player) { 
 		auto results = FindEntities(ComponentMask("Player"));
@@ -202,10 +184,10 @@ unsigned long EntityManager::ComponentMaskOf(const unsigned int & id)
 	return mask;
 }
 
-shared_ptr<Entity> EntityManager::NewEntity()
+EntityPtr EntityManager::NewEntity()
 {
-	shared_ptr<Entity> entity = shared_ptr<Entity>(new Entity(m_nextID++, 0));
-	m_entities.insert(std::pair<unsigned int, shared_ptr<Entity>>(entity->ID(),entity));
+	EntityPtr entity = EntityPtr(new Entity(m_nextID++, 0));
+	m_entities.insert(std::pair<unsigned int, EntityPtr>(entity->ID(),entity));
 	return entity;
 }
 
@@ -214,11 +196,57 @@ EntityManager::~EntityManager()
 	//Save();
 }
 
+bool EntityManager::Initialized()
+{
+	return !m_directory.empty();
+}
+
+void EntityManager::UnInitialize()
+{
+	m_directory = "";
+	// clear the cache
+	m_entities.clear();
+}
+
+void EntityManager::SetDirectory(Filesystem::path & directory)
+{
+	m_directory = directory;
+	//----------------------------------------------------------------
+	// Initialize filesystem dependencies
+
+	Filesystem::create_directory(m_directory);
+	Components::Component::SetDirectory(m_directory);
+	ifstream nextEntityFile(m_directory / m_nextEntityFile);
+	if (nextEntityFile) {
+		nextEntityFile >> m_nextID;
+	}
+}
+
+void EntityManager::InitializeComponents()
+{
+	//----------------------------------------------------------------
+	// Initialize the component mappings
+	AddComponentVector("Player");
+
+	AddComponentVector("Position");
+	AddComponentVector("Movement");
+
+	AddComponentVector("Terrain");
+
+	AddComponentVector("VBO");
+	AddComponentVector("Model");
+
+	//----------------------------------------------------------------
+	// Tags
+	AddComponentVector("Tag_Water");
+	AddComponentVector("Tag_Tree");
+}
+
 void EntityManager::Save()
 {
 	//----------------------------------------------------------------
 	// Entities
-	for (std::unordered_map<unsigned int, shared_ptr<Entity>>::iterator it = m_entities.begin(); it != m_entities.end(); ++it) {
+	for (std::unordered_map<unsigned int, EntityPtr>::iterator it = m_entities.begin(); it != m_entities.end(); ++it) {
 		it->second->Save(m_directory);
 	}
 	//----------------------------------------------------------------

@@ -1,6 +1,6 @@
 #pragma once
 #include <thread>
-#include "System.h"
+#include "WorldSystem.h"
 #include "HeightMap.h"
 #include "Position.h"
 #include "VBO.h"
@@ -11,7 +11,7 @@
 
 using DirectX::SimpleMath::Vector3;
 class TerrainSystem :
-	public System
+	public WorldSystem
 {
 public:
 	TerrainSystem(
@@ -44,8 +44,8 @@ protected:
 	//----------------------------------------------------------------
 	// Entities
 	shared_ptr<Components::Position> PlayerPos();
-	vector<shared_ptr<Entity>> m_terrainEntities;
-	vector<shared_ptr<Entity>> m_waterEntities;
+	vector<EntityPtr> m_terrainEntities;
+	vector<EntityPtr> m_waterEntities;
 	//----------------------------------------------------------------
 	// Threading
 	std::thread m_worker;

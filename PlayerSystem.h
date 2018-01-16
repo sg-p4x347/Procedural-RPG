@@ -1,14 +1,12 @@
 #pragma once
-#include "System.h"
+#include "WorldSystem.h"
 class PlayerSystem :
-	public System
+	public WorldSystem
 {
 public:
 	PlayerSystem(shared_ptr<EntityManager> & entityManager, 
 		vector<string> & components, 
-		unsigned short updatePeriod,
-		shared_ptr<DirectX::Mouse> mouse,
-		shared_ptr<DirectX::Keyboard> keyboard
+		unsigned short updatePeriod
 	);
 
 	// Inherited via System

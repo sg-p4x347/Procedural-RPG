@@ -1,7 +1,6 @@
 #pragma once
 #include "Component.h"
 
-
 class Entity {
 public:
 	Entity(unsigned int id, unsigned long componentMask);

@@ -15,7 +15,7 @@
 static const bool g_erosion = true;
 
 using namespace DirectX::SimpleMath;
-static shared_ptr<Entity> waterEntity;
+static EntityPtr waterEntity;
 TerrainSystem::TerrainSystem(
 	shared_ptr<EntityManager> & entityManager, 
 	vector<string> & components, 
@@ -23,7 +23,7 @@ TerrainSystem::TerrainSystem(
 	int regionWidth,
 	Filesystem::path directory
 )
-	: System(entityManager,components,updatePeriod), 
+	: WorldSystem::WorldSystem(entityManager,components,updatePeriod),
 	m_regionWidth(regionWidth)
 {
 	m_directory = directory / Name();
@@ -244,7 +244,7 @@ DirectX::SimpleMath::Rectangle TerrainSystem::Area()
 
 void TerrainSystem::SetVertex(const int & x, const int & z, const float value)
 {
-	/*vector<shared_ptr<Entity>> regions = EM->FindEntities(EM->ComponentMask("Terrain"));
+	/*vector<EntityPtr> regions = EM->FindEntities(EM->ComponentMask("Terrain"));
 	for (auto & region : regions) {
 		shared_ptr<Components::Position> pos = EM->GetComponent<Components::Position>(region, "Position");
 
@@ -395,7 +395,7 @@ void TerrainSystem::CreateWaterEntities()
 
 void TerrainSystem::NewWater(DirectX::SimpleMath::Vector3 & position)
 {
-	shared_ptr<Entity> entity = EM->NewEntity();
+	EntityPtr entity = EM->NewEntity();
 
 	entity->AddComponent(EM->ComponentMask("Position"), std::shared_ptr<Components::Component>(
 		new Components::Position(entity->ID(), position, SimpleMath::Vector3::Zero)));
@@ -433,7 +433,7 @@ void TerrainSystem::CreateTreeEntities(HeightMap & terrain, shared_ptr<Map<Water
 
 void TerrainSystem::NewTree(DirectX::SimpleMath::Vector3 & position, Vector3 & rotation)
 {
-	shared_ptr<Entity> entity = EM->NewEntity();
+	EntityPtr entity = EM->NewEntity();
 
 	entity->AddComponent(EM->ComponentMask("Position"), std::shared_ptr<Components::Component>(
 		new Components::Position(entity->ID(), position, rotation)));
@@ -770,7 +770,7 @@ int TerrainSystem::LOD(double distance, unsigned int modelWidth)
 
 void TerrainSystem::NewTerrain(DirectX::SimpleMath::Vector3 & position)
 {
-	shared_ptr<Entity> entity = EM->NewEntity();
+	EntityPtr entity = EM->NewEntity();
 
 	entity->AddComponent(EM->ComponentMask("Position"),std::shared_ptr<Components::Component>(
 		new Components::Position(entity->ID(), position, SimpleMath::Vector3::Zero)));

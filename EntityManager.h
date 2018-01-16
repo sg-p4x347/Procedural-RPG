@@ -10,15 +10,22 @@ using std::vector;
 class EntityManager
 {
 public:
+	EntityManager();
 	EntityManager(Filesystem::path & directory);
 	~EntityManager();
+	//----------------------------------------------------------------
+	// Initialization
+	bool Initialized();
+	void UnInitialize();
+	void SetDirectory(Filesystem::path & directory);
+	void InitializeComponents();
 	//----------------------------------------------------------------
 	// Save all cached components
 	void Save();
 	//----------------------------------------------------------------
 	// Component retrieval
 	template <typename CompType>
-	inline shared_ptr<CompType> GetComponent(shared_ptr<Entity> entity, string name) {
+	inline shared_ptr<CompType> GetComponent(EntityPtr entity, string name) {
 		return std::dynamic_pointer_cast<CompType>(GetComponent(m_masks[name],entity));
 	}
 	//----------------------------------------------------------------
@@ -28,16 +35,16 @@ public:
 	unsigned long ComponentMaskOf(const unsigned int & id);
 	//----------------------------------------------------------------
 	// Entity creation
-	shared_ptr<Entity> NewEntity();
+	EntityPtr NewEntity();
 	//----------------------------------------------------------------
 	// Entity retrieval
-	shared_ptr<Entity> Player();
+	EntityPtr Player();
 	shared_ptr<Components::Position> PlayerPos();
-	vector<shared_ptr<Entity>> FindEntities(unsigned long componentMask);
-	vector<shared_ptr<Entity>> FindEntitiesInRange(unsigned long componentMask, Vector3 center, float range);
-	bool Find(const unsigned int & id, shared_ptr<Entity> & entity);
+	vector<EntityPtr> FindEntities(unsigned long componentMask);
+	vector<EntityPtr> FindEntitiesInRange(unsigned long componentMask, Vector3 center, float range);
+	bool Find(const unsigned int & id, EntityPtr & entity);
 private:
-	const Filesystem::path m_directory;
+	Filesystem::path m_directory;
 	//----------------------------------------------------------------
 	// ID management
 	unsigned int m_ID;
@@ -54,10 +61,10 @@ private:
 	static const int m_maskSize = 64;
 	//----------------------------------------------------------------
 	// Entity caching
-	shared_ptr<Entity> m_player;
-	unordered_map<unsigned int, shared_ptr<Entity>> m_entities;
+	EntityPtr m_player;
+	unordered_map<unsigned int, EntityPtr> m_entities;
 	// Loads the secified component for the entity
-	shared_ptr<Components::Component> GetComponent(unsigned long & mask, shared_ptr<Entity> entity);
+	shared_ptr<Components::Component> GetComponent(unsigned long & mask, EntityPtr entity);
 
 	
 };

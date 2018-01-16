@@ -41,7 +41,7 @@ void AssetManager::CreateEffects(Microsoft::WRL::ComPtr<ID3D11DeviceContext> con
 	AddEffect("Terrain", terrain);
 	AddEffect("Water", water);
 }
-AssetManager::AssetManager()
+AssetManager::AssetManager() : m_fontSize(32)
 {
 }
 
@@ -49,6 +49,11 @@ Filesystem::path AssetManager::FullPath(string path, bool procedural, string typ
 {
 	//return Filesystem::path((procedural ? m_proceduralDir : m_authoredDir) / type / (path + extension));
 	return Filesystem::path(m_authoredDir) / (path + extension);
+}
+
+Filesystem::path AssetManager::AppendPath(string path, string type)
+{
+	return Filesystem::path( m_authoredDir / type / path);
 }
 
 
@@ -81,6 +86,27 @@ void AssetManager::SetDevice(Microsoft::WRL::ComPtr<ID3D11Device> device)
 	m_fxFactory->SetDirectory(L".\\Assets\\");
 }
 
+shared_ptr<SpriteFont> AssetManager::GetFont(string path)
+{
+	try {
+
+		// Search cache
+		if (m_fonts.find(path) != m_fonts.end()) {
+			return m_fonts[path];
+		}
+		if (m_d3dDevice == nullptr) throw std::exception("AssetManager device not set");
+		// get the path
+		Filesystem::path fullPath = FullPath(path, false, "Fonts", ".spritefont");
+		// Load from file
+		shared_ptr<SpriteFont> font = std::make_shared<SpriteFont>(m_d3dDevice.Get(),fullPath.c_str());
+		m_fonts.insert(std::pair<string, shared_ptr<SpriteFont>>(path, font));
+		return font;
+	}
+	catch (std::exception ex) {
+		Utility::OutputException(path + ' ' + ex.what());
+	}
+}
+
 Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::GetTexture(string path,bool procedural)
 {
 	try {
@@ -102,7 +128,32 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::GetTexture(string
 		return texture;
 	}
 	catch (std::exception ex) {
-		Utility::OutputException(ex.what());
+		Utility::OutputException(path + ' ' + ex.what());
+	}
+}
+
+Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::GetWicTexture(string path)
+{
+	try {
+
+		// Search cache
+		if (m_WicTextures.find(path) != m_WicTextures.end()) {
+			return m_WicTextures[path];
+		}
+		if (m_d3dDevice == nullptr) throw std::exception("AssetManager device not set");
+		// get the path
+		Filesystem::path fullPath = AppendPath(path,"Textures");
+		// Load from file
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> texture;
+		DX::ThrowIfFailed(
+			DirectX::CreateWICTextureFromFile(m_d3dDevice.Get(), fullPath.c_str(), nullptr,
+				texture.ReleaseAndGetAddressOf())
+		);
+		m_WicTextures.insert(std::pair<string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>(path, texture));
+		return texture;
+	}
+	catch (std::exception ex) {
+		Utility::OutputException(path + ' ' + ex.what());
 	}
 }
 
@@ -118,7 +169,6 @@ std::shared_ptr<Model> AssetManager::GetModel(string path, bool procedural)
 		Filesystem::path fullPath = FullPath(path, procedural, "Models", ".cmo");
 		// Load from file
 		std::shared_ptr<Model> model = std::shared_ptr<Model>(Model::CreateFromCMO(m_d3dDevice.Get(), fullPath.c_str(), *m_fxFactory).release());
-		auto tex = GetTexture("wood");
 		model->UpdateEffects([=](IEffect* effect)
 		{
 			auto basic = dynamic_cast<BasicEffect*>(effect);
@@ -134,8 +184,12 @@ std::shared_ptr<Model> AssetManager::GetModel(string path, bool procedural)
 		return model;
 	}
 	catch (std::exception ex) {
-		Utility::OutputException(ex.what());
+		Utility::OutputException(path + ' ' + ex.what());
 	}
+}
+int AssetManager::GetFontSize()
+{
+	return m_fontSize;
 }
 void AssetManager::AddEffect(string name, shared_ptr<DGSLEffect> effect)
 {

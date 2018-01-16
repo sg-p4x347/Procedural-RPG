@@ -3,26 +3,30 @@
 #include "Position.h"
 #include "Utility.h"
 #include "AssetManager.h"
+#include "GuiText.h"
+
 using namespace DirectX::SimpleMath;
 using Microsoft::WRL::ComPtr;
 
 RenderSystem::RenderSystem(
-	shared_ptr<EntityManager>& entityManager, 
+	shared_ptr<EntityManager> entityManager, 
 	vector<string>& components, 
 	unsigned short updatePeriod,
 	HWND window, int width, int height,
-	Filesystem::path worldAssets
-) : System(entityManager,components, updatePeriod), 
+	shared_ptr<GuiSystem> guiSystem
+) : WorldSystem(entityManager,components, updatePeriod),
 m_VBOmask(entityManager->ComponentMask("VBO")),
-m_ModelMask(entityManager->ComponentMask("Model"))
+m_ModelMask(entityManager->ComponentMask("Model")),
+m_guiSystem(guiSystem)
 {
 	m_window = window;
 	m_worldMatrix = Matrix::Identity;
 
 	CreateDevice();
-	AssetManager::Get()->SetProceduralAssetDir(worldAssets);
 	
 	SetViewport(width, height);
+
+	SetFont("impact");
 }
 
 RenderSystem::~RenderSystem()
@@ -33,13 +37,30 @@ void RenderSystem::Update(double & elapsed)
 {
 	//https://stackoverflow.com/questions/17655442/how-can-i-repeat-my-texture-in-dx
 
-	GetViewMatrix();
+	if (EM->Initialized()) GetViewMatrix();
 	// Clear the screen
 	Clear();
 	// Render all Vertex Buffer Objects
 	SetStates();
-	Render();
+	if (EM->Initialized()) Render();
 	
+	// Update and render GUI
+	SpriteBatchBegin();
+	for (auto & guiComponent : m_guiSystem->GetDrawQueue()) {
+		shared_ptr<Sprite> sprite = dynamic_pointer_cast<Sprite>(guiComponent);
+		if (sprite) {
+			SpriteBatchDraw(sprite);
+		}
+		else {
+			shared_ptr<Text> text = dynamic_pointer_cast<Text>(guiComponent);
+			if (text) {
+				SetFont(text->Font);
+				DrawText(text->String, text->Position, (float)text->FontSize / (float)AssetManager::Get()->GetFontSize(),text->Color);
+			}
+		}
+	}
+	SpriteBatchEnd();
+
 	// Present the backbuffer to the screen
 	Present();
 }
@@ -72,7 +93,7 @@ void RenderSystem::Render()
 			for (auto model : m_Models[effectName]) {
 				auto dxModel = AssetManager::Get()->GetModel(model->Path, false);
 
-				shared_ptr<Entity> entity;
+				EntityPtr entity;
 				if (EM->Find(model->ID, entity)) {
 					auto position = EM->GetComponent<Components::Position>(entity, "Position");
 					XMMATRIX translation = XMMatrixTranslation(position->Pos.x, position->Pos.y, position->Pos.z);
@@ -110,6 +131,53 @@ void RenderSystem::SetViewport(int width, int height)
 	m_outputWidth = std::max(width, 1);
 	m_outputHeight = std::max(height, 1);
 	CreateResources();
+}
+
+Rectangle RenderSystem::GetViewport()
+{
+	return Rectangle(0,0, m_outputWidth,m_outputHeight);
+}
+
+void RenderSystem::SetEntityManager(shared_ptr<EntityManager>& entityManager)
+{
+	EM = entityManager;
+}
+
+void RenderSystem::SpriteBatchBegin()
+{
+	m_states = make_shared<CommonStates>(m_d3dDevice.Get());
+	m_spriteBatch->Begin(SpriteSortMode_BackToFront,m_states->NonPremultiplied());
+}
+
+void RenderSystem::SpriteBatchDraw(shared_ptr<Sprite> sprite)
+{
+	m_spriteBatch->Draw(
+		AssetManager::Get()->GetWicTexture(sprite->BackgroundImage != "" ? sprite->BackgroundImage : "mask.png").Get(),
+		sprite->Rect,
+		sprite->UseSourceRect ? &(RECT)sprite->SourceRect : nullptr,
+		sprite->BackgroundImage != "" ? DirectX::SimpleMath::Color(1.f,1.f,1.f,1.f): sprite->BackgroundColor,
+		0.f,
+		DirectX::SimpleMath::Vector2::Zero,
+		DirectX::SpriteEffects_None,
+		1.f/(float)sprite->Zindex
+	);
+}
+
+void RenderSystem::SetFont(string path)
+{
+	m_font = AssetManager::Get()->GetFont(path);
+}
+
+void RenderSystem::DrawText(string text, Vector2 position,float size, SimpleMath::Color color)
+{
+	if (m_font) {
+		m_font->DrawString(m_spriteBatch.get(), ansi2unicode(text).c_str(), position, color, 0.f, DirectX::FXMVECTOR(), Vector2(size, size));
+	}
+}
+
+void RenderSystem::SpriteBatchEnd()
+{
+	m_spriteBatch->End();
 }
 
 void RenderSystem::Clear()
@@ -278,7 +346,7 @@ void RenderSystem::CreateResources()
 
 	// TODO: Initialize windows-size dependent objects here.
 	
-	
+	m_guiSystem->UpdateUI(backBufferWidth, backBufferHeight);
 }
 
 void RenderSystem::CreateDevice()
@@ -392,7 +460,8 @@ void RenderSystem::CreateDevice()
 	
 	m_effectOrder = vector<string>{ "Terrain", "Water","Default" };
 
-	
+	m_spriteBatch = std::make_unique<SpriteBatch>(m_d3dContext.Get());
+
 }
 
 void RenderSystem::OnDeviceLost()

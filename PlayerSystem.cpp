@@ -3,20 +3,17 @@
 #include "Position.h"
 #include "Player.h"
 #include "Movement.h";
+#include "Game.h"
 
 PlayerSystem::PlayerSystem(
 	shared_ptr<EntityManager> & entityManager, 
 	vector<string> & components, 
-	unsigned short updatePeriod,
-	shared_ptr<DirectX::Mouse> mouse,
-	shared_ptr<DirectX::Keyboard> keyboard
-) : System::System(
+	unsigned short updatePeriod
+) : WorldSystem::WorldSystem(
 	entityManager,
 	components,
 	updatePeriod
-	),
-	m_mouse(mouse),
-	m_keyboard(keyboard)
+	)
 {
 }
 
@@ -33,15 +30,15 @@ void PlayerSystem::Update(double & elapsed)
 	shared_ptr<Components::Movement> movement = EM->GetComponent<Components::Movement>(EM->Player(), "Movement");
 
 	// mouse
-	auto mouseState = m_mouse->GetState();
-	auto keyboardState = m_keyboard->GetState();
+	auto mouseState = Game::MouseState;
+	auto keyboardState = Game::KeyboardState;
 	if (mouseState.positionMode == Mouse::MODE_RELATIVE) {
 		SimpleMath::Vector2 delta = SimpleMath::Vector2(float(mouseState.x), float(mouseState.y))*2.f;
-
-		movement->AngularVelocity.y = -delta.y;
-		movement->AngularVelocity.x = -delta.x;
-		//position->Rot.y -= delta.y;
-		//position->Rot.x -= delta.x;
+		static const float MOUSE_GAIN = 1.f;
+		movement->AngularVelocity.y = -delta.y * MOUSE_GAIN;
+		movement->AngularVelocity.x = -delta.x * MOUSE_GAIN;
+		//position->Rot.y -= delta.y * 0.004f;
+		//position->Rot.x -= delta.x * 0.004f;
 
 		// limit pitch to straight up or straight down
 		// with a little fudge-factor to avoid gimbal lock
@@ -86,7 +83,7 @@ void PlayerSystem::Update(double & elapsed)
 
 void PlayerSystem::CreatePlayer()
 {
-	shared_ptr<Entity> player = EM->NewEntity();
+	EntityPtr player = EM->NewEntity();
 	player->AddComponent(EM->ComponentMask("Player"), shared_ptr<Components::Player>(new Components::Player(player->ID())));
 	shared_ptr<Components::Position> pos(new Components::Position(player->ID()));
 	pos->Pos.y = 10;

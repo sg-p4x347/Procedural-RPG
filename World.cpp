@@ -17,14 +17,9 @@ World::World(
 	std::shared_ptr<DirectX::Mouse> mouse,
 	std::shared_ptr<DirectX::Keyboard> keyboard
 ) : m_directory(directory) {
-	//----------------------------------------------------------------
-	// Initialize Filesystem Dependencies
-	Filesystem::create_directory(m_directory);
+	
 
-	//----------------------------------------------------------------
-	// Initialize Managers
-	m_entityManager = std::shared_ptr<EntityManager>(new EntityManager(m_directory / "Component"));
-	m_systemManager = std::unique_ptr<SystemManager>(new SystemManager(m_directory,m_entityManager, window, width, height,mouse,keyboard));
+	
 	
 	//----------------------------------------------------------------
 	// Misc
@@ -42,11 +37,7 @@ World::World(const string directory) : m_directory(directory)
 }
 void World::Initialize()
 {
-	m_systemManager->Initialize();
-}
-unique_ptr<SystemManager>& World::GetSystemManager()
-{
-	return m_systemManager;
+	//m_systemManager->Initialize();
 }
 // creates a new world
 void World::Generate(int seed) {
@@ -56,8 +47,8 @@ void World::Generate(int seed) {
 
 	// generators
 
-	m_systemManager->GetSystem<TerrainSystem>("Terrain")->Generate();
-	m_systemManager->GetSystem<PlayerSystem>("Player")->CreatePlayer();
+	//m_systemManager->GetSystem<TerrainSystem>("Terrain")->Generate();
+	//m_systemManager->GetSystem<PlayerSystem>("Player")->CreatePlayer();
 	//shared_ptr<Continent> terrain = world->CreateTerrain(worldDir);
 	//world->CreateCities(terrain);
 	//GenerateHistory(m_cities);
@@ -75,8 +66,8 @@ void World::Generate(int seed) {
 //}
 void World::Save()
 {
-	m_entityManager->Save();
-	m_systemManager->Save();
+	//m_entityManager->Save();
+	//m_systemManager->Save();
 }
 //void World::CreateCities(shared_ptr<Continent> Continent)
 //{
@@ -179,7 +170,7 @@ JsonParser World::Export()
 }
 void World::Update(double elapsed)
 {
-	m_systemManager->Tick(elapsed);
+	//m_systemManager->Tick(elapsed);
 }
 void World::CreateDevice(Microsoft::WRL::ComPtr<ID3D11Device> device)
 {

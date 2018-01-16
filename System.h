@@ -5,7 +5,7 @@
 class System
 {
 public:
-	System(shared_ptr<EntityManager> & entityManager, vector<string> & components, unsigned short updatePeriod);
+	System(unsigned short updatePeriod);
 	virtual ~System() {}
 	void Tick(double & elapsed);
 	virtual void Initialize();
@@ -13,6 +13,10 @@ public:
 	// Called before Update()
 	virtual void SyncEntities();
 	virtual string Name() = 0;
+
+	// Update control
+	void Halt();
+	void Run();
 protected:
 	virtual void Update(double & elapsed) = 0;
 	double m_elapsed;				// seconds elapsed since last update
@@ -24,5 +28,6 @@ protected:
 private:
 	unsigned short m_updatePeriod;	// number of update ticks between Update();
 	unsigned short m_ticksLeft;		// number of update ticks left until next Update();
+	bool m_halted;
 };
 

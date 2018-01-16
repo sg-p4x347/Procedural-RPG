@@ -7,11 +7,20 @@
 #include "Distribution.h"
 #include "Utility.h"
 #include "RenderSystem.h"
+#include "TerrainSystem.h"
+#include "PlayerSystem.h"
 #include "AssetManager.h"
+#include "GuiSystem.h"
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
 using Microsoft::WRL::ComPtr;
+
+DirectX::Mouse::State Game::MouseState = DirectX::Mouse::State();
+DirectX::Keyboard::State Game::KeyboardState = DirectX::Keyboard::State();
+DirectX::Mouse::ButtonStateTracker Game::MouseTracker = DirectX::Mouse::ButtonStateTracker();
+DirectX::Keyboard::KeyboardStateTracker Game::KeyboardTracker = DirectX::Keyboard::KeyboardStateTracker();
+Game g_game = Game();
 
 Game::Game() :
     m_window(0),
@@ -23,32 +32,34 @@ Game::Game() :
 	AssetManager::Get()->SetAssetDir("C:/Gage Omega/Programming/Procedural-RPG/Assets");
 }
 
+Game & Game::Get()
+{
+	return g_game;
+}
+
 // Initialize the Direct3D resources required to run.
 void Game::Initialize(HWND window, int width, int height)
 {
-	cout << "Game Initializing...\n";
-    /*m_window = window;
-    m_outputWidth = std::max(width, 1);
-    m_outputHeight = std::max(height, 1);
-
-    CreateDevice();
-
-    CreateResources();*/
-
+	//DebugOutputString("Game Initializing...\n");
+    
+	//----------------------------------------------------------------
+	// Initialize Managers
+	
+	m_systemManager = std::unique_ptr<SystemManager>(new SystemManager(window, width, height));
+	HaltWorldSystems();
     // TODO: Change the timer settings if you want something other than the default variable timestep mode.
     // e.g. for 60 FPS fixed timestep update logic, call:
 	m_keyboard = std::make_shared<Keyboard>();
 	m_mouse = std::make_shared<Mouse>();
 	m_mouse->SetWindow(window);
-	m_mouse->SetMode(DirectX::Mouse::Mode::MODE_RELATIVE);
 	//m_mouse->SetDpi(DisplayInformation::GetForCurrentView()->LogicalDpi);
     m_timer.SetFixedTimeStep(true);
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
     
-
-	//GenerateWorld(3324, "test",window,width,height);
-	LoadWorld("test", window, width, height);
-}
+	m_systemManager->GetSystem<GuiSystem>("Gui")->OpenMenu("main");
+	//GenerateWorld(252, "test");
+	//LoadWorld("test");
+} 
  
 // Executes the basic game loop.
 void Game::Tick()
@@ -57,8 +68,33 @@ void Game::Tick()
     m_timer.Tick([&]()
     {
         Update(m_timer);
-		//Render();
     });
+}
+
+void Game::PauseGame()
+{
+	DirectX::Mouse::Get().SetMode(DirectX::Mouse::Mode::MODE_ABSOLUTE);
+	m_systemManager->GetSystem<GuiSystem>("Gui")->OpenMenu("game_paused");
+	HaltWorldSystems();
+}
+
+void Game::ResumeGame()
+{
+	DirectX::Mouse::Get().SetMode(DirectX::Mouse::Mode::MODE_RELATIVE);
+	m_systemManager->GetSystem<GuiSystem>("Gui")->CloseMenu();
+	RunWorldSystems();
+
+}
+
+void Game::HaltWorldSystems()
+{
+	m_systemManager->HaltAll<WorldSystem>();
+	m_systemManager->GetSystem<RenderSystem>("Render")->Run();
+}
+
+void Game::RunWorldSystems()
+{
+	m_systemManager->RunAll();
 }
 
 // Updates the world.
@@ -67,44 +103,51 @@ void Game::Update(DX::StepTimer const& timer)
     double elapsed = timer.GetElapsedSeconds();
 
     // TODO: Add your game logic here.
-	double time = timer.GetTotalSeconds();
 	// DX Input
-	auto keyboard = m_keyboard->GetState();
-	if (keyboard.Escape)
-		PostQuitMessage(0);
+	MouseState = m_mouse->GetState();
+	KeyboardState = m_keyboard->GetState();
+	MouseTracker.Update(MouseState);
+	KeyboardTracker.Update(KeyboardState);
 
-	// Update the world
-	m_world->Update(elapsed);
-}
+	if (KeyboardTracker.pressed.Escape) {
+		PauseGame();
+	}
 
-void Game::Render()
-{
-	Clear();
-	//m_world->Render(m_d3dDevice, m_d3dContext,m_states);
-	// DO NOT DELETE
-	Present();
+	// Update the systems
+	m_systemManager->Tick(elapsed);
 }
 
 
-void Game::GenerateWorld(int seed, string name, HWND window, int width, int height)
+void Game::GenerateWorld(int seed, string name)
 {
+	Filesystem::path worldDir = "Saves/" + name;
 	try {
-		Filesystem::remove_all("Saves/" + name);
+		Filesystem::remove_all(worldDir);
 	}
 	catch (std::exception ex) {
 		Utility::OutputException(ex.what());
 	}
-	m_world = unique_ptr<World>(new World("Saves/" + name, window, width, height, m_mouse, m_keyboard));
-	m_world->Generate(seed);
-	m_world->Initialize();
-	Tick();
+	// seed the RNG
+	srand(seed);
+	m_systemManager->LoadWorld(worldDir);
+	m_systemManager->GetSystem<TerrainSystem>("Terrain")->Generate();
+	m_systemManager->GetSystem<PlayerSystem>("Player")->CreatePlayer();
+	m_systemManager->Save();
 }
 
-void Game::LoadWorld(string name, HWND window, int width, int height)
+void Game::LoadWorld(string name)
 {
-	m_world = unique_ptr<World>(new World("saves/" + name, window, width, height, m_mouse, m_keyboard));
-	m_world->Initialize();
-	Tick();
+	//----------------------------------------------------------------
+	// Initialize Filesystem Dependencies
+	Filesystem::path worldDir = "Saves/" + name;
+	Filesystem::create_directory(worldDir);
+	m_systemManager->LoadWorld(worldDir);
+}
+
+void Game::CloseWorld()
+{
+	m_systemManager->Save();
+	HaltWorldSystems();
 }
 
 // Presents the back buffer contents to the screen.
@@ -167,18 +210,20 @@ void Game::OnWindowSizeChanged(int width, int height)
 {
     m_outputWidth = std::max(width, 1);
     m_outputHeight = std::max(height, 1);
-	m_world->GetSystemManager()->GetSystem<RenderSystem>("Render")->SetViewport(width, height);
-    //CreateResources();
+	m_systemManager->GetSystem<RenderSystem>("Render")->SetViewport(width, height);
+}
 
-    // TODO: Game window is being resized.
+void Game::OnQuit()
+{
+	m_systemManager->Save();
 }
 
 // Properties
 void Game::GetDefaultSize(int& width, int& height) const
 {
     // TODO: Change to desired default window size (note minimum size is 320x200).
-    width = 800;
-    height = 600;
+    width = 1920;
+    height = 1080;
 }
 
 // These are the resources that depend on the device.
@@ -388,7 +433,6 @@ void Game::OnDeviceLost()
 {
 	// TODO: Add Direct3D resource cleanup here.
 	m_states.reset();
-	m_world->OnDeviceLost();
 
     m_depthStencilView.Reset();
     m_renderTargetView.Reset();

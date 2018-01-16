@@ -67,7 +67,8 @@ namespace DX
         }
     }
 }
-
+class Entity;
+typedef std::shared_ptr<Entity> EntityPtr;
 #include "CommonStates.h"
 #include "DDSTextureLoader.h"
 #include "DirectXHelpers.h"

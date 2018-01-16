@@ -1,15 +1,12 @@
 #pragma once
-
-#include "World.h"
+#include "SystemManager.h"
 #include "StepTimer.h"
-
-// A basic game implementation that creates a D3D11 device and
-// provides a game loop.
-__declspec(align(16)) class Game
+class Game
 {
 public:
 
     Game();
+	static Game& Get();
 	void* operator new(size_t i)
 	{
 		return _mm_malloc(i, 16);
@@ -25,7 +22,16 @@ public:
 	//--------------------------------
     // Basic game loop
     void Tick();
-	
+	//----------------------------------------------------------------
+	// World control
+	void PauseGame();
+	void ResumeGame();
+	// Generates a world
+	void GenerateWorld(int seed, string name);
+	// Loads a world from file
+	void LoadWorld(string name);
+	// De-loads a world
+	void CloseWorld();
 
     // Messages
     void OnActivated();
@@ -33,20 +39,27 @@ public:
     void OnSuspending();
     void OnResuming();
     void OnWindowSizeChanged(int width, int height);
-
+	void OnQuit();
     // Properties
     void GetDefaultSize( int& width, int& height ) const;
-
+	//----------------------------------------------------------------
+	// DX Input
+	static DirectX::Mouse::State MouseState;
+	static DirectX::Mouse::ButtonStateTracker MouseTracker;
+	static DirectX::Keyboard::State KeyboardState;
+	static DirectX::Keyboard::KeyboardStateTracker KeyboardTracker;
 private:
-	//--------------------------------
-	// The currently loaded world
-	unique_ptr<World> m_world;
+	//----------------------------------------------------------------
+	// World control
+	void HaltWorldSystems();
+	void RunWorldSystems();
+	//----------------------------------------------------------------
+	// Systems
+	unique_ptr<SystemManager> m_systemManager;
+	//----------------------------------------------------------------
+	// World
     void Update(DX::StepTimer const& timer);
-	void Render();
-	// Generates a world
-	void GenerateWorld(int seed,string name, HWND window, int width, int height);
-	// Loads a world from file
-	void LoadWorld(string name, HWND window, int width, int height);
+	
 	//--------------------------------
 	// DirectX
     void CreateDevice();
@@ -87,6 +100,7 @@ private:
 	
 	// Input
 	std::shared_ptr<DirectX::Keyboard>				m_keyboard;
+	Keyboard::KeyboardStateTracker					m_keyboardTracker;
 	std::shared_ptr<DirectX::Mouse>					m_mouse;
     // Rendering loop timer.
     DX::StepTimer                                   m_timer;

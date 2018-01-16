@@ -8,7 +8,7 @@ MovementSystem::MovementSystem(
 	shared_ptr<EntityManager>& entityManager, 
 	vector<string>& components, 
 	unsigned short updatePeriod,
-	shared_ptr<RenderSystem> renderSys) : System::System(entityManager,components,updatePeriod), m_renderSystem(renderSys)
+	shared_ptr<RenderSystem> renderSys) : WorldSystem::WorldSystem(entityManager,components,updatePeriod), m_renderSystem(renderSys)
 {
 	
 }

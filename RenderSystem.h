@@ -1,27 +1,30 @@
 #pragma once
-#include "System.h"
+#include "WorldSystem.h"
+#include "GuiSystem.h"
 #include "VBO.h"
 #include "Model.h"
 #include "AssetManager.h"
 class RenderSystem :
-	public System
+	public WorldSystem
 {
 public:
 	RenderSystem(
-		shared_ptr<EntityManager> & entityManager, 
+		shared_ptr<EntityManager> entityManager, 
 		vector<string> & components, 
 		unsigned short updatePeriod,
 		HWND window, int width, int height,
-		Filesystem::path worldAssets
+		shared_ptr<GuiSystem> guiSystem
 	);
 	// Inherited via System
 	virtual void Update(double & elapsed) override;
 	virtual void SyncEntities() override;
 	void SetViewport(int width, int height);
+	Rectangle GetViewport();
+	void SetEntityManager(shared_ptr<EntityManager> & entityManager);
 	~RenderSystem();
 private:
-	
-	shared_ptr<Entity> m_player;
+	shared_ptr<GuiSystem> m_guiSystem;
+	EntityPtr m_player;
 	
 	// DirectX
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_inputLayout;
@@ -29,7 +32,7 @@ private:
 	vector<string>								m_effectOrder;
 	
 	std::shared_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>	m_batch;
-
+	std::unique_ptr<SpriteBatch> m_spriteBatch;
 	//--------------------------------
 	// Device resources.
 	HWND                                            m_window;
@@ -75,12 +78,19 @@ private:
 	std::map<string, vector<shared_ptr<Components::Model>>> m_Models;
 
 	//----------------------------------------------------------------
-	// Rendering
+	// Entity Rendering
 	void Clear();
 	void SetStates();
 	void Render();
 	void Present();
-
+	//----------------------------------------------------------------
+	// 2D Rendering
+	void SpriteBatchBegin();
+	void SpriteBatchDraw(shared_ptr<Sprite> sprite);
+	shared_ptr<SpriteFont> m_font;
+	void SetFont(string path);
+	void DrawText(string text, Vector2 position,float size,SimpleMath::Color color=SimpleMath::Color(Colors::Black));
+	void SpriteBatchEnd();
 	// Inherited via System
 	virtual string Name() override;
 

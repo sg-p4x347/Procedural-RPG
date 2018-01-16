@@ -33,6 +33,7 @@ unsigned long Entity::MissingComponents(unsigned long & componentMask)
 
 void Entity::AddComponent(unsigned long componentMask, shared_ptr<Components::Component> component)
 {
+	component->ID = m_id;
 	m_cachedMask |= componentMask;
 	m_componentMask |= componentMask;
 	m_components.insert(std::pair < unsigned long, shared_ptr<Components::Component>>(componentMask, component));
@@ -58,7 +59,7 @@ map<unsigned long, shared_ptr<Components::Component>> & Entity::Components()
 //		return it->second;
 //	}
 //	// load the component
-//	return EM->GetComponent(mask, shared_ptr<Entity>(this));
+//	return EM->GetComponent(mask, EntityPtr(this));
 //}
 
 //void Entity::Import(JsonParser & jp)
