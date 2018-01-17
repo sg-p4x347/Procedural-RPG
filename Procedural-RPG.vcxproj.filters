@@ -41,19 +41,20 @@
     <Filter Include="GUI">
       <UniqueIdentifier>{a63a9288-0b2a-4052-a556-095f908cc277}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{07a6c8a6-b62a-4d4b-b76a-7eac2b9fc439}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\Serialization">
+      <UniqueIdentifier>{08498aa7-1838-4265-93e3-fe183e361bcc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="StepTimer.h" />
-    <ClInclude Include="Distribution.h" />
     <ClInclude Include="Region.h" />
-    <ClInclude Include="Utility.h" />
-    <ClInclude Include="World.h" />
     <ClInclude Include="ReadData.h" />
     <ClInclude Include="NameGenerator.h" />
-    <ClInclude Include="IdHandler.h" />
-    <ClInclude Include="JsonParser.h" />
     <ClInclude Include="Building.h">
       <Filter>Architecture</Filter>
     </ClInclude>
@@ -69,19 +70,16 @@
     <ClInclude Include="Room.h">
       <Filter>Architecture</Filter>
     </ClInclude>
-    <ClInclude Include="JSON.h" />
     <ClInclude Include="ModelManager.h" />
     <ClInclude Include="Entity.h">
       <Filter>Entity Component System</Filter>
     </ClInclude>
-    <ClInclude Include="ISerialization.h" />
     <ClInclude Include="EntityManager.h">
       <Filter>Entity Component System</Filter>
     </ClInclude>
     <ClInclude Include="Filesystem.h">
       <Filter>Filesystem</Filter>
     </ClInclude>
-    <ClInclude Include="VectorMap.h" />
     <ClInclude Include="Component.h">
       <Filter>Entity Component System\Components</Filter>
     </ClInclude>
@@ -123,7 +121,6 @@
     <ClInclude Include="Road.h">
       <Filter>Entity Component System\Components</Filter>
     </ClInclude>
-    <ClInclude Include="ProUtil.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="HeightMap.h" />
     <ClInclude Include="Droplet.h">
@@ -132,20 +129,17 @@
     <ClInclude Include="ThermalCell.h">
       <Filter>Erosion</Filter>
     </ClInclude>
-    <ClInclude Include="Stratum.h" />
     <ClInclude Include="WaterCell.h">
       <Filter>Erosion</Filter>
     </ClInclude>
     <ClInclude Include="Tag.h">
       <Filter>Entity Component System\Components</Filter>
     </ClInclude>
-    <ClInclude Include="ConversionUtil.h" />
     <ClInclude Include="AssetManager.h" />
     <ClInclude Include="Model.h">
       <Filter>Entity Component System\Components</Filter>
     </ClInclude>
     <ClInclude Include="MathConstants.h" />
-    <ClInclude Include="BaseEntityManager.h" />
     <ClInclude Include="GuiSystem.h">
       <Filter>Entity Component System\Systems</Filter>
     </ClInclude>
@@ -161,26 +155,46 @@
     <ClInclude Include="GuiChildren.h">
       <Filter>GUI</Filter>
     </ClInclude>
-    <ClInclude Include="Sprite.h" />
-    <ClInclude Include="WorldSystem.h" />
     <ClInclude Include="GuiText.h">
       <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="GuiEventHandler.h">
       <Filter>GUI</Filter>
     </ClInclude>
+    <ClInclude Include="BaseEntityManager.h">
+      <Filter>Entity Component System</Filter>
+    </ClInclude>
+    <ClInclude Include="Sprite.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="ConversionUtil.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="ProUtil.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldSystem.h">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="ISerialization.h">
+      <Filter>Utility\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="JSON.h">
+      <Filter>Utility\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="JsonParser.h">
+      <Filter>Utility\Serialization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Distribution.cpp" />
     <ClCompile Include="Region.cpp" />
-    <ClCompile Include="Utility.cpp" />
-    <ClCompile Include="World.cpp" />
     <ClCompile Include="NameGenerator.cpp" />
-    <ClCompile Include="IdHandler.cpp" />
-    <ClCompile Include="JsonParser.cpp" />
     <ClCompile Include="Building.cpp">
       <Filter>Architecture</Filter>
     </ClCompile>
@@ -196,19 +210,16 @@
     <ClCompile Include="Room.cpp">
       <Filter>Architecture</Filter>
     </ClCompile>
-    <ClCompile Include="JSON.cpp" />
     <ClCompile Include="ModelManager.cpp" />
     <ClCompile Include="Entity.cpp">
       <Filter>Entity Component System</Filter>
     </ClCompile>
-    <ClCompile Include="ISerialization.cpp" />
     <ClCompile Include="EntityManager.cpp">
       <Filter>Entity Component System</Filter>
     </ClCompile>
     <ClCompile Include="Filesystem.cpp">
       <Filter>Filesystem</Filter>
     </ClCompile>
-    <ClCompile Include="VectorMap.cpp" />
     <ClCompile Include="Component.cpp">
       <Filter>Entity Component System\Components</Filter>
     </ClCompile>
@@ -249,7 +260,6 @@
     <ClCompile Include="Road.cpp">
       <Filter>Entity Component System\Components</Filter>
     </ClCompile>
-    <ClCompile Include="ProUtil.cpp" />
     <ClCompile Include="HeightMap.cpp" />
     <ClCompile Include="Droplet.cpp">
       <Filter>Erosion</Filter>
@@ -257,17 +267,14 @@
     <ClCompile Include="ThermalCell.cpp">
       <Filter>Erosion</Filter>
     </ClCompile>
-    <ClCompile Include="Stratum.cpp" />
     <ClCompile Include="WaterCell.cpp">
       <Filter>Erosion</Filter>
     </ClCompile>
     <ClCompile Include="Tag.cpp">
       <Filter>Entity Component System\Components</Filter>
     </ClCompile>
-    <ClCompile Include="ConversionUtil.cpp" />
     <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="Model.cpp" />
-    <ClCompile Include="BaseEntityManager.cpp" />
     <ClCompile Include="GuiSystem.cpp">
       <Filter>Entity Component System\Systems</Filter>
     </ClCompile>
@@ -283,13 +290,38 @@
     <ClCompile Include="GuiStyle.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
-    <ClCompile Include="Sprite.cpp" />
-    <ClCompile Include="WorldSystem.cpp" />
     <ClCompile Include="GuiEventHandler.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="GuiText.cpp">
       <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseEntityManager.cpp">
+      <Filter>Entity Component System</Filter>
+    </ClCompile>
+    <ClCompile Include="Sprite.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="ConversionUtil.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="ProUtil.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldSystem.cpp">
+      <Filter>Entity Component System\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="ISerialization.cpp">
+      <Filter>Utility\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="JSON.cpp">
+      <Filter>Utility\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="JsonParser.cpp">
+      <Filter>Utility\Serialization</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -307,7 +339,6 @@
     </Manifest>
   </ItemGroup>
   <ItemGroup>
-    <None Include="myfile.spritefont" />
     <None Include="saves\testWorld\terrain.bin">
       <Filter>Assets</Filter>
     </None>

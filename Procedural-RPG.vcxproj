@@ -198,11 +198,9 @@
     <ClInclude Include="HeightMap.h" />
     <ClInclude Include="JSON.h" />
     <ClInclude Include="JsonParser.h" />
-    <ClInclude Include="Distribution.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Map.h" />
-    <ClInclude Include="IdHandler.h" />
     <ClInclude Include="Line.h" />
     <ClInclude Include="MathConstants.h" />
     <ClInclude Include="Model.h" />
@@ -225,7 +223,6 @@
     <ClInclude Include="ISerialization.h" />
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="StepTimer.h" />
-    <ClInclude Include="Stratum.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="SystemManager.h" />
     <ClInclude Include="Tag.h" />
@@ -236,9 +233,7 @@
     <ClInclude Include="ThermalCell.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="VBO.h" />
-    <ClInclude Include="VectorMap.h" />
     <ClInclude Include="Voxel.h" />
-    <ClInclude Include="World.h" />
     <ClInclude Include="WorldSystem.h" />
   </ItemGroup>
   <ItemGroup>
@@ -260,10 +255,8 @@
     <ClCompile Include="HeightMap.cpp" />
     <ClCompile Include="JSON.cpp" />
     <ClCompile Include="JsonParser.cpp" />
-    <ClCompile Include="Distribution.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Game.cpp" />
-    <ClCompile Include="IdHandler.cpp" />
     <ClCompile Include="Line.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Model.cpp" />
@@ -288,7 +281,6 @@
     <ClCompile Include="Room.cpp" />
     <ClCompile Include="ISerialization.cpp" />
     <ClCompile Include="Sprite.cpp" />
-    <ClCompile Include="Stratum.cpp" />
     <ClCompile Include="System.cpp" />
     <ClCompile Include="SystemManager.cpp" />
     <ClCompile Include="Tag.cpp" />
@@ -299,9 +291,7 @@
     <ClCompile Include="ThermalCell.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="VBO.cpp" />
-    <ClCompile Include="VectorMap.cpp" />
     <ClCompile Include="Voxel.cpp" />
-    <ClCompile Include="World.cpp" />
     <ClCompile Include="WorldSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -328,7 +318,6 @@
     <None Include="config\components.json" />
     <None Include="config\continent.json" />
     <None Include="config\history.json" />
-    <None Include="myfile.spritefont" />
     <None Include="packages.config" />
     <None Include="saves\testWorld\terrain.bin" />
   </ItemGroup>

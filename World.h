@@ -8,7 +8,6 @@
 #include <string>
 #include <algorithm>
 #include <iterator>
-#include "CircularArray.h"
 #include "NameGenerator.h"
 #include "Building.h"
 #include "SystemManager.h"

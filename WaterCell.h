@@ -1,7 +1,6 @@
 #pragma once
 #include "HeightMap.h"
 #include "Map.h"
-#include "Stratum.h"
 /*
 Spread model adapted from
 

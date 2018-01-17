@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "WaterCell.h"
 #include "Utility.h"
-#include "Stratum.h"
 // Constants
 const float WaterCell::rainQty = 0.01f;
 const float WaterCell::rainProbability = 1.f;

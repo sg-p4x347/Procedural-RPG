@@ -13,21 +13,14 @@ using namespace History;
 class Continent
 {
 public:
-	Continent(string directory);
+	Continent(string path);
 	~Continent();
-	
-	
-	// Getters
-	const HeightMap & GetTerrain() const;
-	const HeightMap & GetBiome() const;
-	const int & GetWidth() const;
-	
-private:
 	// Saving data to files -----------------------------------------
-	void Save(string directory);
-	// 2 dimensional maps -------------------------------------------
+	void Save(string path);
+private:
 	HeightMap m_terrain;
 	HeightMap m_biome;
+	Federal * m_federal; // federal division of organization (contains states)
 	int m_width; // The total width of the continent (in meters)
 	// Generation parameters
 	int m_sampleSpacing;
@@ -47,7 +40,11 @@ private:
 	float Sigmoid(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
 	// Erosion filter for generated terrain -------------------------
 	void Erosion();
-	
+	// Create the cities --------------------------------------------
+	void CreateCities();
+	// Generate a timeline of history -------------------------------
+	void GenerateHistory(vector<City> cities);
+
 	void Load();
 };
 
