@@ -152,7 +152,7 @@ void GuiSystem::UpdateUI(int outputWidth, int outputHeight)
 {
 	m_outputRect = Rectangle(0, 0, outputWidth, outputHeight);
 	if (m_currentMenu) {
-		shared_ptr<Style> style = GuiEM.GetComponent<Style>(m_currentMenu, "Style_Default");
+		shared_ptr<Style> style = m_currentMenu->GetComponent<Style>("Style_Default");
 		m_drawQueue = UpdateDrawQueue(CalculateChildRect(m_outputRect,style), m_currentMenu,1);
 	}
 	else {
@@ -212,9 +212,9 @@ vector<shared_ptr<Components::Component>> GuiSystem::UpdateDrawQueue(Rectangle p
 	if (entity->HasComponents(GuiEM.ComponentMask(vector<string>{"Style_Default","Sprite"}))) {
 		//----------------------------------------------------------------
 		// Components
-		shared_ptr<Style> style = GuiEM.GetComponent<Style>(entity, "Style_Default");
-		shared_ptr<Sprite> sprite = GuiEM.GetComponent<Sprite>(entity, "Sprite");
-		shared_ptr<Text> text = GuiEM.GetComponent<Text>(entity, "Text");
+		shared_ptr<Style> style = entity->GetComponent<Style>("Style_Default");
+		shared_ptr<Sprite> sprite = entity->GetComponent<Sprite>("Sprite");
+		shared_ptr<Text> text = entity->GetComponent<Text>("Text");
 		//----------------------------------------------------------------
 		// Background Sprite
 		UpdateSprite(parentRect, entity, style, sprite, zIndex);
@@ -230,10 +230,10 @@ vector<shared_ptr<Components::Component>> GuiSystem::UpdateDrawQueue(Rectangle p
 		vector<EntityPtr> children;
 		vector<shared_ptr<Style>> childStyles;
 		if (entity->HasComponents(GuiEM.ComponentMask("Children"))) {
-			for (auto & childID : GuiEM.GetComponent<Children>(entity, "Children")->Entities) {
+			for (auto & childID : entity->GetComponent<Children>("Children")->Entities) {
 				EntityPtr child;
 				if (GuiEM.Find(childID, child) && child->HasComponents(GuiEM.ComponentMask("Style_Default"))) {
-					childStyles.push_back(GuiEM.GetComponent<Style>(child, "Style_Default"));
+					childStyles.push_back(child->GetComponent<Style>("Style_Default"));
 					children.push_back(child);
 				}
 			}
@@ -253,7 +253,7 @@ void GuiSystem::OnHover(EntityPtr entity)
 	if (m_activeElement != entity) {
 		if (m_hoverElement && m_hoverElement != entity) OnHoverOut(m_hoverElement);
 		if (entity->HasComponents(GuiEM.ComponentMask("Style_Hover"))) {
-			shared_ptr<Style> hoverStyle = GuiEM.GetComponent<Style>(entity, "Style_Hover");
+			shared_ptr<Style> hoverStyle = entity->GetComponent<Style>("Style_Hover");
 			shared_ptr<Sprite> sprite = GetSprite(entity);
 			UpdateSprite(sprite->Rect, entity, hoverStyle, sprite, sprite->Zindex);
 		}
@@ -272,7 +272,7 @@ void GuiSystem::OnMouseDown(EntityPtr entity)
 {
 	m_activeElement = entity;
 	if (entity->HasComponents(GuiEM.ComponentMask("Style_Active"))) {
-		shared_ptr<Style> activeStyle = GuiEM.GetComponent<Style>(entity, "Style_Active");
+		shared_ptr<Style> activeStyle = entity->GetComponent<Style>("Style_Active");
 		shared_ptr<Sprite> sprite = GetSprite(entity);
 		UpdateSprite(sprite->Rect, entity, activeStyle, sprite, sprite->Zindex);
 	}
@@ -291,8 +291,8 @@ void GuiSystem::OnMouseUp(EntityPtr entity)
 void GuiSystem::OnClick(EntityPtr entity)
 {
 	if (entity->HasComponents(GuiEM.ComponentMask("EventHandler_Click"))) {
-		shared_ptr<EventHandler> clickHandler = GuiEM.GetComponent<EventHandler>(entity, "EventHandler_Click");
-		clickHandler->Callback();
+		shared_ptr<EventHandler> clickHandler = entity->GetComponent<EventHandler>("EventHandler_Click");
+		if (clickHandler) clickHandler->Callback();
 	}
 	OnHover(entity);
 }
@@ -300,7 +300,7 @@ void GuiSystem::OnClick(EntityPtr entity)
 void GuiSystem::OnDefault(EntityPtr entity)
 {
 	if (entity->HasComponents(GuiEM.ComponentMask(vector<string>{"Style_Default", "Sprite"}))) {
-		shared_ptr<Style> defaultStyle = GuiEM.GetComponent<Style>(entity, "Style_Default");
+		shared_ptr<Style> defaultStyle = entity->GetComponent<Style>("Style_Default");
 		shared_ptr<Sprite> sprite = GetSprite(entity);
 		UpdateSprite(sprite->Rect, entity, defaultStyle, sprite, sprite->Zindex);
 	}
@@ -460,5 +460,5 @@ int GuiSystem::GetSecondaryPosition(FlowType flow, Rectangle rect)
 
 shared_ptr<Sprite> GuiSystem::GetSprite(EntityPtr entity)
 {
-	return GuiEM.GetComponent<Sprite>(entity, "Sprite");
+	return entity->GetComponent<Sprite>("Sprite");
 }

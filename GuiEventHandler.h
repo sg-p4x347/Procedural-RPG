@@ -1,18 +1,18 @@
 #pragma once
-#include "Component.h"
+#include "Delegate.h"
 namespace GUI {
 	class EventHandler :
-		public Components::Component
+		public Components::Delegate
 	{
 	public:
-		EventHandler(const unsigned int & id,string type);
+		EventHandler(string type);
 		EventHandler(string type, std::function<void()>&&callback);
 		~EventHandler();
 		// Data
-		string Type;
 		std::function<void()> Callback;
-		// Inherited via Component
-		virtual string GetName() override;
+
+		// Inherited via Delegate
+		virtual string GetDiscreteName() override;
 	};
 }
 

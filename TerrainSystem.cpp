@@ -2,7 +2,7 @@
 #include "TerrainSystem.h"
 #include "Terrain.h"
 #include "Position.h"
-#include "VBO.h"
+#include "PositionNormalTextureVBO.h"
 #include "Movement.h"
 #include "ProUtil.h"
 #include "Utility.h"
@@ -17,7 +17,7 @@ static const bool g_erosion = true;
 using namespace DirectX::SimpleMath;
 static EntityPtr waterEntity;
 TerrainSystem::TerrainSystem(
-	shared_ptr<EntityManager> & entityManager, 
+	unique_ptr<EntityManager> &  entityManager,
 	vector<string> & components, 
 	unsigned short updatePeriod, 
 	int regionWidth,
@@ -31,8 +31,7 @@ TerrainSystem::TerrainSystem(
 	JsonParser terrainMap = JsonParser(std::ifstream("config/continent.json"))["terrainMap"];
 	m_width = terrainMap["width"].To<int>();
 	//m_workerThread = TaskThread()
-
-	
+	//m_workers = Map<std::thread>(m_width / m_regionWidth,0,0,0);
 }
 
 
@@ -190,9 +189,9 @@ void TerrainSystem::Generate()
 
 void TerrainSystem::Update(double & elapsed)
 {
-	Vector3 velocity = EM->GetComponent<Components::Movement>(EM->Player(), "Movement")->Velocity;
-	if (velocity.Length() < 10) {
-		UpdateRegions(PlayerPos()->Pos);
+	Vector3 velocity = EM->Player()->GetComponent<Components::Movement>("Movement")->Velocity;
+	if (velocity.Length() < 100) {
+		UpdateRegions(EM->PlayerPos()->Pos);
 	}
 	//m_worker = std::thread(&TerrainSystem::UpdateRegions, *this,PlayerPos()->Pos);
 }
@@ -252,11 +251,6 @@ void TerrainSystem::SetVertex(const int & x, const int & z, const float value)
 	shared_ptr<Components::VBO> terrainVBO = EM->GetComponent<Components::VBO>(region, "VBO");
 
 	if (terrainVBO->Vertices.size() != 0) terrainVBO->Vertices[Utility::posToIndex(z, x, m_width + 1)].position.y = water.map[x][z].Height;*/
-}
-
-shared_ptr<Components::Position> TerrainSystem::PlayerPos()
-{
-	return EM->GetComponent<Components::Position>(EM->Player(),"Position");
 }
 
 void TerrainSystem::SaveTerrain(HeightMap & terrain, HeightMap & biome)
@@ -397,13 +391,13 @@ void TerrainSystem::NewWater(DirectX::SimpleMath::Vector3 & position)
 {
 	EntityPtr entity = EM->NewEntity();
 
-	entity->AddComponent(EM->ComponentMask("Position"), std::shared_ptr<Components::Component>(
-		new Components::Position(entity->ID(), position, SimpleMath::Vector3::Zero)));
-	entity->AddComponent(EM->ComponentMask("Tag_Water"), std::shared_ptr<Components::Component>(
-		new Components::Tag(entity->ID(),"Water")));
-	auto vbo = new Components::VBO(entity->ID());
+	entity->AddComponent(std::shared_ptr<Components::Component>(
+		new Components::Position(position, SimpleMath::Vector3::Zero)));
+	entity->AddComponent(std::shared_ptr<Components::Component>(
+		new Components::Tag("Water")));
+	auto vbo = new Components::PositionNormalTextureVBO();
 	vbo->Effect = "Water";
-	entity->AddComponent(EM->ComponentMask("VBO"), std::shared_ptr<Components::Component>(vbo));
+	entity->AddComponent(std::shared_ptr<Components::Component>(vbo));
 }
 
 void TerrainSystem::CreateTreeEntities(HeightMap & terrain, shared_ptr<Map<WaterCell>> water)
@@ -435,12 +429,12 @@ void TerrainSystem::NewTree(DirectX::SimpleMath::Vector3 & position, Vector3 & r
 {
 	EntityPtr entity = EM->NewEntity();
 
-	entity->AddComponent(EM->ComponentMask("Position"), std::shared_ptr<Components::Component>(
-		new Components::Position(entity->ID(), position, rotation)));
-	entity->AddComponent(EM->ComponentMask("Tag_Tree"), std::shared_ptr<Components::Component>(
-		new Components::Tag(entity->ID(), "Tree")));
-	entity->AddComponent(EM->ComponentMask("Model"), std::shared_ptr<Components::Component>(
-		new Components::Model(entity->ID(), "Tree", "Default")));
+	entity->AddComponent(std::shared_ptr<Components::Component>(
+		new Components::Position(position, rotation)));
+	entity->AddComponent(std::shared_ptr<Components::Component>(
+		new Components::Tag("Tree")));
+	entity->AddComponent(std::shared_ptr<Components::Component>(
+		new Components::Model("Tree", "Default")));
 }
 
 float TerrainSystem::TreeGradientProbability(float gradient)
@@ -462,15 +456,16 @@ void TerrainSystem::UpdateRegions(Vector3 center)
 	for (int i = 0; i < m_terrainEntities.size(); i++) {
 		auto terrainEntity = m_terrainEntities[i];
 		auto waterEntity = m_waterEntities[i];
-		Vector3 position = EM->GetComponent<Components::Position>(terrainEntity,"Position")->Pos;
+		Vector3 position = terrainEntity->GetComponent<Components::Position>("Position")->Pos;
 		position.y = 0;
 		double distance = Vector3::Distance(center, position);
 		
-		shared_ptr<Components::VBO> vbo = EM->GetComponent<Components::VBO>(terrainEntity, "VBO");
-		shared_ptr<Components::VBO> waterVBO = EM->GetComponent<Components::VBO>(waterEntity, "VBO");
+		shared_ptr<Components::PositionNormalTextureVBO> vbo = terrainEntity->GetComponent<Components::PositionNormalTextureVBO>("PositionNormalTextureVBO");
+		shared_ptr<Components::PositionNormalTextureVBO> waterVBO = waterEntity->GetComponent<Components::PositionNormalTextureVBO>("PositionNormalTextureVBO");
 		// Update the Level Of Detail as a funtion of distance
 		int lod = LOD(distance, (int)m_regionWidth);
 		// Only update this VBO if the LOD has changed
+
 		if (vbo->LOD != lod) {
 			vbo->LOD = lod;
 			waterVBO->LOD = lod;
@@ -478,17 +473,22 @@ void TerrainSystem::UpdateRegions(Vector3 center)
 			int x = (int)std::floor(position.x / (double)(int)m_regionWidth);
 			int z = (int)std::floor(position.z / (double)(int)m_regionWidth);
 
-			m_worker = std::thread([this, vbo,waterVBO, x, z]() {
-				UpdateWaterVBO(waterVBO, UpdateTerrainVBO(vbo, x, z), x, z);
-			});
-			m_worker.detach();
+			std::thread([this, vbo, waterVBO, x, z]() {
+				try {
+					UpdateWaterVBO(waterVBO, UpdateTerrainVBO(vbo, x, z), x, z);
+				}
+				catch (std::exception ex) {
+					Utility::OutputException(ex.what());
+				}
+			}).detach();
+			//m_worker.join();
 			//UpdateTerrainVBO(vbo, x, z);
 			
 		}
 	}
 }
 
-void TerrainSystem::UpdateWaterVBO(shared_ptr<Components::VBO> vbo, shared_ptr<HeightMap> terrain, int  regionX, int  regionZ)
+void TerrainSystem::UpdateWaterVBO(shared_ptr<Components::PositionNormalTextureVBO> vbo, shared_ptr<HeightMap> terrain, int  regionX, int  regionZ)
 {
 	// calculate quad size based off of LOD (Level Of Detail)
 	int quadWidth = std::pow(2, vbo->LOD);
@@ -605,9 +605,9 @@ void TerrainSystem::UpdateWaterVBO(shared_ptr<Components::VBO> vbo, shared_ptr<H
 	vbo->LODchanged = true;
 }
 
-VertexPositionNormalTangentColorTexture TerrainSystem::CreateVertex(Vector3 position, Vector3 normal, Vector2 texture)
+VertexPositionNormalTexture TerrainSystem::CreateVertex(Vector3 position, Vector3 normal, Vector2 texture)
 {
-	return VertexPositionNormalTangentColorTexture(position, normal, XMFLOAT4(), XMFLOAT4(), texture);
+	return VertexPositionNormalTexture(position, normal, texture);
 }
 
 float TerrainSystem::LowestNeighbor(HeightMap & water, HeightMap & terrain, int x, int z)
@@ -624,7 +624,7 @@ float TerrainSystem::LowestNeighbor(HeightMap & water, HeightMap & terrain, int 
 	return minY;
 }
 
-shared_ptr<HeightMap> TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int  regionX, int regionZ)
+shared_ptr<HeightMap> TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::PositionNormalTextureVBO> vbo, int  regionX, int regionZ)
 {
 	// calculate quad size based off of LOD (Level Of Detail)
 	int quadWidth = std::pow(2, vbo->LOD);
@@ -697,21 +697,17 @@ shared_ptr<HeightMap> TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO
 
 			// Triangle 1 - Upper left
 			vbo->Vertices[index] = {
-				XMFLOAT3(vertex1),										// position
+				XMFLOAT3(vertex1),				// position
 				XMFLOAT3(normalMap.map[x][z]),	// normal
-				XMFLOAT4(1.f,0.f,0.f,1.f),								// tangent
-				XMFLOAT4(0.f,0.f,0.f,1.f),							// color
-				XMFLOAT2(0.f,0.f)										// texture
+				XMFLOAT2(0.f,0.f)				// texture
 			};
 			vbo->Indices[index] = index;
 			index++;
 			// Triangle 1 - Bottom right.
 			vbo->Vertices[index] = {
-				XMFLOAT3(vertex4),												// position
+				XMFLOAT3(vertex4),										// position
 				XMFLOAT3(normalMap.map[x + 1][z + 1]),	// normal
-				XMFLOAT4(1.f,0.f,0.f,1.f),										// tangent
-				XMFLOAT4(0.f,0.f,0.f,1.f),									// color
-				XMFLOAT2(1.f,1.f)												// texture
+				XMFLOAT2(1.f,1.f)										// texture
 			};
 			vbo->Indices[index] = index;
 			index++;
@@ -719,8 +715,6 @@ shared_ptr<HeightMap> TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex3),											// position
 				XMFLOAT3(normalMap.map[x][z + 1]),	// normal
-				XMFLOAT4(1.f,0.f,0.f,1.f),									// tangent
-				XMFLOAT4(0.f,0.f,0.f,1.f),								// color
 				XMFLOAT2(0.f,1.f)											// texture
 			};
 			vbo->Indices[index] = index;
@@ -729,8 +723,6 @@ shared_ptr<HeightMap> TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex1),										// position
 				XMFLOAT3(normalMap.map[x][z]),	// normal
-				XMFLOAT4(1.f,0.f,0.f,1.f),								// tangent
-				XMFLOAT4(0.f,0.f,0.f,1.f),							// color
 				XMFLOAT2(0.f,0.f)										// texture
 			};
 			vbo->Indices[index] = index;
@@ -739,8 +731,6 @@ shared_ptr<HeightMap> TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex2),											// position
 				XMFLOAT3(normalMap.map[x + 1][z]),	// normal
-				XMFLOAT4(1.f,0.f,0.f,1.f),									// tangent
-				XMFLOAT4(0.f,0.f,0.f,1.f),								// color
 				XMFLOAT2(1.f,0.f)											// texture
 			};
 			vbo->Indices[index] = index;
@@ -749,8 +739,6 @@ shared_ptr<HeightMap> TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::VBO
 			vbo->Vertices[index] = {
 				XMFLOAT3(vertex4),												// position
 				XMFLOAT3(normalMap.map[x + 1][z + 1]),	// normal
-				XMFLOAT4(1.f,0.f,0.f,1.f),										// tangent
-				XMFLOAT4(0.f,0.f,0.f,1.f),									// color
 				XMFLOAT2(1.f,1.f)												// texture
 			};
 			vbo->Indices[index] = index;
@@ -772,15 +760,14 @@ void TerrainSystem::NewTerrain(DirectX::SimpleMath::Vector3 & position)
 {
 	EntityPtr entity = EM->NewEntity();
 
-	entity->AddComponent(EM->ComponentMask("Position"),std::shared_ptr<Components::Component>(
-		new Components::Position(entity->ID(), position, SimpleMath::Vector3::Zero)));
-	entity->AddComponent(EM->ComponentMask("Terrain"), std::shared_ptr<Components::Component>(
-		new Components::Terrain(entity->ID())));
+	entity->AddComponent(std::shared_ptr<Components::Component>(
+		new Components::Position(position, SimpleMath::Vector3::Zero)));
+	entity->AddComponent(std::shared_ptr<Components::Component>(
+		new Components::Terrain()));
 
-	Components::VBO * vbo = new Components::VBO(entity->ID());
+	Components::PositionNormalTextureVBO * vbo = new Components::PositionNormalTextureVBO();
 	vbo->Effect = "Terrain";
-	entity->AddComponent(EM->ComponentMask("VBO"), std::shared_ptr<Components::Component>(
-		vbo));
+	entity->AddComponent(std::shared_ptr<Components::Component>(vbo));
 }
 
 Vector3 TerrainSystem::Normal(std::ifstream & ifs, const int & index)

@@ -4,7 +4,7 @@ class PlayerSystem :
 	public WorldSystem
 {
 public:
-	PlayerSystem(shared_ptr<EntityManager> & entityManager, 
+	PlayerSystem(unique_ptr<EntityManager> &  entityManager,
 		vector<string> & components, 
 		unsigned short updatePeriod
 	);

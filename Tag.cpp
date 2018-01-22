@@ -1,16 +1,12 @@
 #include "pch.h"
 #include "Tag.h"
 namespace Components {
-	Tag::Tag(const unsigned int & id, string name) : Component::Component(id), Name(name)
+	Tag::Tag(string name) : Delegate::Delegate(name)
 	{
 	}
 
-	Tag::~Tag()
+	string Tag::GetDiscreteName()
 	{
-	}
-
-	string Tag::GetName()
-	{
-		return "Tag_" + Name;
+		return "Tag";
 	}
 }

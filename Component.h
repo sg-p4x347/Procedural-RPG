@@ -8,15 +8,11 @@ namespace Components {
 		public ISerialization
 	{
 	public:
-		
+		Component();
 		Component(const unsigned int & id);
 		Component(Component & other);
 		virtual ~Component();
 
-		// Sets the parent directory for all components
-		static void SetDirectory(Filesystem::path directory);
-		// Getst he parent directory for all components
-		static Filesystem::path GetDirectory();
 		// saves this component to file
 		void Save(Filesystem::path directory); 
 		// returns a concrete component from filestream

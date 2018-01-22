@@ -5,7 +5,6 @@ namespace GUI {
 		public Components::Component
 	{
 	public:
-		Children(const unsigned int & id);
 		Children();
 		Children(vector<unsigned int> children);
 		vector<unsigned int> Entities;

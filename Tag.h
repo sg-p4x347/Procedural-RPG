@@ -1,16 +1,14 @@
 #pragma once
-#include "Component.h"
+#include "Delegate.h"
 namespace Components {
 	class Tag :
-		public Component
+		public Delegate
 	{
 	public:
-		Tag(const unsigned int & id, string name);
-		~Tag();
+		Tag(string type);
 
-		string Name;
-		// Inherited via Component
-		virtual string GetName() override;
+		// Inherited via Delegate
+		virtual string GetDiscreteName() override;
 	};
 }
 

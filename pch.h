@@ -47,6 +47,8 @@
 #include <stdexcept>
 #include <dirent.h>
 #include <stdio.h>
+#include <mutex>
+#include <shared_mutex>
 using std::string;
 using std::vector;
 using std::map;

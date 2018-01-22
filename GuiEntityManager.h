@@ -19,8 +19,6 @@ namespace GUI {
 		void AddEventHandler(EntityPtr entity, EventHandler * handler);
 		void AddText(EntityPtr entity, string text);
 	protected:
-		// Inherited via BaseEntityManager
-		virtual shared_ptr<Components::Component> InstantiateComponent(unsigned long & mask, EntityPtr entity) override;
 	};
 }
 

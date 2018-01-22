@@ -1,16 +1,14 @@
 #pragma once
 #include "WorldSystem.h"
 #include "GuiSystem.h"
-#include "VBO.h"
+#include "PositionNormalTextureVBO.h"
 #include "Model.h"
 #include "AssetManager.h"
 class RenderSystem :
-	public WorldSystem
+	public System
 {
 public:
 	RenderSystem(
-		shared_ptr<EntityManager> entityManager, 
-		vector<string> & components, 
 		unsigned short updatePeriod,
 		HWND window, int width, int height,
 		shared_ptr<GuiSystem> guiSystem
@@ -20,12 +18,13 @@ public:
 	virtual void SyncEntities() override;
 	void SetViewport(int width, int height);
 	Rectangle GetViewport();
-	void SetEntityManager(shared_ptr<EntityManager> & entityManager);
+	void InitializeWorldRendering(EntityManager * entityManager);
 	~RenderSystem();
 private:
+	EntityManager * EM;
 	shared_ptr<GuiSystem> m_guiSystem;
 	EntityPtr m_player;
-	
+	std::mutex m_mutex;
 	// DirectX
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_inputLayout;
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_waterLayout;
@@ -68,13 +67,13 @@ private:
 	DirectX::XMMATRIX GetViewMatrix();
 	//----------------------------------------------------------------
 	// Components::VBO
-	const unsigned long m_VBOmask;
-	std::map<string, vector<shared_ptr<Components::VBO>>> m_VBOs;
+	unsigned long m_VBOmask;
+	std::map<string, vector<shared_ptr<Components::PositionNormalTextureVBO>>> m_VBOs;
 	
-	void RenderVBO(shared_ptr<Components::VBO> vbo);
+	void RenderVBO(shared_ptr<Components::PositionNormalTextureVBO> vbo);
 	//----------------------------------------------------------------
 	// Components::Model using DirectX::Model
-	const unsigned long m_ModelMask;
+	unsigned long m_ModelMask;
 	std::map<string, vector<shared_ptr<Components::Model>>> m_Models;
 
 	//----------------------------------------------------------------

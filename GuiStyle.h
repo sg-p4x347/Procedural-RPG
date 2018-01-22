@@ -1,5 +1,6 @@
 #pragma once
-#include "Component.h"
+#include "Delegate.h"
+
 namespace GUI {
 	enum ContentType {
 		Color,
@@ -24,10 +25,9 @@ namespace GUI {
 		End
 	};
 	class Style :
-		public Components::Component
+		public Components::Delegate
 	{
 	public:
-		Style(const unsigned int & id, string selector);
 		Style(
 			string selector = "Default",
 			string background = "",
@@ -54,7 +54,6 @@ namespace GUI {
 			Image: example.png
 			Dimension: 12px | 12%
 		*/
-		string Selector;
 		// Box model attributes
 		string Background;		// Color | Image
 		string FontColor;		// Color
@@ -93,12 +92,13 @@ namespace GUI {
 		AlignmentType GetTextAlign();
 		AlignmentType GetVerticalTextAlign();
 
-		// Inherited via Component
-		virtual string GetName() override;
 	private:
 		AlignmentType GetAlignmentType(string value);
 		DimensionType GetDimension(string value, float & dimension);
 		DirectX::SimpleMath::Color GetColor(string value);
+
+		// Inherited via Delegate
+		virtual string GetDiscreteName() override;
 	};
 }
 

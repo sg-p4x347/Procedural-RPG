@@ -52,24 +52,8 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="StepTimer.h" />
-    <ClInclude Include="Region.h" />
     <ClInclude Include="ReadData.h" />
     <ClInclude Include="NameGenerator.h" />
-    <ClInclude Include="Building.h">
-      <Filter>Architecture</Filter>
-    </ClInclude>
-    <ClInclude Include="Line.h">
-      <Filter>Architecture</Filter>
-    </ClInclude>
-    <ClInclude Include="Rectangle.h">
-      <Filter>Architecture</Filter>
-    </ClInclude>
-    <ClInclude Include="Voxel.h">
-      <Filter>Architecture</Filter>
-    </ClInclude>
-    <ClInclude Include="Room.h">
-      <Filter>Architecture</Filter>
-    </ClInclude>
     <ClInclude Include="ModelManager.h" />
     <ClInclude Include="Entity.h">
       <Filter>Entity Component System</Filter>
@@ -188,28 +172,17 @@
     <ClInclude Include="JsonParser.h">
       <Filter>Utility\Serialization</Filter>
     </ClInclude>
+    <ClInclude Include="Delegate.h">
+      <Filter>Entity Component System\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="VboParser.h" />
+    <ClInclude Include="PositionNormalTextureVBO.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Region.cpp" />
     <ClCompile Include="NameGenerator.cpp" />
-    <ClCompile Include="Building.cpp">
-      <Filter>Architecture</Filter>
-    </ClCompile>
-    <ClCompile Include="Line.cpp">
-      <Filter>Architecture</Filter>
-    </ClCompile>
-    <ClCompile Include="Rectangle.cpp">
-      <Filter>Architecture</Filter>
-    </ClCompile>
-    <ClCompile Include="Voxel.cpp">
-      <Filter>Architecture</Filter>
-    </ClCompile>
-    <ClCompile Include="Room.cpp">
-      <Filter>Architecture</Filter>
-    </ClCompile>
     <ClCompile Include="ModelManager.cpp" />
     <ClCompile Include="Entity.cpp">
       <Filter>Entity Component System</Filter>
@@ -274,7 +247,6 @@
       <Filter>Entity Component System\Components</Filter>
     </ClCompile>
     <ClCompile Include="AssetManager.cpp" />
-    <ClCompile Include="Model.cpp" />
     <ClCompile Include="GuiSystem.cpp">
       <Filter>Entity Component System\Systems</Filter>
     </ClCompile>
@@ -323,6 +295,14 @@
     <ClCompile Include="JsonParser.cpp">
       <Filter>Utility\Serialization</Filter>
     </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Entity Component System\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Delegate.cpp">
+      <Filter>Entity Component System\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="VboParser.cpp" />
+    <ClCompile Include="PositionNormalTextureVBO.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />

@@ -4,8 +4,8 @@ class WorldSystem :
 	public System
 {
 public:
-	WorldSystem(shared_ptr<EntityManager> entityManager, vector<string> & components, unsigned short updatePeriod);
+	WorldSystem(unique_ptr<EntityManager> & entityManager, vector<string> & components, unsigned short updatePeriod);
 protected:
-	shared_ptr<EntityManager> EM;
+	unique_ptr<EntityManager> & EM;
 };
 

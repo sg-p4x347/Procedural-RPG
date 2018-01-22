@@ -7,7 +7,7 @@ namespace Components {
 	{
 	public:
 		Terrain(const Terrain & other);
-		Terrain(const unsigned int & id);
+		Terrain();
 		
 		// Inherited via Component
 		virtual string GetName() override;

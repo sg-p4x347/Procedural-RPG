@@ -51,7 +51,6 @@ void Game::Initialize(HWND window, int width, int height)
 	m_keyboard = std::make_shared<Keyboard>();
 	m_mouse = std::make_shared<Mouse>();
 	m_mouse->SetWindow(window);
-	//m_mouse->SetDpi(DisplayInformation::GetForCurrentView()->LogicalDpi);
     m_timer.SetFixedTimeStep(true);
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
     
@@ -87,13 +86,12 @@ void Game::ResumeGame()
 
 void Game::HaltWorldSystems()
 {
-	m_systemManager->HaltAll<WorldSystem>();
-	m_systemManager->GetSystem<RenderSystem>("Render")->Run();
+	m_systemManager->Halt<WorldSystem>();
 }
 
 void Game::RunWorldSystems()
 {
-	m_systemManager->RunAll();
+	m_systemManager->Run<WorldSystem>();
 }
 
 // Updates the world.
@@ -122,6 +120,7 @@ void Game::GenerateWorld(int seed, string name)
 	Filesystem::path worldDir = "Saves/" + name;
 	try {
 		Filesystem::remove_all(worldDir);
+		Filesystem::create_directories(worldDir);
 	}
 	catch (std::exception ex) {
 		Utility::OutputException(ex.what());
@@ -145,8 +144,7 @@ void Game::LoadWorld(string name)
 
 void Game::CloseWorld()
 {
-	m_systemManager->Save();
-	HaltWorldSystems();
+	m_systemManager->CloseWorld();
 }
 
 // Presents the back buffer contents to the screen.

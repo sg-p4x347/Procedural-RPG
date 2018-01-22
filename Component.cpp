@@ -5,8 +5,8 @@
 using namespace Filesystem;
 
 namespace Components {
+	Component::Component() : ID(0) {}
 	Component::Component(const unsigned int & id) : ID(id) {}
-	Filesystem::path Component::m_directory;
 	std::ofstream Component::GetOutputStream(Filesystem::path directory, const unsigned int & id)
 	{
 		Filesystem::path componentDir = directory / GetName();
@@ -26,16 +26,6 @@ namespace Components {
 
 	Component::~Component()
 	{
-	}
-
-	void Component::SetDirectory(Filesystem::path directory)
-	{
-		m_directory = directory;
-	}
-
-	Filesystem::path Component::GetDirectory()
-	{
-		return m_directory;
 	}
 
 	void Component::Save(Filesystem::path directory)

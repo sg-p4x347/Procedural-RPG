@@ -21,13 +21,26 @@ public:
 		return dynamic_pointer_cast<SystemType>(m_systems[name]);
 	}
 	template <typename SystemType>
-	inline void HaltAll() {
-		for (auto & pair : m_systems) {
-			auto worldSystem = dynamic_pointer_cast<WorldSystem>(pair.second);
-			if (worldSystem) worldSystem->Halt();
+	inline void Remove() {
+		for (auto & pair : map<string,shared_ptr<System>>(m_systems)) {
+			auto system = dynamic_pointer_cast<SystemType>(pair.second);
+			if (system) m_systems.erase(pair.first);
 		}
 	}
-	void RunAll();
+	template <typename SystemType>
+	inline void Halt() {
+		for (auto & pair : m_systems) {
+			auto system = dynamic_pointer_cast<SystemType>(pair.second);
+			if (system) system->Halt();
+		}
+	}
+	template <typename SystemType>
+	inline void Run() {
+		for (auto & pair : m_systems) {
+			auto system = dynamic_pointer_cast<SystemType>(pair.second);
+			if (system) system->Run();
+		}
+	}
 private:
 	//----------------------------------------------------------------
 	// Systems
@@ -35,7 +48,7 @@ private:
 	map<string, shared_ptr<System>> m_systems;
 	//----------------------------------------------------------------
 	// Entities
-	shared_ptr<EntityManager> m_entityManager;
+	unique_ptr<EntityManager> m_entityManager;
 	
 
 };

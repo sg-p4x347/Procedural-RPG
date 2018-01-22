@@ -1,5 +1,5 @@
 #pragma once
-#include "Entity.h"
+#include "Component.h"
 class BaseEntityManager
 {
 public:
@@ -7,15 +7,14 @@ public:
 	~BaseEntityManager();
 	//----------------------------------------------------------------
 	// Component retrieval 
-	template <typename CompType>
-	inline shared_ptr<CompType> GetComponent(EntityPtr entity, string name) {
-		return std::dynamic_pointer_cast<CompType>(GetComponent(m_masks[name], entity));
-	}
+	// Gets the secified component for the entity
+	shared_ptr<Components::Component> GetComponent(unsigned long & mask, Entity * entity);
 	//----------------------------------------------------------------
 	// Mask helpers
 	unsigned long ComponentMask(vector<string> components);
 	unsigned long ComponentMask(string component);
 	virtual unsigned long ComponentMaskOf(const unsigned int & id);
+	string NameOf(const unsigned long & mask);
 	//----------------------------------------------------------------
 	// Entity creation
 	EntityPtr NewEntity();
@@ -28,24 +27,49 @@ public:
 protected:
 	//----------------------------------------------------------------
 	// Component management
-	void AddComponentVector(string name);
-	virtual shared_ptr<Components::Component> InstantiateComponent(unsigned long & mask, EntityPtr entity) = 0;
-	// Name, mask
-	map<string, unsigned long> m_masks;
-	map<unsigned long, string> m_names;
+
+	// Creates a mask for the component
+	void RegisterComponent(std::function<Components::Component*()>&& instantiate);
+	void RegisterDelegate(std::function<Components::Component*(string delegateName)>&& instantiate, vector<string> delegateNames);
+	
+	// If not retrieved from the cache, this is called
+	virtual shared_ptr<Components::Component> LoadComponent(unsigned long & mask, Entity * entity);
+	
+	// returns a new component
+	shared_ptr<Components::Component> GetPrototype(unsigned long & mask);
+
 	//----------------------------------------------------------------
-	// Entity caching
+	// Entity management
+	
+	// If not retrieved from the cache, this is called
+	virtual vector<EntityPtr> LoadEntities(unsigned long & mask);
+	// Entity ID, Entity pointer
 	unordered_map<unsigned int, EntityPtr> m_entities;
-	// Loads the secified component for the entity
-	shared_ptr<Components::Component> GetComponent(unsigned long & mask, EntityPtr entity);
+
+	//----------------------------------------------------------------
+	// ID management
+	void SetNextID(unsigned int & id);
+	unsigned int GetNextID();
 private:
-	const Filesystem::path m_directory;
+	//----------------------------------------------------------------
+	// Component management
+	void RegisterComponent(string name);
 	//----------------------------------------------------------------
 	// ID management
 	unsigned int m_nextID;
-	// Mask, index
-	map<unsigned long, unsigned int> m_indices;
-	static const int m_maskSize = 64;
+
+	//----------------------------------------------------------------
+	// Caching
+
+	// Mask, Prototype instantiation lambda
+	map<unsigned long, std::function<Components::Component*()>> m_prototypes;
+	// Name, Mask
+	map<string, unsigned long> m_masks;
+	// Mask, Name
+	map<unsigned long, string> m_names;
+	
+	// map locking
+	std::shared_mutex m_mutex;
 	
 
 };

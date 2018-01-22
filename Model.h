@@ -5,9 +5,8 @@ namespace Components {
 		public Component
 	{
 	public:
-		Model(const unsigned int id);
-		Model(const unsigned int id,string path,string effect, bool procedural = false);
-		~Model();
+		Model();
+		Model(string path,string effect, bool procedural = false);
 		
 		// Relative path for locating the model
 		string Path;

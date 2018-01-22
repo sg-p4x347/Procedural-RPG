@@ -5,7 +5,6 @@ namespace GUI {
 		public Components::Component
 	{
 	public:
-		Sprite(const unsigned int & id);
 		Sprite(
 			SimpleMath::Color backgroundColor = SimpleMath::Color(Colors::Transparent),
 			string backgroundImage = "",

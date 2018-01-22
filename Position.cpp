@@ -2,23 +2,18 @@
 #include "Position.h"
 
 namespace Components {
-	Position::Position(const Position & other) : Position::Position(other.ID,other.Pos,other.Rot)
+	Position::Position(const Position & other) : Position::Position(other.Pos,other.Rot)
 	{
 	}
-	Position::Position(const unsigned int & id) : Position::Position(id, SimpleMath::Vector3::Zero,SimpleMath::Vector3::Zero)
+	Position::Position() : Position::Position(SimpleMath::Vector3::Zero,SimpleMath::Vector3::Zero)
 	{
 	}
 
 
-	Position::Position(const unsigned int id, SimpleMath::Vector3 pos, SimpleMath::Vector3 rot) : Component::Component(id)
+	Position::Position(SimpleMath::Vector3 pos, SimpleMath::Vector3 rot)
 	{
 		Pos = pos;
 		Rot = rot;
-	}
-
-	Position::~Position()
-	{
-		Save(Component::GetDirectory());
 	}
 
 

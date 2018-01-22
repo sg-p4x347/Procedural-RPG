@@ -4,11 +4,11 @@
 namespace Components {
 	
 
-	Terrain::Terrain(const Terrain & other) : Terrain::Terrain(other.ID)
+	Terrain::Terrain(const Terrain & other) : Terrain::Terrain()
 	{
 	}
 
-	Terrain::Terrain(const unsigned int & id) : Component::Component(id)
+	Terrain::Terrain()
 	{
 	}
 

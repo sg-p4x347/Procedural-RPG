@@ -1,17 +1,12 @@
 #include "pch.h"
 #include "Model.h"
 namespace Components {
-	Model::Model(const unsigned int id) : Component::Component(id)
+	Model::Model()
 	{
 	}
-	Model::Model(const unsigned int id, string path, string effect, bool procedural) : Component::Component(id), Path(path),Procedural(procedural),Effect(effect)
+	Model::Model(string path, string effect, bool procedural) :Path(path),Procedural(procedural),Effect(effect)
 	{
 
-	}
-
-	Model::~Model()
-	{
-		Save(Component::GetDirectory());
 	}
 
 	string Model::GetName()

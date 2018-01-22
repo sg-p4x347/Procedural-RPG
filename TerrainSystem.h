@@ -3,7 +3,7 @@
 #include "WorldSystem.h"
 #include "HeightMap.h"
 #include "Position.h"
-#include "VBO.h"
+#include "PositionNormalTextureVBO.h"
 #include "Position.h"
 #include "WaterCell.h"
 #include "Droplet.h"
@@ -15,7 +15,7 @@ class TerrainSystem :
 {
 public:
 	TerrainSystem(
-		shared_ptr<EntityManager> & entityManager, 
+		unique_ptr<EntityManager> & entityManager, 
 		vector<string> & components, 
 		unsigned short updatePeriod, 
 		int regionWidth,
@@ -43,12 +43,12 @@ public:
 protected:
 	//----------------------------------------------------------------
 	// Entities
-	shared_ptr<Components::Position> PlayerPos();
 	vector<EntityPtr> m_terrainEntities;
 	vector<EntityPtr> m_waterEntities;
 	//----------------------------------------------------------------
 	// Threading
-	std::thread m_worker;
+	//Map<std::thread> m_workers;
+	std::thread m_workers[64][64];
 	//----------------------------------------------------------------
 	// Loading and Updating Regions
 	int LOD(double distance, unsigned int modelWidth);
@@ -90,9 +90,9 @@ protected:
 	//----------------------------------------------------------------
 	// Updating meshes
 	void UpdateRegions(DirectX::SimpleMath::Vector3 center);
-	shared_ptr<HeightMap> UpdateTerrainVBO(shared_ptr<Components::VBO> vbo, int  x, int  z);
-	void UpdateWaterVBO(shared_ptr < Components::VBO> vbo, shared_ptr<HeightMap> terrain, int  x, int z);
-	VertexPositionNormalTangentColorTexture CreateVertex(Vector3 position, Vector3 normal, Vector2 texture);
+	shared_ptr<HeightMap> UpdateTerrainVBO(shared_ptr<Components::PositionNormalTextureVBO> vbo, int  x, int  z);
+	void UpdateWaterVBO(shared_ptr<Components::PositionNormalTextureVBO> vbo, shared_ptr<HeightMap> terrain, int  x, int z);
+	VertexPositionNormalTexture CreateVertex(Vector3 position, Vector3 normal, Vector2 texture);
 	float LowestNeighbor(HeightMap & water,HeightMap & terrain, int x, int z);
 	//----------------------------------------------------------------
 	// Terrain

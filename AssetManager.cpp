@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "AssetManager.h"
-
 AssetManager * AssetManager::m_instance = nullptr;
 void AssetManager::CreateEffects(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context)
 {
@@ -74,6 +73,7 @@ void AssetManager::SetAssetDir(Filesystem::path assets)
 void AssetManager::SetProceduralAssetDir(Filesystem::path procedural)
 {
 	m_proceduralDir = procedural;
+	m_vboParser = std::make_unique<VboParser>(m_proceduralDir / "Models");
 }
 
 void AssetManager::SetDevice(Microsoft::WRL::ComPtr<ID3D11Device> device)
@@ -190,6 +190,10 @@ std::shared_ptr<Model> AssetManager::GetModel(string path, bool procedural)
 int AssetManager::GetFontSize()
 {
 	return m_fontSize;
+}
+VboParser * AssetManager::ProVboParser()
+{
+	return m_vboParser.get();
 }
 void AssetManager::AddEffect(string name, shared_ptr<DGSLEffect> effect)
 {

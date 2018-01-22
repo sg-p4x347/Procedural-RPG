@@ -1,14 +1,14 @@
 #include "pch.h"
 #include "GuiEventHandler.h"
 
+
 namespace GUI {
 
-	EventHandler::EventHandler(const unsigned int & id, string type) : Components::Component(id)
+	EventHandler::EventHandler(string type) : Components::Delegate(type)
 	{
-		Type = type;
 	}
 
-	EventHandler::EventHandler(string type, std::function<void()>&& callback) : EventHandler::EventHandler(0,type)
+	EventHandler::EventHandler(string type, std::function<void()>&& callback) : EventHandler::EventHandler(type)
 	{
 		Callback = std::move(callback);
 	}
@@ -18,8 +18,8 @@ namespace GUI {
 	{
 	}
 
-	string GUI::EventHandler::GetName()
+	string EventHandler::GetDiscreteName()
 	{
-		return "EventHandler_" + Type;
+		return "EventHandler";
 	}
 }

@@ -5,7 +5,7 @@
 const float MovementSystem::m_updateRange = 100.f;
 
 MovementSystem::MovementSystem(
-	shared_ptr<EntityManager>& entityManager, 
+	unique_ptr<EntityManager> &  entityManager,
 	vector<string>& components, 
 	unsigned short updatePeriod,
 	shared_ptr<RenderSystem> renderSys) : WorldSystem::WorldSystem(entityManager,components,updatePeriod), m_renderSystem(renderSys)
@@ -21,8 +21,8 @@ string MovementSystem::Name()
 void MovementSystem::Update(double & elapsed)
 {
 	for (auto & entity : m_entities) {
-		auto position = EM->GetComponent<Components::Position>(entity, "Position");
-		auto movement = EM->GetComponent<Components::Movement>(entity, "Movement");
+		auto position = entity->GetComponent<Components::Position>("Position");
+		auto movement = entity->GetComponent<Components::Movement>("Movement");
 		movement->Velocity += movement->Acceleration * elapsed;
 		position->Pos += movement->Velocity * elapsed;
 

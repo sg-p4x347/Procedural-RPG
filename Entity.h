@@ -1,33 +1,47 @@
 #pragma once
 #include "Component.h"
+#include "BaseEntityManager.h"
 
 class Entity {
 public:
-	Entity(unsigned int id, unsigned long componentMask);
+	Entity(const unsigned int & id, const unsigned long & mask,BaseEntityManager * entityManager);
+	//----------------------------------------------------------------
+	// Getters
 	unsigned int ID();
-	unsigned long ComponentMask();
-	unsigned long CachedMask();
-
-	bool HasComponents(unsigned long componentMask);
-	unsigned long MissingComponents(unsigned long & componentMask);
-	/*template <typename CompType>
+	unsigned long GetMask();
+	//----------------------------------------------------------------
+	// Mask Queries
+	bool HasComponents(const unsigned long & mask);
+	unsigned long MissingComponents(const unsigned long & mask);
+	//----------------------------------------------------------------
+	// Component retrieval
+	template <typename CompType>
 	inline shared_ptr<CompType> GetComponent(string name) {
-		return dynamic_pointer_cast<CompType>(GetComponent(EM->ComponentMask(name)));
-	}*/
-
+		unsigned long componentMask = m_entityManager->ComponentMask(name);
+		if (HasComponents(componentMask)) {
+			if (m_components.find(componentMask) != m_components.end()) {
+				return dynamic_pointer_cast<CompType>(m_components[componentMask]);
+			}
+			else {
+				return dynamic_pointer_cast<CompType>(m_entityManager->GetComponent(componentMask, this));
+			}
+		}
+		else {
+			return nullptr;
+		}
+	}
+	//template <typename CompType>
+	//inline shared_ptr<CompType> GetComponent() {
+	//	// get the mask
+	//	
+	//}
+	vector<shared_ptr<Components::Component>> GetComponents();
 	//----------------------------------------------------------------
-	// Used by EntityManager
-	void AddComponent(unsigned long mask, shared_ptr<Components::Component> component);
-	void Save(Filesystem::path directory);
-	map<unsigned long, shared_ptr<Components::Component>>  & Components();
+	// Component addition
+	void AddComponent(shared_ptr<Components::Component> component);
 private:
-	unsigned int m_id;
-	unsigned long m_componentMask;
-	unsigned long m_cachedMask;
+	const unsigned int m_id;
+	unsigned long m_mask;
 	map<unsigned long, shared_ptr<Components::Component>> m_components;
-	
-	//----------------------------------------------------------------
-	// Helper
-	//shared_ptr<Components::Component> GetComponent(unsigned long & mask);
+	BaseEntityManager * m_entityManager;
 };
-

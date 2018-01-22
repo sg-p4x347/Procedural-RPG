@@ -229,13 +229,13 @@ P2F main(V2P pixel)
 	float3 color;
 	// we need to normalize incoming vectors
 	float3 surfaceNormal = normalize(pixel.normal);
-	float3 surfaceTangent = normalize(pixel.tangent.xyz);
+	float3 surfaceTangent = float3(1.0, 0.0, 0.0);
 	//float3 worldNormal = normalize(pixel.worldNorm);
 	float3 worldNormal = float3(0.0, 1.0, 0.0);
 	float3 toEyeVector = normalize(pixel.toEye);
 
 	// construct tangent matrix
-	float3x3 localToTangent = transpose(float3x3(surfaceTangent, cross(surfaceNormal, surfaceTangent) * pixel.tangent.w, surfaceNormal));
+	float3x3 localToTangent = transpose(float3x3(surfaceTangent, cross(surfaceNormal, surfaceTangent) * 1.0, surfaceNormal));
 	float3x3 worldToTangent = mul((float3x3)WorldToLocal4x4, localToTangent);
 
 	// transform some vectors into tangent space

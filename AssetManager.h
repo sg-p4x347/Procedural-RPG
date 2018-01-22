@@ -1,4 +1,5 @@
 #pragma once
+#include "VboParser.h"
 class AssetManager
 {
 public:
@@ -22,6 +23,7 @@ public:
 		return effect != nullptr;
 	}
 	int GetFontSize();
+	VboParser * ProVboParser();
 	//----------------------------------------------------------------
 	// Asset Storage
 	void AddEffect(string name, shared_ptr<DGSLEffect> effect);
@@ -44,7 +46,7 @@ private:
 	//----------------------------------------------------------------
 	// Models
 	map<string, std::shared_ptr<Model>> m_models;
-
+	unique_ptr<VboParser> m_vboParser;
 	//----------------------------------------------------------------
 	// Effects
 	std::unique_ptr<DGSLEffectFactory>	m_DGSLfxFactory;

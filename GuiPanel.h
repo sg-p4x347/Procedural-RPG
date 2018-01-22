@@ -5,7 +5,6 @@ namespace GUI {
 		public Components::Component
 	{
 	public:
-		Panel(const unsigned int & id);
 		Panel();
 		~Panel();
 		// Data

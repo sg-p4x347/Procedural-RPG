@@ -6,7 +6,6 @@ namespace GUI {
 		public Components::Component
 	{
 	public:
-		Text(const unsigned int & id);
 		Text(string text = "",string font = "",Vector2 position = Vector2::Zero,int fontSize=0,SimpleMath::Color color=SimpleMath::Color(Colors::Black));
 		// Data
 		string String;

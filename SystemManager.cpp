@@ -12,14 +12,11 @@ SystemManager::SystemManager(
 	HWND window, int width, int height
 ) {
 	//----------------------------------------------------------------
-	// Construct the entity manager
-	m_entityManager = std::shared_ptr<EntityManager>(new EntityManager());
-	//----------------------------------------------------------------
 	// Construct the core systems 
 
 	
 	AddSystem(std::shared_ptr<System>(new GuiSystem( 1)));
-	AddSystem(std::shared_ptr<System>(new RenderSystem(m_entityManager, vector<string>{"VBO"}, 1, window, width, height, dynamic_pointer_cast<GuiSystem>(m_systems["Gui"]))));
+	AddSystem(std::shared_ptr<System>(new RenderSystem(1, window, width, height, dynamic_pointer_cast<GuiSystem>(m_systems["Gui"]))));
 	
 	//AddSystem(std::shared_ptr<System>(new InfrastructureSystem(m_entityManager, vector<string>{"Infrastructure"}, 0)));
 
@@ -47,6 +44,8 @@ void SystemManager::Initialize()
 
 void SystemManager::LoadWorld(Filesystem::path worldDir)
 {
+	//----------------------------------------------------------------
+	// Filesystem dependencies
 	Filesystem::path systemsDir = worldDir / "System";
 	Filesystem::create_directories(systemsDir);
 
@@ -54,32 +53,46 @@ void SystemManager::LoadWorld(Filesystem::path worldDir)
 	Filesystem::create_directories(assetsDir);
 	AssetManager::Get()->SetProceduralAssetDir(assetsDir);
 
-	m_entityManager->SetDirectory(worldDir / "Component");
-
-	auto renderSystem = dynamic_pointer_cast<RenderSystem>(m_systems["Render"]);
-	renderSystem->SetEntityManager(m_entityManager);
+	Filesystem::path componentDir = worldDir / "Component";
+	Filesystem::create_directory(componentDir);
+	//----------------------------------------------------------------
+	// Create a new entity manager
+	m_entityManager.reset(new EntityManager(componentDir));
+	//----------------------------------------------------------------
+	// Update render targets
+	auto renderSystem = GetSystem<RenderSystem>("Render");
+	renderSystem->InitializeWorldRendering(m_entityManager.get());
+	//----------------------------------------------------------------
+	// Add world systems
 	AddSystem(std::shared_ptr<System>(new TerrainSystem(m_entityManager, vector<string>{ "Terrain", "Position", "VBO" }, 1, 128, systemsDir)));
 	AddSystem(std::shared_ptr<System>(new PlayerSystem(m_entityManager, vector<string>{ "Player", "Position" }, 1)));
 	AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Movement"}, 1,renderSystem )));
-	
+	//----------------------------------------------------------------
+	// Initialize all systems
 	Initialize();
 }
 
 void SystemManager::CloseWorld()
 {
-	m_entityManager->UnInitialize();
+	//----------------------------------------------------------------
+	// Save all systems
+	Save();
+	//----------------------------------------------------------------
+	// Deconstruct the entity manager
+	m_entityManager->Save();
+	m_entityManager.reset();
+	//----------------------------------------------------------------
+	// Update render targets
+	auto renderSystem = GetSystem<RenderSystem>("Render");
+	renderSystem->InitializeWorldRendering(nullptr);
+	//----------------------------------------------------------------
+	// Remove world systems
+	Remove<WorldSystem>();
 }
 
 void SystemManager::Save()
 {
 	for (auto & system : m_systems) system.second->Save();
-}
-
-void SystemManager::RunAll()
-{
-	for (auto & pair : m_systems) {
-		pair.second->Run();
-	}
 }
 
 void SystemManager::AddSystem(shared_ptr<System> system)

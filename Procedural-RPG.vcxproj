@@ -182,9 +182,9 @@
   <ItemGroup>
     <ClInclude Include="AssetManager.h" />
     <ClInclude Include="BaseEntityManager.h" />
-    <ClInclude Include="Building.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="ConversionUtil.h" />
+    <ClInclude Include="Delegate.h" />
     <ClInclude Include="Droplet.h" />
     <ClInclude Include="EntityManager.h" />
     <ClInclude Include="Filesystem.h" />
@@ -201,7 +201,6 @@
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Map.h" />
-    <ClInclude Include="Line.h" />
     <ClInclude Include="MathConstants.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="ModelManager.h" />
@@ -212,14 +211,12 @@
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerSystem.h" />
     <ClInclude Include="Position.h" />
+    <ClInclude Include="PositionNormalTextureVBO.h" />
     <ClInclude Include="ProUtil.h" />
     <ClInclude Include="ReadData.h" />
-    <ClInclude Include="Rectangle.h" />
-    <ClInclude Include="Region.h" />
     <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="resource1.h" />
     <ClInclude Include="Road.h" />
-    <ClInclude Include="Room.h" />
     <ClInclude Include="ISerialization.h" />
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="StepTimer.h" />
@@ -228,20 +225,20 @@
     <ClInclude Include="Tag.h" />
     <ClInclude Include="TaskThread.h" />
     <ClInclude Include="Terrain.h" />
+    <ClInclude Include="VboParser.h" />
     <ClInclude Include="WaterCell.h" />
     <ClInclude Include="TerrainSystem.h" />
     <ClInclude Include="ThermalCell.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="VBO.h" />
-    <ClInclude Include="Voxel.h" />
     <ClInclude Include="WorldSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="BaseEntityManager.cpp" />
-    <ClCompile Include="Building.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="ConversionUtil.cpp" />
+    <ClCompile Include="Delegate.cpp" />
     <ClCompile Include="Droplet.cpp" />
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="Filesystem.cpp" />
@@ -257,7 +254,6 @@
     <ClCompile Include="JsonParser.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Game.cpp" />
-    <ClCompile Include="Line.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModelManager.cpp" />
@@ -273,12 +269,10 @@
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerSystem.cpp" />
     <ClCompile Include="Position.cpp" />
+    <ClCompile Include="PositionNormalTextureVBO.cpp" />
     <ClCompile Include="ProUtil.cpp" />
-    <ClCompile Include="Rectangle.cpp" />
-    <ClCompile Include="Region.cpp" />
     <ClCompile Include="RenderSystem.cpp" />
     <ClCompile Include="Road.cpp" />
-    <ClCompile Include="Room.cpp" />
     <ClCompile Include="ISerialization.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="System.cpp" />
@@ -286,12 +280,12 @@
     <ClCompile Include="Tag.cpp" />
     <ClCompile Include="TaskThread.cpp" />
     <ClCompile Include="Terrain.cpp" />
+    <ClCompile Include="VboParser.cpp" />
     <ClCompile Include="WaterCell.cpp" />
     <ClCompile Include="TerrainSystem.cpp" />
     <ClCompile Include="ThermalCell.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="VBO.cpp" />
-    <ClCompile Include="Voxel.cpp" />
     <ClCompile Include="WorldSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -330,7 +324,9 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <MeshContentTask Include="Assets\Models\Tree.fbx" />
+    <MeshContentTask Include="Assets\Models\Tree.fbx">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)/Assets%(Filename).cmo</ContentOutput>
+    </MeshContentTask>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

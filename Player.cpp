@@ -4,13 +4,8 @@
 using namespace DirectX::SimpleMath;
 
 namespace Components {
-	Components::Player::Player(const unsigned int & id) : Component::Component(id)
+	Components::Player::Player()
 	{
-	}
-
-	Player::~Player()
-	{
-		Save(Component::GetDirectory());
 	}
 
 	string Components::Player::GetName()

@@ -4,21 +4,21 @@
 #include "Utility.h"
 #include "AssetManager.h"
 #include "GuiText.h"
+#include <thread>
 
 using namespace DirectX::SimpleMath;
 using Microsoft::WRL::ComPtr;
 
 RenderSystem::RenderSystem(
-	shared_ptr<EntityManager> entityManager, 
-	vector<string>& components, 
 	unsigned short updatePeriod,
 	HWND window, int width, int height,
 	shared_ptr<GuiSystem> guiSystem
-) : WorldSystem(entityManager,components, updatePeriod),
-m_VBOmask(entityManager->ComponentMask("VBO")),
-m_ModelMask(entityManager->ComponentMask("Model")),
-m_guiSystem(guiSystem)
+) : System(updatePeriod),
+m_guiSystem(guiSystem),
+m_VBOmask(0),
+m_ModelMask(0)
 {
+	InitializeWorldRendering(nullptr);
 	m_window = window;
 	m_worldMatrix = Matrix::Identity;
 
@@ -37,12 +37,12 @@ void RenderSystem::Update(double & elapsed)
 {
 	//https://stackoverflow.com/questions/17655442/how-can-i-repeat-my-texture-in-dx
 
-	if (EM->Initialized()) GetViewMatrix();
+	if (EM) GetViewMatrix();
 	// Clear the screen
 	Clear();
 	// Render all Vertex Buffer Objects
 	SetStates();
-	if (EM->Initialized()) Render();
+	if (EM) Render();
 	
 	// Update and render GUI
 	SpriteBatchBegin();
@@ -82,24 +82,27 @@ void RenderSystem::Render()
 				m_d3dContext->IASetInputLayout(m_inputLayout.Get());
 			}
 			// Render VBOs with the effect
-			if (m_VBOs.find(effectName) != m_VBOs.end()) {
-				for (auto vbo : m_VBOs[effectName]) {
-					RenderVBO(vbo);
+			if (m_mutex.try_lock()) {
+				if (m_VBOs.find(effectName) != m_VBOs.end()) {
+					for (auto & vbo : m_VBOs[effectName]) {
+						RenderVBO(vbo);
+					}
 				}
+				m_mutex.unlock();
 			}
 		}
 		// Render Models with the effect
 		if (m_Models.find(effectName) != m_Models.end()) {
-			for (auto model : m_Models[effectName]) {
+			for (auto & model : m_Models[effectName]) {
 				auto dxModel = AssetManager::Get()->GetModel(model->Path, false);
 
 				EntityPtr entity;
 				if (EM->Find(model->ID, entity)) {
-					auto position = EM->GetComponent<Components::Position>(entity, "Position");
+					auto position = entity->GetComponent<Components::Position>("Position");
 					XMMATRIX translation = XMMatrixTranslation(position->Pos.x, position->Pos.y, position->Pos.z);
 					XMMATRIX rotation = XMMatrixRotationRollPitchYawFromVector(position->Rot);
 					XMMATRIX final = XMMatrixMultiply(rotation, translation);
-					final = XMMatrixMultiply(final, m_worldMatrix );
+					final = XMMatrixMultiply(final, m_worldMatrix);
 					dxModel->Draw(m_d3dContext.Get(), *m_states, final, m_viewMatrix, m_projMatrix);
 				}
 			}
@@ -108,23 +111,32 @@ void RenderSystem::Render()
 }
 void RenderSystem::SyncEntities()
 {
-	m_VBOs.clear();
-	
-	for (auto entity : EM->FindEntities(m_VBOmask)) {
-		shared_ptr<Components::VBO> vbo = EM->GetComponent<Components::VBO>(entity, "VBO");
-		if (m_VBOs.find(vbo->Effect) == m_VBOs.end()) {
-			m_VBOs.insert(std::pair<string, vector<shared_ptr<Components::VBO>>>(vbo->Effect, vector<shared_ptr<Components::VBO>>()));
+	std::thread([=] {
+		
+		std::map<string, vector<shared_ptr<Components::PositionNormalTextureVBO>>> vbos;
+		for (auto & entity : EM->FindEntities(m_VBOmask)) {
+			shared_ptr<Components::PositionNormalTextureVBO> vbo = entity->GetComponent<Components::PositionNormalTextureVBO>("PositionNormalTextureVBO");
+			if (vbos.find(vbo->Effect) == vbos.end()) {
+				vbos.insert(std::pair<string, vector<shared_ptr<Components::PositionNormalTextureVBO>>>(vbo->Effect, vector<shared_ptr<Components::PositionNormalTextureVBO>>()));
+			}
+			vbos[vbo->Effect].push_back(vbo);
 		}
-		m_VBOs[vbo->Effect].push_back(vbo);
-	}
-	m_Models.clear();
-	for (auto entity : EM->FindEntitiesInRange(m_ModelMask,EM->PlayerPos()->Pos,100)) {
-		shared_ptr<Components::Model> model = EM->GetComponent<Components::Model>(entity, "Model");
-		if (m_Models.find(model->Effect) == m_Models.end()) {
-			m_Models.insert(std::pair<string, vector<shared_ptr<Components::Model>>>(model->Effect, vector<shared_ptr<Components::Model>>()));
+		m_mutex.lock();
+		m_VBOs = vbos;
+		m_mutex.unlock();
+		std::map<string, vector<shared_ptr<Components::Model>>> models;
+		for (auto & entity : EM->FindEntitiesInRange(m_ModelMask, EM->PlayerPos()->Pos, 100)) {
+			shared_ptr<Components::Model> model = entity->GetComponent<Components::Model>("Model");
+			if (models.find(model->Effect) == models.end()) {
+				models.insert(std::pair<string, vector<shared_ptr<Components::Model>>>(model->Effect, vector<shared_ptr<Components::Model>>()));
+			}
+			models[model->Effect].push_back(model);
 		}
-		m_Models[model->Effect].push_back(model);
-	}
+		m_mutex.lock();
+		m_Models = models;
+		m_mutex.unlock();
+		
+	}).detach();
 }
 void RenderSystem::SetViewport(int width, int height)
 {
@@ -138,9 +150,13 @@ Rectangle RenderSystem::GetViewport()
 	return Rectangle(0,0, m_outputWidth,m_outputHeight);
 }
 
-void RenderSystem::SetEntityManager(shared_ptr<EntityManager>& entityManager)
+void RenderSystem::InitializeWorldRendering(EntityManager * entityManager)
 {
 	EM = entityManager;
+	if (EM) {
+		m_VBOmask = entityManager->ComponentMask("PositionNormalTextureVBO");
+		m_ModelMask = entityManager->ComponentMask("Model");
+	}
 }
 
 void RenderSystem::SpriteBatchBegin()
@@ -438,8 +454,8 @@ void RenderSystem::CreateDevice()
 		terrain->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
 
 		DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(
-			VertexPositionNormalTangentColorTexture::InputElements,
-			VertexPositionNormalTangentColorTexture::InputElementCount,
+			VertexPositionNormalTexture::InputElements,
+			VertexPositionNormalTexture::InputElementCount,
 			shaderByteCode, byteCodeLength,
 			m_inputLayout.ReleaseAndGetAddressOf()));
 	}
@@ -452,8 +468,8 @@ void RenderSystem::CreateDevice()
 		water->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
 
 		DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(
-			VertexPositionNormalTangentColorTexture::InputElements,
-			VertexPositionNormalTangentColorTexture::InputElementCount,
+			VertexPositionNormalTexture::InputElements,
+			VertexPositionNormalTexture::InputElementCount,
 			shaderByteCode, byteCodeLength,
 			m_waterLayout.ReleaseAndGetAddressOf()));
 	}
@@ -482,7 +498,7 @@ void RenderSystem::OnDeviceLost()
 
 DirectX::XMMATRIX RenderSystem::GetViewMatrix()
 {
-	shared_ptr<Components::Position> position = EM->GetComponent<Components::Position>(EM->Player(),"Position");
+	shared_ptr<Components::Position> position = EM->PlayerPos();
 	float y = sinf(position->Rot.y);
 	float r = cosf(position->Rot.y);
 	float z = r*cosf(position->Rot.x);
@@ -507,7 +523,7 @@ void RenderSystem::SetStates()
 	m_d3dContext->OMSetDepthStencilState(m_states->DepthDefault(), 0);
 }
 
-void RenderSystem::RenderVBO(shared_ptr<Components::VBO> vbo)
+void RenderSystem::RenderVBO(shared_ptr<Components::PositionNormalTextureVBO> vbo)
 {
 	// make sure the buffers have been updated
 	if (vbo->LODchanged && vbo->Vertices.size() != 0) {
@@ -515,14 +531,14 @@ void RenderSystem::RenderVBO(shared_ptr<Components::VBO> vbo)
 		vbo->LODchanged = false;
 	}
 	// Set vertex buffer stride and offset.
-	UINT stride = sizeof(VertexPositionNormalTangentColorTexture);
+	UINT stride = sizeof(VertexPositionNormalTexture);
 	UINT offset = 0;
 
 	// Set the vertex buffer to active in the input assembler so it can be rendered.
 	m_d3dContext->IASetVertexBuffers(0, 1, vbo->VB.GetAddressOf(), &stride, &offset);
 
 	// Set the index buffer to active in the input assembler so it can be rendered.
-	m_d3dContext->IASetIndexBuffer(vbo->IB.Get(), DXGI_FORMAT_R32_UINT, 0);
+	m_d3dContext->IASetIndexBuffer(vbo->IB.Get(), DXGI_FORMAT_R16_UINT, 0);
 
 	// Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
 	m_d3dContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

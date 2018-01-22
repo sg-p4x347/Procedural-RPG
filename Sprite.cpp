@@ -21,10 +21,6 @@ namespace GUI {
 		SourceRect = sourceRect;
 	}
 
-	Sprite::Sprite(const unsigned int & id) : Components::Component(id)
-	{
-	}
-
 	string Sprite::GetName()
 	{
 		return "Sprite";

@@ -6,7 +6,7 @@
 #include "Game.h"
 
 PlayerSystem::PlayerSystem(
-	shared_ptr<EntityManager> & entityManager, 
+	unique_ptr<EntityManager> &  entityManager,
 	vector<string> & components, 
 	unsigned short updatePeriod
 ) : WorldSystem::WorldSystem(
@@ -26,8 +26,8 @@ string PlayerSystem::Name()
 
 void PlayerSystem::Update(double & elapsed)
 {
-	shared_ptr<Components::Position> position = EM->GetComponent<Components::Position>(EM->Player(),"Position");
-	shared_ptr<Components::Movement> movement = EM->GetComponent<Components::Movement>(EM->Player(), "Movement");
+	shared_ptr<Components::Position> position = EM->Player()->GetComponent<Components::Position>("Position");
+	shared_ptr<Components::Movement> movement = EM->Player()->GetComponent<Components::Movement>("Movement");
 
 	// mouse
 	auto mouseState = Game::MouseState;
@@ -84,9 +84,9 @@ void PlayerSystem::Update(double & elapsed)
 void PlayerSystem::CreatePlayer()
 {
 	EntityPtr player = EM->NewEntity();
-	player->AddComponent(EM->ComponentMask("Player"), shared_ptr<Components::Player>(new Components::Player(player->ID())));
-	shared_ptr<Components::Position> pos(new Components::Position(player->ID()));
+	player->AddComponent(shared_ptr<Components::Player>(new Components::Player()));
+	shared_ptr<Components::Position> pos(new Components::Position());
 	pos->Pos.y = 10;
-	player->AddComponent(EM->ComponentMask("Position"),pos);
-	player->AddComponent(EM->ComponentMask("Movement"), shared_ptr<Components::Movement>(new Components::Movement(player->ID())));
+	player->AddComponent(pos);
+	player->AddComponent(shared_ptr<Components::Movement>(new Components::Movement()));
 }

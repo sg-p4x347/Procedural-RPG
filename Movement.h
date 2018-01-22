@@ -7,13 +7,12 @@ namespace Components {
 		public Component
 	{
 	public:
-		Movement(const unsigned int & id);
-		Movement(const unsigned int & id,
+		Movement();
+		Movement(
 			DirectX::SimpleMath::Vector3 velocity,
 			DirectX::SimpleMath::Vector3 acceleration,
 			DirectX::SimpleMath::Vector3 angularVelocity,
 			DirectX::SimpleMath::Vector3 angularAcceleration);
-		~Movement();
 		DirectX::SimpleMath::Vector3 Velocity;
 		DirectX::SimpleMath::Vector3 Acceleration;
 		DirectX::SimpleMath::Vector3 AngularVelocity;

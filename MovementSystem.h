@@ -5,7 +5,7 @@ class MovementSystem :
 	public WorldSystem
 {
 public:
-	MovementSystem(shared_ptr<EntityManager> & entityManager, vector<string> & components, unsigned short updatePeriod,shared_ptr<RenderSystem> renderSys);
+	MovementSystem(unique_ptr<EntityManager> &  entityManager, vector<string> & components, unsigned short updatePeriod,shared_ptr<RenderSystem> renderSys);
 
 	// Inherited via System
 	virtual string Name() override;

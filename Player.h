@@ -6,8 +6,7 @@ namespace Components {
 	class Player :
 		public Component {
 	public:
-		Player(const unsigned int & id);
-		~Player();
+		Player();
 
 
 		// Inherited via Component

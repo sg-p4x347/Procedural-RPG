@@ -2,10 +2,6 @@
 #include "GuiStyle.h"
 
 namespace GUI {
-	Style::Style(const unsigned int & id, string selector) : Components::Component(id)
-	{
-		Selector = selector;
-	}
 
 	Style::Style(
 		string selector,
@@ -23,9 +19,7 @@ namespace GUI {
 		string fontSize,
 		string textAlign,
 		string verticalTextAlign
-	) : Style::Style(0,selector)
-	{
-		Selector = selector;
+	) : Delegate::Delegate(selector) {
 		Background = background;
 		FontColor = fontColor;
 		Foreground = foreground;
@@ -129,10 +123,6 @@ namespace GUI {
 		return GetAlignmentType(VerticalTextAlign);
 	}
 
-	string GUI::Style::GetName()
-	{
-		return "Style_" + Selector;
-	}
 	AlignmentType Style::GetAlignmentType(string value)
 	{
 		if (value == "start") {
@@ -182,5 +172,9 @@ namespace GUI {
 			return DirectX::SimpleMath::Color(values);
 		}
 		return DirectX::Colors::Transparent;
+	}
+	string Style::GetDiscreteName()
+	{
+		return "Style";
 	}
 }
