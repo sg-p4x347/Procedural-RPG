@@ -92,6 +92,9 @@ namespace GUI {
 		AlignmentType GetTextAlign();
 		AlignmentType GetVerticalTextAlign();
 
+		//----------------------------------------------------------------
+		// Operators
+		Style operator+(Style & other);
 	private:
 		AlignmentType GetAlignmentType(string value);
 		DimensionType GetDimension(string value, float & dimension);

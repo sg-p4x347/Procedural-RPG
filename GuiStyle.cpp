@@ -123,6 +123,24 @@ namespace GUI {
 		return GetAlignmentType(VerticalTextAlign);
 	}
 
+	Style Style::operator+(Style & other)
+	{
+		// TEMP
+		// default values should be "", and this should check to see if one has it and not the other, vs specific cases
+		return Style(
+			DelegateName,
+			Background == "" ? other.Background : Background,
+			FontColor == "rgb(0,0,0)" ? other.FontColor : FontColor,
+			Foreground == "" ? other.Foreground : Foreground,
+			Width == "100%" ? other.Width : Width,
+			Height == "100%" ? other.Height : Height,
+			FlowDirection == "column" ? other.FlowDirection : FlowDirection,
+			Overflow == "scroll" ? other.Overflow : Overflow,
+			Justify == "start" ? other.Justify : Justify,
+			other.AlignItems == "start" ? other.AlignItems : other.AlignItems
+		);
+	}
+
 	AlignmentType Style::GetAlignmentType(string value)
 	{
 		if (value == "start") {

@@ -46,5 +46,7 @@ namespace Utility {
 	float BicubicInterpolation(float p[4][4], float x, float y);
 	// Conversions
 	float DegToRad(float degree);
+	// Tests
+	bool IsNumeric(const std::string& s);
 }
 

@@ -11,7 +11,7 @@
 #include "Terrain.h"
 #include "Model.h"
 #include "Entity.h"
-
+#include "Filesystem.h"
 const Filesystem::path EntityManager::m_nextEntityFile("Next_Entity.txt");
 
 
@@ -80,8 +80,11 @@ vector<EntityPtr> EntityManager::LoadEntities(unsigned long & componentMask)
 		if (mask[i]) {
 			unordered_set<unsigned int> nextMatching;
 			for (auto & dir : Filesystem::directory_iterator(m_directory / NameOf(std::pow(2, i)))) {
-				unsigned int id = std::stoi(dir.path().filename());
-				if (firstComp || unCached.count(id)) nextMatching.insert(id);
+				string fileName = FileSystemHelpers::StripExtension(dir.path().filename().string());
+				if (Utility::IsNumeric(fileName)) {
+					unsigned int id = std::stoi(fileName);
+					if (firstComp || unCached.count(id)) nextMatching.insert(id);
+				}
 			}
 			unCached = nextMatching;
 			firstComp = false;
