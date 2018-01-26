@@ -111,7 +111,7 @@ void RenderSystem::Render()
 }
 void RenderSystem::SyncEntities()
 {
-	std::thread([=] {
+	//std::thread([=] {
 		
 		std::map<string, vector<shared_ptr<Components::PositionNormalTextureVBO>>> vbos;
 		for (auto & entity : EM->FindEntities(m_VBOmask)) {
@@ -136,7 +136,7 @@ void RenderSystem::SyncEntities()
 		m_Models = models;
 		m_mutex.unlock();
 		
-	}).detach();
+	//}).detach();
 }
 void RenderSystem::SetViewport(int width, int height)
 {
@@ -454,8 +454,8 @@ void RenderSystem::CreateDevice()
 		terrain->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
 
 		DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(
-			VertexPositionNormalTexture::InputElements,
-			VertexPositionNormalTexture::InputElementCount,
+			VertexPositionNormalTangentColorTexture::InputElements,
+			VertexPositionNormalTangentColorTexture::InputElementCount,
 			shaderByteCode, byteCodeLength,
 			m_inputLayout.ReleaseAndGetAddressOf()));
 	}
@@ -468,8 +468,8 @@ void RenderSystem::CreateDevice()
 		water->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
 
 		DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(
-			VertexPositionNormalTexture::InputElements,
-			VertexPositionNormalTexture::InputElementCount,
+			VertexPositionNormalTangentColorTexture::InputElements,
+			VertexPositionNormalTangentColorTexture::InputElementCount,
 			shaderByteCode, byteCodeLength,
 			m_waterLayout.ReleaseAndGetAddressOf()));
 	}

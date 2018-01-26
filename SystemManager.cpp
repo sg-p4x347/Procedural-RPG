@@ -39,6 +39,8 @@ void SystemManager::Tick(double & elapsed)
 
 void SystemManager::Initialize()
 {
+	//----------------------------------------------------------------
+	// Initialize all systems
 	for (auto & system : m_systems) system.second->Initialize();
 }
 
@@ -64,12 +66,9 @@ void SystemManager::LoadWorld(Filesystem::path worldDir)
 	renderSystem->InitializeWorldRendering(m_entityManager.get());
 	//----------------------------------------------------------------
 	// Add world systems
-	AddSystem(std::shared_ptr<System>(new TerrainSystem(m_entityManager, vector<string>{ "Terrain", "Position", "VBO" }, 1, 128, systemsDir)));
+	AddSystem(std::shared_ptr<System>(new TerrainSystem(m_entityManager, vector<string>{ "Terrain", "Position", "VBO" }, 1, 64, systemsDir)));
 	AddSystem(std::shared_ptr<System>(new PlayerSystem(m_entityManager, vector<string>{ "Player", "Position" }, 1)));
-	AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Movement"}, 1,renderSystem )));
-	//----------------------------------------------------------------
-	// Initialize all systems
-	Initialize();
+	AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Movement"}, 1, renderSystem)));
 }
 
 void SystemManager::CloseWorld()

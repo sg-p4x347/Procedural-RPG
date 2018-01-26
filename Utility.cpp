@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Utility.h"
+#include <cctype>
 using namespace DirectX;
 
 namespace Utility {
@@ -162,6 +163,12 @@ namespace Utility {
 	{
 		static const float PIdiv180 = PI / 180.f;
 		return PIdiv180 * degree;
+	}
+	bool IsNumeric(const std::string & s)
+	{
+		std::string::const_iterator it = s.begin();
+		while (it != s.end() && std::isdigit(*it)) ++it;
+		return !s.empty() && it == s.end();
 	}
 	float CubicInterpolate(float p[4], float x) {
 		return p[1] + 0.5 * x*(p[2] - p[0] + x*(2.0*p[0] - 5.0*p[1] + 4.0*p[2] - p[3] + x*(3.0*(p[1] - p[2]) + p[3] - p[0])));

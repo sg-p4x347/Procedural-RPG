@@ -1,8 +1,7 @@
 #pragma once
+#include "pch.h"
 #include "ISerialization.h"
 #include "JSON.h"
-#include "Filesystem.h"
-
 namespace Components {
 	class Component :
 		public ISerialization

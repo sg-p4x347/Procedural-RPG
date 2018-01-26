@@ -24,6 +24,8 @@ GuiSystem::GuiSystem(
 		{ "button_active",Rectangle(0,256,384,128) }
 	});
 
+	//----------------------------------------------------------------
+	// Common styles
 	// Generate the entire GUI
 
 	//----------------------------------------------------------------
@@ -58,7 +60,16 @@ GuiSystem::GuiSystem(
 		}(), vector<EntityPtr>{
 			GuiEM.NewButton("Load World",[=] {
 				Game::Get().LoadWorld("test");
-				Game::Get().ResumeGame();
+			}, [] {
+				Style * style = new Style();
+				style->Background = "widget.png:button";
+				style->Height = "100px";
+				style->FontColor = "rgb(1,1,1)";
+				style->FontSize = "48px";
+				return style;
+			}()),
+				GuiEM.NewButton("Generate World", [=] {
+				Game::Get().GenerateWorld(13278,"test");
 			}, [] {
 				Style * style = new Style();
 				style->Background = "widget.png:button";
@@ -99,11 +110,25 @@ GuiSystem::GuiSystem(
 		}(), vector<EntityPtr>{
 			GuiEM.NewButton("Resume Game",[=] {
 				Game::Get().ResumeGame();
-			}),
+			}, [] {
+				Style * style = new Style();
+				style->Background = "widget.png:button";
+				style->Height = "100px";
+				style->FontColor = "rgb(1,1,1)";
+				style->FontSize = "48px";
+				return style;
+			}()),
 			GuiEM.NewButton("Main Menu",[=] {
 				Game::Get().CloseWorld();
 				OpenMenu("main");
-			})
+			}, [] {
+				Style * style = new Style();
+				style->Background = "widget.png:button";
+				style->Height = "100px";
+				style->FontColor = "rgb(1,1,1)";
+				style->FontSize = "48px";
+				return style;
+			}())
 		})
 	}));
 

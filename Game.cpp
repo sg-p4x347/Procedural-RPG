@@ -131,6 +131,9 @@ void Game::GenerateWorld(int seed, string name)
 	m_systemManager->GetSystem<TerrainSystem>("Terrain")->Generate();
 	m_systemManager->GetSystem<PlayerSystem>("Player")->CreatePlayer();
 	m_systemManager->Save();
+
+	m_systemManager->Initialize();
+	ResumeGame();
 }
 
 void Game::LoadWorld(string name)
@@ -140,6 +143,8 @@ void Game::LoadWorld(string name)
 	Filesystem::path worldDir = "Saves/" + name;
 	Filesystem::create_directory(worldDir);
 	m_systemManager->LoadWorld(worldDir);
+	m_systemManager->Initialize();
+	ResumeGame();
 }
 
 void Game::CloseWorld()

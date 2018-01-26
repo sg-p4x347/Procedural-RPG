@@ -111,9 +111,8 @@ void BaseEntityManager::RegisterDelegate(std::function<Components::Component*(st
 }
 void BaseEntityManager::RegisterComponent(string name)
 {
-	static unsigned int index = 0;
 
-	unsigned long mask = std::pow(2, index++);
+	unsigned long mask = std::pow(2, m_masks.size());
 	m_masks.insert(std::pair<string, unsigned long>(name, mask));
 	m_names.insert(std::pair<unsigned long, string>(mask, name));
 }
