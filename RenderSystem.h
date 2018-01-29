@@ -18,10 +18,10 @@ public:
 	virtual void SyncEntities() override;
 	void SetViewport(int width, int height);
 	Rectangle GetViewport();
-	void InitializeWorldRendering(EntityManager * entityManager);
+	void InitializeWorldRendering(WorldEntityManager * entityManager);
 	~RenderSystem();
 private:
-	EntityManager * EM;
+	WorldEntityManager * EM;
 	shared_ptr<GuiSystem> m_guiSystem;
 	EntityPtr m_player;
 	std::mutex m_mutex;

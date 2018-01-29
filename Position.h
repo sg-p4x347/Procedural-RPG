@@ -9,8 +9,7 @@ namespace Components {
 	{
 	public:
 		Position(const Position & other);
-		Position();
-		Position(SimpleMath::Vector3 pos, SimpleMath::Vector3 rot);
+		Position(SimpleMath::Vector3 pos = SimpleMath::Vector3::Zero, SimpleMath::Vector3 rot = SimpleMath::Vector3::Zero);
 		// Position (x,y,z)
 		SimpleMath::Vector3 Pos;
 		// Rotation (x,y,z)

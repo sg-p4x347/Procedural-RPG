@@ -6,7 +6,7 @@ namespace Components {
 	{
 	public:
 		Model();
-		Model(string path,string effect, bool procedural = false);
+		Model(string path,string effect, bool procedural = false,bool backfaceCulling = true);
 		
 		// Relative path for locating the model
 		string Path;
@@ -14,6 +14,8 @@ namespace Components {
 		bool Procedural;
 		// Effect used to render the model
 		string Effect;
+		// Cull back faces
+		bool BackfaceCulling;
 
 		// Inherited via Component
 		virtual string GetName() override;

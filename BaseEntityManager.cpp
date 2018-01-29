@@ -7,7 +7,6 @@ BaseEntityManager::BaseEntityManager()
 	m_nextID = 1;
 }
 
-
 BaseEntityManager::~BaseEntityManager()
 {
 }
@@ -49,6 +48,11 @@ EntityPtr BaseEntityManager::NewEntity()
 	auto entity = std::shared_ptr<Entity>(new Entity(m_nextID++,0,this));
 	m_entities.insert(std::pair<unsigned int, EntityPtr>(entity->ID(), entity));
 	return entity;
+}
+
+vector<EntityPtr> BaseEntityManager::FindEntities(string compName)
+{
+	return FindEntities(ComponentMask(compName));
 }
 
 vector<EntityPtr> BaseEntityManager::FindEntities(unsigned long componentMask)

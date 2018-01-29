@@ -69,7 +69,7 @@ GuiSystem::GuiSystem(
 				return style;
 			}()),
 				GuiEM.NewButton("Generate World", [=] {
-				Game::Get().GenerateWorld(13278,"test");
+				Game::Get().GenerateWorld(1234,"test");
 			}, [] {
 				Style * style = new Style();
 				style->Background = "widget.png:button";

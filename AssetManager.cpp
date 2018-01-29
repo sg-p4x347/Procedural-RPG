@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "AssetManager.h"
+#include "ModelAsset.h"
 AssetManager * AssetManager::m_instance = nullptr;
 void AssetManager::CreateEffects(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context)
 {
@@ -40,14 +41,17 @@ void AssetManager::CreateEffects(Microsoft::WRL::ComPtr<ID3D11DeviceContext> con
 	AddEffect("Terrain", terrain);
 	AddEffect("Water", water);
 }
+AssetEntityManager * AssetManager::GetProceduralEM()
+{
+	return m_proceduralEM.get();
+}
 AssetManager::AssetManager() : m_fontSize(32)
 {
 }
 
-Filesystem::path AssetManager::FullPath(string path, bool procedural, string type, string extension)
+Filesystem::path AssetManager::FullPath(string path, bool procedural, string extension)
 {
-	//return Filesystem::path((procedural ? m_proceduralDir : m_authoredDir) / type / (path + extension));
-	return Filesystem::path(m_authoredDir) / (path + extension);
+	return Filesystem::path((procedural ? m_proceduralDir : m_authoredDir) / (path + extension));
 }
 
 Filesystem::path AssetManager::AppendPath(string path, string type)
@@ -68,12 +72,19 @@ AssetManager * AssetManager::Get()
 void AssetManager::SetAssetDir(Filesystem::path assets)
 {
 	m_authoredDir = assets;
+	m_authoredEM.reset(new AssetEntityManager(assets));
 }
 
 void AssetManager::SetProceduralAssetDir(Filesystem::path procedural)
 {
 	m_proceduralDir = procedural;
-	m_vboParser = std::make_unique<VboParser>(m_proceduralDir / "Models");
+	m_vboParser = std::make_unique<VboParser>(procedural);
+	m_proceduralEM.reset(new AssetEntityManager(procedural));
+}
+
+void AssetManager::CleanupProceduralAssets()
+{
+	m_proceduralEM.reset(nullptr);
 }
 
 void AssetManager::SetDevice(Microsoft::WRL::ComPtr<ID3D11Device> device)
@@ -96,7 +107,7 @@ shared_ptr<SpriteFont> AssetManager::GetFont(string path)
 		}
 		if (m_d3dDevice == nullptr) throw std::exception("AssetManager device not set");
 		// get the path
-		Filesystem::path fullPath = FullPath(path, false, "Fonts", ".spritefont");
+		Filesystem::path fullPath = FullPath(path, false, ".spritefont");
 		// Load from file
 		shared_ptr<SpriteFont> font = std::make_shared<SpriteFont>(m_d3dDevice.Get(),fullPath.c_str());
 		m_fonts.insert(std::pair<string, shared_ptr<SpriteFont>>(path, font));
@@ -117,7 +128,7 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::GetTexture(string
 		}
 		if (m_d3dDevice == nullptr) throw std::exception("AssetManager device not set");
 		// get the path
-		Filesystem::path fullPath = FullPath(path, procedural, "Textures", ".dds");
+		Filesystem::path fullPath = FullPath(path, procedural, ".dds");
 		// Load from file
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> texture;
 		DX::ThrowIfFailed(
@@ -157,31 +168,50 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::GetWicTexture(str
 	}
 }
 
-std::shared_ptr<Model> AssetManager::GetModel(string path, bool procedural)
+std::shared_ptr<Model> AssetManager::GetModel(string path, float distance, bool procedural)
 {
 	try {
-		// Search cache
-		if (m_models.find(path) != m_models.end()) {
-			return m_models[path];
-		}
 		if (m_d3dDevice == nullptr) throw std::exception("AssetManager device not set");
-		// get the path
-		Filesystem::path fullPath = FullPath(path, procedural, "Models", ".cmo");
-		// Load from file
-		std::shared_ptr<Model> model = std::shared_ptr<Model>(Model::CreateFromCMO(m_d3dDevice.Get(), fullPath.c_str(), *m_fxFactory).release());
-		model->UpdateEffects([=](IEffect* effect)
-		{
-			auto basic = dynamic_cast<BasicEffect*>(effect);
-			if (basic)
-			{
-				basic->SetAlpha(0.5);
-				/*basic->SetTextureEnabled(true);
-				basic->SetTexture(tex.Get());
-				basic->EnableDefaultLighting();*/
+		// get the entity
+		shared_ptr<ModelAsset> modelAsset = procedural ? m_proceduralEM->GetModel(path) : m_authoredEM->GetModel(path);
+		// get the LOD level
+		int lod = std::min(modelAsset->LodCount-1,(int)distance / modelAsset->LodSpacing);
+		// Get the model
+		std::shared_ptr<Model> model;
+		if (modelAsset->LODs.size() <= lod || !modelAsset->LODs[lod]) {
+			//----------------------------------------------------------------
+			// Cache the LOD
+
+			// get the path
+			Filesystem::path fullPath = FullPath(path + '_' + std::to_string(lod), procedural, procedural ? ".vbo" : ".cmo");
+			// Load from file
+			if (procedural) {
+				model.reset(Model::CreateFromVBO(m_d3dDevice.Get(), fullPath.c_str()).release());
 			}
-		});
-		m_models.insert(std::pair<string, shared_ptr<Model>>(path, model));
+			else {
+				model.reset(Model::CreateFromCMO(m_d3dDevice.Get(), fullPath.c_str(), *m_fxFactory).release());
+			}
+			if (modelAsset->LODs.size() <= lod) {
+				modelAsset->LODs.resize(lod + 1);
+			}
+			modelAsset->LODs.insert(modelAsset->LODs.begin() + lod, model);
+		}
+		else {
+			model = modelAsset->LODs[lod];
+		}
 		return model;
+		//model->UpdateEffects([=](IEffect* effect)
+		//{
+		//	auto basic = dynamic_cast<BasicEffect*>(effect);
+		//	if (basic)
+		//	{
+		//		basic->SetAlpha(0.5);
+		//		/*basic->SetTextureEnabled(true);
+		//		basic->SetTexture(tex.Get());
+		//		basic->EnableDefaultLighting();*/
+		//	}
+		//});
+		
 	}
 	catch (std::exception ex) {
 		Utility::OutputException(path + ' ' + ex.what());

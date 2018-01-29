@@ -150,6 +150,7 @@ void Game::LoadWorld(string name)
 void Game::CloseWorld()
 {
 	m_systemManager->CloseWorld();
+	AssetManager::Get()->CleanupProceduralAssets();
 }
 
 // Presents the back buffer contents to the screen.

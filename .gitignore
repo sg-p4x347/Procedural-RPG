@@ -1,7 +1,7 @@
 # Procedural-RPG
 Saves/
 Unused/
-
+*.dat
 
 # Windows image file caches
 Thumbs.db

@@ -39,11 +39,19 @@ namespace Utility {
 	float Sigmoid(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
 	float SigmoidDecay(float x, float width,float transitionPercent = 1.f); // sigmoid starting at (0.0,~1.0) decaying to (width,~0.0) at a rate given by transitionPercent
 	float Inverse(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
+	
+	float BinomialCoefficient(int n, int k);
+	//----------------------------------------------------------------
 	// Interpolation functions
+
+	// 2 Dimension
 	float LinearInterpolate(float p[2], float x);
-	float BilinearInterpolate(float p[2][2], float x, float y);
 	float CubicInterpolate(float p[4], float x);
+	// 2.5 Dimensions
+	float BilinearInterpolate(float p[2][2], float x, float y);
 	float BicubicInterpolation(float p[4][4], float x, float y);
+	
+
 	// Conversions
 	float DegToRad(float degree);
 	// Tests

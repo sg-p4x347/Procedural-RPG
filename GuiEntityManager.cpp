@@ -39,9 +39,9 @@ namespace GUI {
 	EntityPtr GuiEntityManager::NewPanel(Style * style, vector<EntityPtr> children)
 	{
 		EntityPtr entity = NewEntity();
-		entity->AddComponent(shared_ptr<Components::Component>(new Panel()));
-		entity->AddComponent(shared_ptr<Components::Component>(style));
-		entity->AddComponent(std::shared_ptr<Components::Component>(new Sprite()));
+		entity->AddComponent(new Panel());
+		entity->AddComponent(style);
+		entity->AddComponent(new Sprite());
 		if (children.size() != 0) AddChildren(entity,children);
 		return entity;
 	}
@@ -60,17 +60,17 @@ namespace GUI {
 				return style;
 			}
 		}());
-		btn->AddComponent(std::shared_ptr<Text>(new Text(text)));
-		btn->AddComponent(std::shared_ptr<Style>([] {
+		btn->AddComponent(new Text(text));
+		btn->AddComponent([] {
 			Style * style = new Style("Hover");
 			style->Background = "widget.png:button_hover";
 			return style;
-		}()));
-		btn->AddComponent(std::shared_ptr<Style>([] {
+		}());
+		btn->AddComponent([] {
 			Style * style = new Style("Active");
 			style->Background = "widget.png:button_active";
 			return style;
-		}()));
+		}());
 		AddEventHandler(btn, new EventHandler("Click", std::move(clickCallback)));
 		return btn;
 	}
@@ -89,9 +89,9 @@ namespace GUI {
 			}
 			else {
 				// Add new children component
-				entity->AddComponent(shared_ptr<Components::Component>(
+				entity->AddComponent(
 					new Children(ids)
-				));
+				);
 			}
 		}
 	}
@@ -99,14 +99,14 @@ namespace GUI {
 	void GuiEntityManager::AddEventHandler(EntityPtr entity, EventHandler * handler)
 	{
 		if (entity && handler) {
-			entity->AddComponent(shared_ptr<Components::Component>(handler));
+			entity->AddComponent(handler);
 		}
 	}
 
 	void GuiEntityManager::AddText(EntityPtr entity, string text)
 	{
 		if (entity && text != "") {
-			entity->AddComponent(shared_ptr<Components::Component>(new Text(text)));
+			entity->AddComponent(new Text(text));
 		}
 	}
 

@@ -38,7 +38,8 @@ public:
 	vector<shared_ptr<Components::Component>> GetComponents();
 	//----------------------------------------------------------------
 	// Component addition
-	void AddComponent(shared_ptr<Components::Component> component);
+	void AddComponent(Components::Component * component);
+	void AddComponent(shared_ptr<Components::Component> & component);
 private:
 	const unsigned int m_id;
 	unsigned long m_mask;

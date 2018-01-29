@@ -15,7 +15,7 @@ class TerrainSystem :
 {
 public:
 	TerrainSystem(
-		unique_ptr<EntityManager> & entityManager, 
+		unique_ptr<WorldEntityManager> & entityManager,
 		vector<string> & components, 
 		unsigned short updatePeriod, 
 		int regionWidth,

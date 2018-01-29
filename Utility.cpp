@@ -118,6 +118,15 @@ namespace Utility {
 		return a * (1 - 1 / (c * (x - b) + 1));
 	}
 
+	float BinomialCoefficient(int n, int k)
+	{
+		float result = 1.f;
+		for (int i = 1; i < k; i++) {
+			result *= (float)(n + 1 - i) / (float)i;
+		}
+		return result;
+	}
+
 	float SigmoidDecay(float x, float width, float transitionPercent)
 	{
 		return Sigmoid(x, 1.f, 0.5 * width, -10 / (width * transitionPercent));
@@ -159,6 +168,7 @@ namespace Utility {
 		arr[3] = CubicInterpolate(p[3], y);
 		return CubicInterpolate(arr, x);
 	}
+	
 	float DegToRad(float degree)
 	{
 		static const float PIdiv180 = PI / 180.f;

@@ -180,13 +180,16 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AssetEntityManager.h" />
     <ClInclude Include="AssetManager.h" />
     <ClInclude Include="BaseEntityManager.h" />
+    <ClInclude Include="Bezier.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="ConversionUtil.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="Droplet.h" />
-    <ClInclude Include="EntityManager.h" />
+    <ClInclude Include="ModelAsset.h" />
+    <ClInclude Include="PersistenceEntityManager.h" />
     <ClInclude Include="Filesystem.h" />
     <ClInclude Include="GuiChildren.h" />
     <ClInclude Include="GuiEventHandler.h" />
@@ -225,22 +228,27 @@
     <ClInclude Include="Tag.h" />
     <ClInclude Include="TaskThread.h" />
     <ClInclude Include="Terrain.h" />
+    <ClInclude Include="TopologyCruncher.h" />
     <ClInclude Include="VboParser.h" />
     <ClInclude Include="WaterCell.h" />
     <ClInclude Include="TerrainSystem.h" />
     <ClInclude Include="ThermalCell.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="VBO.h" />
+    <ClInclude Include="WorldEntityManager.h" />
     <ClInclude Include="WorldSystem.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AssetEntityManager.cpp" />
     <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="BaseEntityManager.cpp" />
+    <ClCompile Include="Bezier.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="ConversionUtil.cpp" />
     <ClCompile Include="Delegate.cpp" />
     <ClCompile Include="Droplet.cpp" />
-    <ClCompile Include="EntityManager.cpp" />
+    <ClCompile Include="ModelAsset.cpp" />
+    <ClCompile Include="PersistenceEntityManager.cpp" />
     <ClCompile Include="Filesystem.cpp" />
     <ClCompile Include="GuiChildren.cpp" />
     <ClCompile Include="GuiEventHandler.cpp" />
@@ -280,12 +288,14 @@
     <ClCompile Include="Tag.cpp" />
     <ClCompile Include="TaskThread.cpp" />
     <ClCompile Include="Terrain.cpp" />
+    <ClCompile Include="TopologyCruncher.cpp" />
     <ClCompile Include="VboParser.cpp" />
     <ClCompile Include="WaterCell.cpp" />
     <ClCompile Include="TerrainSystem.cpp" />
     <ClCompile Include="ThermalCell.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="VBO.cpp" />
+    <ClCompile Include="WorldEntityManager.cpp" />
     <ClCompile Include="WorldSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -309,11 +319,9 @@
   <ItemGroup>
     <None Include="config\building.json" />
     <None Include="config\city.json" />
-    <None Include="config\components.json" />
     <None Include="config\continent.json" />
     <None Include="config\history.json" />
     <None Include="packages.config" />
-    <None Include="saves\testWorld\terrain.bin" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shaders\Terrain.hlsl">
@@ -324,6 +332,7 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <MeshContentTask Include="Assets\Models\Cube.fbx" />
     <MeshContentTask Include="Assets\Models\Tree.fbx">
       <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)/Assets%(Filename).cmo</ContentOutput>
     </MeshContentTask>

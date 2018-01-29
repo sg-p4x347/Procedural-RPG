@@ -94,16 +94,38 @@ void RenderSystem::Render()
 		// Render Models with the effect
 		if (m_Models.find(effectName) != m_Models.end()) {
 			for (auto & model : m_Models[effectName]) {
-				auto dxModel = AssetManager::Get()->GetModel(model->Path, false);
+				
 
 				EntityPtr entity;
 				if (EM->Find(model->ID, entity)) {
 					auto position = entity->GetComponent<Components::Position>("Position");
+					auto dxModel = AssetManager::Get()->GetModel(model->Path,Vector3::Distance(EM->PlayerPos()->Pos,position->Pos),model->Procedural);
+					
 					XMMATRIX translation = XMMatrixTranslation(position->Pos.x, position->Pos.y, position->Pos.z);
 					XMMATRIX rotation = XMMatrixRotationRollPitchYawFromVector(position->Rot);
 					XMMATRIX final = XMMatrixMultiply(rotation, translation);
+					
 					final = XMMatrixMultiply(final, m_worldMatrix);
-					dxModel->Draw(m_d3dContext.Get(), *m_states, final, m_viewMatrix, m_projMatrix);
+
+					
+					for (auto it = dxModel->meshes.cbegin(); it != dxModel->meshes.cend(); ++it)
+					{
+						auto mesh = it->get();
+						assert(mesh != 0);
+
+						mesh->PrepareForRendering(m_d3dContext.Get(), *m_states, false);
+						if (!model->BackfaceCulling) {
+							m_d3dContext->RSSetState(m_states->CullNone());
+						}
+						else {
+							m_d3dContext->RSSetState(m_states->CullCounterClockwise());
+						}
+						//// Do model-level setCustomState work here
+						//m_d3dContext->RSSetState(m_states->CullNone());
+						mesh->Draw(m_d3dContext.Get(), final, m_viewMatrix, m_projMatrix, false);
+					}
+					//dxModel->Draw(m_d3dContext.Get(), *m_states, final, m_viewMatrix, m_projMatrix);
+					
 				}
 			}
 		}
@@ -150,7 +172,7 @@ Rectangle RenderSystem::GetViewport()
 	return Rectangle(0,0, m_outputWidth,m_outputHeight);
 }
 
-void RenderSystem::InitializeWorldRendering(EntityManager * entityManager)
+void RenderSystem::InitializeWorldRendering(WorldEntityManager * entityManager)
 {
 	EM = entityManager;
 	if (EM) {

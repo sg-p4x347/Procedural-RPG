@@ -1,6 +1,6 @@
 #pragma once
 #include "System.h"
-#include "EntityManager.h"
+#include "WorldEntityManager.h"
 //#include "RenderSystem.h"
 
 class SystemManager
@@ -48,7 +48,7 @@ private:
 	map<string, shared_ptr<System>> m_systems;
 	//----------------------------------------------------------------
 	// Entities
-	unique_ptr<EntityManager> m_entityManager;
+	unique_ptr<WorldEntityManager> m_entityManager;
 	
 
 };

@@ -11,13 +11,16 @@
 #include "WaterCell.h"
 #include "Model.h"
 #include <thread>
+#include "TopologyCruncher.h"
+#include "VboParser.h"
+#include "AssetManager.h"
 
-static const bool g_erosion = true;
+static const bool g_erosion = false;
 
 using namespace DirectX::SimpleMath;
 static EntityPtr waterEntity;
 TerrainSystem::TerrainSystem(
-	unique_ptr<EntityManager> &  entityManager,
+	unique_ptr<WorldEntityManager> &  entityManager,
 	vector<string> & components, 
 	unsigned short updatePeriod, 
 	int regionWidth,
@@ -185,6 +188,50 @@ void TerrainSystem::Generate()
 
 	// Trees
 	CreateTreeEntities(terrain,water);
+
+
+	// TEMP
+	VboParser * vp = AssetManager::Get()->ProVboParser();
+	{
+		TopologyCruncher tc = TopologyCruncher();
+		
+		{
+			// Strip two
+			vector<Vector3> fest = vector<Vector3>{ Vector3(0,0,0),Vector3(-4,10,-3),Vector3(-3,3,-2) };
+			tc.Strip(fest, [](float & t) {
+				return 0.f;
+			}, [](float & t) {
+				float ends[2]{ 1.f,0.f };
+				return Utility::LinearInterpolate(ends, t);
+			});
+		}
+		{
+			// Strip one
+			vector<Vector3> path = vector<Vector3>{ Vector3(0,0,0),Vector3(2,10,3),Vector3(3,2,2) };
+			tc.Strip(path, [](float & t) {
+				return 0.f;
+			}, [](float & t) {
+				float ends[2]{ 2.f,0.f };
+				return Utility::LinearInterpolate(ends, t);
+			});
+		}
+		Components::VBO<VertexPositionNormalTexture> * vbo = new Components::PositionNormalTextureVBO(tc.CreateVBO());
+		
+		AssetManager::Get()->GetProceduralEM()->CreateModel("Grass", *vbo);
+		delete vbo;
+	}
+	{
+		EntityPtr test = EM->NewEntity();
+		test->AddComponent(new Components::Model("Grass","Terrain",true,false));
+		test->AddComponent(new Components::Position(Vector3(0, 20, 0)));
+/*
+		auto vbo = test->GetComponent<Components::PositionNormalTextureVBO>("PositionNormalTextureVBO");
+		vbo->Effect = "Terrain";
+		vbo->LODchanged = true;
+		vp.ImportVBO(Filesystem::path("test.vbo"), *vbo);*/
+
+	}
+	AssetManager::Get()->GetProceduralEM()->Save();
 }
 
 void TerrainSystem::Update(double & elapsed)
@@ -391,13 +438,13 @@ void TerrainSystem::NewWater(DirectX::SimpleMath::Vector3 & position)
 {
 	EntityPtr entity = EM->NewEntity();
 
-	entity->AddComponent(std::shared_ptr<Components::Component>(
-		new Components::Position(position, SimpleMath::Vector3::Zero)));
-	entity->AddComponent(std::shared_ptr<Components::Component>(
-		new Components::Tag("Water")));
+	entity->AddComponent(
+		new Components::Position(position, SimpleMath::Vector3::Zero));
+	entity->AddComponent(
+		new Components::Tag("Water"));
 	auto vbo = new Components::PositionNormalTextureVBO();
 	vbo->Effect = "Water";
-	entity->AddComponent(std::shared_ptr<Components::Component>(vbo));
+	entity->AddComponent(vbo);
 }
 
 void TerrainSystem::CreateTreeEntities(HeightMap & terrain, shared_ptr<Map<WaterCell>> water)
@@ -429,12 +476,13 @@ void TerrainSystem::NewTree(DirectX::SimpleMath::Vector3 & position, Vector3 & r
 {
 	EntityPtr entity = EM->NewEntity();
 
-	entity->AddComponent(std::shared_ptr<Components::Component>(
-		new Components::Position(position, rotation)));
-	entity->AddComponent(std::shared_ptr<Components::Component>(
-		new Components::Tag("Tree")));
-	entity->AddComponent(std::shared_ptr<Components::Component>(
-		new Components::Model("Tree", "Default")));
+	entity->AddComponent(
+		new Components::Position(position, rotation));
+	entity->AddComponent(
+		new Components::Tag("Tree"));
+	entity->AddComponent(
+		new Components::Model("Grass", "Default",true,false));
+	//new Components::Model("Tree", "Default")
 }
 
 float TerrainSystem::TreeGradientProbability(float gradient)
@@ -760,14 +808,14 @@ void TerrainSystem::NewTerrain(DirectX::SimpleMath::Vector3 & position)
 {
 	EntityPtr entity = EM->NewEntity();
 
-	entity->AddComponent(std::shared_ptr<Components::Component>(
-		new Components::Position(position, SimpleMath::Vector3::Zero)));
-	entity->AddComponent(std::shared_ptr<Components::Component>(
-		new Components::Terrain()));
+	entity->AddComponent(
+		new Components::Position(position, SimpleMath::Vector3::Zero));
+	entity->AddComponent(
+		new Components::Terrain());
 
 	Components::PositionNormalTextureVBO * vbo = new Components::PositionNormalTextureVBO();
 	vbo->Effect = "Terrain";
-	entity->AddComponent(std::shared_ptr<Components::Component>(vbo));
+	entity->AddComponent(vbo);
 }
 
 Vector3 TerrainSystem::Normal(std::ifstream & ifs, const int & index)

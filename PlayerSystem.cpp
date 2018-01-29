@@ -6,7 +6,7 @@
 #include "Game.h"
 
 PlayerSystem::PlayerSystem(
-	unique_ptr<EntityManager> &  entityManager,
+	unique_ptr<WorldEntityManager> &  entityManager,
 	vector<string> & components, 
 	unsigned short updatePeriod
 ) : WorldSystem::WorldSystem(
@@ -84,9 +84,9 @@ void PlayerSystem::Update(double & elapsed)
 void PlayerSystem::CreatePlayer()
 {
 	EntityPtr player = EM->NewEntity();
-	player->AddComponent(shared_ptr<Components::Player>(new Components::Player()));
-	shared_ptr<Components::Position> pos(new Components::Position());
+	player->AddComponent(new Components::Player());
+	auto pos = new Components::Position();
 	pos->Pos.y = 10;
 	player->AddComponent(pos);
-	player->AddComponent(shared_ptr<Components::Movement>(new Components::Movement()));
+	player->AddComponent(new Components::Movement());
 }

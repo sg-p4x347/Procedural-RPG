@@ -4,7 +4,15 @@ namespace Components {
 	Model::Model()
 	{
 	}
-	Model::Model(string path, string effect, bool procedural) :Path(path),Procedural(procedural),Effect(effect)
+	Model::Model(
+		string path, 
+		string effect, 
+		bool procedural, 
+		bool backfaceCulling) :
+		Path(path),
+		Procedural(procedural),
+		Effect(effect),
+		BackfaceCulling(backfaceCulling)
 	{
 
 	}

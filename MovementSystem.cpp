@@ -5,7 +5,7 @@
 const float MovementSystem::m_updateRange = 100.f;
 
 MovementSystem::MovementSystem(
-	unique_ptr<EntityManager> &  entityManager,
+	unique_ptr<WorldEntityManager> &  entityManager,
 	vector<string>& components, 
 	unsigned short updatePeriod,
 	shared_ptr<RenderSystem> renderSys) : WorldSystem::WorldSystem(entityManager,components,updatePeriod), m_renderSystem(renderSys)

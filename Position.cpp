@@ -5,9 +5,6 @@ namespace Components {
 	Position::Position(const Position & other) : Position::Position(other.Pos,other.Rot)
 	{
 	}
-	Position::Position() : Position::Position(SimpleMath::Vector3::Zero,SimpleMath::Vector3::Zero)
-	{
-	}
 
 
 	Position::Position(SimpleMath::Vector3 pos, SimpleMath::Vector3 rot)

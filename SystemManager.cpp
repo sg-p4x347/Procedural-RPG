@@ -59,7 +59,7 @@ void SystemManager::LoadWorld(Filesystem::path worldDir)
 	Filesystem::create_directory(componentDir);
 	//----------------------------------------------------------------
 	// Create a new entity manager
-	m_entityManager.reset(new EntityManager(componentDir));
+	m_entityManager.reset(new WorldEntityManager(componentDir));
 	//----------------------------------------------------------------
 	// Update render targets
 	auto renderSystem = GetSystem<RenderSystem>("Render");

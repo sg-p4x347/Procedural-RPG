@@ -36,7 +36,12 @@ vector<shared_ptr<Components::Component>> Entity::GetComponents()
 	return components;
 }
 
-void Entity::AddComponent(shared_ptr<Components::Component> component)
+void Entity::AddComponent(Components::Component * component)
+{
+	AddComponent(shared_ptr<Components::Component>(component));
+}
+
+void Entity::AddComponent(shared_ptr<Components::Component>& component)
 {
 	component->ID = m_id;
 	unsigned long componentMask = m_entityManager->ComponentMask(component->GetName());
