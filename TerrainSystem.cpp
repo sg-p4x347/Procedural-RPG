@@ -215,6 +215,16 @@ void TerrainSystem::Generate()
 				return Utility::LinearInterpolate(ends, t);
 			});
 		}
+		{
+			// Strip three
+			vector<Vector3> path = vector<Vector3>{ Vector3(0,0,0),Vector3(-2,20,3),Vector3(4,15,3),Vector3(4,2,2) };
+			tc.Strip(path, [](float & t) {
+				return 0.f;
+			}, [](float & t) {
+				float ends[2]{ 2.f,0.f };
+				return Utility::LinearInterpolate(ends, t);
+			});
+		}
 		Components::VBO<VertexPositionNormalTexture> * vbo = new Components::PositionNormalTextureVBO(tc.CreateVBO());
 		
 		AssetManager::Get()->GetProceduralEM()->CreateModel("Grass", *vbo);

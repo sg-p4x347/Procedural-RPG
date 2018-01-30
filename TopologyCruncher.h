@@ -19,7 +19,13 @@ public:
 		vector<Vector3> & path, 
 		std::function<float(float & t)> roll = [](float & t) {return HALF_PI;},
 		std::function<float(float & t)> width = [](float & t) {return 1.f;},
-		float segmentLength = 0.1f
+		int divisions = 10
+	);
+	void Tube(
+		vector<Vector3> & path,
+		std::function<float(float & t)> diameter = [](float & t) {return 1.f; },
+		int longitudeDivisions = 10,
+		int radialDivisions = 10
 	);
 private:
 	vector<VertexPositionNormalTexture> m_VB;
