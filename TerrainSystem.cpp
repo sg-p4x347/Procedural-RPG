@@ -195,35 +195,53 @@ void TerrainSystem::Generate()
 	{
 		TopologyCruncher tc = TopologyCruncher();
 		
+		//{
+		//	// Strip two
+		//	vector<Vector3> fest = vector<Vector3>{ Vector3(0,0,0),Vector3(-4,10,-3),Vector3(-3,3,-2) };
+		//	tc.Strip(fest, [](float & t) {
+		//		return 0.f;
+		//	}, [](float & t) {
+		//		float ends[2]{ 1.f,0.f };
+		//		return Utility::LinearInterpolate(ends, t);
+		//	});
+		//}
+		//{
+		//	// Strip one
+		//	vector<Vector3> path = vector<Vector3>{ Vector3(0,0,0),Vector3(2,10,3),Vector3(3,2,2) };
+		//	tc.Strip(path, [](float & t) {
+		//		return 0.f;
+		//	}, [](float & t) {
+		//		float ends[2]{ 2.f,0.f };
+		//		return Utility::LinearInterpolate(ends, t);
+		//	});
+		//}
+		//{
+		//	// Strip three
+		//	vector<Vector3> path = vector<Vector3>{ Vector3(0,0,0),Vector3(-2,20,3),Vector3(4,15,3),Vector3(4,2,2) };
+		//	tc.Strip(path, [](float & t) {
+		//		return 0.f;
+		//	}, [](float & t) {
+		//		float ends[2]{ 2.f,0.f };
+		//		return Utility::LinearInterpolate(ends, t);
+		//	});
+		//}
 		{
-			// Strip two
-			vector<Vector3> fest = vector<Vector3>{ Vector3(0,0,0),Vector3(-4,10,-3),Vector3(-3,3,-2) };
-			tc.Strip(fest, [](float & t) {
-				return 0.f;
-			}, [](float & t) {
-				float ends[2]{ 1.f,0.f };
-				return Utility::LinearInterpolate(ends, t);
-			});
-		}
-		{
-			// Strip one
-			vector<Vector3> path = vector<Vector3>{ Vector3(0,0,0),Vector3(2,10,3),Vector3(3,2,2) };
+			// Strip four
+			vector<Vector3> path = vector<Vector3>{ 
+				Vector3(0,0,0),
+				Vector3(10,0,10),
+				Vector3(10,10,10),
+				Vector3(0,10,0),
+				Vector3(0,0,0),
+				Vector3(0,-10,0),
+				Vector3(-10,-10,-10),
+				Vector3(-10,0,-10) };
 			tc.Strip(path, [](float & t) {
 				return 0.f;
 			}, [](float & t) {
-				float ends[2]{ 2.f,0.f };
+				float ends[2]{ 2.f,2.f };
 				return Utility::LinearInterpolate(ends, t);
-			});
-		}
-		{
-			// Strip three
-			vector<Vector3> path = vector<Vector3>{ Vector3(0,0,0),Vector3(-2,20,3),Vector3(4,15,3),Vector3(4,2,2) };
-			tc.Strip(path, [](float & t) {
-				return 0.f;
-			}, [](float & t) {
-				float ends[2]{ 2.f,0.f };
-				return Utility::LinearInterpolate(ends, t);
-			});
+			},20);
 		}
 		Components::VBO<VertexPositionNormalTexture> * vbo = new Components::PositionNormalTextureVBO(tc.CreateVBO());
 		

@@ -32,6 +32,8 @@ void TopologyCruncher::Strip(vector<Vector3>& path, std::function<float(float&t)
 	vector<Vector3> rightEdge;
 	vector<Vector3> normals;
 	float t = 0.f;
+	Vector3 previousLeft;
+	Vector3 previousRight;
 	for (int i = 0; i <= divisions; i++) {
 		Bezier bezierCurve = Bezier(path);
 		Bezier & derivative = bezierCurve.GetDerivative();
@@ -40,9 +42,9 @@ void TopologyCruncher::Strip(vector<Vector3>& path, std::function<float(float&t)
 
 		Vector3 forward = derivative.GetPoint(t);
 		forward.Normalize();
-		float yaw = std::asin(forward.z);
-		float pitch = std::asin(forward.y);
-
+		/*float yaw = std::asin(forward.z);
+		float pitch = std::asin(forward.y);*/
+/*
 		float sinY = sin(yaw);
 		float cosY = cos(yaw);
 		float sinP = sin(pitch);
@@ -53,11 +55,21 @@ void TopologyCruncher::Strip(vector<Vector3>& path, std::function<float(float&t)
 			cosY * cosP,	-cosY * sinP*sinR - sinY * cosR,	-cosY * sinP*cosR + sinY * sinR,
 			sinY*cosP,		-sinY * sinP*sinR + cosY * cosR,	-sinY * sinP*cosR - cosY * sinR,
 			sinP,			cosP*sinR,							cosP*sinR
-		);
+		);*/
 
-		Vector3 left = Vector3(-cosY * sinP*sinR - sinY * cosR, -sinY * sinP*sinR + cosY * cosR, cosP*sinR);
+		//Vector3 left = Vector3(-cosY * sinP*sinR - sinY * cosR, -sinY * sinP*sinR + cosY * cosR, cosP*sinR);
+		Vector3 left = previousLeft;
+		Vector3 right = previousRight;
+		if (std::abs(forward.x) > 0.0001f || std::abs(forward.z) > 0.0001f) {
+			left = Vector3(forward.x, 0, -forward.z);
+			left.Normalize();
+			previousLeft = left;
+			Vector3 right = Vector3(-forward.x, 0, forward.z);
+			right.Normalize();
+			previousRight = right;
+		}
+		
 		Vector3 normal = forward.Cross(left);
-		Vector3 right = forward.Cross(normal);
 
 		float radius = width(t) / 2.f;
 
@@ -94,8 +106,8 @@ void TopologyCruncher::Strip(vector<Vector3>& path, std::function<float(float&t)
 void TopologyCruncher::Tube(
 	vector<Vector3>& path, 
 	std::function<float(float&t)> diameter,
-	int longitudeDivisions = 10,
-	int radialDivisions = 10)
+	int longitudeDivisions,
+	int radialDivisions)
 {
 	const float dt = 1.f / (float)longitudeDivisions;
 
@@ -103,7 +115,7 @@ void TopologyCruncher::Tube(
 	vector<Vector3> rightEdge;
 	vector<Vector3> normals;
 	float t = 0.f;
-	for (int i = 0; i <= longitudeDivisions; i++) {
+	/*for (int i = 0; i <= longitudeDivisions; i++) {
 		Bezier bezierCurve = Bezier(path);
 		Bezier & derivative = bezierCurve.GetDerivative();
 
@@ -123,9 +135,9 @@ void TopologyCruncher::Tube(
 		normals.push_back(normal);
 
 		t += dt;
-	}
+	}*/
 	// make quads
-	for (int i = 0; i < divisions; i++) {
+	for (int i = 0; i < longitudeDivisions; i++) {
 		/*
 		1---2
 		| \ |
