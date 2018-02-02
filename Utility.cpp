@@ -121,7 +121,7 @@ namespace Utility {
 	float BinomialCoefficient(int n, int k)
 	{
 		float result = 1.f;
-		for (int i = 1; i < k; i++) {
+		for (int i = 1; i <= k; i++) {
 			result *= (float)(n + 1 - i) / (float)i;
 		}
 		return result;
