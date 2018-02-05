@@ -14,7 +14,7 @@
 #include "TopologyCruncher.h"
 #include "VboParser.h"
 #include "AssetManager.h"
-
+#include "TreeGenerator.h"
 static const bool g_erosion = false;
 
 using namespace DirectX::SimpleMath;
@@ -193,35 +193,36 @@ void TerrainSystem::Generate()
 	// TEMP
 	VboParser * vp = AssetManager::Get()->ProVboParser();
 	{
-		TopologyCruncher tc = TopologyCruncher();
-		
-		{
-			// Strip
-			vector<Vector3> path = vector<Vector3>{
-				Vector3(0,0,0),
-				Vector3(0.05f,0.1f,0.05f),
-				Vector3(0.1f,0.05f,0.1f) };
-			tc.Strip(path, [](float & t) {
-				return 0.f;
-			}, [](float & t) {
-				float ends[2]{ 0.01f,0.f };
-				return Utility::LinearInterpolate(ends, t);
-			},10);
-		}
-		{
-			// Tube
-			vector<Vector3> path = vector<Vector3>{
-				Vector3(0,0,0),
-				Vector3(5,0,2),
-				Vector3(5,5,5),
-				Vector3(0,10,0),
-				Vector3(5,15,3)
-			};
-			tc.Tube(path, [](float & t) {
-				return 10 * exp(-10 * t);
-			}, 20,10);
-		}
-		Components::VBO<VertexPositionNormalTexture> * vbo = new Components::PositionNormalTextureVBO(tc.CreateVBO());
+		//TopologyCruncher tc = TopologyCruncher();
+		//
+		//{
+		//	// Strip
+		//	vector<Vector3> path = vector<Vector3>{
+		//		Vector3(0,0,0) * 10,
+		//		Vector3(0.05f,0.1f,0.05f) * 10,
+		//		Vector3(0.1f,0.05f,0.1f) * 10 };
+		//	tc.Strip(path, [](float & t) {
+		//		return 0.f;
+		//	}, [](float & t) {
+		//		float ends[2]{ 0.01f,0.f };
+		//		return Utility::LinearInterpolate(ends, t) * 10;
+		//	},30);
+		//}
+		//{
+		//	// Tube
+		//	vector<Vector3> path = vector<Vector3>{
+		//		Vector3(0,0,0),
+		//		Vector3(5,0,2),
+		//		Vector3(5,5,5),
+		//		Vector3(0,10,0),
+		//		Vector3(5,15,3)
+		//	};
+		//	tc.Tube(path, [](float & t) {
+		//		return 10 * exp(-10 * t);
+		//	}, 20,10);
+		//}
+		TreeGenerator tg;
+		Components::VBO<VertexPositionNormalTexture> * vbo = new Components::PositionNormalTextureVBO(tg.Generate());
 		
 		AssetManager::Get()->GetProceduralEM()->CreateModel("Grass", *vbo);
 		delete vbo;

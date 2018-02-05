@@ -1,6 +1,10 @@
 #pragma once
 #include "PositionNormalTextureVBO.h"
-
+enum PathType {
+	BezierPath,
+	CubicPath,
+	LinearPath
+};
 class TopologyCruncher
 {
 public:
@@ -25,8 +29,10 @@ public:
 		vector<Vector3> & path,
 		std::function<float(float & t)> diameter = [](float & t) {return 1.f; },
 		int longitudeDivisions = 10,
-		int radialDivisions = 10
+		int radialDivisions = 10,
+		PathType type = PathType::BezierPath
 	);
+
 private:
 	vector<VertexPositionNormalTexture> m_VB;
 	vector<uint16_t> m_IB;

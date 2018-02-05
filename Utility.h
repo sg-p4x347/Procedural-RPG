@@ -18,7 +18,7 @@ namespace Utility {
 	// Randomness
 	float randWithin(float min, float max);
 	int randWithin(int min, int max);
-	float Deviation(float range, float offset);
+	float Deviation(float diameter, float offset = 0.f);
 	bool Chance(float percent);
 	int Probability(vector<float> probabilities);
 	int sign(int integer);
@@ -43,7 +43,8 @@ namespace Utility {
 	float BinomialCoefficient(int n, int k);
 	//----------------------------------------------------------------
 	// Interpolation functions
-
+	// 1 Dimension
+	float Lerp(float start, float end, float t);
 	// 2 Dimension
 	float LinearInterpolate(float p[2], float x);
 	float CubicInterpolate(float p[4], float x);

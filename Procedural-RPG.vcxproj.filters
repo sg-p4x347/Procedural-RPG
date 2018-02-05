@@ -74,6 +74,12 @@
     <Filter Include="Assets\Shaders">
       <UniqueIdentifier>{4193cb6b-1cd8-46be-b2c7-a128ba331711}</UniqueIdentifier>
     </Filter>
+    <Filter Include="World\Generator">
+      <UniqueIdentifier>{11967537-a078-4379-a3a7-ef5fe0dc0b5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World\Generator\Tree">
+      <UniqueIdentifier>{0d89c84e-6baf-4ce9-8f12-db9c19a748ce}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -243,6 +249,13 @@
     <ClInclude Include="ModelManager.h">
       <Filter>Misc</Filter>
     </ClInclude>
+    <ClInclude Include="TreeGenerator.h">
+      <Filter>World\Generator\Tree</Filter>
+    </ClInclude>
+    <ClInclude Include="TreeBranch.h">
+      <Filter>World\Generator\Tree</Filter>
+    </ClInclude>
+    <ClInclude Include="CubicSpline.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -398,6 +411,13 @@
     <ClCompile Include="ModelManager.cpp">
       <Filter>Misc</Filter>
     </ClCompile>
+    <ClCompile Include="TreeGenerator.cpp">
+      <Filter>World\Generator\Tree</Filter>
+    </ClCompile>
+    <ClCompile Include="TreeBranch.cpp">
+      <Filter>World\Generator\Tree</Filter>
+    </ClCompile>
+    <ClCompile Include="CubicSpline.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">

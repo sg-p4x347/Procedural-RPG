@@ -3,6 +3,13 @@
 
 
 
+Bezier::Bezier(const Bezier & other) :
+	m_controlPoints(other.m_controlPoints),
+	m_order(other.m_order),
+	m_binomialCoefficients(other.m_binomialCoefficients)
+{
+}
+
 Bezier::Bezier(vector<Vector3> controlPoints) : m_controlPoints(controlPoints), m_order(controlPoints.size()-1)
 {
 	// Cache the binomial coefficients
@@ -32,4 +39,17 @@ Bezier & Bezier::GetDerivative()
 		m_derivative = std::make_unique<Bezier>(controlPoints);
 	}
 	return *m_derivative;
+}
+
+float Bezier::Length(int subDivisions)
+{
+	const float dt = 1.f / (float)subDivisions;
+	float length = 0.f;
+	for (int i = 0; i < subDivisions; i++) {
+		length += Vector3::Distance(GetPoint((float)i * dt), GetPoint((float)(i + 1) * dt));
+	}
+	if (length == 0.f) {
+		auto test = 0;
+	}
+	return length;
 }

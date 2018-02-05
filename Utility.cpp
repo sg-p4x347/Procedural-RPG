@@ -82,8 +82,8 @@ namespace Utility {
 		}
 		return c;
 	}
-	float Deviation(float range, float offset) {
-		return randWithin(-range * 0.5f + offset, range * 0.5f + offset);
+	float Deviation(float diameter, float offset) {
+		return randWithin(-diameter * 0.5f + offset, diameter * 0.5f + offset);
 	}
 	void Normalize(float * set, int size)
 	{
@@ -132,9 +132,14 @@ namespace Utility {
 		return Sigmoid(x, 1.f, 0.5 * width, -10 / (width * transitionPercent));
 	}
 
+	float Lerp(float start, float end, float t)
+	{
+		return start * (1 - t) + end * t;;
+	}
+
 	float LinearInterpolate(float p[2], float x)
 	{
-		return p[0] * (1 - x) + p[1] * x;
+		return Lerp(p[0], p[1], x);
 	}
 
 	void Normalize(std::vector<float> & set)

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "TopologyCruncher.h"
 #include "Bezier.h"
+#include "CubicSpline.h"
 
 TopologyCruncher::TopologyCruncher()
 {
@@ -107,22 +108,32 @@ void TopologyCruncher::Tube(
 	vector<Vector3>& path, 
 	std::function<float(float&t)> diameter,
 	int longitudeDivisions,
-	int radialDivisions)
+	int radialDivisions,
+	PathType type)
 {
 	const float dt = 1.f / (float)longitudeDivisions;
 
 	vector<vector<Vector3>> loops;
 	vector<Vector3> points;
 	float t = 0.f;
-	Vector3 previousLeft;
+	Vector3 previousLeft = Vector3::UnitX;
 	for (int i = 0; i <= longitudeDivisions; i++) {
-		Bezier bezierCurve = Bezier(path);
-		Bezier & derivative = bezierCurve.GetDerivative();
-
-		Vector3 point = bezierCurve.GetPoint(t);
+		Vector3 point;
+		Vector3 forward;
+		if (type == PathType::BezierPath) {
+			Bezier bezierCurve = Bezier(path);
+			Bezier & derivative = bezierCurve.GetDerivative();
+			point = bezierCurve.GetPoint(t);
+			forward = derivative.GetPoint(t);
+		} else if (type == PathType::CubicPath) {
+			CubicSpline cubic = CubicSpline(path,10.f);
+			CubicSpline & derivative = cubic.GetDerivative();
+			point = cubic.GetPoint(t);
+			forward = derivative.GetPoint(t);
+		}
 		points.push_back(point);
-		Vector3 forward = derivative.GetPoint(t);
 		forward.Normalize();
+		
 
 		//Vector3 left = Vector3(-cosY * sinP*sinR - sinY * cosR, -sinY * sinP*sinR + cosY * cosR, cosP*sinR);
 
