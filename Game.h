@@ -26,6 +26,7 @@ public:
 	// World control
 	void PauseGame();
 	void ResumeGame();
+	void TogglePause();
 	// Generates a world
 	void GenerateWorld(int seed, string name);
 	// Loads a world from file
@@ -49,6 +50,7 @@ public:
 	static DirectX::Keyboard::State KeyboardState;
 	static DirectX::Keyboard::KeyboardStateTracker KeyboardTracker;
 private:
+	bool m_paused;
 	//----------------------------------------------------------------
 	// World control
 	void HaltWorldSystems();

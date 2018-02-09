@@ -4,16 +4,15 @@
 #include "Player.h"
 #include "Movement.h";
 #include "Game.h"
-
+#include "IEventManager.h"
 PlayerSystem::PlayerSystem(
+	shared_ptr<SystemManager> systemManager,
 	unique_ptr<WorldEntityManager> &  entityManager,
 	vector<string> & components, 
 	unsigned short updatePeriod
-) : WorldSystem::WorldSystem(
-	entityManager,
-	components,
-	updatePeriod
-	)
+) : 
+WorldSystem::WorldSystem(entityManager,components,updatePeriod),
+SM(systemManager)
 {
 }
 
@@ -77,8 +76,17 @@ void PlayerSystem::Update(double & elapsed)
 		input.y -= 1.f;
 
 	// adjust the velocity according to orientation
-	SimpleMath::Quaternion q = SimpleMath::Quaternion::CreateFromYawPitchRoll(position->Rot.x, -position->Rot.y, 0.f);
+	SimpleMath::Quaternion q = GetPlayerQuaternion();
 	movement->Velocity = SimpleMath::Vector3::Transform(input, q) * (keyboardState.LeftControl ? 1000 : 100);
+
+	if (Game::Get().KeyboardTracker.IsKeyPressed(DirectX::Keyboard::Keys::E)) {
+		//SM->GetSystem<ActionSystem>("Action")->Check();
+		//SM->GetEventManager().Invoke("InvokeAction");
+		IEventManager::Invoke(EventTypes::Action_Check);
+	}
+	if (Game::Get().KeyboardTracker.IsKeyPressed(DirectX::Keyboard::Keys::Escape)) {
+		Game::Get().TogglePause();
+	}
 }
 
 void PlayerSystem::CreatePlayer()
@@ -89,4 +97,10 @@ void PlayerSystem::CreatePlayer()
 	pos->Pos.y = 10;
 	player->AddComponent(pos);
 	player->AddComponent(new Components::Movement());
+}
+
+Quaternion PlayerSystem::GetPlayerQuaternion()
+{
+	auto position = EM->PlayerPos();
+	return SimpleMath::Quaternion::CreateFromYawPitchRoll(position->Rot.x, -position->Rot.y, 0.f);
 }

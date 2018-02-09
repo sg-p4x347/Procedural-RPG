@@ -256,6 +256,16 @@
       <Filter>World\Generator\Tree</Filter>
     </ClInclude>
     <ClInclude Include="CubicSpline.h" />
+    <ClInclude Include="ActionSystem.h">
+      <Filter>World\System</Filter>
+    </ClInclude>
+    <ClInclude Include="Action.h" />
+    <ClInclude Include="EventManager.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="IEventManager.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -418,6 +428,13 @@
       <Filter>World\Generator\Tree</Filter>
     </ClCompile>
     <ClCompile Include="CubicSpline.cpp" />
+    <ClCompile Include="ActionSystem.cpp">
+      <Filter>World\System</Filter>
+    </ClCompile>
+    <ClCompile Include="Action.cpp" />
+    <ClCompile Include="IEventManager.cpp">
+      <Filter>ECS</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
