@@ -25,7 +25,8 @@ Game::Game() :
     m_window(0),
     m_outputWidth(1920),
     m_outputHeight(1080),
-    m_featureLevel(D3D_FEATURE_LEVEL_9_1)
+    m_featureLevel(D3D_FEATURE_LEVEL_9_1),
+	m_paused(false)
 {
 
 	AssetManager::Get()->SetAssetDir("C:/Gage Omega/Programming/Procedural-RPG/Assets");
@@ -84,6 +85,16 @@ void Game::ResumeGame()
 
 }
 
+void Game::TogglePause()
+{
+	if (m_paused) {
+		ResumeGame();
+	}
+	else {
+		PauseGame();
+	}
+}
+
 void Game::HaltWorldSystems()
 {
 	m_systemManager->Halt<WorldSystem>();
@@ -106,9 +117,9 @@ void Game::Update(DX::StepTimer const& timer)
 	MouseTracker.Update(MouseState);
 	KeyboardTracker.Update(KeyboardState);
 
-	if (KeyboardTracker.pressed.Escape) {
+	/*if (KeyboardTracker.pressed.Escape) {
 		PauseGame();
-	}
+	}*/
 
 	// Update the systems
 	m_systemManager->Tick(elapsed);

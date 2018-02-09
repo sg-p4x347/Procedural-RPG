@@ -1,10 +1,13 @@
 #pragma once
 #include "WorldSystem.h"
+#include "ActionSystem.h"
+class SystemManager;
+
 class PlayerSystem :
 	public WorldSystem
 {
 public:
-	PlayerSystem(unique_ptr<WorldEntityManager> &  entityManager,
+	PlayerSystem(shared_ptr<SystemManager> systemManager, unique_ptr<WorldEntityManager> &  entityManager,
 		vector<string> & components, 
 		unsigned short updatePeriod
 	);
@@ -15,7 +18,14 @@ public:
 	//----------------------------------------------------------------
 	// Generation
 	void CreatePlayer();
+
+	//----------------------------------------------------------------
+	// Utility
+	Quaternion GetPlayerQuaternion();
+
+
 private:
+	shared_ptr<SystemManager> SM;
 	shared_ptr<DirectX::Mouse> m_mouse;
 	shared_ptr<DirectX::Keyboard> m_keyboard;
 };

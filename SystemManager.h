@@ -1,6 +1,7 @@
 #pragma once
 #include "System.h"
 #include "WorldEntityManager.h"
+#include "EventManager.h"
 //#include "RenderSystem.h"
 
 class SystemManager
@@ -41,15 +42,19 @@ public:
 			if (system) system->Run();
 		}
 	}
+	EventManager<> & GetEventManager();
 private:
 	//----------------------------------------------------------------
 	// Systems
+	shared_ptr<SystemManager> m_this;
 	void AddSystem(shared_ptr<System> system);
 	map<string, shared_ptr<System>> m_systems;
 	//----------------------------------------------------------------
 	// Entities
 	unique_ptr<WorldEntityManager> m_entityManager;
-	
+	//----------------------------------------------------------------
+	// Events
+	EventManager<> m_events;
 
 };
 

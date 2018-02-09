@@ -6,11 +6,13 @@
 #include "RenderSystem.h"
 #include "MovementSystem.h"
 #include "GuiSystem.h"
+#include "ActionSystem.h"
 //#include "InfrastructureSystem.h"
 
 SystemManager::SystemManager(
 	HWND window, int width, int height
 ) {
+	m_this.reset(this);
 	//----------------------------------------------------------------
 	// Construct the core systems 
 
@@ -67,8 +69,9 @@ void SystemManager::LoadWorld(Filesystem::path worldDir)
 	//----------------------------------------------------------------
 	// Add world systems
 	AddSystem(std::shared_ptr<System>(new TerrainSystem(m_entityManager, vector<string>{ "Terrain", "Position", "VBO" }, 1, 64, systemsDir)));
-	AddSystem(std::shared_ptr<System>(new PlayerSystem(m_entityManager, vector<string>{ "Player", "Position" }, 1)));
+	AddSystem(std::shared_ptr<System>(new PlayerSystem(m_this,m_entityManager, vector<string>{ "Player", "Position" }, 1)));
 	AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Movement"}, 1, renderSystem)));
+	AddSystem(std::shared_ptr<System>(new ActionSystem(m_this,m_entityManager, vector<string>{"Action"}, 60)));
 }
 
 void SystemManager::CloseWorld()
@@ -92,6 +95,11 @@ void SystemManager::CloseWorld()
 void SystemManager::Save()
 {
 	for (auto & system : m_systems) system.second->Save();
+}
+
+EventManager<>& SystemManager::GetEventManager()
+{
+	return m_events;
 }
 
 void SystemManager::AddSystem(shared_ptr<System> system)

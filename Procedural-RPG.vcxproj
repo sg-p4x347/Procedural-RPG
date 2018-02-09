@@ -180,11 +180,15 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Action.h" />
+    <ClInclude Include="ActionSystem.h" />
     <ClInclude Include="AssetEntityManager.h" />
     <ClInclude Include="AssetManager.h" />
     <ClInclude Include="BaseEntityManager.h" />
     <ClInclude Include="Bezier.h" />
     <ClInclude Include="CubicSpline.h" />
+    <ClInclude Include="EventManager.h" />
+    <ClInclude Include="IEventManager.h" />
     <ClInclude Include="TreeBranch.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="ConversionUtil.h" />
@@ -242,11 +246,14 @@
     <ClInclude Include="WorldSystem.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Action.cpp" />
+    <ClCompile Include="ActionSystem.cpp" />
     <ClCompile Include="AssetEntityManager.cpp" />
     <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="BaseEntityManager.cpp" />
     <ClCompile Include="Bezier.cpp" />
     <ClCompile Include="CubicSpline.cpp" />
+    <ClCompile Include="IEventManager.cpp" />
     <ClCompile Include="TreeBranch.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="ConversionUtil.cpp" />
