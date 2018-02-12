@@ -1,13 +1,12 @@
 #pragma once
 #include "WorldSystem.h"
-#include "ActionSystem.h"
 class SystemManager;
 
 class PlayerSystem :
 	public WorldSystem
 {
 public:
-	PlayerSystem(shared_ptr<SystemManager> systemManager, unique_ptr<WorldEntityManager> &  entityManager,
+	PlayerSystem(SystemManager * systemManager, unique_ptr<WorldEntityManager> &  entityManager,
 		vector<string> & components, 
 		unsigned short updatePeriod
 	);
@@ -21,12 +20,15 @@ public:
 
 	//----------------------------------------------------------------
 	// Utility
-	Quaternion GetPlayerQuaternion();
+	Quaternion GetPlayerQuaternion(bool ignorePitch = false);
 
 
 private:
-	shared_ptr<SystemManager> SM;
+	SystemManager * SM;
 	shared_ptr<DirectX::Mouse> m_mouse;
 	shared_ptr<DirectX::Keyboard> m_keyboard;
+
+	void SetMovementToNormal();
+	void SetMovementToSpectator();
 };
 

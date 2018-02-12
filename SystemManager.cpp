@@ -7,12 +7,13 @@
 #include "MovementSystem.h"
 #include "GuiSystem.h"
 #include "ActionSystem.h"
+#include "CollisionSystem.h"
+#include "IEventManager.h"
 //#include "InfrastructureSystem.h"
 
 SystemManager::SystemManager(
 	HWND window, int width, int height
 ) {
-	m_this.reset(this);
 	//----------------------------------------------------------------
 	// Construct the core systems 
 
@@ -48,6 +49,8 @@ void SystemManager::Initialize()
 
 void SystemManager::LoadWorld(Filesystem::path worldDir)
 {
+	IEventManager::NewVersion();
+	GetSystem<GuiSystem>("Gui")->BindHandlers();
 	//----------------------------------------------------------------
 	// Filesystem dependencies
 	Filesystem::path systemsDir = worldDir / "System";
@@ -68,10 +71,12 @@ void SystemManager::LoadWorld(Filesystem::path worldDir)
 	renderSystem->InitializeWorldRendering(m_entityManager.get());
 	//----------------------------------------------------------------
 	// Add world systems
-	AddSystem(std::shared_ptr<System>(new TerrainSystem(m_entityManager, vector<string>{ "Terrain", "Position", "VBO" }, 1, 64, systemsDir)));
-	AddSystem(std::shared_ptr<System>(new PlayerSystem(m_this,m_entityManager, vector<string>{ "Player", "Position" }, 1)));
+	AddSystem(std::shared_ptr<System>(new TerrainSystem(this,m_entityManager, vector<string>{ "Terrain", "Position", "VBO" }, 1, 64, systemsDir)));
+	AddSystem(std::shared_ptr<System>(new PlayerSystem(this,m_entityManager, vector<string>{ "Player", "Position" }, 1)));
 	AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Movement"}, 1, renderSystem)));
-	AddSystem(std::shared_ptr<System>(new ActionSystem(m_this,m_entityManager, vector<string>{"Action"}, 60)));
+	AddSystem(std::shared_ptr<System>(new ActionSystem(this, m_entityManager, vector<string>{"Action", "Position"}, 10)));
+	AddSystem(std::shared_ptr<System>(new CollisionSystem(this, m_entityManager, vector<string>{"Movement", "Position", "Collision"}, 1)));
+
 }
 
 void SystemManager::CloseWorld()
@@ -81,8 +86,10 @@ void SystemManager::CloseWorld()
 	Save();
 	//----------------------------------------------------------------
 	// Deconstruct the entity manager
-	m_entityManager->Save();
-	m_entityManager.reset();
+	if (m_entityManager) {
+		m_entityManager->Save();
+		m_entityManager.reset();
+	}
 	//----------------------------------------------------------------
 	// Update render targets
 	auto renderSystem = GetSystem<RenderSystem>("Render");

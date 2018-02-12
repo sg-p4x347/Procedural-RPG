@@ -9,12 +9,15 @@
 #include "Droplet.h"
 #include "ThermalCell.h"
 
+class SystemManager;
+
 using DirectX::SimpleMath::Vector3;
 class TerrainSystem :
 	public WorldSystem
 {
 public:
 	TerrainSystem(
+		SystemManager * systemManager,
 		unique_ptr<WorldEntityManager> & entityManager,
 		vector<string> & components, 
 		unsigned short updatePeriod, 
@@ -33,7 +36,7 @@ public:
 	void Generate();
 	string GetBiomeName(float sample);
 	float Height(const int & x, const int & z);
-
+	float Height(float & x, float & z);
 	float Biome(const int & x, const int & z);
 	int Width();
 	DirectX::SimpleMath::Rectangle Area();
@@ -41,6 +44,7 @@ public:
 	// terrain manipulation (TEMP currently only updates the VBO)
 	void SetVertex(const int & x, const int & z, const float value);
 protected:
+	SystemManager * SM;
 	//----------------------------------------------------------------
 	// Entities
 	vector<EntityPtr> m_terrainEntities;
@@ -52,15 +56,18 @@ protected:
 	//----------------------------------------------------------------
 	// Loading and Updating Regions
 	int LOD(double distance, unsigned int modelWidth);
-	
-
+	//----------------------------------------------------------------
+	// Terrain cache
+	shared_ptr<HeightMap> m_cache;
+	Vector2 m_cachePos;
+	void UpdateCache(Vector3 center);
 	// 2 dimensional maps -------------------------------------------
 	int m_width;				// The total width of the continent (in meters)
 	const int m_regionWidth;	// Width of region divisions (in meters)
 	Filesystem::path m_directory;
 	float InternalHeight(std::ifstream & ifs, const int & index, float precision);
 	Vector3 Normal(std::ifstream & ifs, const int & index);
-	
+	void ImportMap(HeightMap & map, int x, int z);
 	//----------------------------------------------------------------
 	// Generation parameters
 	int m_sampleSpacing;
@@ -92,7 +99,7 @@ protected:
 	void UpdateRegions(DirectX::SimpleMath::Vector3 center);
 	shared_ptr<HeightMap> UpdateTerrainVBO(shared_ptr<Components::PositionNormalTextureVBO> vbo, int  x, int  z);
 	void UpdateWaterVBO(shared_ptr<Components::PositionNormalTextureVBO> vbo, shared_ptr<HeightMap> terrain, int  x, int z);
-	VertexPositionNormalTexture CreateVertex(Vector3 position, Vector3 normal, Vector2 texture);
+	VertexPositionNormalTangentColorTexture CreateVertex(Vector3 position, Vector3 normal, Vector2 texture);
 	float LowestNeighbor(HeightMap & water,HeightMap & terrain, int x, int z);
 	//----------------------------------------------------------------
 	// Terrain

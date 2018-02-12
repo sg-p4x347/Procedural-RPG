@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "Entity.h"
-
+#include "IEventManager.h"
 
 Entity::Entity(const unsigned int & id, const unsigned long & mask, BaseEntityManager * entityManager) : m_id(id), m_mask(mask), m_entityManager(entityManager)
 {
@@ -38,6 +38,7 @@ vector<shared_ptr<Components::Component>> Entity::GetComponents()
 
 void Entity::AddComponent(Components::Component * component)
 {
+	
 	AddComponent(shared_ptr<Components::Component>(component));
 }
 
@@ -45,6 +46,8 @@ void Entity::AddComponent(shared_ptr<Components::Component>& component)
 {
 	component->ID = m_id;
 	unsigned long componentMask = m_entityManager->ComponentMask(component->GetName());
+	
 	m_mask |= componentMask;
 	m_components.insert(std::pair < unsigned long, shared_ptr<Components::Component>>(componentMask, component));
+	IEventManager::Invoke(Entity_ComponentAdded, m_id, componentMask);
 }

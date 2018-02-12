@@ -8,9 +8,6 @@
     <Filter Include="Config">
       <UniqueIdentifier>{a0034a97-ab0a-4b02-9196-ded993123651}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Architecture">
-      <UniqueIdentifier>{7d4a7142-fe88-42a1-9c1c-d8d5f51b2207}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Filesystem">
       <UniqueIdentifier>{bcbdf428-3a00-4135-94d1-ddd69ca4d3be}</UniqueIdentifier>
     </Filter>
@@ -79,6 +76,12 @@
     </Filter>
     <Filter Include="World\Generator\Tree">
       <UniqueIdentifier>{0d89c84e-6baf-4ce9-8f12-db9c19a748ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\Geometry">
+      <UniqueIdentifier>{ac93e48b-0697-4315-82a6-c93c940a530c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Events">
+      <UniqueIdentifier>{41e63228-b4fe-4146-b46d-98f6069059fc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -255,17 +258,40 @@
     <ClInclude Include="TreeBranch.h">
       <Filter>World\Generator\Tree</Filter>
     </ClInclude>
-    <ClInclude Include="CubicSpline.h" />
     <ClInclude Include="ActionSystem.h">
       <Filter>World\System</Filter>
     </ClInclude>
-    <ClInclude Include="Action.h" />
-    <ClInclude Include="EventManager.h">
-      <Filter>ECS</Filter>
+    <ClInclude Include="Action.h">
+      <Filter>World\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Box.h">
+      <Filter>Utility\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Line.h">
+      <Filter>Utility\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="CubicSpline.h">
+      <Filter>Utility\Math</Filter>
     </ClInclude>
     <ClInclude Include="IEventManager.h">
-      <Filter>ECS</Filter>
+      <Filter>Events</Filter>
     </ClInclude>
+    <ClInclude Include="EventManager.h">
+      <Filter>Events</Filter>
+    </ClInclude>
+    <ClInclude Include="EventHandler.h">
+      <Filter>Events</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityRegion.h">
+      <Filter>World\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Collision.h">
+      <Filter>World\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionSystem.h">
+      <Filter>World\System</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -427,14 +453,34 @@
     <ClCompile Include="TreeBranch.cpp">
       <Filter>World\Generator\Tree</Filter>
     </ClCompile>
-    <ClCompile Include="CubicSpline.cpp" />
     <ClCompile Include="ActionSystem.cpp">
       <Filter>World\System</Filter>
     </ClCompile>
-    <ClCompile Include="Action.cpp" />
-    <ClCompile Include="IEventManager.cpp">
-      <Filter>ECS</Filter>
+    <ClCompile Include="Action.cpp">
+      <Filter>World\Component</Filter>
     </ClCompile>
+    <ClCompile Include="Box.cpp">
+      <Filter>Utility\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="Line.cpp">
+      <Filter>Utility\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="CubicSpline.cpp">
+      <Filter>Utility\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="IEventManager.cpp">
+      <Filter>Events</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityRegion.cpp">
+      <Filter>World\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Collision.cpp">
+      <Filter>World\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionSystem.cpp">
+      <Filter>World\System</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomEffect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
@@ -460,12 +506,21 @@
     <None Include="packages.config">
       <Filter>VS</Filter>
     </None>
+    <None Include="config\WorldEntityManager.json">
+      <Filter>Config</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shaders\Terrain.hlsl">
       <Filter>Assets\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Assets\Shaders\Water.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\Test.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\VSTest.hlsl">
       <Filter>Assets\Shaders</Filter>
     </FxCompile>
   </ItemGroup>

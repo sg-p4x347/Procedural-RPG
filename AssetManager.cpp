@@ -1,33 +1,146 @@
 #include "pch.h"
 #include "AssetManager.h"
 #include "ModelAsset.h"
+#include "CustomEffect.h"
 AssetManager * AssetManager::m_instance = nullptr;
+void AssetManager::CreateDgslEffect(string name, vector<string> textures, const D3D11_INPUT_ELEMENT_DESC * inputElements, const UINT elementCount)
+{
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
+	m_pixelShaders.insert(std::pair<string, Microsoft::WRL::ComPtr<ID3D11PixelShader>>(name, pixelShader));
+	auto blob = DX::ReadData(ansi2unicode("Assets\\" + name + ".cso").c_str()); // .cso is the compiled version of the hlsl shader (compiled shader object)
+	DX::ThrowIfFailed(m_d3dDevice->CreatePixelShader(&blob.front(), blob.size(),
+		nullptr, pixelShader.ReleaseAndGetAddressOf()));
+
+	shared_ptr<DGSLEffect> effect = std::make_shared<DGSLEffect>(m_d3dDevice.Get(), pixelShader.Get());
+
+	for (int textureIndex = 0; textureIndex < textures.size(); textureIndex++) {
+		effect->SetTexture(textureIndex, AssetManager::Get()->GetTexture(textures[textureIndex]).Get());
+	}
+
+
+	effect->SetTextureEnabled(true);
+	effect->SetVertexColorEnabled(true);
+	effect->EnableDefaultLighting();
+
+	// Input layout
+	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+	void const* shaderByteCode;
+	size_t byteCodeLength;
+
+	effect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
+
+	DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(
+		inputElements,
+		elementCount,
+		shaderByteCode, byteCodeLength,
+		inputLayout.ReleaseAndGetAddressOf()));
+	m_inputLayouts.insert(std::make_pair(name, inputLayout));
+
+
+	AddEffect(name, effect);
+}
+void AssetManager::CreateCustomEffect(string name, vector<string> textures,const D3D11_INPUT_ELEMENT_DESC * inputElements, const UINT elementCount)
+{
+	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
+	m_vertexShaders.insert(std::pair<string, Microsoft::WRL::ComPtr<ID3D11VertexShader>>(name, vertexShader));
+	auto blob = DX::ReadData(ansi2unicode("Assets\\VS" + name + ".cso").c_str()); // .cso is the compiled version of the hlsl shader (compiled shader object)
+	DX::ThrowIfFailed(m_d3dDevice->CreateVertexShader(&blob.front(), blob.size(),
+		nullptr, vertexShader.ReleaseAndGetAddressOf()));
+
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
+	m_pixelShaders.insert(std::pair<string, Microsoft::WRL::ComPtr<ID3D11PixelShader>>(name, pixelShader));
+	blob = DX::ReadData(ansi2unicode("Assets\\" + name + ".cso").c_str()); // .cso is the compiled version of the hlsl shader (compiled shader object)
+	DX::ThrowIfFailed(m_d3dDevice->CreatePixelShader(&blob.front(), blob.size(),
+		nullptr, pixelShader.ReleaseAndGetAddressOf()));
+
+	shared_ptr<CustomEffect> effect = std::make_shared<CustomEffect>(m_d3dDevice.Get(), pixelShader.Get(),vertexShader.Get());
+
+	for (int textureIndex = 0; textureIndex < textures.size(); textureIndex++) {
+		effect->SetTexture(textureIndex,AssetManager::Get()->GetTexture(textures[textureIndex]).Get());
+	}
+
+	/*effect->SetTextureEnabled(true);
+	effect->SetVertexColorEnabled(true);
+
+	effect->EnableDefaultLighting();*/
+	// Input layout
+	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+	void const* shaderByteCode;
+	size_t byteCodeLength;
+
+	effect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
+
+	DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(
+		inputElements,
+		elementCount,
+		shaderByteCode, byteCodeLength,
+		inputLayout.ReleaseAndGetAddressOf()));
+	m_inputLayouts.insert(std::make_pair(name, inputLayout));
+
+	AddEffect(name, effect);
+}
 void AssetManager::CreateEffects(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context)
 {
 	//----------------------------------------------------------------
 	// Terrain Effect
-	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
-	m_pixelShaders.insert(std::pair<string, Microsoft::WRL::ComPtr<ID3D11PixelShader>>("Terrain", pixelShader));
-	auto blob = DX::ReadData(L"Assets\\Terrain.cso"); // .cso is the compiled version of the hlsl shader (compiled shader object)
-	DX::ThrowIfFailed(m_d3dDevice->CreatePixelShader(&blob.front(), blob.size(),
-		nullptr, pixelShader.ReleaseAndGetAddressOf()));
-
-	shared_ptr<DGSLEffect> terrain = std::make_shared<DGSLEffect>(m_d3dDevice.Get(), pixelShader.Get());
-
-	terrain->SetTexture(AssetManager::Get()->GetTexture("dirt").Get());
-	terrain->SetTexture(1, AssetManager::Get()->GetTexture("grass").Get());
-	terrain->SetTexture(2, AssetManager::Get()->GetTexture("stone").Get());
-	terrain->SetTexture(3, AssetManager::Get()->GetTexture("snow").Get());
-
-	terrain->SetTextureEnabled(true);
-	terrain->SetVertexColorEnabled(true);
-
-	terrain->EnableDefaultLighting();
-
+	CreateDgslEffect(
+		"Terrain",
+		vector<string>{"dirt", "grass", "stone", "snow"},
+		VertexPositionNormalTangentColorTexture::InputElements,
+		VertexPositionNormalTangentColorTexture::InputElementCount
+	);
 	//----------------------------------------------------------------
 	// Water Effect
+	CreateDgslEffect(
+		"Water",
+		vector<string>{"water"},
+		VertexPositionNormalTangentColorTexture::InputElements,
+		VertexPositionNormalTangentColorTexture::InputElementCount
+	);
+	//----------------------------------------------------------------
+	// Test Effect
+	/*CreateCustomEffect(
+		"Test",
+		vector<string>(),
+		VertexPositionColor::InputElements,
+		VertexPositionColor::InputElementCount
+	);*/
 
-	DGSLEffectFactory::DGSLEffectInfo info;
+	//Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
+	//m_pixelShaders.insert(std::pair<string, Microsoft::WRL::ComPtr<ID3D11PixelShader>>("Terrain", pixelShader));
+	//auto blob = DX::ReadData(L"Assets\\Terrain.cso"); // .cso is the compiled version of the hlsl shader (compiled shader object)
+	//DX::ThrowIfFailed(m_d3dDevice->CreatePixelShader(&blob.front(), blob.size(),
+	//	nullptr, pixelShader.ReleaseAndGetAddressOf()));
+
+	//shared_ptr<DGSLEffect> terrain = std::make_shared<DGSLEffect>(m_d3dDevice.Get(), pixelShader.Get());
+
+	//terrain->SetTexture(AssetManager::Get()->GetTexture("dirt").Get());
+	//terrain->SetTexture(1, AssetManager::Get()->GetTexture("grass").Get());
+	//terrain->SetTexture(2, AssetManager::Get()->GetTexture("stone").Get());
+	//terrain->SetTexture(3, AssetManager::Get()->GetTexture("snow").Get());
+
+	//terrain->SetTextureEnabled(true);
+	//terrain->SetVertexColorEnabled(true);
+
+	//terrain->EnableDefaultLighting();
+	//// Input layout
+	//{
+	//	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+	//	void const* shaderByteCode;
+	//	size_t byteCodeLength;
+
+	//	terrain->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
+
+	//	DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(
+	//		VertexPositionNormalTangentColorTexture::InputElements,
+	//		VertexPositionNormalTangentColorTexture::InputElementCount,
+	//		shaderByteCode, byteCodeLength,
+	//		inputLayout.ReleaseAndGetAddressOf()));
+	//	m_inputLayouts.insert(std::make_pair())
+	//}
+
+	
+	/*DGSLEffectFactory::DGSLEffectInfo info;
 	info.name = L"Water";
 	info.pixelShader = L"Assets\\Water.cso";
 	shared_ptr<DGSLEffect> water = std::dynamic_pointer_cast <DGSLEffect>(m_DGSLfxFactory->CreateDGSLEffect(info, context.Get()));
@@ -36,10 +149,30 @@ void AssetManager::CreateEffects(Microsoft::WRL::ComPtr<ID3D11DeviceContext> con
 	water->SetVertexColorEnabled(true);
 	water->EnableDefaultLighting();
 	
+	void const* shaderByteCode;
+	size_t byteCodeLength;
 
+	water->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
 
-	AddEffect("Terrain", terrain);
-	AddEffect("Water", water);
+	DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(
+		VertexPositionNormalTangentColorTexture::InputElements,
+		VertexPositionNormalTangentColorTexture::InputElementCount,
+		shaderByteCode, byteCodeLength,
+		m_waterLayout.ReleaseAndGetAddressOf()));
+
+	
+	AddEffect("Water", water);*/
+}
+void AssetManager::CreateInputLayouts()
+{
+	/*shared_ptr<DGSLEffect> terrain;
+	if (AssetManager::Get()->GetEffect<DGSLEffect>("Terrain", terrain))
+	
+	shared_ptr<DGSLEffect> water;
+	if (AssetManager::Get()->GetEffect<DGSLEffect>("Water", water))
+	{
+		
+	}*/
 }
 AssetEntityManager * AssetManager::GetProceduralEM()
 {
@@ -217,6 +350,13 @@ std::shared_ptr<Model> AssetManager::GetModel(string path, float distance, bool 
 		Utility::OutputException(path + ' ' + ex.what());
 	}
 }
+Microsoft::WRL::ComPtr<ID3D11InputLayout> AssetManager::GetInputLayout(string name)
+{
+	if (m_inputLayouts.find(name) != m_inputLayouts.end()) {
+		return m_inputLayouts[name];
+	}
+	return nullptr;
+}
 int AssetManager::GetFontSize()
 {
 	return m_fontSize;
@@ -225,7 +365,7 @@ VboParser * AssetManager::ProVboParser()
 {
 	return m_vboParser.get();
 }
-void AssetManager::AddEffect(string name, shared_ptr<DGSLEffect> effect)
+void AssetManager::AddEffect(string name, shared_ptr<IEffect> effect)
 {
-	m_effects.insert(std::pair<string, shared_ptr<DGSLEffect>>(name, effect));
+	m_effects.insert(std::pair<string, shared_ptr<IEffect>>(name, effect));
 }

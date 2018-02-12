@@ -16,6 +16,7 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetTexture(string path,bool procedural = false);
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetWicTexture(string path);
 	std::shared_ptr<Model> GetModel(string path, float distance = 0.f, bool procedural = false);
+	Microsoft::WRL::ComPtr<ID3D11InputLayout> GetInputLayout(string name);
 	template <typename EffectType>
 	inline bool GetEffect(string name, shared_ptr<EffectType> & effect) {
 		effect = nullptr;
@@ -29,12 +30,14 @@ public:
 	VboParser * ProVboParser();
 	//----------------------------------------------------------------
 	// Asset Storage
-	void AddEffect(string name, shared_ptr<DGSLEffect> effect);
+	void AddEffect(string name, shared_ptr<IEffect> effect);
 
 	//----------------------------------------------------------------
 	// Asset Creation
+	void CreateDgslEffect(string name, vector<string> textures, const D3D11_INPUT_ELEMENT_DESC * inputElements, const UINT elementCount);
+	void CreateCustomEffect(string name, vector<string> textures,const D3D11_INPUT_ELEMENT_DESC * inputElements,const UINT elementCount);
 	void CreateEffects(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context);
-	
+	void CreateInputLayouts();
 	AssetEntityManager * GetProceduralEM();
 private:
 	static AssetManager * m_instance;
@@ -62,10 +65,13 @@ private:
 	std::unique_ptr<DGSLEffectFactory>	m_DGSLfxFactory;
 	std::unique_ptr<EffectFactory>		m_fxFactory;
 	map<string, shared_ptr<IEffect>>	m_effects;
-	
+	//----------------------------------------------------------------
+	// Input Layouts
+	map<string,Microsoft::WRL::ComPtr<ID3D11InputLayout>>	m_inputLayouts;
 	//----------------------------------------------------------------
 	// Shaders
 	map<string,Microsoft::WRL::ComPtr<ID3D11PixelShader>>	m_pixelShaders;
+	map<string, Microsoft::WRL::ComPtr<ID3D11VertexShader>>	m_vertexShaders;
 	//----------------------------------------------------------------
 	// Fonts
 	map<string, std::shared_ptr<SpriteFont>> m_fonts;

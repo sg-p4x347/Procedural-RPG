@@ -7,6 +7,7 @@
 #include "Game.h"
 #include "GuiText.h"
 #include "AssetManager.h"
+#include "IEventManager.h"
 
 using namespace GUI;
 using namespace DirectX;
@@ -131,7 +132,18 @@ GuiSystem::GuiSystem(
 			}())
 		})
 	}));
-
+	//----------------------------------------------------------------
+	// HUD
+	m_HUDhint = GuiEM.NewTextPanel("Hint", [] {
+		Style * style = new Style();
+		style->FontSize = "32px";
+		style->TextAlign = "center";
+		style->FontColor = "rgb(1,1,1)";
+		style->VerticalTextAlign = "center";
+		style->Height = "100%";
+		return style;
+	}());
+	AddMenu("HUD", m_HUDhint);
 }
 
 
@@ -200,6 +212,29 @@ void GuiSystem::CloseMenu()
 vector<shared_ptr<Components::Component>> & GuiSystem::GetDrawQueue()
 {
 	return m_drawQueue;
+}
+
+void GuiSystem::ShowHint(string hint)
+{
+	
+	auto textComp = m_HUDhint->GetComponent<GUI::Text>("Text");
+	textComp->String = hint;
+	OpenMenu("HUD");
+}
+
+void GuiSystem::HideHint()
+{
+	CloseMenu();
+}
+
+void GuiSystem::BindHandlers()
+{
+	IEventManager::RegisterHandler(GUI_ShowHint, std::function<void(string)>([=](string text) {
+		ShowHint(text);
+	}));
+	IEventManager::RegisterHandler(GUI_HideHint, std::function<void(void)>([=]() {
+		HideHint();
+	}));
 }
 
 void GuiSystem::AddMenu(string name, EntityPtr menu)
@@ -316,7 +351,7 @@ void GuiSystem::OnMouseUp(EntityPtr entity)
 void GuiSystem::OnClick(EntityPtr entity)
 {
 	if (entity->HasComponents(GuiEM.ComponentMask("EventHandler_Click"))) {
-		shared_ptr<EventHandler> clickHandler = entity->GetComponent<EventHandler>("EventHandler_Click");
+		shared_ptr<GUI::EventHandler> clickHandler = entity->GetComponent<GUI::EventHandler>("EventHandler_Click");
 		if (clickHandler) clickHandler->Callback();
 	}
 	OnHover(entity);

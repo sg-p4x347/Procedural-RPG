@@ -15,11 +15,14 @@
 #include "VboParser.h"
 #include "AssetManager.h"
 #include "TreeGenerator.h"
+#include "SystemManager.h"
+#include "ActionSystem.h"
 static const bool g_erosion = false;
 
 using namespace DirectX::SimpleMath;
 static EntityPtr waterEntity;
 TerrainSystem::TerrainSystem(
+	SystemManager * systemManager,
 	unique_ptr<WorldEntityManager> &  entityManager,
 	vector<string> & components, 
 	unsigned short updatePeriod, 
@@ -27,6 +30,7 @@ TerrainSystem::TerrainSystem(
 	Filesystem::path directory
 )
 	: WorldSystem::WorldSystem(entityManager,components,updatePeriod),
+	SM(systemManager),
 	m_regionWidth(regionWidth)
 {
 	m_directory = directory / Name();
@@ -35,6 +39,8 @@ TerrainSystem::TerrainSystem(
 	m_width = terrainMap["width"].To<int>();
 	//m_workerThread = TaskThread()
 	//m_workers = Map<std::thread>(m_width / m_regionWidth,0,0,0);
+
+	
 }
 
 
@@ -222,14 +228,14 @@ void TerrainSystem::Generate()
 		//	}, 20,10);
 		//}
 		TreeGenerator tg;
-		Components::VBO<VertexPositionNormalTexture> * vbo = new Components::PositionNormalTextureVBO(tg.Generate());
+		Components::VBO<VertexPositionNormalTangentColorTexture> * vbo = new Components::PositionNormalTextureVBO(tg.Generate());
 		
-		AssetManager::Get()->GetProceduralEM()->CreateModel("Grass", *vbo);
+		AssetManager::Get()->GetProceduralEM()->CreateModel("Tree", *vbo);
 		delete vbo;
 	}
 	{
 		EntityPtr test = EM->NewEntity();
-		test->AddComponent(new Components::Model("Grass","Terrain",true,false));
+		test->AddComponent(new Components::Model("Tree","Terrain",true,false));
 		test->AddComponent(new Components::Position(Vector3(0, 20, 0)));
 /*
 		auto vbo = test->GetComponent<Components::PositionNormalTextureVBO>("PositionNormalTextureVBO");
@@ -283,6 +289,11 @@ float TerrainSystem::Height(const int & x, const int & z)
 		return InternalHeight(terrainStream, index,10.f);
 	}
 	return 0.0;
+}
+
+float TerrainSystem::Height(float & x, float & z)
+{
+	return m_cache->Height(x - m_cachePos.x, z - m_cachePos.y);
 }
 
 int TerrainSystem::Width()
@@ -488,8 +499,10 @@ void TerrainSystem::NewTree(DirectX::SimpleMath::Vector3 & position, Vector3 & r
 	entity->AddComponent(
 		new Components::Tag("Tree"));
 	entity->AddComponent(
-		new Components::Model("Grass", "Default",true,false));
+		new Components::Model("Tree", "Default",true,false));
 	//new Components::Model("Tree", "Default")
+	// Add action node
+	SM->GetSystem<ActionSystem>("Action")->CreateAction(position, Vector3(1.f, 10.f, 1.f), EventTypes::Plant_GatherWood, entity->ID());
 }
 
 float TerrainSystem::TreeGradientProbability(float gradient)
@@ -508,6 +521,7 @@ void TerrainSystem::UpdateRegions(Vector3 center)
 {
 	
 	center.y = 0;
+	UpdateCache(center);
 	for (int i = 0; i < m_terrainEntities.size(); i++) {
 		auto terrainEntity = m_terrainEntities[i];
 		auto waterEntity = m_waterEntities[i];
@@ -660,9 +674,9 @@ void TerrainSystem::UpdateWaterVBO(shared_ptr<Components::PositionNormalTextureV
 	vbo->LODchanged = true;
 }
 
-VertexPositionNormalTexture TerrainSystem::CreateVertex(Vector3 position, Vector3 normal, Vector2 texture)
+VertexPositionNormalTangentColorTexture TerrainSystem::CreateVertex(Vector3 position, Vector3 normal, Vector2 texture)
 {
-	return VertexPositionNormalTexture(position, normal, texture);
+	return VertexPositionNormalTangentColorTexture(position, normal, Vector4::Zero,Vector4::Zero,texture);
 }
 
 float TerrainSystem::LowestNeighbor(HeightMap & water, HeightMap & terrain, int x, int z)
@@ -751,51 +765,51 @@ shared_ptr<HeightMap> TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::Pos
 			*/
 
 			// Triangle 1 - Upper left
-			vbo->Vertices[index] = {
+			vbo->Vertices[index] = CreateVertex(
 				XMFLOAT3(vertex1),				// position
 				XMFLOAT3(normalMap.map[x][z]),	// normal
 				XMFLOAT2(0.f,0.f)				// texture
-			};
+			);
 			vbo->Indices[index] = index;
 			index++;
 			// Triangle 1 - Bottom right.
-			vbo->Vertices[index] = {
+			vbo->Vertices[index] = CreateVertex(
 				XMFLOAT3(vertex4),										// position
 				XMFLOAT3(normalMap.map[x + 1][z + 1]),	// normal
 				XMFLOAT2(1.f,1.f)										// texture
-			};
+			);
 			vbo->Indices[index] = index;
 			index++;
 			// Triangle 1 - Bottom left.
-			vbo->Vertices[index] = {
+			vbo->Vertices[index] = CreateVertex(
 				XMFLOAT3(vertex3),											// position
 				XMFLOAT3(normalMap.map[x][z + 1]),	// normal
 				XMFLOAT2(0.f,1.f)											// texture
-			};
+			);
 			vbo->Indices[index] = index;
 			index++;
 			// Triangle 2 - Upper left.
-			vbo->Vertices[index] = {
+			vbo->Vertices[index] = CreateVertex(
 				XMFLOAT3(vertex1),										// position
 				XMFLOAT3(normalMap.map[x][z]),	// normal
 				XMFLOAT2(0.f,0.f)										// texture
-			};
+			);
 			vbo->Indices[index] = index;
 			index++;
 			// Triangle 2 - Upper right.
-			vbo->Vertices[index] = {
+			vbo->Vertices[index] = CreateVertex(
 				XMFLOAT3(vertex2),											// position
 				XMFLOAT3(normalMap.map[x + 1][z]),	// normal
 				XMFLOAT2(1.f,0.f)											// texture
-			};
+			);
 			vbo->Indices[index] = index;
 			index++;
 			// Triangle 2 - Bottom right.
-			vbo->Vertices[index] = {
+			vbo->Vertices[index] = CreateVertex(
 				XMFLOAT3(vertex4),												// position
 				XMFLOAT3(normalMap.map[x + 1][z + 1]),	// normal
 				XMFLOAT2(1.f,1.f)												// texture
-			};
+			);
 			vbo->Indices[index] = index;
 			index++;
 		}
@@ -809,6 +823,21 @@ int TerrainSystem::LOD(double distance, unsigned int modelWidth)
 {
 	// add integer to decrease terrain detail
 	return 0 + std::min((int)std::log2(m_regionWidth),std::max(0,(int)std::floor(std::log2(distance / (double)modelWidth))));
+}
+
+void TerrainSystem::UpdateCache(Vector3 center)
+{
+	float dx = center.x - m_cachePos.x;
+	float dz = center.z - m_cachePos.y;
+	if (!m_cache || dx > m_cache->width || dx < 0.f || dz > m_cache->width || dz < 0.f) {
+		if (!m_cache) // initialize the local cache
+			m_cache.reset(new HeightMap(32, 0, 0, 0));
+		// Update the cache
+		m_cachePos.x = ((int)center.x / m_cache->width) * m_cache->width;
+		m_cachePos.y = ((int)center.z / m_cache->width) * m_cache->width;
+
+		ImportMap(*m_cache,(int)m_cachePos.x,(int)m_cachePos.y);
+	}
 }
 
 void TerrainSystem::NewTerrain(DirectX::SimpleMath::Vector3 & position)
@@ -834,6 +863,16 @@ Vector3 TerrainSystem::Normal(std::ifstream & ifs, const int & index)
 	Vector3 normal = Vector3(float(normalBuffer[0]), float(normalBuffer[1]), float(normalBuffer[2]));
 	normal.Normalize();
 	return normal;
+}
+
+void TerrainSystem::ImportMap(HeightMap & map, int x, int z)
+{
+	ifstream terrainStream(m_directory / "terrain.dat", ios::binary);
+	for (int i = 0; i <=  map.width; i++) {
+		for (int j = 0; j <= map.width; j++) {
+			map.map[i][j] = InternalHeight(terrainStream, Utility::posToIndex(x + i, z + j, m_width + 1), 10.f);
+		}
+	}
 }
 
 float TerrainSystem::InternalHeight(std::ifstream & ifs, const int & index,float precision)

@@ -34,7 +34,8 @@ public:
 	);
 
 private:
-	vector<VertexPositionNormalTexture> m_VB;
+	VertexPositionNormalTangentColorTexture CreateVertex(Vector3 position, Vector3 normal, Vector2 texture);
+	vector<VertexPositionNormalTangentColorTexture> m_VB;
 	vector<uint16_t> m_IB;
 };
 

@@ -46,6 +46,13 @@ namespace GUI {
 		return entity;
 	}
 
+	EntityPtr GuiEntityManager::NewTextPanel(string text, Style * style)
+	{
+		EntityPtr panel = NewPanel(style);
+		panel->AddComponent(new Text(text));
+		return panel;
+	}
+
 	EntityPtr GuiEntityManager::NewButton(string text, std::function<void()>&&clickCallback, Style * style)
 	{
 		// Create World button

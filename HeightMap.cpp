@@ -84,6 +84,9 @@ float HeightMap::Height(float x, float z)
 	if (std::floorf(x) == x && std::floorf(z) == z) {
 		return Height((int)x, (int)z);
 	}
+	else if (x < 0.f || z < 0.f || x > width || z > width) {
+		return 0.f;
+	}
 	else {
 		float quad[2][2]{
 			{map[std::floor(x)][std::floor(z)],map[std::floor(x)][std::ceil(z)]},

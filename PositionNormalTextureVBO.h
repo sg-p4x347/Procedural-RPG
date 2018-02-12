@@ -2,7 +2,7 @@
 #include "VBO.h"
 namespace Components {
 	class PositionNormalTextureVBO :
-		public VBO<VertexPositionNormalTexture>
+		public VBO<VertexPositionNormalTangentColorTexture>
 	{
 	public:
 		PositionNormalTextureVBO();

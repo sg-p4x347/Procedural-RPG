@@ -12,6 +12,7 @@ namespace GUI {
 		//----------------------------------------------------------------
 		// Entity Factories
 		EntityPtr NewPanel(Style * style, vector<EntityPtr> children = vector<EntityPtr>());
+		EntityPtr NewTextPanel(string text, Style * style);
 		EntityPtr NewButton(string text, std::function<void()>&& clickCallback,Style * style = nullptr);
 		//----------------------------------------------------------------
 		// Entity modifiers

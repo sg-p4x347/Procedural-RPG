@@ -7,7 +7,7 @@
 const Filesystem::path PersistenceEntityManager::m_nextEntityFile("Next_Entity.txt");
 
 
-PersistenceEntityManager::PersistenceEntityManager(Filesystem::path & directory) : BaseEntityManager::BaseEntityManager(), m_player(nullptr), m_directory(directory)
+PersistenceEntityManager::PersistenceEntityManager(Filesystem::path & directory) : BaseEntityManager::BaseEntityManager(), m_directory(directory)
 {
 	//----------------------------------------------------------------
 	// Initialize filesystem dependencies
@@ -171,30 +171,7 @@ vector<EntityPtr> PersistenceEntityManager::LoadEntities(unsigned long & compone
 //	return entityVector;
 //}
 
-vector<EntityPtr> PersistenceEntityManager::FindEntitiesInRange(unsigned long componentMask, Vector3 center, float range)
-{
-	auto entities = FindEntities(componentMask | ComponentMask("Position"));
-	vector<EntityPtr> finalSet;
-	for (auto & entity : entities) {
-		if (Vector3::Distance(entity->GetComponent<Components::Position>("Position")->Pos,center) <= range) {
-			finalSet.push_back(entity);
-		}
-	}
-	return finalSet;
-}
 
-EntityPtr PersistenceEntityManager::Player()
-{
-	if (!m_player) { 
-		auto results = FindEntities(ComponentMask("Player"));
-		m_player = results.size() != 0 ? results[0] : nullptr; }
-	return m_player;
-}
-
-shared_ptr<Components::Position> PersistenceEntityManager::PlayerPos()
-{
-	return Player()->GetComponent<Components::Position>("Position");
-}
 
 unsigned long PersistenceEntityManager::ComponentMaskOf(const unsigned int & id)
 {
@@ -207,10 +184,10 @@ unsigned long PersistenceEntityManager::ComponentMaskOf(const unsigned int & id)
 	return mask;
 }
 
-PersistenceEntityManager::~PersistenceEntityManager()
-{
-	//Save();
-}
+//PersistenceEntityManager::~PersistenceEntityManager()
+//{
+//	//Save();
+//}
 
 void PersistenceEntityManager::Save()
 {

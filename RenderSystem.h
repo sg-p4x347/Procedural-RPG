@@ -26,8 +26,7 @@ private:
 	EntityPtr m_player;
 	std::mutex m_mutex;
 	// DirectX
-	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_inputLayout;
-	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_waterLayout;
+	
 	vector<string>								m_effectOrder;
 	
 	std::shared_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>	m_batch;
@@ -56,7 +55,7 @@ private:
 	SimpleMath::Matrix	m_worldMatrix;
 	SimpleMath::Matrix 	m_viewMatrix;
 	SimpleMath::Matrix  m_projMatrix;
-	void UpdateEffectMatricies(std::shared_ptr<DGSLEffect> effect, int backBufferWidth, int backBufferHeight);
+	void UpdateEffectMatricies(std::shared_ptr<IEffectMatrices> effect, int backBufferWidth, int backBufferHeight);
 	// Initializes window-dependent resources
 	void CreateResources();
 	// Initialzies window-independent resources

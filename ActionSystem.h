@@ -1,5 +1,6 @@
 #pragma once
 #include "WorldSystem.h"
+#include "IEventManager.h"
 /*----------------------------------------------------------------
  Purpose:
  Provide standard operations on world action nodes. Designed to be
@@ -12,15 +13,20 @@ class ActionSystem :
 	public WorldSystem
 {
 public:
-	ActionSystem(shared_ptr<SystemManager> systemManager, unique_ptr<WorldEntityManager> & entityManager, vector<string> & components, unsigned short updatePeriod);
+	ActionSystem(SystemManager *, unique_ptr<WorldEntityManager> & entityManager, vector<string> & components, unsigned short updatePeriod);
 
 	// Inherited via WorldSystem
 	virtual string Name() override;
 	virtual void Update(double & elapsed) override;
 
 	void Check();
-	void CreateAction();
+	void CreateAction(Vector3 position, Vector3 size, EventTypes event, unsigned int targetEntity);
 private:
-	shared_ptr<SystemManager> SM;
+
+	SystemManager * SM;
+	//----------------------------------------------------------------
+	// Utility
+	Vector3 GetPlayerLookRay();
+	bool CanInteract(EntityPtr & actionNode);
 };
 

@@ -46,7 +46,6 @@ public:
 private:
 	//----------------------------------------------------------------
 	// Systems
-	shared_ptr<SystemManager> m_this;
 	void AddSystem(shared_ptr<System> system);
 	map<string, shared_ptr<System>> m_systems;
 	//----------------------------------------------------------------

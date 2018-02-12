@@ -75,6 +75,7 @@ void Game::PauseGame()
 	DirectX::Mouse::Get().SetMode(DirectX::Mouse::Mode::MODE_ABSOLUTE);
 	m_systemManager->GetSystem<GuiSystem>("Gui")->OpenMenu("game_paused");
 	HaltWorldSystems();
+	m_paused = true;
 }
 
 void Game::ResumeGame()
@@ -82,7 +83,7 @@ void Game::ResumeGame()
 	DirectX::Mouse::Get().SetMode(DirectX::Mouse::Mode::MODE_RELATIVE);
 	m_systemManager->GetSystem<GuiSystem>("Gui")->CloseMenu();
 	RunWorldSystems();
-
+	m_paused = false;
 }
 
 void Game::TogglePause()
@@ -117,9 +118,9 @@ void Game::Update(DX::StepTimer const& timer)
 	MouseTracker.Update(MouseState);
 	KeyboardTracker.Update(KeyboardState);
 
-	/*if (KeyboardTracker.pressed.Escape) {
-		PauseGame();
-	}*/
+	if (KeyboardTracker.pressed.Escape) {
+		TogglePause();
+	}
 
 	// Update the systems
 	m_systemManager->Tick(elapsed);

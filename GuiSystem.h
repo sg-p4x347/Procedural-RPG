@@ -24,6 +24,13 @@ public:
 	//----------------------------------------------------------------
 	// Draw queue for RenderSystem
 	vector<shared_ptr<Components::Component>> & GetDrawQueue();
+	//----------------------------------------------------------------
+	// HUD Control
+	void ShowHint(string hint);
+	void HideHint();
+	//----------------------------------------------------------------
+	// Events
+	void BindHandlers();
 private:
 	GUI::GuiEntityManager GuiEM;
 	Rectangle m_outputRect;
@@ -33,7 +40,9 @@ private:
 	map<string, EntityPtr> m_menus;
 	void AddMenu(string name, EntityPtr menu);
 	EntityPtr GetMenu(string name);
-	
+	//----------------------------------------------------------------
+	// HUD
+	EntityPtr m_HUDhint;
 
 	//----------------------------------------------------------------
 	// Spritesheets
