@@ -17,7 +17,7 @@
 #include "TreeGenerator.h"
 #include "SystemManager.h"
 #include "ActionSystem.h"
-static const bool g_erosion = false;
+static const bool g_erosion = true;
 
 using namespace DirectX::SimpleMath;
 static EntityPtr waterEntity;
