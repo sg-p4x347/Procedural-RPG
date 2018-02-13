@@ -27,7 +27,7 @@ m_ModelMask(0)
 	
 	SetViewport(width, height);
 
-	SetFont("impact");
+	//SetFont("impact");
 }
 
 RenderSystem::~RenderSystem()
@@ -55,8 +55,7 @@ void RenderSystem::Update(double & elapsed)
 		else {
 			shared_ptr<Text> text = dynamic_pointer_cast<Text>(guiComponent);
 			if (text) {
-				SetFont(text->Font);
-				DrawText(text->String, text->Position, (float)text->FontSize / (float)AssetManager::Get()->GetFontSize(),text->Color);
+				DrawText(text->String,text->Font, text->Position, text->FontSize,text->Color);
 			}
 		}
 	}
@@ -210,15 +209,16 @@ void RenderSystem::SpriteBatchDraw(shared_ptr<Sprite> sprite)
 	);
 }
 
-void RenderSystem::SetFont(string path)
+shared_ptr<SpriteFont> RenderSystem::GetFont(string path,int size)
 {
-	m_font = AssetManager::Get()->GetFont(path);
+	return AssetManager::Get()->GetFont(path,size);
 }
 
-void RenderSystem::DrawText(string text, Vector2 position,float size, SimpleMath::Color color)
+void RenderSystem::DrawText(string text,string font, Vector2 position,int size, SimpleMath::Color color)
 {
-	if (m_font) {
-		m_font->DrawString(m_spriteBatch.get(), ansi2unicode(text).c_str(), position, color, 0.f, DirectX::FXMVECTOR(), Vector2(size, size));
+	auto spriteFont = GetFont(font, size);
+	if (spriteFont) {
+		spriteFont->DrawString(m_spriteBatch.get(), ansi2unicode(text).c_str(), position, color);
 	}
 }
 
