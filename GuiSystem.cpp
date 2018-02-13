@@ -41,9 +41,9 @@ GuiSystem::GuiSystem(
 		[=] {
 			auto panel = GuiEM.NewPanel([] {
 				Style * style = new Style();
-				style->Background = "rgb(0.25,0.25,0.25)";
+				style->Background = "rgba(1,1,1,1)";
 				style->FontSize = "128px";
-				style->FontColor = "rgb(1,1,1)";
+				style->FontColor = "rgb(0,0,0)";
 				style->TextAlign = "center";
 				style->Height = "15%";
 				return style;
@@ -70,7 +70,7 @@ GuiSystem::GuiSystem(
 				return style;
 			}()),
 				GuiEM.NewButton("Generate World", [=] {
-				Game::Get().GenerateWorld(1234,"test");
+				Game::Get().GenerateWorld(1516,"test");
 			}, [] {
 				Style * style = new Style();
 				style->Background = "widget.png:button";
@@ -93,6 +93,7 @@ GuiSystem::GuiSystem(
 		[=] {
 			auto panel = GuiEM.NewPanel([] {
 				Style * style = new Style();
+				style->Background = "rgba(1,1,1,0.5)";
 				style->FontSize = "128px";
 				style->TextAlign = "center";
 				style->Height = "15%";
@@ -405,7 +406,7 @@ void GuiSystem::UpdateText(shared_ptr<Text> text, shared_ptr<Sprite> sprite, sha
 	// align text
 	auto spriteFont = AssetManager::Get()->GetFont(text->Font,text->FontSize);
 
-	Vector2 boundingRect = spriteFont->MeasureString(ansi2unicode(text->String).c_str()) * ((float)text->FontSize / (float)AssetManager::Get()->GetFontSize());
+	Vector2 boundingRect = spriteFont->MeasureString(ansi2unicode(text->String).c_str());
 	// horizontal
 	switch (style->GetTextAlign()) {
 	case AlignmentType::Center: text->Position.x += (int)(sprite->Rect.width / 2 - boundingRect.x / 2); break;

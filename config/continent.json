@@ -9,8 +9,8 @@
 
     // Continent Map (determines the rough shape of the continent, where land and sea are)
     "continentMap": {
-        "initialDeviation": 0.1, // initial vertical deviation (% Of width)
-        "deviationDecrease": 1.0, // roughness (0.0 = no deviation, 2.0 = 100% deviation)
+        "initialDeviation": 0.05, // initial vertical deviation (% Of width)
+        "deviationDecrease": 1.2, // roughness (0.0 = no deviation, 2.0 = 100% deviation)
         "zoom": 3, // how many iterations the deviation Is Not decreased"
         "offset": 0.8 // offset that makes the continent larger (% Of initial deviation)
     },
@@ -18,11 +18,11 @@
     "biomeMap": {
         "initialDeviation": 1.0, // initial vertical deviation
         "deviationDecrease": 0.0, // roughness (% decrease In deviation per iteration)
-        "zoom": 1 // how many iterations the deviation Is Not decreased
+        "zoom": 2 // how many iterations the deviation Is Not decreased
     },
     // Terrain Map (the final terrain mesh generation, incorperating the continent And biome maps)
     "terrainMap": {
-        "width": 256, // In meters (must be power Of two)
+        "width": 4096, // In meters (must be power Of two)
         "initialDeviation": 0.0625, // initial vertical deviation (% Of width)
         "deviationDecrease": 1.15 // roughness (% decrease In deviation per iteration)
     },
