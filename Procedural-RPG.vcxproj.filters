@@ -517,12 +517,6 @@
     <FxCompile Include="Assets\Shaders\Water.hlsl">
       <Filter>Assets\Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Assets\Shaders\Test.hlsl">
-      <Filter>Assets\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Assets\Shaders\VSTest.hlsl">
-      <Filter>Assets\Shaders</Filter>
-    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ImageContentTask Include="Assets\Textures\dirt.png">

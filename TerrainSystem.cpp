@@ -499,7 +499,7 @@ void TerrainSystem::NewTree(DirectX::SimpleMath::Vector3 & position, Vector3 & r
 	entity->AddComponent(
 		new Components::Tag("Tree"));
 	entity->AddComponent(
-		new Components::Model("Tree", "Default",true,false));
+		new Components::Model("Tree", "Default",false));
 	//new Components::Model("Tree", "Default")
 	// Add action node
 	SM->GetSystem<ActionSystem>("Action")->CreateAction(position, Vector3(1.f, 10.f, 1.f), EventTypes::Plant_GatherWood, entity->ID());

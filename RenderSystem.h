@@ -85,9 +85,9 @@ private:
 	// 2D Rendering
 	void SpriteBatchBegin();
 	void SpriteBatchDraw(shared_ptr<Sprite> sprite);
-	shared_ptr<SpriteFont> m_font;
-	void SetFont(string path);
-	void DrawText(string text, Vector2 position,float size,SimpleMath::Color color=SimpleMath::Color(Colors::Black));
+	map<string,shared_ptr<SpriteFont>> m_font;
+	shared_ptr<SpriteFont> GetFont(string path,int size);
+	void DrawText(string text,string font, Vector2 position,int size,SimpleMath::Color color=SimpleMath::Color(Colors::Black));
 	void SpriteBatchEnd();
 	// Inherited via System
 	virtual string Name() override;

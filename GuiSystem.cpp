@@ -403,7 +403,7 @@ void GuiSystem::UpdateText(shared_ptr<Text> text, shared_ptr<Sprite> sprite, sha
 	}
 
 	// align text
-	auto spriteFont = AssetManager::Get()->GetFont(text->Font);
+	auto spriteFont = AssetManager::Get()->GetFont(text->Font,text->FontSize);
 
 	Vector2 boundingRect = spriteFont->MeasureString(ansi2unicode(text->String).c_str()) * ((float)text->FontSize / (float)AssetManager::Get()->GetFontSize());
 	// horizontal

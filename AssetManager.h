@@ -12,7 +12,7 @@ public:
 	void SetDevice(Microsoft::WRL::ComPtr<ID3D11Device> device);
 	//----------------------------------------------------------------
 	// Asset Retrieval
-	shared_ptr<SpriteFont> GetFont(string path);
+	shared_ptr<SpriteFont> GetFont(string name,int size);
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetTexture(string path,bool procedural = false);
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetWicTexture(string path);
 	std::shared_ptr<Model> GetModel(string path, float distance = 0.f, bool procedural = false);

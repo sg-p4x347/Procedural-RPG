@@ -230,8 +230,9 @@ void AssetManager::SetDevice(Microsoft::WRL::ComPtr<ID3D11Device> device)
 	m_fxFactory->SetDirectory(L".\\Assets\\");
 }
 
-shared_ptr<SpriteFont> AssetManager::GetFont(string path)
+shared_ptr<SpriteFont> AssetManager::GetFont(string name,int size)
 {
+	string path = name + '_' + to_string(size);
 	try {
 
 		// Search cache
