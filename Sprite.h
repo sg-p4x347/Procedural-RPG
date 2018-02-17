@@ -11,16 +11,20 @@ namespace GUI {
 			Rectangle rect = Rectangle(0,0,0,0),
 			int zIndex = 1,
 			bool useSourceRect = false,
-			Rectangle sourceRect = Rectangle()
+			Rectangle sourceRect = Rectangle(),
+			vector<Rectangle> clippingRects = vector<Rectangle>(),
+			vector<Components::Component> childSprites = vector<Components::Component>()
 		);
 		SimpleMath::Color BackgroundColor;
 		string BackgroundImage;
 		Rectangle Rect;
+		
 		int Zindex;
 		EntityPtr SourceEntity;
 		Rectangle SourceRect;
 		bool UseSourceRect;
-
+		vector<Rectangle> ClippingRects;
+		vector<Components::Component> ChildSprites;
 		// Inherited via Component
 		virtual string GetName() override;
 	};

@@ -89,6 +89,8 @@ private:
 	shared_ptr<SpriteFont> GetFont(string path,int size);
 	void DrawText(string text,string font, Vector2 position,int size,SimpleMath::Color color=SimpleMath::Color(Colors::Black));
 	void SpriteBatchEnd();
+	// clipping rasterizer state
+	unique_ptr<ID3D11RasterizerState> m_scissorState;
 	// Inherited via System
 	virtual string Name() override;
 

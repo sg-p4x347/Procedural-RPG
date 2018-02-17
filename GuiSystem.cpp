@@ -20,7 +20,7 @@ GuiSystem::GuiSystem(
 	//----------------------------------------------------------------
 	// Initialize spritesheets
 	AddSpriteSheet("widget.png", std::map<string, Rectangle>{
-		{ "button",Rectangle(0,0,384,128)},
+		{ "button", Rectangle(0, 0, 384, 128)},
 		{ "button_hover",Rectangle(0,128,384,128) },
 		{ "button_active",Rectangle(0,256,384,128) }
 	});
@@ -59,7 +59,7 @@ GuiSystem::GuiSystem(
 			style->Width = "20%";
 			return style;
 		}(), vector<EntityPtr>{
-			GuiEM.NewButton("Load World",[=] {
+			GuiEM.NewButton("Continue", [=] {
 				Game::Get().LoadWorld("test");
 			}, [] {
 				Style * style = new Style();
@@ -69,8 +69,28 @@ GuiSystem::GuiSystem(
 				style->FontSize = "48px";
 				return style;
 			}()),
-				GuiEM.NewButton("Generate World", [=] {
-				Game::Get().GenerateWorld(1516,"test");
+				GuiEM.NewButton("New World", [=] {
+				OpenMenu("new_world");
+			}, [] {
+				Style * style = new Style();
+				style->Background = "widget.png:button";
+				style->Height = "100px";
+				style->FontColor = "rgb(1,1,1)";
+				style->FontSize = "48px";
+				return style;
+			}()),
+				GuiEM.NewButton("Load World", [=] {
+				OpenMenu("load_world");
+			}, [] {
+				Style * style = new Style();
+				style->Background = "widget.png:button";
+				style->Height = "100px";
+				style->FontColor = "rgb(1,1,1)";
+				style->FontSize = "48px";
+				return style;
+			}()),
+				GuiEM.NewButton("Options", [=] {
+				OpenMenu("options");
 			}, [] {
 				Style * style = new Style();
 				style->Background = "widget.png:button";
@@ -84,8 +104,8 @@ GuiSystem::GuiSystem(
 
 	//----------------------------------------------------------------
 	// game_paused
-	
-	AddMenu("game_paused", GuiEM.NewPanel([]{
+
+	AddMenu("game_paused", GuiEM.NewPanel([] {
 		Style * style = new Style();
 		return style;
 	}(), vector<EntityPtr>{
@@ -99,18 +119,18 @@ GuiSystem::GuiSystem(
 				style->Height = "15%";
 				return style;
 			}());
-			GuiEM.AddText(panel,"Game Paused");
+			GuiEM.AddText(panel, "Game Paused");
 			return panel;
 		}(),
-		// Side panel
-		GuiEM.NewPanel([] {
+			// Side panel
+			GuiEM.NewPanel([] {
 			Style * style = new Style();
 			style->Justify = "center";
 			style->Height = "85%";
 			style->Width = "20%";
 			return style;
 		}(), vector<EntityPtr>{
-			GuiEM.NewButton("Resume Game",[=] {
+			GuiEM.NewButton("Resume Game", [=] {
 				Game::Get().ResumeGame();
 			}, [] {
 				Style * style = new Style();
@@ -120,7 +140,7 @@ GuiSystem::GuiSystem(
 				style->FontSize = "48px";
 				return style;
 			}()),
-			GuiEM.NewButton("Main Menu",[=] {
+				GuiEM.NewButton("Main Menu", [=] {
 				Game::Get().CloseWorld();
 				OpenMenu("main");
 			}, [] {
@@ -145,6 +165,136 @@ GuiSystem::GuiSystem(
 		return style;
 	}());
 	AddMenu("HUD", m_HUDhint);
+	//----------------------------------------------------------------
+	// Options
+	AddMenu("options", GuiEM.NewPanel([] {
+		Style * style = new Style();
+		return style;
+	}(), vector<EntityPtr>{
+		// Header
+		[=] {
+			auto panel = GuiEM.NewPanel([] {
+				Style * style = new Style();
+				style->Background = "rgba(1,1,1,0.5)";
+				style->FontSize = "128px";
+				style->TextAlign = "center";
+				style->Height = "15%";
+				return style;
+			}());
+			GuiEM.AddText(panel, "Options");
+			return panel;
+		}(),
+			// Side panel
+			GuiEM.NewPanel([] {
+			Style * style = new Style();
+			style->Justify = "center";
+			style->Height = "85%";
+			style->Width = "20%";
+			return style;
+		}(), vector<EntityPtr>{
+			GuiEM.NewButton("Controls", [=] {
+				Game::Get().ResumeGame();
+			}, [] {
+				Style * style = new Style();
+				style->Background = "widget.png:button";
+				style->Height = "100px";
+				style->FontColor = "rgb(1,1,1)";
+				style->FontSize = "48px";
+				return style;
+			}()),
+				GuiEM.NewButton("Main Menu", [=] {
+				Game::Get().CloseWorld();
+				OpenMenu("main");
+			}, [] {
+				Style * style = new Style();
+				style->Background = "widget.png:button";
+				style->Height = "100px";
+				style->FontColor = "rgb(1,1,1)";
+				style->FontSize = "48px";
+				return style;
+			}())
+		})
+	}));
+	//----------------------------------------------------------------
+	// New World
+	AddMenu("new_world", GuiEM.NewPanel([] {
+		Style * style = new Style();
+		return style;
+	}(), vector<EntityPtr>{
+		// Header
+		[=] {
+			auto panel = GuiEM.NewPanel([] {
+				Style * style = new Style();
+				style->Background = "rgba(1,1,1,0.5)";
+				style->FontSize = "128px";
+				style->TextAlign = "center";
+				style->Height = "20%";
+				return style;
+			}());
+			GuiEM.AddText(panel, "Create a world");
+			return panel;
+		}(),
+			// Side panel
+			GuiEM.NewPanel([] {
+			Style * style = new Style();
+			style->Justify = "center";
+			style->Height = "80%";
+			style->Width = "20%";
+			return style;
+		}(), vector<EntityPtr>{
+			GuiEM.NewButton("Generate!", [=] {
+				Game::Get().GenerateWorld(23242,"test");
+			}, [] {
+				Style * style = new Style();
+				style->Background = "widget.png:button";
+				style->Height = "100px";
+				style->FontColor = "rgb(0,0,0.5)";
+				style->FontSize = "48px";
+				return style;
+			}()),
+				GuiEM.NewButton("Main Menu", [=] {
+				Game::Get().CloseWorld();
+				OpenMenu("main");
+			}, [] {
+				Style * style = new Style();
+				style->Background = "widget.png:button";
+				style->Height = "100px";
+				style->FontColor = "rgb(1,1,1)";
+				style->FontSize = "48px";
+				return style;
+			}())
+		})
+	}));
+	////----------------------------------------------------------------
+	//// Controls
+	//AddMenu("controls", GuiEM.NewPanel([] {
+	//	Style * style = new Style();
+	//	return style;
+	//}(), vector<EntityPtr>{
+	//	// Header
+	//	[=] {
+	//		auto panel = GuiEM.NewPanel([] {
+	//			Style * style = new Style();
+	//			style->Background = "rgba(1,1,1,0.5)";
+	//			style->FontSize = "128px";
+	//			style->TextAlign = "center";
+	//			style->Height = "15%";
+	//			return style;
+	//		}());
+	//		GuiEM.AddText(panel, "Controls");
+	//		return panel;
+	//	}(),
+	//		// Side panel
+	//		GuiEM.NewPanel([] {
+	//		Style * style = new Style();
+	//		style->Justify = "center";
+	//		style->Height = "85%";
+	//		style->Width = "20%";
+	//		return style;
+	//	}(), vector<EntityPtr>{}())
+	//	})
+	//}));
+
 }
 
 
@@ -267,9 +417,9 @@ Rectangle GuiSystem::GetSpriteRect(string filePath, string spriteName)
 	return Rectangle(0, 0, 0, 0);
 }
 
-vector<shared_ptr<Components::Component>> GuiSystem::UpdateDrawQueue(Rectangle parentRect, EntityPtr entity,int zIndex)
+shared_ptr<GUI::Sprite> GuiSystem::UpdateDrawQueue(Rectangle parentRect, EntityPtr entity,int zIndex)
 {
-	vector<shared_ptr<Components::Component>> queue;
+	shared_ptr<GUI::Sprite> queue;
 	if (entity->HasComponents(GuiEM.ComponentMask(vector<string>{"Style_Default","Sprite"}))) {
 		//----------------------------------------------------------------
 		// Components
@@ -284,7 +434,7 @@ vector<shared_ptr<Components::Component>> GuiSystem::UpdateDrawQueue(Rectangle p
 		// Text
 		if (text) {
 			UpdateText(text, sprite, style);
-			queue.push_back(text);
+			queue.ChildSprites.push_back(text);
 		}
 
 		// get children
@@ -302,8 +452,7 @@ vector<shared_ptr<Components::Component>> GuiSystem::UpdateDrawQueue(Rectangle p
 		// recursively render children to queue
 		vector<Rectangle> childRects = CalculateChildRects(parentRect, style, childStyles);
 		for (int i = 0; i < children.size(); i++) {
-			vector<shared_ptr<Components::Component>> extra = UpdateDrawQueue(childRects[i],children[i],zIndex+1);
-			queue.insert(queue.end(), extra.begin(), extra.end());
+			queue.ChildSprites.push_back(UpdateDrawQueue(childRects[i],children[i],zIndex+1));
 		}
 	}
 	return queue;
@@ -430,11 +579,36 @@ vector<Rectangle> GuiSystem::CalculateChildRects(Rectangle parentRect, shared_pt
 	//----------------------------------------------------------------
 	// Get total childen length
 	int totalChildPrimary = 0;
+	int totalChildSecondary = 0;
 	for (auto & child : childrenStyles) {
 		Rectangle childRect = CalculateChildRect(parentRect, child);
 		totalChildPrimary += GetPrimaryDimension(flow, childRect);
+		int secondary = GetSecondaryDimension(flow, childRect);
+		if (secondary > totalChildSecondary) {
+			totalChildSecondary = secondary;
+		}
 		childRects.push_back(childRect);
 	}
+	
+
+	//----------------------------------------------------------------
+	// Scroll offsets
+	Vector2 contentSize = GetVector(flow, totalChildPrimary, totalChildSecondary);
+	Vector2 parentSize = GetVector(flow, GetPrimaryDimension(flow, parentRect), GetSecondaryDimension(flow, parentRect));
+	Vector2 parentPos = GetVector(flow, GetPrimaryPosition(flow, parentRect), GetSecondaryPosition(flow, parentRect));
+	Vector2 contentPos = parentPos - (contentSize - parentSize) * parentStyle->ScrollPosition;
+	
+	// Create clipping rects
+	float topDiff = parentRect.y - contentPos.y;
+	float bottomDiff = (contentPos.y + contentSize.y) - (parentRect.y + parentRect.height);
+	float leftDiff = parentRect.x - contentPos.x;
+	float rightDiff = (contentSize.x + contentPos.x) - (parentRect.x + parentRect.width);
+
+	Rectangle clipTop = Rectangle(contentPos.x, contentPos.y, contentSize.x,topDiff);
+	Rectangle clipBottom = Rectangle(contentPos.x, parentRect.y + parentRect.height, contentSize.x, bottomDiff);
+	Rectangle clipLeft = Rectangle(contentPos.x, contentPos.y + topDiff, leftDiff, parentRect.height);
+	Rectangle clipRight = Rectangle(parentRect.x + parentRect.width, parentRect.y,rightDiff,  parentRect.height);
+
 	//----------------------------------------------------------------
 	// Calculate primary axis offsets
 	int primaryOffset = GetPrimaryPosition(flow, parentRect);
@@ -446,6 +620,9 @@ vector<Rectangle> GuiSystem::CalculateChildRects(Rectangle parentRect, shared_pt
 	//----------------------------------------------------------------
 	// Apply offsets
 	for (Rectangle & childRect : childRects) {
+		// apply scroll offsets
+		childRect.x += contentPos.x - parentRect.x;
+		childRect.y += contentPos.y - parentRect.y;
 		// secondary
 		int childSecondaryOffset = secondaryOffset;
 		switch (parentStyle->GetAlignItems()) {
@@ -456,6 +633,7 @@ vector<Rectangle> GuiSystem::CalculateChildRects(Rectangle parentRect, shared_pt
 		// move the primary offset past this child
 		primaryOffset += GetPrimaryDimension(flow, childRect);
 	}
+	
 	return childRects;
 }
 
@@ -517,6 +695,15 @@ int GuiSystem::GetSecondaryPosition(FlowType flow, Rectangle rect)
 	case FlowType::Row: return rect.y;
 	}
 	return 0;
+}
+
+Vector2 GuiSystem::GetVector(FlowType flow, int primary, int secondary)
+{
+	switch (flow) {
+	case FlowType::Column: return Vector2(secondary, primary);
+	case FlowType::Row: return Vector2(primary, secondary);
+	}
+	return Vector2::Zero;
 }
 
 shared_ptr<Sprite> GuiSystem::GetSprite(EntityPtr entity)

@@ -27,6 +27,11 @@ m_ModelMask(0)
 	
 	SetViewport(width, height);
 
+	// clipping state
+	CD3D11_RASTERIZER_DESC rsDesc(D3D11_FILL_SOLID, D3D11_CULL_BACK, FALSE,
+		0, 0.f, 0.f, TRUE, TRUE, TRUE, FALSE);
+	if (FAILED(m_d3dDevice->CreateRasterizerState(&rsDesc, &m_scissorState.get())))
+		// error
 	//SetFont("impact");
 }
 

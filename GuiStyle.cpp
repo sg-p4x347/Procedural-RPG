@@ -11,9 +11,11 @@ namespace GUI {
 		string width, 
 		string height, 
 		string flowDirection, 
-		string overflow, 
+		string overflowX, 
+		string overflowY,
 		string justify,
 		string alignItems,
+		Vector2 scrollPos,
 
 		string font,
 		string fontSize,
@@ -26,9 +28,11 @@ namespace GUI {
 		Width = width;
 		Height = height;
 		FlowDirection = flowDirection;
-		Overflow = overflow;
+		OverflowX = overflowX;
+		OverflowY = overflowY;
 		Justify = justify;
 		AlignItems = alignItems;
+		ScrollPosition = scrollPos;
 
 		Font = font;
 		FontSize = fontSize;
@@ -123,6 +127,16 @@ namespace GUI {
 		return GetAlignmentType(VerticalTextAlign);
 	}
 
+	OverflowType Style::GetOverflowX()
+	{
+		return GetOverflow(OverflowX);
+	}
+
+	OverflowType Style::GetOverflowY()
+	{
+		return GetOverflow(OverflowY);
+	}
+
 	Style Style::operator+(Style & other)
 	{
 		// TEMP
@@ -135,7 +149,8 @@ namespace GUI {
 			Width == "100%" ? other.Width : Width,
 			Height == "100%" ? other.Height : Height,
 			FlowDirection == "column" ? other.FlowDirection : FlowDirection,
-			Overflow == "scroll" ? other.Overflow : Overflow,
+			OverflowX == "scroll" ? other.OverflowX : OverflowX,
+			OverflowY == "scroll" ? other.OverflowY : OverflowY,
 			Justify == "start" ? other.Justify : Justify,
 			other.AlignItems == "start" ? other.AlignItems : other.AlignItems
 		);
@@ -190,6 +205,16 @@ namespace GUI {
 			return DirectX::SimpleMath::Color(values);
 		}
 		return DirectX::Colors::Transparent;
+	}
+	OverflowType Style::GetOverflow(string value)
+	{
+		if (value == "scroll") {
+			return OverflowType::Scroll;
+		}
+		else if (value == "hidden") {
+			return OverflowType::Hidden;
+		}
+
 	}
 	string Style::GetDiscreteName()
 	{

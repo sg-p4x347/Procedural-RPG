@@ -8,7 +8,9 @@ namespace GUI {
 		Rectangle rect,
 		int zIndex,
 		bool useSourceRect,
-		Rectangle sourceRect
+		Rectangle sourceRect,
+		vector<Rectangle> clippingRects,
+		vector<Components::Component> childSprites
 	) : Components::Component(0)
 		
 
@@ -19,6 +21,8 @@ namespace GUI {
 		Zindex = zIndex;
 		UseSourceRect = useSourceRect;
 		SourceRect = sourceRect;
+		ClippingRects = clippingRects;
+		ChildSprites = childSprites;
 	}
 
 	string Sprite::GetName()

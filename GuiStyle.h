@@ -36,9 +36,11 @@ namespace GUI {
 			string width = "100%",
 			string height = "100%",
 			string flowDirection = "column",
-			string overflow = "scroll",
+			string overflowX = "scroll",
+			string overflowY = "scroll",
 			string justify = "start",
 			string alignItems = "start",
+			Vector2 scrollPos = Vector2::Zero,
 
 			string font = "impact",
 			string fontSize = "32px",
@@ -61,10 +63,11 @@ namespace GUI {
 		string Width;			// Dimension
 		string Height;			// Dimension
 		string FlowDirection;	// column | row
-		string Overflow;		// hidden | scroll
+		string OverflowX;		// hidden | scroll
+		string OverflowY;		// hidden | scroll
 		string Justify;			// start | center | end
 		string AlignItems;		// start | center | end
-
+		Vector2 ScrollPosition;	// [0.f -> 1.f] in both directions
 		// Text
 		string Font;
 		string FontSize;
@@ -92,6 +95,8 @@ namespace GUI {
 		AlignmentType GetTextAlign();
 		AlignmentType GetVerticalTextAlign();
 
+		OverflowType GetOverflowX();
+		OverflowType GetOverflowY();
 		//----------------------------------------------------------------
 		// Operators
 		Style operator+(Style & other);
@@ -99,7 +104,7 @@ namespace GUI {
 		AlignmentType GetAlignmentType(string value);
 		DimensionType GetDimension(string value, float & dimension);
 		DirectX::SimpleMath::Color GetColor(string value);
-
+		OverflowType GetOverflow(string value);
 		// Inherited via Delegate
 		virtual string GetDiscreteName() override;
 	};
