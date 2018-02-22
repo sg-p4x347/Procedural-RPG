@@ -11,14 +11,14 @@ MovementSystem::MovementSystem(
 	unsigned short updatePeriod,
 	shared_ptr<RenderSystem> renderSys) : WorldSystem::WorldSystem(entityManager,components,updatePeriod), m_renderSystem(renderSys)
 {
-	IEventManager::RegisterHandler(Entity_ComponentAdded, std::function<void(unsigned int, unsigned long)>([=](unsigned int id, unsigned long mask) {
+	/*IEventManager::RegisterHandler(Entity_ComponentAdded, std::function<void(unsigned int, unsigned long)>([=](unsigned int id, unsigned long mask) {
 		EntityPtr target;
 		if (EM->Find(id, target)) {
 			if (mask == m_componentMask) {
 				m_entities.push_back(target);
 			}
 		}
-	}));
+	}));*/
 }
 
 string MovementSystem::Name()

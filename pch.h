@@ -4,11 +4,11 @@
 //
 
 #pragma once
-
 #include <WinSDKVer.h>
-#define _WIN32_WINNT 0x0600
+#define _WIN32_WINNT 0x0602
 #include <SDKDDKVer.h>
-
+//#include <wrl.h>
+//#include <stdint.h>
 // Use the C++ standard templated min/max
 #define NOMINMAX
 
@@ -71,6 +71,7 @@ namespace DX
 }
 class Entity;
 typedef std::shared_ptr<Entity> EntityPtr;
+#include "Audio.h"
 #include "CommonStates.h"
 #include "DDSTextureLoader.h"
 #include "DirectXHelpers.h"
@@ -91,4 +92,5 @@ typedef std::shared_ptr<Entity> EntityPtr;
 #include "ReadData.h"
 #include "ConversionUtil.h"
 #include "Utility.h"
+#include "ProUtil.h"
 #include "MathConstants.h"

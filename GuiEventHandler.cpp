@@ -8,7 +8,7 @@ namespace GUI {
 	{
 	}
 
-	EventHandler::EventHandler(string type, std::function<void()>&& callback) : EventHandler::EventHandler(type)
+	EventHandler::EventHandler(string type, std::function<void(Event evt)>&& callback) : EventHandler::EventHandler(type)
 	{
 		Callback = std::move(callback);
 	}

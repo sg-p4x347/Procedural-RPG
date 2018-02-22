@@ -10,7 +10,7 @@ namespace Utility {
 	
 	static const float sqrtTwo = 1.41421356237;
 	float pythag(double x, double y, double z);
-	const double M_E = 2.71828182845904523536;
+	//const double M_E = 2.71828182845904523536;
 	int posToIndex(int x, int y, int width);
 	int indexToX(int index, int width);
 	int indexToY(int index, int width);
@@ -41,6 +41,8 @@ namespace Utility {
 	float Inverse(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
 	
 	float BinomialCoefficient(int n, int k);
+
+	float Clamp(float x, float min, float max);
 	//----------------------------------------------------------------
 	// Interpolation functions
 	// 1 Dimension

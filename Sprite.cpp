@@ -9,8 +9,7 @@ namespace GUI {
 		int zIndex,
 		bool useSourceRect,
 		Rectangle sourceRect,
-		vector<Rectangle> clippingRects,
-		vector<Components::Component> childSprites
+		vector<Rectangle> clippingRects
 	) : Components::Component(0)
 		
 
@@ -22,7 +21,7 @@ namespace GUI {
 		UseSourceRect = useSourceRect;
 		SourceRect = sourceRect;
 		ClippingRects = clippingRects;
-		ChildSprites = childSprites;
+		ScrollPosition = Vector2::Zero;
 	}
 
 	string Sprite::GetName()

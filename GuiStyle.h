@@ -24,6 +24,10 @@ namespace GUI {
 		Center,
 		End
 	};
+	enum class VisibilityType {
+		Visible,
+		Hidden
+	};
 	class Style :
 		public Components::Delegate
 	{
@@ -35,17 +39,20 @@ namespace GUI {
 			string foreground = "",
 			string width = "100%",
 			string height = "100%",
+			string width2 = "0px",
+			string height2 = "0px",
 			string flowDirection = "column",
-			string overflowX = "scroll",
-			string overflowY = "scroll",
+			string overflowX = "hidden",
+			string overflowY = "hidden",
 			string justify = "start",
 			string alignItems = "start",
-			Vector2 scrollPos = Vector2::Zero,
 
 			string font = "impact",
 			string fontSize = "32px",
 			string textAlign = "start",
-			string verticalTextAlign = "center"
+			string verticalTextAlign = "center",
+
+			string visibility = "visible"
 		);
 		~Style();
 		/*
@@ -62,18 +69,22 @@ namespace GUI {
 		string Foreground;		// Color | Image
 		string Width;			// Dimension
 		string Height;			// Dimension
+		string Width2;			// Dimension
+		string Height2;			// Dimension
 		string FlowDirection;	// column | row
 		string OverflowX;		// hidden | scroll
 		string OverflowY;		// hidden | scroll
 		string Justify;			// start | center | end
 		string AlignItems;		// start | center | end
-		Vector2 ScrollPosition;	// [0.f -> 1.f] in both directions
+		
 		// Text
 		string Font;
 		string FontSize;
 		string TextAlign;
 		string VerticalTextAlign;
 		
+		// Misc
+		string Visibility;
 
 
 		//----------------------------------------------------------------
@@ -84,7 +95,10 @@ namespace GUI {
 		string GetBackgroundSprite();
 
 		DimensionType GetWidth(float & width);
+		DimensionType GetWidth2(float & width);
+
 		DimensionType GetHeight(float & height);
+		DimensionType GetHeight2(float & height);
 
 		FlowType GetFlowDirection();
 		AlignmentType GetJustify();
@@ -97,9 +111,12 @@ namespace GUI {
 
 		OverflowType GetOverflowX();
 		OverflowType GetOverflowY();
+
+		VisibilityType GetVisibility();
 		//----------------------------------------------------------------
 		// Operators
 		Style operator+(Style & other);
+		void operator=(Style & other);
 	private:
 		AlignmentType GetAlignmentType(string value);
 		DimensionType GetDimension(string value, float & dimension);

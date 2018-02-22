@@ -10,6 +10,7 @@
 #include "PlayerSystem.h"
 #include "AssetManager.h"
 #include "GuiSystem.h"
+#include "IEventManager.h"
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
@@ -26,9 +27,10 @@ Game::Game() :
     m_outputWidth(1920),
     m_outputHeight(1080),
     m_featureLevel(D3D_FEATURE_LEVEL_9_1),
-	m_paused(false)
+	m_paused(false),
+	m_inWorld(false)
 {
-
+	m_config = JsonParser(ifstream("Config/game.json"));
 	AssetManager::Get()->SetAssetDir("C:/Gage Omega/Programming/Procedural-RPG/Assets");
 }
 
@@ -41,7 +43,8 @@ Game & Game::Get()
 void Game::Initialize(HWND window, int width, int height)
 {
 	//DebugOutputString("Game Initializing...\n");
-    
+	
+	
 	//----------------------------------------------------------------
 	// Initialize Managers
 	
@@ -49,8 +52,9 @@ void Game::Initialize(HWND window, int width, int height)
 	HaltWorldSystems();
     // TODO: Change the timer settings if you want something other than the default variable timestep mode.
     // e.g. for 60 FPS fixed timestep update logic, call:
-	m_keyboard = std::make_shared<Keyboard>();
-	m_mouse = std::make_shared<Mouse>();
+	m_keyboard = std::make_unique<Keyboard>();
+
+	m_mouse = std::make_unique<Mouse>();
 	m_mouse->SetWindow(window);
     m_timer.SetFixedTimeStep(true);
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
@@ -70,6 +74,11 @@ void Game::Tick()
     });
 }
 
+Filesystem::path Game::GetSavesDirectory()
+{
+	return Filesystem::path("Saves");
+}
+
 void Game::PauseGame()
 {
 	DirectX::Mouse::Get().SetMode(DirectX::Mouse::Mode::MODE_ABSOLUTE);
@@ -80,6 +89,7 @@ void Game::PauseGame()
 
 void Game::ResumeGame()
 {
+	
 	DirectX::Mouse::Get().SetMode(DirectX::Mouse::Mode::MODE_RELATIVE);
 	m_systemManager->GetSystem<GuiSystem>("Gui")->CloseMenu();
 	RunWorldSystems();
@@ -94,6 +104,21 @@ void Game::TogglePause()
 	else {
 		PauseGame();
 	}
+}
+
+void Game::EnterWorld()
+{
+	srand(clock());
+	m_systemManager->Initialize();
+	m_inWorld = true;
+	ResumeGame();
+	IEventManager::Invoke(EventTypes::Sound_PlayMusic);
+}
+
+void Game::LeaveWorld()
+{
+	m_inWorld = false;
+	IEventManager::Invoke(EventTypes::Sound_StopMusic);
 }
 
 void Game::HaltWorldSystems()
@@ -118,7 +143,7 @@ void Game::Update(DX::StepTimer const& timer)
 	MouseTracker.Update(MouseState);
 	KeyboardTracker.Update(KeyboardState);
 
-	if (KeyboardTracker.pressed.Escape) {
+	if (m_inWorld && KeyboardTracker.pressed.Escape) {
 		TogglePause();
 	}
 
@@ -129,7 +154,7 @@ void Game::Update(DX::StepTimer const& timer)
 
 void Game::GenerateWorld(int seed, string name)
 {
-	Filesystem::path worldDir = "Saves/" + name;
+	Filesystem::path worldDir = GetSavesDirectory() / name;
 	try {
 		Filesystem::remove_all(worldDir);
 		Filesystem::create_directories(worldDir);
@@ -144,23 +169,42 @@ void Game::GenerateWorld(int seed, string name)
 	m_systemManager->GetSystem<PlayerSystem>("Player")->CreatePlayer();
 	m_systemManager->Save();
 
-	m_systemManager->Initialize();
-	ResumeGame();
+	EnterWorld();
 }
 
-void Game::LoadWorld(string name)
+bool Game::LoadWorld(string name)
 {
-	//----------------------------------------------------------------
-	// Initialize Filesystem Dependencies
-	Filesystem::path worldDir = "Saves/" + name;
-	Filesystem::create_directory(worldDir);
-	m_systemManager->LoadWorld(worldDir);
-	m_systemManager->Initialize();
-	ResumeGame();
+	try {
+		if (name == "") {
+			name = (string)m_config["CurrentWorld"];
+			if (name != "") {
+				return LoadWorld((string)m_config["CurrentWorld"]);
+			}
+			else {
+				return false;
+			}
+		}
+		else {
+			m_config.Set("CurrentWorld",name);
+			//----------------------------------------------------------------
+			// Initialize Filesystem Dependencies
+			Filesystem::path worldDir = "Saves/" + name;
+			Filesystem::create_directory(worldDir);
+			m_systemManager->LoadWorld(worldDir);
+			
+			EnterWorld();
+			return true;
+		}
+	}
+	catch (std::exception e) {
+		m_systemManager->GetSystem<GuiSystem>("Gui")->DisplayException(e);
+		return true;
+	}
 }
 
 void Game::CloseWorld()
 {
+	LeaveWorld();
 	m_systemManager->CloseWorld();
 	AssetManager::Get()->CleanupProceduralAssets();
 }
@@ -207,11 +251,13 @@ void Game::OnActivated()
 void Game::OnDeactivated()
 {
     // TODO: Game is becoming background window.
+
 }
 
 void Game::OnSuspending()
 {
     // TODO: Game is being power-suspended (or minimized).
+	IEventManager::Invoke(EventTypes::Game_Suspend);
 }
 
 void Game::OnResuming()
@@ -219,18 +265,20 @@ void Game::OnResuming()
     m_timer.ResetElapsedTime();
 
     // TODO: Game is being power-resumed (or returning from minimize).
+	IEventManager::Invoke(EventTypes::Game_Resume);
 }
 
 void Game::OnWindowSizeChanged(int width, int height)
 {
     m_outputWidth = std::max(width, 1);
     m_outputHeight = std::max(height, 1);
-	m_systemManager->GetSystem<RenderSystem>("Render")->SetViewport(width, height);
+	if (m_systemManager) m_systemManager->GetSystem<RenderSystem>("Render")->SetViewport(width, height);
 }
 
 void Game::OnQuit()
 {
-	m_systemManager->Save();
+	if (m_systemManager) m_systemManager->Save();
+	m_config.Export(ofstream("Config/game.json"));
 }
 
 // Properties
@@ -239,6 +287,16 @@ void Game::GetDefaultSize(int& width, int& height) const
     // TODO: Change to desired default window size (note minimum size is 320x200).
     width = 1920;
     height = 1080;
+}
+
+void Game::CharTyped(char ch)
+{
+	m_systemManager->GetSystem<GuiSystem>("Gui")->CharTyped(ch);
+}
+
+void Game::Backspace()
+{
+	m_systemManager->GetSystem<GuiSystem>("Gui")->Backspace();
 }
 
 // These are the resources that depend on the device.

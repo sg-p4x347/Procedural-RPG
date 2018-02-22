@@ -11,9 +11,12 @@ namespace GUI {
 		~GuiEntityManager();
 		//----------------------------------------------------------------
 		// Entity Factories
-		EntityPtr NewPanel(Style * style, vector<EntityPtr> children = vector<EntityPtr>());
+		EntityPtr NewPanel(Style * style, vector<EntityPtr> children = vector<EntityPtr>(),string id = "");
 		EntityPtr NewTextPanel(string text, Style * style);
-		EntityPtr NewButton(string text, std::function<void()>&& clickCallback,Style * style = nullptr);
+		EntityPtr NewButton(string text, std::function<void(Event evt)>&& clickCallback, 
+			string defaultBackground = "widget.png:button", 
+			string hoverBackground = "widget.png:button_hover", 
+			string activeBackground = "widget.png:button_active");
 		//----------------------------------------------------------------
 		// Entity modifiers
 		void AddChildren(EntityPtr entity, vector<EntityPtr> children);

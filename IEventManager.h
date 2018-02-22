@@ -4,8 +4,8 @@ class IEventManager
 {
 public:
 	template <typename ... Signature>
-	static inline void RegisterHandler(EventTypes type, std::function<void(Signature...)> & handler) {
-		EventManager<Signature...>::RegisterHandler(type, handler,m_currentVersion);
+	static inline void RegisterHandler(EventTypes type, std::function<void(Signature...)> & handler, bool isStatic = false) {
+		EventManager<Signature...>::RegisterHandler(type, handler,m_currentVersion,isStatic);
 	}
 	template <typename ... Signature>
 	static inline void Invoke(EventTypes type, Signature... parameters) {

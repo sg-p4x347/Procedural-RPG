@@ -42,7 +42,6 @@ public:
 			if (system) system->Run();
 		}
 	}
-	EventManager<> & GetEventManager();
 private:
 	//----------------------------------------------------------------
 	// Systems
@@ -51,9 +50,6 @@ private:
 	//----------------------------------------------------------------
 	// Entities
 	unique_ptr<WorldEntityManager> m_entityManager;
-	//----------------------------------------------------------------
-	// Events
-	EventManager<> m_events;
 
 };
 

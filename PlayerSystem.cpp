@@ -31,10 +31,10 @@ void PlayerSystem::Update(double & elapsed)
 	if (mouseState.positionMode == Mouse::MODE_RELATIVE) {
 		SimpleMath::Vector2 delta = SimpleMath::Vector2(float(mouseState.x), float(mouseState.y))*2.f;
 		static const float MOUSE_GAIN = 1.f;
-		movement->AngularVelocity.y = -delta.y * MOUSE_GAIN;
-		movement->AngularVelocity.x = -delta.x * MOUSE_GAIN;
-		//position->Rot.y -= delta.y * 0.004f;
-		//position->Rot.x -= delta.x * 0.004f;
+		//movement->AngularVelocity.y = -delta.y * MOUSE_GAIN;
+		//movement->AngularVelocity.x = -delta.x * MOUSE_GAIN;
+		position->Rot.y -= delta.y * elapsed;
+		position->Rot.x -= delta.x * elapsed;
 
 		// limit pitch to straight up or straight down
 		// with a little fudge-factor to avoid gimbal lock

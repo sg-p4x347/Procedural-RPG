@@ -16,7 +16,7 @@ ActionSystem::ActionSystem(
 		Check();
 	}));
 
-	IEventManager::RegisterHandler(EventTypes::Plant_GatherWood, std::function<void(unsigned int)>([=](unsigned int target) {
+	IEventManager::RegisterHandler(EventTypes::Action_GatherWood, std::function<void(unsigned int)>([=](unsigned int target) {
 		EntityPtr tree;
 		if (EM->Find(target, tree)) {
 			tree->AddComponent(new Components::Movement(Vector3::Zero, Vector3(0.f, -9.8f, 0.f), Vector3::Zero, Vector3::Zero));

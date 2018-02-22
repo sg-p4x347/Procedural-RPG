@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <ctime>
 #include "SystemManager.h"
 #include "WorldSystem.h"
 #include "TerrainSystem.h"
@@ -9,6 +10,7 @@
 #include "ActionSystem.h"
 #include "CollisionSystem.h"
 #include "IEventManager.h"
+#include "SoundSystem.h"
 //#include "InfrastructureSystem.h"
 
 SystemManager::SystemManager(
@@ -20,7 +22,7 @@ SystemManager::SystemManager(
 	
 	AddSystem(std::shared_ptr<System>(new GuiSystem( 1)));
 	AddSystem(std::shared_ptr<System>(new RenderSystem(1, window, width, height, dynamic_pointer_cast<GuiSystem>(m_systems["Gui"]))));
-	
+	AddSystem(std::shared_ptr<System>(new SoundSystem()));
 	//AddSystem(std::shared_ptr<System>(new InfrastructureSystem(m_entityManager, vector<string>{"Infrastructure"}, 0)));
 
 	//----------------------------------------------------------------
@@ -49,6 +51,7 @@ void SystemManager::Initialize()
 
 void SystemManager::LoadWorld(Filesystem::path worldDir)
 {
+	
 	IEventManager::NewVersion();
 	GetSystem<GuiSystem>("Gui")->BindHandlers();
 	//----------------------------------------------------------------
@@ -102,11 +105,6 @@ void SystemManager::CloseWorld()
 void SystemManager::Save()
 {
 	for (auto & system : m_systems) system.second->Save();
-}
-
-EventManager<>& SystemManager::GetEventManager()
-{
-	return m_events;
 }
 
 void SystemManager::AddSystem(shared_ptr<System> system)

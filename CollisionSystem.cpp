@@ -3,6 +3,7 @@
 #include "TerrainSystem.h"
 #include "SystemManager.h"
 #include "Game.h"
+#include "IEventManager.h"
 CollisionSystem::CollisionSystem(SystemManager * systemManager, unique_ptr<WorldEntityManager>& entityManager, vector<string>& components, unsigned short updatePeriod) :
 	WorldSystem::WorldSystem(entityManager, components, updatePeriod), SM(systemManager)
 {
@@ -33,6 +34,9 @@ void CollisionSystem::Update(double & elapsed)
 			// Pop the y back to the terrain
 			auto movement = entity->GetComponent<Components::Movement>("Movement");
 			if (terrainHeight > bottomCenter.y) {
+				if (std::abs(movement->Velocity.y) > 5.f) {
+					IEventManager::Invoke(EventTypes::Sound_PlayEffect, string("Hit0"));
+				}
 				position->Pos.y = terrainHeight - collision->BoundingBox.Position.y;
 				
 				movement->Velocity.y = 0.f;

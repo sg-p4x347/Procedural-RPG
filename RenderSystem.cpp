@@ -5,6 +5,7 @@
 #include "AssetManager.h"
 #include "GuiText.h"
 #include "CustomEffect.h"
+#include "GuiChildren.h"
 #include <thread>
 
 using namespace DirectX::SimpleMath;
@@ -30,7 +31,9 @@ m_ModelMask(0)
 	// clipping state
 	CD3D11_RASTERIZER_DESC rsDesc(D3D11_FILL_SOLID, D3D11_CULL_BACK, FALSE,
 		0, 0.f, 0.f, TRUE, TRUE, TRUE, FALSE);
-	if (FAILED(m_d3dDevice->CreateRasterizerState(&rsDesc, &m_scissorState.get())))
+	m_scissorState = nullptr;
+	m_d3dDevice->CreateRasterizerState(&rsDesc, &m_scissorState);
+	//m_scissorState.reset(scissorState);
 		// error
 	//SetFont("impact");
 }
@@ -51,20 +54,7 @@ void RenderSystem::Update(double & elapsed)
 	if (EM) Render();
 	
 	// Update and render GUI
-	SpriteBatchBegin();
-	for (auto & guiComponent : m_guiSystem->GetDrawQueue()) {
-		shared_ptr<Sprite> sprite = dynamic_pointer_cast<Sprite>(guiComponent);
-		if (sprite) {
-			SpriteBatchDraw(sprite);
-		}
-		else {
-			shared_ptr<Text> text = dynamic_pointer_cast<Text>(guiComponent);
-			if (text) {
-				DrawText(text->String,text->Font, text->Position, text->FontSize,text->Color);
-			}
-		}
-	}
-	SpriteBatchEnd();
+	RenderGUI();
 
 	// Present the backbuffer to the screen
 	Present();
@@ -194,10 +184,79 @@ void RenderSystem::InitializeWorldRendering(WorldEntityManager * entityManager)
 	}
 }
 
-void RenderSystem::SpriteBatchBegin()
+
+void RenderSystem::RenderGUI()
+{
+	auto currentMenu = m_guiSystem->GetCurrentMenu();
+	if (currentMenu) {
+		vector<EntityPtr> spriteBatches{currentMenu };
+		while (spriteBatches.size() > 0) {
+			vector<EntityPtr> spriteBatchesTemp;
+			for (EntityPtr entity : spriteBatches) {
+				auto sprite = entity->GetComponent<Sprite>("Sprite");
+				SpriteBatchBegin(sprite->ClippingRects);
+				RenderGuiEntityRecursive(entity, spriteBatchesTemp);
+				SpriteBatchEnd();
+			}
+			spriteBatches = spriteBatchesTemp;
+		}
+	}
+}
+
+void RenderSystem::RenderGuiEntityRecursive(EntityPtr entity, vector<EntityPtr>& spriteBatches)
+{
+	
+	shared_ptr<Sprite> sprite = entity->GetComponent<Sprite>("Sprite");
+	shared_ptr<Text> text = entity->GetComponent<Text>("Text");
+	if (sprite) {
+		SpriteBatchDraw(sprite);
+	}
+	if (text) {
+		DrawText(text->String, text->Font, text->Position, text->FontSize, text->Color);
+	}
+	shared_ptr<GUI::Children> children = entity->GetComponent<GUI::Children>("Children");
+	if (children) {
+		for (auto & childID : children->Entities) {
+			EntityPtr child;
+			if (m_guiSystem->GetEM().Find(childID, child)) {
+				auto childSprite = child->GetComponent<Sprite>("Sprite");
+				if (childSprite) {
+					if (childSprite->ClippingRects.size() > 0) {
+						spriteBatches.push_back(child);
+					}
+					else {
+						RenderGuiEntityRecursive(child, spriteBatches);
+					}
+				}
+			}
+		}
+	}
+	
+}
+
+void RenderSystem::SpriteBatchBegin(vector<Rectangle> clippingRects)
 {
 	m_states = make_shared<CommonStates>(m_d3dDevice.Get());
-	m_spriteBatch->Begin(SpriteSortMode_BackToFront,m_states->NonPremultiplied());
+	if (clippingRects.size() > 0) {
+		m_spriteBatch->Begin(SpriteSortMode_BackToFront, m_states->NonPremultiplied(),
+			nullptr,
+			nullptr,
+			m_scissorState,
+			[=]() {
+			CD3D11_RECT * rects = new CD3D11_RECT[clippingRects.size()];
+			for (int i = 0; i < clippingRects.size(); i++) {
+				Rectangle rect = clippingRects[i];
+				rects[i] = CD3D11_RECT(rect.x, rect.y, rect.x + rect.width, rect.y + rect.height);
+			}
+			m_d3dContext->RSSetScissorRects(clippingRects.size(), rects);
+			//CD3D11_RECT r(0,0,1920,125);
+			//m_d3dContext->RSSetScissorRects(1, &r);
+			delete[] rects;
+		});
+	}
+	else {
+		m_spriteBatch->Begin(SpriteSortMode_BackToFront, m_states->NonPremultiplied());
+	}
 }
 
 void RenderSystem::SpriteBatchDraw(shared_ptr<Sprite> sprite)

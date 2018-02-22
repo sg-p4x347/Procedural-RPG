@@ -17,7 +17,7 @@
 #include "TreeGenerator.h"
 #include "SystemManager.h"
 #include "ActionSystem.h"
-static const bool g_erosion = true;
+static const bool g_erosion = false;
 
 using namespace DirectX::SimpleMath;
 static EntityPtr waterEntity;
@@ -502,7 +502,7 @@ void TerrainSystem::NewTree(DirectX::SimpleMath::Vector3 & position, Vector3 & r
 		new Components::Model("Tree", "Default",false));
 	//new Components::Model("Tree", "Default")
 	// Add action node
-	SM->GetSystem<ActionSystem>("Action")->CreateAction(position, Vector3(1.f, 10.f, 1.f), EventTypes::Plant_GatherWood, entity->ID());
+	SM->GetSystem<ActionSystem>("Action")->CreateAction(position, Vector3(1.f, 10.f, 1.f), EventTypes::Action_GatherWood, entity->ID());
 }
 
 float TerrainSystem::TreeGradientProbability(float gradient)

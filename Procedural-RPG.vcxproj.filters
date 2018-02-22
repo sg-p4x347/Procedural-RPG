@@ -292,6 +292,12 @@
       <Filter>World\System</Filter>
     </ClInclude>
     <ClInclude Include="CustomEffect.h" />
+    <ClInclude Include="SoundSystem.h">
+      <Filter>World\System</Filter>
+    </ClInclude>
+    <ClInclude Include="SoundAsset.h">
+      <Filter>Assets\Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -481,6 +487,12 @@
       <Filter>World\System</Filter>
     </ClCompile>
     <ClCompile Include="CustomEffect.cpp" />
+    <ClCompile Include="SoundSystem.cpp">
+      <Filter>World\System</Filter>
+    </ClCompile>
+    <ClCompile Include="SoundAsset.cpp">
+      <Filter>Assets\Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">

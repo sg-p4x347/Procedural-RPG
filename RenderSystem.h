@@ -83,14 +83,16 @@ private:
 	void Present();
 	//----------------------------------------------------------------
 	// 2D Rendering
-	void SpriteBatchBegin();
+	void RenderGUI();
+	void RenderGuiEntityRecursive(EntityPtr entity, vector<EntityPtr> & spriteBatches);
+	void SpriteBatchBegin(vector<Rectangle> clippingRects = vector<Rectangle>());
 	void SpriteBatchDraw(shared_ptr<Sprite> sprite);
 	map<string,shared_ptr<SpriteFont>> m_font;
 	shared_ptr<SpriteFont> GetFont(string path,int size);
 	void DrawText(string text,string font, Vector2 position,int size,SimpleMath::Color color=SimpleMath::Color(Colors::Black));
 	void SpriteBatchEnd();
 	// clipping rasterizer state
-	unique_ptr<ID3D11RasterizerState> m_scissorState;
+	ID3D11RasterizerState * m_scissorState;
 	// Inherited via System
 	virtual string Name() override;
 

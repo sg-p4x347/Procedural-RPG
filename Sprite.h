@@ -12,8 +12,7 @@ namespace GUI {
 			int zIndex = 1,
 			bool useSourceRect = false,
 			Rectangle sourceRect = Rectangle(),
-			vector<Rectangle> clippingRects = vector<Rectangle>(),
-			vector<Components::Component> childSprites = vector<Components::Component>()
+			vector<Rectangle> clippingRects = vector<Rectangle>()
 		);
 		SimpleMath::Color BackgroundColor;
 		string BackgroundImage;
@@ -24,7 +23,7 @@ namespace GUI {
 		Rectangle SourceRect;
 		bool UseSourceRect;
 		vector<Rectangle> ClippingRects;
-		vector<Components::Component> ChildSprites;
+		Vector2 ScrollPosition;	// [0.f -> 1.f] in both directions
 		// Inherited via Component
 		virtual string GetName() override;
 	};

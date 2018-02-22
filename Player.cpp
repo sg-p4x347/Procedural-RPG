@@ -4,7 +4,7 @@
 using namespace DirectX::SimpleMath;
 
 namespace Components {
-	Components::Player::Player()
+	Components::Player::Player() : MovementState(MovementStates::Spectator)
 	{
 	}
 

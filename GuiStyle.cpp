@@ -9,35 +9,41 @@ namespace GUI {
 		string fontColor,
 		string foreground, 
 		string width, 
-		string height, 
+		string height,
+		string width2,
+		string height2,
 		string flowDirection, 
 		string overflowX, 
 		string overflowY,
 		string justify,
 		string alignItems,
-		Vector2 scrollPos,
 
 		string font,
 		string fontSize,
 		string textAlign,
-		string verticalTextAlign
+		string verticalTextAlign,
+
+		string visibility
 	) : Delegate::Delegate(selector) {
 		Background = background;
 		FontColor = fontColor;
 		Foreground = foreground;
 		Width = width;
 		Height = height;
+		Width2 = width2;
+		Height2 = height2;
 		FlowDirection = flowDirection;
 		OverflowX = overflowX;
 		OverflowY = overflowY;
 		Justify = justify;
 		AlignItems = alignItems;
-		ScrollPosition = scrollPos;
 
 		Font = font;
 		FontSize = fontSize;
 		TextAlign = textAlign;
 		VerticalTextAlign = verticalTextAlign;
+
+		Visibility = visibility;
 	}
 
 	Style::~Style()
@@ -79,9 +85,19 @@ namespace GUI {
 		return GetDimension(Width, width);
 	}
 
+	DimensionType Style::GetWidth2(float & width)
+	{
+		return GetDimension(Width2, width);
+	}
+
 	DimensionType Style::GetHeight(float & height)
 	{
 		return GetDimension(Height, height);
+	}
+
+	DimensionType Style::GetHeight2(float & height)
+	{
+		return GetDimension(Height2, height);
 	}
 
 	FlowType Style::GetFlowDirection()
@@ -137,6 +153,14 @@ namespace GUI {
 		return GetOverflow(OverflowY);
 	}
 
+	VisibilityType Style::GetVisibility()
+	{
+		if (Visibility == "hidden") {
+			return VisibilityType::Hidden;
+		}
+		return VisibilityType::Visible;
+	}
+
 	Style Style::operator+(Style & other)
 	{
 		// TEMP
@@ -154,6 +178,29 @@ namespace GUI {
 			Justify == "start" ? other.Justify : Justify,
 			other.AlignItems == "start" ? other.AlignItems : other.AlignItems
 		);
+	}
+
+	void Style::operator=(Style & other)
+	{
+		Background = other.Background;
+		FontColor = other.FontColor;
+		Foreground = other.Foreground;
+		Width = other.Width;
+		Height = other.Height;
+		Width2 = other.Width2;
+		Height2 = other.Height2;
+		FlowDirection = other.FlowDirection;
+		OverflowX = other.OverflowX;
+		OverflowY = other.OverflowY;
+		Justify = other.Justify;
+		AlignItems = other.AlignItems;
+
+		Font = other.Font;
+		FontSize = other.FontSize;
+		TextAlign = other.TextAlign;
+		VerticalTextAlign = other.VerticalTextAlign;
+
+		Visibility = other.Visibility;
 	}
 
 	AlignmentType Style::GetAlignmentType(string value)

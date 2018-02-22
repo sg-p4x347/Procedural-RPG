@@ -6,6 +6,7 @@ class Game
 public:
 
     Game();
+	//~Game();
 	static Game& Get();
 	void* operator new(size_t i)
 	{
@@ -24,13 +25,18 @@ public:
     void Tick();
 	//----------------------------------------------------------------
 	// World control
+	bool m_inWorld;
+	// gets the directory that contains all saved worlds
+	Filesystem::path GetSavesDirectory();
+
+	// Simulation state
 	void PauseGame();
 	void ResumeGame();
 	void TogglePause();
 	// Generates a world
 	void GenerateWorld(int seed, string name);
 	// Loads a world from file
-	void LoadWorld(string name);
+	bool LoadWorld(string name = "");
 	// De-loads a world
 	void CloseWorld();
 
@@ -45,16 +51,24 @@ public:
     void GetDefaultSize( int& width, int& height ) const;
 	//----------------------------------------------------------------
 	// DX Input
+	void CharTyped(char ch);
+	void Backspace();
 	static DirectX::Mouse::State MouseState;
 	static DirectX::Mouse::ButtonStateTracker MouseTracker;
 	static DirectX::Keyboard::State KeyboardState;
 	static DirectX::Keyboard::KeyboardStateTracker KeyboardTracker;
 private:
-	bool m_paused;
+	//----------------------------------------------------------------
+	// Config
+	JsonParser m_config;
 	//----------------------------------------------------------------
 	// World control
+	void EnterWorld();
+	void LeaveWorld();
+
 	void HaltWorldSystems();
 	void RunWorldSystems();
+	bool m_paused;
 	//----------------------------------------------------------------
 	// Systems
 	unique_ptr<SystemManager> m_systemManager;

@@ -105,7 +105,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     static bool s_fullscreen = false;
     // TODO: Set s_fullscreen to true if defaulting to fullscreen.
 
-    auto game = reinterpret_cast<Game*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+	auto & game = Game::Get();reinterpret_cast<Game*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
     switch (message)
     {
@@ -120,21 +120,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             if (!s_minimized)
             {
                 s_minimized = true;
-                if (!s_in_suspend && game)
-                    game->OnSuspending();
+                if (!s_in_suspend)
+                    game.OnSuspending();
                 s_in_suspend = true;
             }
         }
         else if (s_minimized)
         {
             s_minimized = false;
-            if (s_in_suspend && game)
-                game->OnResuming();
+            if (s_in_suspend)
+                game.OnResuming();
             s_in_suspend = false;
         }
-        else if (!s_in_sizemove && game)
+        else if (!s_in_sizemove)
         {
-            game->OnWindowSizeChanged(LOWORD(lParam), HIWORD(lParam));
+            game.OnWindowSizeChanged(LOWORD(lParam), HIWORD(lParam));
         }
         break;
 
@@ -144,13 +144,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     case WM_EXITSIZEMOVE:
         s_in_sizemove = false;
-        if (game)
-        {
-            RECT rc;
-            GetClientRect(hWnd, &rc);
+        RECT rc;
+        GetClientRect(hWnd, &rc);
 
-            game->OnWindowSizeChanged(rc.right - rc.left, rc.bottom - rc.top);
-        }
+        game.OnWindowSizeChanged(rc.right - rc.left, rc.bottom - rc.top);
         break;
 
     case WM_GETMINMAXINFO:
@@ -162,16 +159,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_ACTIVATEAPP:
-        if (game)
+        if (wParam)
         {
-            if (wParam)
-            {
-                game->OnActivated();
-            }
-            else
-            {
-                game->OnDeactivated();
-            }
+            game.OnActivated();
+        }
+        else
+        {
+            game.OnDeactivated();
         }
 		Keyboard::ProcessMessage(message, wParam, lParam);
 		Mouse::ProcessMessage(message, wParam, lParam);
@@ -181,16 +175,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         switch (wParam)
         {
         case PBT_APMQUERYSUSPEND:
-            if (!s_in_suspend && game)
-                game->OnSuspending();
+            if (!s_in_suspend)
+                game.OnSuspending();
             s_in_suspend = true;
             return true;
 
         case PBT_APMRESUMESUSPEND:
             if (!s_minimized)
             {
-                if (s_in_suspend && game)
-                    game->OnResuming();
+                if (s_in_suspend)
+                    game.OnResuming();
                 s_in_suspend = false;
             }
             return true;
@@ -198,11 +192,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_DESTROY:
+		game.OnQuit();
         PostQuitMessage(0);
         break;
 
     case WM_SYSKEYDOWN:
-		Keyboard::ProcessMessage(message, wParam, lParam);
+		//Keyboard::ProcessMessage(message, wParam, lParam);
         if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
         {
             // Implements the classic ALT+ENTER fullscreen toggle
@@ -213,8 +208,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                 int width = 800;
                 int height = 600;
-                if (game)
-                    game->GetDefaultSize(width, height);
+                game.GetDefaultSize(width, height);
 
                 ShowWindow(hWnd, SW_SHOWNORMAL);
 
@@ -253,6 +247,45 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_SYSKEYUP:
 		Keyboard::ProcessMessage(message, wParam, lParam);
 		break;
+	case WM_CHAR:
+		switch (wParam)
+		{
+		case 0x08:
+
+			// Process a backspace. 
+			game.Backspace();
+			break;
+
+		case 0x0A:
+
+			// Process a linefeed. 
+
+			break;
+
+		case 0x1B:
+
+			// Process an escape. 
+
+			break;
+
+		case 0x09:
+
+			// Process a tab. 
+
+			break;
+
+		case 0x0D:
+
+			// Process a carriage return. 
+
+			break;
+
+		default:
+
+			// Process displayable characters. 
+			game.CharTyped((char)wParam);
+			break;
+		}
     }
 
     return DefWindowProc(hWnd, message, wParam, lParam);

@@ -2,7 +2,11 @@
 #include "GuiPanel.h"
 
 namespace GUI {
-	Panel::Panel()
+	Panel::Panel() : Parent(0), ElementID("")
+	{
+	}
+
+	Panel::Panel(string id) : Parent(0), ElementID(id)
 	{
 	}
 

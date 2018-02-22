@@ -127,6 +127,11 @@ namespace Utility {
 		return result;
 	}
 
+	float Clamp(float x, float min, float max)
+	{
+		return std::min(max, std::max(min, x));
+	}
+
 	float SigmoidDecay(float x, float width, float transitionPercent)
 	{
 		return Sigmoid(x, 1.f, 0.5 * width, -10 / (width * transitionPercent));

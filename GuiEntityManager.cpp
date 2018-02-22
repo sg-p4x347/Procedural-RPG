@@ -27,7 +27,11 @@ namespace GUI {
 		//----------------------------------------------------------------
 		// EventHanlders
 		RegisterDelegate([](string type) {return new EventHandler(type);}, vector<string>{
-			"Click"
+			"Click",
+			"Drag",
+			"Scroll",
+			"Keydown",
+			"MouseUp"
 		});
 	}
 
@@ -36,10 +40,10 @@ namespace GUI {
 	{
 	}
 
-	EntityPtr GuiEntityManager::NewPanel(Style * style, vector<EntityPtr> children)
+	EntityPtr GuiEntityManager::NewPanel(Style * style, vector<EntityPtr> children,string id)
 	{
 		EntityPtr entity = NewEntity();
-		entity->AddComponent(new Panel());
+		entity->AddComponent(new Panel(id));
 		entity->AddComponent(style);
 		entity->AddComponent(new Sprite());
 		if (children.size() != 0) AddChildren(entity,children);
@@ -53,29 +57,25 @@ namespace GUI {
 		return panel;
 	}
 
-	EntityPtr GuiEntityManager::NewButton(string text, std::function<void()>&&clickCallback, Style * style)
+	EntityPtr GuiEntityManager::NewButton(string text, std::function<void(Event evt)>&&clickCallback,string defaultBackground,string hoverBackground,string activeBackground)
 	{
 		// Create World button
 		EntityPtr btn = NewPanel([=] {
-			if (!style) {
-				Style* defaultStyle = new Style();
-				defaultStyle->Background = "widget.png:button";
-				defaultStyle->Height = "100px";
-				return defaultStyle;
-			}
-			else {
-				return style;
-			}
-		}());
-		btn->AddComponent(new Text(text));
-		btn->AddComponent([] {
-			Style * style = new Style("Hover");
-			style->Background = "widget.png:button_hover";
+			Style* style = new Style();
+			style->FontColor = "rgb(1,1,1)";
+			style->Background = defaultBackground;
+			style->Height = "100px";
 			return style;
 		}());
-		btn->AddComponent([] {
+		btn->AddComponent(new Text(text));
+		btn->AddComponent([=] {
+			Style * style = new Style("Hover");
+			style->Background = hoverBackground;
+			return style;
+		}());
+		btn->AddComponent([=] {
 			Style * style = new Style("Active");
-			style->Background = "widget.png:button_active";
+			style->Background = activeBackground;
 			return style;
 		}());
 		AddEventHandler(btn, new EventHandler("Click", std::move(clickCallback)));
@@ -86,8 +86,10 @@ namespace GUI {
 	{
 		if (entity) {
 			vector<unsigned int> ids;
-			for (auto & entity : children) {
-				ids.push_back(entity->ID());
+			for (auto & child : children) {
+				ids.push_back(child->ID());
+				shared_ptr<Panel> panel = child->GetComponent<Panel>("Panel");
+				if (panel) panel->Parent = entity->ID();
 			}
 			if (entity->HasComponents(ComponentMask("Children"))) {
 				// Add children to existing component

@@ -20,10 +20,10 @@ public:
 	void UpdateUI(int outputWidth, int outputHeight);
 
 	void OpenMenu(string name);
+	EntityPtr GetCurrentMenu();
 	void CloseMenu();
-	//----------------------------------------------------------------
-	// Draw queue for RenderSystem
-	vector<shared_ptr<Components::Component>> & GetDrawQueue();
+	GuiEntityManager & GetEM();
+	void DisplayException(std::exception e);
 	//----------------------------------------------------------------
 	// HUD Control
 	void ShowHint(string hint);
@@ -31,6 +31,8 @@ public:
 	//----------------------------------------------------------------
 	// Events
 	void BindHandlers();
+	void CharTyped(char ch);
+	void Backspace();
 private:
 	GUI::GuiEntityManager GuiEM;
 	Rectangle m_outputRect;
@@ -38,8 +40,11 @@ private:
 	// Menus
 	EntityPtr m_currentMenu;
 	map<string, EntityPtr> m_menus;
+	map<string, std::function<EntityPtr(void)>> m_dynamicMenus;
 	void AddMenu(string name, EntityPtr menu);
+	void AddDynamicMenu(string name, std::function<EntityPtr(void)> constructor);
 	EntityPtr GetMenu(string name);
+	void OpenMenu(EntityPtr menu);
 	//----------------------------------------------------------------
 	// HUD
 	EntityPtr m_HUDhint;
@@ -53,22 +58,34 @@ private:
 	// Style Updates
 	EntityPtr m_activeElement;
 	EntityPtr m_hoverElement;
-	void UpdateSprite(Rectangle rect, EntityPtr entity, shared_ptr<Style> style, shared_ptr<Sprite> sprite, int zIndex);
+	void UpdateSprite(EntityPtr entity, shared_ptr<Style> style, shared_ptr<Sprite> sprite, int zIndex);
 	void UpdateText(shared_ptr<Text> text, shared_ptr<Sprite> sprite, shared_ptr<Style> style);
+
+	void SetStyle(EntityPtr entity, Style style);
 	//----------------------------------------------------------------
 	// Events
-	void OnHover(EntityPtr entity);
-	void OnHoverOut(EntityPtr entity);
-	void OnMouseDown(EntityPtr entity);
-	void OnMouseUp(EntityPtr entity);
-	void OnClick(EntityPtr entity);
+
+	void OnHover(EntityPtr entity, Event evt);
+	void OnHoverOut(EntityPtr entity, Event evt);
+	void OnMouseDown(EntityPtr entity, Event evt);
+	void OnMouseUp(EntityPtr entity, Event evt);
+	void OnClick(EntityPtr entity, Event evt);
+	void OnDrag(EntityPtr entity, Event evt);
+	void OnScroll(EntityPtr entity, Event evt);
+	void OnKeydown(EntityPtr entity, Event evt);
 
 	void OnDefault(EntityPtr entity);
 	//----------------------------------------------------------------
+	// User Interface
+	const int m_scrollTicks;
+	/* Iterate recursively into the UI heierarchy to locate the lowest level
+	element that the vector occupies*/
+	EntityPtr FindOccupiedRecursive(EntityPtr entity, Vector2 mousePos);
+	EntityPtr FindFirstParent(EntityPtr child, std::function<bool(shared_ptr<Style>)> && validation = [](shared_ptr<Style> style) {return true;});
+	//----------------------------------------------------------------
 	// View engine
-	shared_ptr<GUI::Sprite> m_drawQueue;
-	shared_ptr<GUI::Sprite> UpdateDrawQueue(Rectangle parentRect, EntityPtr entity, int zIndex);
-	vector<Rectangle> CalculateChildRects(Rectangle parentRect, shared_ptr<Style> parentStyle,vector<shared_ptr<Style>> childrenStyles);
+	void UpdateFlowRecursive(EntityPtr entity, int zIndex);
+	void PositionChildren(EntityPtr parent);
 
 	Rectangle CalculateChildRect(Rectangle parentRect, shared_ptr<Style> childStyle);
 	void SetPosition(FlowType flow, Rectangle & rect, int primary, int secondary);
@@ -80,8 +97,16 @@ private:
 	int GetSecondaryPosition(FlowType flow, Rectangle rect);
 
 	Vector2 GetVector(FlowType flow, int primary, int secondary);
+	// factories
+	EntityPtr NewVerticalScrollBar(EntityPtr target);
+	EntityPtr MainMenuBtn(int height = 100);
+	EntityPtr NewTextBox(string id,string placeholder = "");
 	//----------------------------------------------------------------
 	// Misc helpers
 	shared_ptr<Sprite> GetSprite(EntityPtr entity);
+	void AddRectIfValid(Rectangle rect, vector<Rectangle> & rects);
+	void AddScrollbarsRecursive(EntityPtr & entity);
+	EntityPtr GetElementByID(string id);
+	EntityPtr FindElementByIdRecursive(EntityPtr entity, string id);
 };
 

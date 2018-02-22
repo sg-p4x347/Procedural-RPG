@@ -33,11 +33,11 @@ WorldEntityManager::WorldEntityManager(Filesystem::path directory) : Persistence
 
 	//----------------------------------------------------------------
 	// Event Handlers
-	IEventManager::RegisterHandler(Entity_ComponentAdded, std::function<void(unsigned int, unsigned long)>([=](unsigned int target, unsigned long mask) {
+	/*IEventManager::RegisterHandler(Entity_ComponentAdded, std::function<void(unsigned int, unsigned long)>([=](unsigned int target, unsigned long mask) {
 		if (mask == ComponentMask("Position")) {
 			AddEntityToRegion(target);
 		}
-	}));
+	}));*/
 }
 vector<EntityPtr> WorldEntityManager::FindEntitiesInRange(unsigned long componentMask, Vector3 center, float range)
 {
@@ -114,6 +114,9 @@ EntityPtr WorldEntityManager::Player()
 	if (!m_player) {
 		auto results = FindEntities(ComponentMask("Player"));
 		m_player = results.size() != 0 ? results[0] : nullptr;
+		if (!m_player) {
+			throw std::exception("Player data missing");
+		}
 	}
 	return m_player;
 }

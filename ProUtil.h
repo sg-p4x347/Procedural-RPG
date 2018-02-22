@@ -13,4 +13,6 @@ namespace ProUtil {
 	Vector2 PointWithin(Rectangle A);
 	float RandWithin(float min, float max);
 	int RandWithin(int min, int max);
+	int ToRandom(string input);
+	
 }
