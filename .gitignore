@@ -2,6 +2,9 @@
 Saves/
 Unused/
 DirectXTK/
+*.fbx
+*.wav
+*.xwb
 
 # Windows image file caches
 Thumbs.db
