@@ -192,6 +192,9 @@
     <ClInclude Include="BaseEntityManager.h" />
     <ClInclude Include="Bezier.h" />
     <ClInclude Include="Box.h" />
+    <ClInclude Include="Building.h" />
+    <ClInclude Include="BuildingGenerator.h" />
+    <ClInclude Include="BuildingVoxel.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="CollisionSystem.h" />
     <ClInclude Include="CubicSpline.h" />
@@ -267,6 +270,9 @@
     <ClCompile Include="BaseEntityManager.cpp" />
     <ClCompile Include="Bezier.cpp" />
     <ClCompile Include="Box.cpp" />
+    <ClCompile Include="Building.cpp" />
+    <ClCompile Include="BuildingGenerator.cpp" />
+    <ClCompile Include="BuildingVoxel.cpp" />
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CollisionSystem.cpp" />
     <ClCompile Include="CubicSpline.cpp" />
