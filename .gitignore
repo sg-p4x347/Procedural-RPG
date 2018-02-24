@@ -5,6 +5,9 @@ DirectXTK/
 *.fbx
 *.wav
 *.xwb
+*.dds
+*.cmo
+*.cso
 
 # Windows image file caches
 Thumbs.db
