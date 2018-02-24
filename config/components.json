@@ -1,0 +1,7 @@
+{
+    "componentMask": [
+        "Position",
+        "Movement",
+        "Input"
+    ]
+}

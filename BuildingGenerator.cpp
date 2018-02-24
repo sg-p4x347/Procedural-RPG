@@ -1,0 +1,642 @@
+#include "pch.h"
+#include "BuildingGenerator.h"
+#include "Line.h"
+#include "JsonParser.h"
+#include "Utility.h"
+#include "Room.h"
+#include "BuildingGenerator.h"
+#include "Rectangle.h"
+#include "Voxel.h"
+using Rectangle = Architecture::Rectangle;
+BuildingGenerator::BuildingGenerator()
+{
+}
+
+
+BuildingGenerator::~BuildingGenerator()
+{
+}
+
+
+using namespace std;
+using namespace Utility;
+
+	Building BuildingGenerator::Create(Architecture::Rectangle footprint, JsonParser & config, string type)
+	{
+		// initialize configuration settings
+		m_config = config[type];
+		m_goldenRatio = config["goldenRatio"].To<double>();
+		m_hallWidth = m_config["hallWidth"].To<int>();
+		m_divisionDeviation = m_config["divisionDeviation"].To<double>();
+		m_minFitness = m_config["minFitness"].To<double>();
+		// initialize rects vector
+		auto m_rects = vector<Architecture::Rectangle>{ footprint };
+		auto rooms = vector<Room>();
+
+		int roomIndex = -1;
+		// keep creating rooms as long as there are rectangles
+		while (m_rects.size() > 0) {
+			if (!HasRequiredRooms()) {
+
+				JsonParser roomCfg;
+				do {
+					roomIndex++;
+					if (roomIndex >= m_config["rooms"].Count()) roomIndex = 0;
+					roomCfg = m_config["rooms"][roomIndex];
+				} while (!roomCfg["required"].To<bool>() || RoomCount(roomCfg["type"].To<string>(),rooms) >= m_config["rooms"][roomIndex]["count"].To<int>());
+
+				// search for the best rect out of all current rects
+				double bestFitness = 0.0;
+				int bestRect = 0;
+				for (int i = 0; i < m_rects.size(); i++) {
+					double fitness = RoomFitness(m_rects[i], roomCfg);
+					if (i == 0 || fitness < bestFitness) {
+						bestFitness = fitness;
+						bestRect = i;
+					}
+				}
+				// recursively divide this rect until a room is established
+				CreateRoom(bestRect, roomCfg,rooms,m_rects);
+
+			}
+			else {
+				// search for the best rectangle-room match
+				pair<int, JsonParser> bestFit = BestFit(m_rects,rooms);
+				if (std::get<0>(bestFit) >= 0) {
+					CreateRoom(std::get<0>(bestFit), std::get<1>(bestFit),rooms,m_rects);
+				}
+				else {
+					break;
+				}
+			}
+		}
+		// Network the rooms
+		NetworkRooms();
+		// Voxelize
+		Voxelize();
+	}
+
+	BuildingGenerator::~BuildingGenerator()
+	{
+	}
+	int BuildingGenerator::RoomCount(string type, vector<Room> & rooms)
+	{
+		int counter = 0;
+		for (Room & room : rooms) {
+			if (type == room.type) counter++;
+		}
+		return counter;
+	}
+
+	//bool BuildingGenerator::MeetsConstraints(Rectangle & rect,JsonParser & room)
+	//{
+	//	return (rect.width * rect.height >= room["minArea")
+	//		&& std::abs(double(std::max(rect.width, rect.height)) / double(std::min(rect.width, rect.height) - m_goldenRatio)) / m_goldenRatio <= m_deviation
+	//		);
+	//}
+
+	bool BuildingGenerator::MeetsAreaConstraint(Architecture::Rectangle & rect, JsonParser & room)
+	{
+		return (rect.width * rect.height >= room["minArea"].To<int>());
+	}
+
+	// Higher the fitness, the better
+	double BuildingGenerator::RoomFitness(Architecture::Rectangle & rect, JsonParser & room)
+	{
+		double optimalArea = room["area"].To<double>();
+
+		double optimalWidth = sqrt(optimalArea / m_goldenRatio); // short side
+		double optimalLength = m_goldenRatio * optimalWidth; // long side
+		double error = pow((min(rect.width, rect.height) - optimalWidth) / optimalWidth, 2)
+			+ pow((max(rect.width, rect.height) - optimalLength) / optimalLength, 2);
+		if (error == 0) {
+			return std::numeric_limits<double>::infinity();
+		}
+		else {
+			return 1.0 / error;
+		}
+	}
+
+	pair<int, JsonParser> BuildingGenerator::BestFit(vector<Architecture::Rectangle>& rects,vector<Room> & rooms)
+	{
+		// search for the best rectangle--room match
+		double bestFitness = 0.0;
+		int bestRect = -1;
+		JsonParser bestRoomCfg;
+		for (JsonParser roomCfg : m_config["rooms"].GetElements()) {
+			if (roomCfg["count"].To<int>() == -1 || RoomCount(roomCfg["type"].To<string>(),rooms) < roomCfg["count"].To<int>()) {
+				for (int rectIndex = 0; rectIndex < rects.size(); rectIndex++) {
+					double fitness = RoomFitness(rects[rectIndex], roomCfg);
+					if (fitness > bestFitness) {
+						bestFitness = fitness;
+						bestRect = rectIndex;
+						bestRoomCfg = roomCfg;
+					}
+				}
+			}
+		}
+
+		return pair<int, JsonParser>(bestRect, bestRoomCfg);
+	}
+
+	//void BuildingGenerator::BestFit(int parentIndex, JsonParser & room)
+	//{
+	//	Rectangle & parentRect = m_rects[parentIndex];
+	//	// test each width in the range to determine which one yields the best rectangle
+	//	Rectangle subRectA(parentRect);
+	//	// determine which side to adjust (the longer side)
+	//	bool adjustWidth = max(parentRect.width, parentRect.height) == parentRect.width;
+	//	// find the rect with the best fitness
+	//	double bestFitness = 0.0;
+	//	for (int length = 1; length <= max(parentRect.width, parentRect.height); length++) {
+	//		Rectangle testRect(subRectA);
+	//		if (adjustWidth) {
+	//			testRect.width = length;
+	//		} else {
+	//			testRect.height = length;
+	//		}
+	//		double fitness = RoomFitness(testRect, room);
+	//		if (length == 1 || fitness < bestFitness ) {
+	//			bestFitness = fitness;
+	//			subRectA = testRect;
+	//		}
+	//	}
+	//	// if the best (sub) rect is better than the original parent rect
+	//	if (bestFitness < RoomFitness(parentRect,room)) {
+	//		// Add a rect for the left over area
+	//		Rectangle subRectB(parentRect);
+	//		if (adjustWidth) {
+	//			subRectB.width -= subRectA.width;
+	//			subRectB.x = subRectA.width;
+	//		}
+	//		else {
+	//			subRectB.height -= subRectA.height;
+	//			subRectB.y = subRectA.height;
+	//		}
+	//		// add subRectB (non-optimized)
+	//		m_rects.push_back(subRectB);
+	//	}
+	//	// remove the parent rect
+	//	m_rects.erase(m_rects.begin() + parentIndex);
+	//	// turn the optimized rect into a room
+	//	m_rooms.push_back(new Room(subRectA, room.Get<string>("name")));
+	//}
+
+	vector<Architecture::Rectangle> BuildingGenerator::DivideRect(Architecture::Rectangle & rect, double division, bool percent, bool horizontal, bool vertical)
+	{
+		int largeSide = horizontal ? rect.width : (vertical ? rect.height : max(rect.width, rect.height));
+		int smallSide = vertical ? rect.width : (horizontal ? rect.height : min(rect.width, rect.height));
+		bool xIsLarger = !vertical && (largeSide == rect.width || horizontal);
+
+		int divisionSideA = (int)(percent ? round(largeSide * division) : division);
+		int divisionSideB = largeSide - divisionSideA;
+
+		Architecture::Rectangle subRectA(
+			rect.x,
+			rect.y,
+			(xIsLarger ? divisionSideA : smallSide),
+			(xIsLarger ? smallSide : divisionSideA)
+		);
+		Architecture::Rectangle subRectB(
+			rect.x + (xIsLarger ? subRectA.width : 0),
+			rect.y + (xIsLarger ? 0 : subRectA.height),
+			(xIsLarger ? divisionSideB : smallSide),
+			(xIsLarger ? smallSide : divisionSideB)
+		);
+		vector<Architecture::Rectangle> rects;
+		rects.push_back(subRectA);
+		rects.push_back(subRectB);
+		return rects;
+	}
+
+	void BuildingGenerator::CreateRoom(int parentIndex, JsonParser & roomCfg, vector<Room> & rooms, vector<Architecture::Rectangle> & rects, bool recursive)
+	{
+		Architecture::Rectangle parentRect = rects[parentIndex];
+		// remove the original rect
+		rects.erase(rects.begin() + parentIndex);
+
+		vector<Architecture::Rectangle> rects = DivideRect(parentRect, 0.5, true);
+		Architecture::Rectangle subRectA = rects[0];
+		Architecture::Rectangle subRectB = rects[1];
+		//// pick a spot to divide the rectangle
+		//long largeSide = max(parentRect.width, parentRect.height);
+		//long smallSize = min(parentRect.width, parentRect.height);
+
+		//long divisionSideA = (long)Utility::randWithin((float(largeSide) / 2.f) - (float(largeSide)*m_divisionDeviation), float(largeSide) / 2.f);
+		//long divisionSideB = largeSide - divisionSideA;
+
+		//Rectangle subRectA = Rectangle(
+		//	parentRect.x,
+		//	parentRect.y,
+		//	divisionSideA,
+		//	smallSize
+		//);
+		//Rectangle subRectB = Rectangle(
+		//	parentRect.x + (largeSide == parentRect.width ? divisionSideA : 0),
+		//	parentRect.y + (largeSide == parentRect.height ? divisionSideA : 0),
+		//	divisionSideB,
+		//	smallSize
+		//);
+
+		/* if the average fitness of the two subRects is better
+		than the original rect*/
+		double parentFitness = RoomFitness(parentRect, roomCfg);
+		double fitnessA = RoomFitness(subRectA, roomCfg);
+		double fitnessB = RoomFitness(subRectB, roomCfg);
+		if (subRectA != parentRect && subRectB != parentRect && (fitnessA + fitnessB) / 2.0 > parentFitness) {
+
+
+			// try to add some randomness to the mix
+			// divides the rect on the long side, deviating by "divisionDeviation" away from half way (0.5)
+			vector<Architecture::Rectangle> unequalRects = DivideRect(parentRect, Deviation(m_divisionDeviation, 0.5), true);
+			double fitnessUneqA = RoomFitness(unequalRects[0], roomCfg);
+			double fitnessUneqB = RoomFitness(unequalRects[1], roomCfg);
+			if ((fitnessUneqA + fitnessUneqB) / 2.0 > parentFitness) {
+				subRectA = unequalRects[0];
+				subRectB = unequalRects[1];
+				fitnessA = fitnessUneqA;
+				fitnessB = fitnessUneqB;
+			}
+
+			// add the two subRects
+			int indexA = -1;
+			int indexB = -1;
+			if (subRectA.Area() > 0 && subRectB.Area() > 0) {
+				rects.push_back(subRectA);
+				indexA = rects.size() - 1;
+				rects.push_back(subRectB);
+				indexB = rects.size() - 1;
+
+				// recursively break down the best rect until a room is created
+				if (recursive) {
+					if (fitnessA >= fitnessB) {
+						CreateRoom(indexA, roomCfg,rooms, rects); // subRectA
+					}
+					else if (fitnessB > fitnessA) {
+						CreateRoom(indexB, roomCfg,rooms,rects); // subRectB
+					}
+				}
+			}
+			else {
+				int test = 0;
+			}
+
+
+		}
+		else {
+			// re-assign this room if it is just ludicrous 
+			if (parentFitness <= m_minFitness) {
+				//newRoom.Initialize(self.BestFit([parentRect]).config.name);
+				CreateRoom(parentIndex, std::get<1>(BestFit(vector<Architecture::Rectangle>{parentRect})));
+
+			}
+			else {
+				// turn the parent rect into a room
+				Room newRoom = Room(parentRect, roomCfg);
+
+				rooms.push_back(newRoom);
+			}
+		}
+	}
+	void BuildingGenerator::NetworkRooms()
+	{
+		vector< vector<Room*> > networks;
+		int i = 0;
+		do {
+			// make a hallway to connect separate networks
+			if (networks.size() > 0) LinkNetworks(networks);
+			// link the rooms
+			LinkRooms();
+			// group connected rooms in to networks
+			networks = FindNetworks();
+			i++;
+		} while (networks.size() > 1 && i < 50); // i < [int] ensures no ifinity loop
+	}
+	void BuildingGenerator::LinkRooms()
+	{
+		// clear out any pre-existing links
+		for (Room & room : m_rooms) {
+			room.links.clear();
+		}
+		// do the linking
+		bool continueNetworking = true;
+		while (continueNetworking) {
+			bool linkCreated = false;
+			// iterate over all rooms
+			for (Room & roomA : m_rooms) {
+				if (roomA.links.size() < roomA.config["maxLinks"].To<int>()) {
+					// keep track of the best link
+					Room * bestRoom = nullptr;
+					int bestLinkRank = -1;
+					// iterate over all other rooms
+					for (Room & roomB : m_rooms) {
+						if (&roomA != &roomB && !roomA.IsLinkedWith(&roomB) && roomA.rect.IsTouching(roomB.rect)) {
+							// determine if either room can link with the other
+							int linkRank = roomA.config["linksTo"].IndexOf(roomB.type);
+							if (linkRank != -1 && (bestLinkRank == -1 || linkRank < bestLinkRank)) {
+								bestLinkRank = linkRank;
+								bestRoom = &roomB;
+							}
+							if (linkRank == 0) break;
+						}
+					}
+
+					if (bestRoom != nullptr) {
+						// make the link
+						roomA.links.push_back(bestRoom);
+						linkCreated = true;
+					}
+				}
+				if (linkCreated) break;
+			}
+			if (!linkCreated) continueNetworking = false;
+		}
+	}
+	vector<vector<Room*>> BuildingGenerator::FindNetworks()
+	{
+		// initialize the array of room networks
+		vector<vector<Room*>> networks;
+		for (Room & room : m_rooms) {
+			networks.push_back(vector<Room*>{&room});
+		}
+		bool linkFound = true;
+		while (linkFound) {
+			linkFound = false;
+			for (int indexA = 0; indexA < networks.size(); indexA++) {
+				for (int indexB = 0; indexB < networks.size(); indexB++) {
+					if (indexA != indexB) {
+						vector<Room*> & networkA = networks[indexA];
+						vector<Room*> & networkB = networks[indexB];
+						for (int rIndexA = 0; rIndexA < networkA.size(); rIndexA++) {
+							for (int rIndexB = 0; rIndexB < networkB.size(); rIndexB++) {
+								Room* roomA = networkA[rIndexA];
+								Room* roomB = networkB[rIndexB];
+								if (roomA->IsLinkedWith(roomB)) {
+									linkFound = true;
+									// add networkB to networkA
+									networks[indexA].insert(networkA.end(), networkB.begin(), networkB.end());
+									// remove network B
+									networks.erase(networks.begin() + indexB);
+								}
+								if (linkFound) break;
+							}
+							if (linkFound) break;
+						}
+					}
+					if (linkFound) break;
+				}
+				if (linkFound) break;
+			}
+		}
+		return networks;
+	}
+	void BuildingGenerator::LinkNetworks(vector<vector<Room*>> networks)
+	{
+		// find the closest two disconnected networks
+		tuple<Room*, Room*, double> bestPair(
+			nullptr,
+			nullptr,
+			std::numeric_limits<double>::infinity() // shortest distance between the two
+		);
+		for (int i = 0; i < networks.size(); i++) {
+			for (int j = 0; j < networks.size(); j++) {
+				if (i != j) {
+					tuple<Room*, Room*, double> pair = FindClosest(networks[i], networks[j], true);
+					// if closer than the previous closest
+					if (std::get<2>(pair) < std::get<2>(bestPair)) {
+						bestPair = pair;
+					}
+				}
+			}
+		}
+		// travel from A to B
+		CreateHallway(nullptr, std::get<0>(bestPair), std::get<1>(bestPair));
+	}
+	tuple<Room*, Room*, double> BuildingGenerator::FindClosest(vector<Room*> A, vector<Room*> B, bool linkable, bool touching)
+	{
+		tuple<Room*, Room*, double> closestPair;
+		get<2>(closestPair) = std::numeric_limits<double>::infinity();
+		for (Room* roomA : A) {
+			for (Room* roomB : B) {
+				if (roomA != roomB && (!linkable || roomA->CanLinkWith(roomB)) && (!touching || roomA->rect.IsTouching(roomB->rect))) {
+					double distance = (roomA->rect.Center() - roomB->rect.Center()).Length();
+					if (distance < get<2>(closestPair)) {
+						get<0>(closestPair) = roomA;
+						get<1>(closestPair) = roomB;
+						get<2>(closestPair) = distance;
+
+					}
+				}
+			}
+		}
+		return closestPair;
+	}
+	vector<Room*> BuildingGenerator::RoomsTouching(Room * roomA)
+	{
+		vector<Room*> rooms;
+		for (Room & roomB : m_rooms) {
+			if (roomA->rect.IsTouching(roomB.rect)) rooms.push_back(&roomB);
+		}
+		return rooms;
+	}
+	void BuildingGenerator::CreateHallway(Room * previous, Room * current, Room * target)
+	{
+		// find the next room in the chain
+		Room * nextRoom = nullptr;
+		vector<Room*> roomsTouching = RoomsTouching(current);
+		for (Room * room : roomsTouching) {
+			if (room == target) nextRoom = target;
+		}
+		if (nextRoom == nullptr) nextRoom = get<0>(FindClosest(roomsTouching, vector<Room*>{target}));
+		// find which sides to make the hallway on
+		if (previous) {
+			// connection between current and previous room// edges of the current room that would be viable for a hallway
+			vector<Edge> edgesPrev;
+			Line line = current->rect.Touching(previous->rect);
+
+			if (line.SharedCoord(current->rect.x)) edgesPrev.push_back(Left);
+			if (line.SharedCoord(current->rect.x + current->rect.width)) edgesPrev.push_back(Right);
+			if (line.SharedCoord(current->rect.y)) edgesPrev.push_back(Bottom);
+			if (line.SharedCoord(current->rect.y + current->rect.height)) edgesPrev.push_back(Top);
+			// connection between current and next room
+			vector<Edge> edgesNext;
+			line = current->rect.Touching(previous->rect);
+
+			if (line.SharedCoord(current->rect.x)) edgesNext.push_back(Left);
+			if (line.SharedCoord(current->rect.x + current->rect.width)) edgesNext.push_back(Right);
+			if (line.SharedCoord(current->rect.y)) edgesNext.push_back(Bottom);
+			if (line.SharedCoord(current->rect.y + current->rect.height)) edgesNext.push_back(Top);
+
+			// if there is a common edge, that be the hallway
+			bool common = false;
+			for (Edge edgePrev : edgesPrev) {
+				for (Edge edgeNext : edgesNext) {
+					if (edgePrev == edgeNext) {
+						CreateHallwayFromEdge(current, edgePrev);
+						common = true;
+						break;
+					}
+				}
+				if (common) break;
+			}
+			// if no common edge
+			if (!common) {
+				// if the edges are adjacent
+				bool adjacent = false;
+				for (Edge edgePrev : edgesPrev) {
+					for (Edge edgeNext : edgesNext) {
+						if (EdgesAdjacent(edgePrev, edgeNext)) {
+							CreateHallwayFromEdge(current, edgePrev);
+							CreateHallwayFromEdge(current, edgeNext);
+							adjacent = true;
+							break;
+						}
+					}
+					if (adjacent) break;
+				}
+				// if edges are opposite
+				if (!adjacent) {
+					CreateHallwayFromEdge(current, edgesPrev[0]);
+					CreateHallwayFromEdge(current, edgesNext[0]);
+					Edge other;
+					if (edgesPrev[0] == Left || edgesPrev[0] == Right) other = Top;
+					if (edgesPrev[0] == Bottom || edgesPrev[0] == Top) other = Left;
+					CreateHallwayFromEdge(current, other);
+				}
+			}
+		}
+		if (nextRoom == target) {
+			return;
+		}
+		else {
+			// recursively create hallways until the target is reached
+			CreateHallway(current, nextRoom, target);
+		}
+	}
+	bool BuildingGenerator::EdgesAdjacent(Edge & A, Edge & B)
+	{
+		return ((A == Left || A == Right) && (B == Top || B == Bottom) || (A == Top || A == Bottom) && (B == Left || B == Right));
+	}
+	void BuildingGenerator::CreateHallwayFromEdge(Room * room, Edge edge)
+	{
+		Room hallway;
+		JsonParser hallConfig;
+		for (JsonParser roomCfg : m_config["rooms"].GetElements()) {
+			if (roomCfg["type"].To<string>() == "hallway") {
+				hallConfig = roomCfg;
+				break;
+			}
+		}
+		switch (edge) {
+		case Left:
+			if (m_hallWidth <  room->rect.width) {
+				hallway = Room(Rectangle(room->rect.x, room->rect.y, m_hallWidth, room->rect.height), hallConfig);
+				room->rect.width -= m_hallWidth;
+				room->rect.x += m_hallWidth;
+			}
+			else {
+				room->type = "hallway";
+				room->config = hallConfig;
+			}
+			break;
+		case Right:
+			if (m_hallWidth < room->rect.width) {
+				hallway = Room(Rectangle(room->rect.x + room->rect.Right() - m_hallWidth, room->rect.y, m_hallWidth, room->rect.height), hallConfig);
+				room->rect.width -= m_hallWidth;
+			}
+			else {
+				room->type = "hallway";
+				room->config = hallConfig;
+			}
+			break;
+		case Bottom:
+			if (m_hallWidth < room->rect.height) {
+				hallway = Room(Rectangle(room->rect.x, room->rect.y, room->rect.width, m_hallWidth), hallConfig);
+				room->rect.height -= m_hallWidth;
+				room->rect.y += m_hallWidth;
+			}
+			else {
+				room->type = "hallway";
+				room->config = hallConfig;
+			}
+			break;
+		case Top:
+			if (m_hallWidth < room->rect.height) {
+				hallway = Room(Rectangle(room->rect.x, room->rect.Top() - m_hallWidth, room->rect.width, m_hallWidth), hallConfig);
+				room->rect.height -= m_hallWidth;
+			}
+			else {
+				room->type = "hallway";
+				room->config = hallConfig;
+			}
+			break;
+		}
+		// remove the room if it no longer has an area
+		/*if (room->rect.Area() <= 0) {
+		for (int i = 0; i < m_rooms.size(); i++) {
+		if (&m_rooms[i] == room) {
+		m_rooms.erase(m_rooms.begin() + i);
+		}
+		}
+		}*/
+		// if this room now looks pretty shitty, rename it
+		if (!room->config["required"].To<bool>() || RoomFitness(room->rect, room->config) <= m_minFitness) {
+			//room->
+		}
+		// add the hallway room
+		if (hallway.type == "hallway") {
+			m_rooms.push_back(hallway);
+		}
+	}
+	void BuildingGenerator::Voxelize()
+	{
+		// 2d voxel array
+		m_voxels = vector < vector<Voxel> >(m_footprint.width, vector<Voxel>(m_footprint.height));
+		// iterate & voxelize each room
+		for (Room room : m_rooms) {
+			for (int x = room.rect.x; x < room.rect.x + room.rect.width; x++) {
+				for (int y = room.rect.y; y < room.rect.y + room.rect.height; y++) {
+					// Unit square used for determining where walls go
+					/*
+					(-1,1)-------(1,1)
+					|           |
+					|     .     |
+					|           |
+					(-1,-1)------(1,-1)
+					*/
+					short unitX = (short)floor(((float)x - room.rect.Center().x) / ((float)room.rect.width / 2.f));
+					short unitY = (short)floor(((float)y - room.rect.Center().y) / ((float)room.rect.height / 2.f));
+					m_voxels[x][y].Floor(
+						unitX,
+						unitY,
+						room.config["floorType"].To<short>()
+					);
+					m_voxels[x][y].Wall(
+						unitX,
+						unitY,
+						room.config["wallType"].To<short>()
+					);
+				}
+			}
+		}
+	}
+
+	bool BuildingGenerator::HasRequiredRooms()
+	{
+		int totalRequired = 0;
+		int totalCreated = 0;
+		for (int i = 0; i < m_config["rooms"].Count(); i++) {
+			JsonParser roomConfig = m_config["rooms"][i];
+			if (roomConfig["required"].To<bool>()) {
+				totalRequired++;
+				for (Room & room : m_rooms) {
+					if (room.type == roomConfig["type"].To<string>()) {
+						totalCreated++;
+						break;
+					}
+				}
+			}
+		}
+		return totalCreated >= totalRequired;
+	}
+

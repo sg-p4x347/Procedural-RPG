@@ -83,6 +83,9 @@
     <Filter Include="Events">
       <UniqueIdentifier>{41e63228-b4fe-4146-b46d-98f6069059fc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="World\Generator\Building">
+      <UniqueIdentifier>{97760ea1-03e6-4512-914c-f1b032a2f189}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -298,6 +301,15 @@
     <ClInclude Include="SoundAsset.h">
       <Filter>Assets\Component</Filter>
     </ClInclude>
+    <ClInclude Include="BuildingGenerator.h">
+      <Filter>World\Generator\Building</Filter>
+    </ClInclude>
+    <ClInclude Include="BuildingVoxel.h">
+      <Filter>World\Generator\Building</Filter>
+    </ClInclude>
+    <ClInclude Include="Building.h">
+      <Filter>World\Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -492,6 +504,15 @@
     </ClCompile>
     <ClCompile Include="SoundAsset.cpp">
       <Filter>Assets\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="BuildingGenerator.cpp">
+      <Filter>World\Generator\Building</Filter>
+    </ClCompile>
+    <ClCompile Include="BuildingVoxel.cpp">
+      <Filter>World\Generator\Building</Filter>
+    </ClCompile>
+    <ClCompile Include="Building.cpp">
+      <Filter>World\Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
