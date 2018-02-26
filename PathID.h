@@ -1,22 +1,20 @@
 #pragma once
-#include "JSON.h"
-#include "JsonParser.h"
 #include "Component.h"
-class ModelAsset :
+#include "JSON.h"
+class PathID :
 	public Components::Component,
 	public JSON
 {
 public:
-	ModelAsset(int lodSpacing = 1, int lodCount = 1);
+	PathID();
+	PathID(string path);
 	// Data
-	int LodSpacing; // how far apart each LOD is
-	int LodCount; // how many LOD levels are there
-	vector<shared_ptr<Model>> LODs; // indexed by LOD level
+	string Path;
 	// Inherited via Component
 	virtual string GetName() override;
 	virtual void Import(std::ifstream & ifs) override;
 	virtual void Export(std::ofstream & ofs) override;
-	// JSON
+	// Inherited via JSON
 	virtual void Import(JsonParser & jp) override;
 	virtual JsonParser Export() override;
 };

@@ -8,7 +8,7 @@ struct Line
 	double Length();
 	//Line Overlap(Line & B);
 	//bool CoLinear(Line & B);
-	//bool SharedCoord(int x);
+	bool SharedCoord(int x);
 };
 
 

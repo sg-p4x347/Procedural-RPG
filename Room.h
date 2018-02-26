@@ -1,14 +1,15 @@
 #pragma once
 #include "Rectangle.h"
-
 namespace Architecture {
-	struct Room {
+	
+	class Room {
+	public:
 		//=================================================
 		// Properties
 		//=================================================
 		Architecture::Rectangle rect;
 		string type;
-		vector<Room *> links;
+		vector<shared_ptr<Room>> links;
 		JsonParser config;
 		//=================================================
 		// Methods
@@ -17,8 +18,8 @@ namespace Architecture {
 		Room(const Room & other);
 		Room(Rectangle & r, const JsonParser & config);
 		// Room networking
-		bool IsLinkedWith(const Room * B) const;
-		bool HasLinkTo(const Room * B) const;
-		bool CanLinkWith(const Room * B) const;
+		bool IsLinkedWith(const  Room * B) const;
+		bool HasLinkTo(const  Room * B) const;
+		bool CanLinkWith(const  Room * B) const;
 	};
 }

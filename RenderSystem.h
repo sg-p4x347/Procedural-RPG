@@ -3,12 +3,15 @@
 #include "GuiSystem.h"
 #include "PositionNormalTextureVBO.h"
 #include "Model.h"
+#include "CompositeModel.h";
 #include "AssetManager.h"
+class SystemManager;
 class RenderSystem :
 	public System
 {
 public:
 	RenderSystem(
+		SystemManager * systemManager,
 		unsigned short updatePeriod,
 		HWND window, int width, int height,
 		shared_ptr<GuiSystem> guiSystem
@@ -23,6 +26,7 @@ public:
 private:
 	WorldEntityManager * EM;
 	shared_ptr<GuiSystem> m_guiSystem;
+	SystemManager * SM;
 	EntityPtr m_player;
 	std::mutex m_mutex;
 	// DirectX
@@ -74,7 +78,11 @@ private:
 	// Components::Model using DirectX::Model
 	unsigned long m_ModelMask;
 	std::map<string, vector<shared_ptr<Components::Model>>> m_Models;
-
+	//----------------------------------------------------------------
+	// DX::Model
+	void RenderModel(shared_ptr<DirectX::Model> model, Vector3 & position , Vector3 & rotation, bool backfaceCulling);
+	void RenderCompositeModel(shared_ptr<CompositeModel> model, Vector3 & position, Vector3 & rotation, bool backfaceCulling);
+	void RenderModelMesh(DirectX::ModelMesh * mesh, XMMATRIX world, bool backfaceCulling);
 	//----------------------------------------------------------------
 	// Entity Rendering
 	void Clear();

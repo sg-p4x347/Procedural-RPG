@@ -3,8 +3,6 @@
 #include "JsonParser.h"
 #include "Room.h"
 
-using namespace std;
-namespace SimpleMath = DirectX::SimpleMath;
 
 namespace Architecture {
 	Room::Room() : rect(), config()
@@ -25,14 +23,14 @@ namespace Architecture {
 	}
 	bool Room::HasLinkTo(const Room * B) const
 	{
-		for (Room * A : links) {
-			if (A == B) return true;
+		for (shared_ptr<Room> A : links) {
+			if (A.get() == B) return true;
 		}
 		return false;
 	}
 	bool Room::CanLinkWith(const Room * B) const
 	{
-		return (links.size() < config["maxLinks"].To<int>() && (config)["linksTo"].IndexOf<string>(B->type) >= 0)
+		return (links.size() < config["maxLinks"].To<int>() && config["linksTo"].IndexOf<string>(B->type) >= 0)
 			|| (B->links.size() < B->config["maxLinks"].To<int>() && B->config["linksTo"].IndexOf<string>(type) >= 0);
 	}
 }

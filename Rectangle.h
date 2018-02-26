@@ -3,15 +3,22 @@
 #include "JSON.h"
 
 namespace Architecture {
+	enum Edge {
+		Left,
+		Right,
+		Top,
+		Bottom
+	};
 struct Rectangle : public JSON {
 	Rectangle();
+	Rectangle(const SimpleMath::Rectangle & B);
 	Rectangle(const Rectangle & B);
 	Rectangle(int xIn, int yIn,int widthIn,int heightIn);
 	Rectangle(JsonParser & rect);
 
 	bool IsBordering(Rectangle & B);
 	bool IsTouching(Rectangle & B);
-	Architecture::Line Touching(Rectangle & B);
+	Line Touching(Rectangle & B);
 	int Area();
 	DirectX::SimpleMath::Vector2 Center();
 	int Left();

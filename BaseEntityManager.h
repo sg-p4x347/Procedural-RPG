@@ -24,7 +24,7 @@ public:
 	vector<EntityPtr> FindEntities(unsigned long componentMask);
 	vector<EntityPtr> FindEntities(vector<unsigned int> ids);
 	bool Find(const unsigned int & id, EntityPtr & entity);
-
+	
 protected:
 	//----------------------------------------------------------------
 	// Component management

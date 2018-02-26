@@ -40,7 +40,11 @@ public:
 	float Biome(const int & x, const int & z);
 	int Width();
 	DirectX::SimpleMath::Rectangle Area();
-
+	void ImportMap(HeightMap & map);
+	float Flatten(HeightMap & map, Rectangle area, const int margin = 10);
+	float Height(HeightMap & map, int x, int z);
+	float Average(HeightMap & map, Rectangle area);
+	void Save(HeightMap & map);
 	// terrain manipulation (TEMP currently only updates the VBO)
 	void SetVertex(const int & x, const int & z, const float value);
 protected:
@@ -67,7 +71,7 @@ protected:
 	Filesystem::path m_directory;
 	float InternalHeight(std::ifstream & ifs, const int & index, float precision);
 	Vector3 Normal(std::ifstream & ifs, const int & index);
-	void ImportMap(HeightMap & map, int x, int z);
+	
 	//----------------------------------------------------------------
 	// Generation parameters
 	int m_sampleSpacing;

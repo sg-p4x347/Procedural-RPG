@@ -2,15 +2,15 @@
 #include "Building.h"
 #include "BuildingVoxel.h"
 #include "Room.h"
-using namespace Components;
+using RoomPtr = std::shared_ptr<Architecture::Room>;
+using RoomPtrs = vector<shared_ptr<Architecture::Room>>;
 class BuildingGenerator
 {
 public:
 	BuildingGenerator();
 
 public:
-	Building Create(Architecture::Rectangle footprint, JsonParser & config, string type);
-	DirectX::SimpleMath::Rectangle GetFootprint();
+	Components::Building Create(SimpleMath::Rectangle footprint, JsonParser & config);
 private:
 
 	//bool MeetsConstraints(Rectangle & rect, JsonParser & room);
@@ -18,31 +18,31 @@ private:
 	// returns the relative error of the rectangle as it fits the room constraints
 	// 0 is most fit, positive infinity is least fit
 	double RoomFitness(Architecture::Rectangle & rect, JsonParser & room);
-	pair<int, JsonParser> BestFit(vector<Architecture::Rectangle> & rects, vector<Room> & rooms);
+	pair<int, JsonParser> BestFit(vector<Architecture::Rectangle> & rects, RoomPtrs & rooms);
 	//void BestFit(int parentIndex, JsonParser & room);
-	bool HasRequiredRooms();
+	bool HasRequiredRooms(RoomPtrs & rooms);
 	// returns the number of occurences of the specified room type
-	int RoomCount(string type, vector<Room> & rooms);
+	int RoomCount(string type, RoomPtrs & rooms);
 	// Room Generation ================================
 	vector<Architecture::Rectangle> DivideRect(Architecture::Rectangle & rect, double division, bool percent = true, bool horizontal = false, bool vertical = false);
-	void CreateRoom(int parentIndex, JsonParser & roomConfig, vector<Room> & rooms,vector<Architecture::Rectangle> & rects, bool recursive = true);
+	void CreateRoom(int parentIndex, JsonParser & roomConfig, RoomPtrs & rooms,vector<Architecture::Rectangle> & rects, bool recursive = true);
 	// Room Networking ================================
-	void NetworkRooms();
-	void LinkRooms();
+	void NetworkRooms(RoomPtrs & rooms);
+	void LinkRooms(RoomPtrs & rooms);
 	// determines what rooms are networked and returns an array of room arrays
-	vector< vector<Room*> > FindNetworks();
+	vector<RoomPtrs> FindNetworks(RoomPtrs & rooms);
 	// pathfinds a hallway between two disconnected room networks
-	void LinkNetworks(vector< vector<Room*> > networks);
+	void LinkNetworks(RoomPtrs & rooms, vector<RoomPtrs > networks);
 	// takes two vectors of rooms, returns the closest pair of rooms, and the distance between them
-	tuple<Room*, Room*, double> FindClosest(vector<Room*> A, vector<Room*> B, bool linkable = false, bool touching = false);
+	tuple<shared_ptr<Architecture::Room>, shared_ptr<Architecture::Room>, double> FindClosest(RoomPtrs A, RoomPtrs B, bool linkable = false, bool touching = false);
 
-	vector<Room*> RoomsTouching(Room* room);
-	void CreateHallway(Room* previous, Room* current, Room* target);
-	bool EdgesAdjacent(Edge & A, Edge & B);
-	void CreateHallwayFromEdge(Room* room, Edge edge);
+	RoomPtrs RoomsTouching(RoomPtrs rooms, RoomPtr room);
+	void CreateHallway(RoomPtrs rooms, RoomPtr previous,  RoomPtr current, RoomPtr target);
+	bool EdgesAdjacent(Architecture::Edge & A, Architecture::Edge & B);
+	void CreateHallwayFromEdge(RoomPtrs rooms, RoomPtr room, Architecture::Edge edge);
 
 	// Voxelization ================================
-	void Voxelize();
+	Map<BuildingVoxel> Voxelize(RoomPtrs & rooms, SimpleMath::Rectangle footprint);
 
 	//=================================================
 	// Properties

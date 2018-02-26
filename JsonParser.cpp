@@ -6,11 +6,20 @@ JsonParser::JsonParser() {
 	m_type = JsonType::object;
 }
 JsonParser::JsonParser(const JsonParser & other)
-{
-	m_array = other.m_array;
-	m_object = other.m_object;
-	m_type = other.m_type;
-	m_value = other.m_value;
+{ 
+	try {
+		m_type = other.m_type;
+		switch (other.m_type) {
+		case JsonType::object: m_object = other.m_object; break;
+		case JsonType::array: m_array = other.m_array; break;
+		case JsonType::primitive:
+		case JsonType::null:
+			m_value = other.m_value;
+		}
+	}
+	catch (std::exception ex) {
+
+	}
 }
 JsonParser::JsonParser(JsonType type)
 {

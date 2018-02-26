@@ -7,18 +7,21 @@
 #include "CustomEffect.h"
 #include "GuiChildren.h"
 #include <thread>
-
+#include "SystemManager.h"
+#include "BuildingSystem.h"
 using namespace DirectX::SimpleMath;
 using Microsoft::WRL::ComPtr;
 
 RenderSystem::RenderSystem(
+	SystemManager * systemManager,
 	unsigned short updatePeriod,
 	HWND window, int width, int height,
 	shared_ptr<GuiSystem> guiSystem
 ) : System(updatePeriod),
 m_guiSystem(guiSystem),
 m_VBOmask(0),
-m_ModelMask(0)
+m_ModelMask(0),
+SM(systemManager)
 {
 	InitializeWorldRendering(nullptr);
 	m_window = window;
@@ -94,44 +97,29 @@ void RenderSystem::Render()
 				m_mutex.unlock();
 			}
 		}
-		// Render Models with the effect
+
+		// Render all Components::Model with the effect
 		if (m_Models.find(effectName) != m_Models.end()) {
 			for (auto & model : m_Models[effectName]) {
-				
-
 				EntityPtr entity;
 				if (EM->Find(model->ID, entity)) {
 					auto position = entity->GetComponent<Components::Position>("Position");
 					auto dxModel = AssetManager::Get()->GetModel(model->Path,Vector3::Distance(EM->PlayerPos()->Pos,position->Pos),model->Procedural);
 					
-					XMMATRIX translation = XMMatrixTranslation(position->Pos.x, position->Pos.y, position->Pos.z);
-					XMMATRIX rotation = XMMatrixRotationRollPitchYawFromVector(position->Rot);
-					XMMATRIX final = XMMatrixMultiply(rotation, translation);
-					
-					final = XMMatrixMultiply(final, m_worldMatrix);
-
-					
-					for (auto it = dxModel->meshes.cbegin(); it != dxModel->meshes.cend(); ++it)
-					{
-						auto mesh = it->get();
-						assert(mesh != 0);
-
-						mesh->PrepareForRendering(m_d3dContext.Get(), *m_states, false);
-						if (!model->BackfaceCulling) {
-							m_d3dContext->RSSetState(m_states->CullNone());
-						}
-						else {
-							m_d3dContext->RSSetState(m_states->CullCounterClockwise());
-						}
-						//// Do model-level setCustomState work here
-						//m_d3dContext->RSSetState(m_states->CullNone());
-						mesh->Draw(m_d3dContext.Get(), final, m_viewMatrix, m_projMatrix, false);
-					}
-					//dxModel->Draw(m_d3dContext.Get(), *m_states, final, m_viewMatrix, m_projMatrix);
+					RenderModel(dxModel, position->Pos, position->Rot, model->BackfaceCulling);
 					
 				}
 			}
 		}
+		
+	}
+	// Render all buildings
+	for (EntityPtr & building : EM->FindEntities("Building")) {
+			
+		auto position = building->GetComponent<Components::Position>("Position");
+		auto dxModel = SM->GetSystem<BuildingSystem>("Building")->GetModel(building, Vector3::Distance(EM->PlayerPos()->Pos, position->Pos));
+
+		RenderCompositeModel(dxModel, position->Pos, position->Rot, true);
 	}
 }
 void RenderSystem::SyncEntities()
@@ -289,6 +277,51 @@ void RenderSystem::DrawText(string text,string font, Vector2 position,int size, 
 void RenderSystem::SpriteBatchEnd()
 {
 	m_spriteBatch->End();
+}
+
+void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model, Vector3 & position, Vector3 & rotation, bool backfaceCulling)
+{
+	XMMATRIX translation = XMMatrixTranslation(position.x, position.y, position.z);
+	XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(rotation);
+	XMMATRIX final = XMMatrixMultiply(rotMat, translation);
+
+	final = XMMatrixMultiply(final, m_worldMatrix);
+
+
+	for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
+	{
+		auto mesh = it->get();
+		assert(mesh != 0);
+		RenderModelMesh(mesh, final, backfaceCulling);
+		
+	}
+	//dxModel->Draw(m_d3dContext.Get(), *m_states, final, m_viewMatrix, m_projMatrix);
+}
+
+void RenderSystem::RenderCompositeModel(shared_ptr<CompositeModel> model, Vector3 & position, Vector3 & rotation, bool backfaceCulling)
+{
+	XMMATRIX translation = XMMatrixTranslation(position.x, position.y, position.z);
+	XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(rotation);
+	XMMATRIX world = XMMatrixMultiply(rotMat, translation);
+
+	for (auto & pair : model->meshes) {
+		RenderModelMesh(pair.first.get(), XMMatrixMultiply(pair.second,world), backfaceCulling);
+	}
+
+}
+
+void RenderSystem::RenderModelMesh(DirectX::ModelMesh * mesh, XMMATRIX world, bool backfaceCulling)
+{
+	mesh->PrepareForRendering(m_d3dContext.Get(), *m_states, false);
+	if (!backfaceCulling) {
+		m_d3dContext->RSSetState(m_states->CullNone());
+	}
+	else {
+		m_d3dContext->RSSetState(m_states->CullCounterClockwise());
+	}
+	//// Do model-level setCustomState work here
+	//m_d3dContext->RSSetState(m_states->CullNone());
+	mesh->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix, false);
 }
 
 void RenderSystem::Clear()

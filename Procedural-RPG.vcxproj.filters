@@ -310,6 +310,22 @@
     <ClInclude Include="Building.h">
       <Filter>World\Component</Filter>
     </ClInclude>
+    <ClInclude Include="Room.h">
+      <Filter>World\Generator\Building</Filter>
+    </ClInclude>
+    <ClInclude Include="Rectangle.h">
+      <Filter>World\Generator\Building</Filter>
+    </ClInclude>
+    <ClInclude Include="BuildingSystem.h">
+      <Filter>World\System</Filter>
+    </ClInclude>
+    <ClInclude Include="PathID.h">
+      <Filter>Assets\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="CompositeModel.h" />
+    <ClInclude Include="Geometry.h">
+      <Filter>Utility\Geometry</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -514,6 +530,22 @@
     <ClCompile Include="Building.cpp">
       <Filter>World\Component</Filter>
     </ClCompile>
+    <ClCompile Include="Room.cpp">
+      <Filter>World\Generator\Building</Filter>
+    </ClCompile>
+    <ClCompile Include="Rectangle.cpp">
+      <Filter>World\Generator\Building</Filter>
+    </ClCompile>
+    <ClCompile Include="BuildingSystem.cpp">
+      <Filter>World\System</Filter>
+    </ClCompile>
+    <ClCompile Include="PathID.cpp">
+      <Filter>Assets\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="CompositeModel.cpp" />
+    <ClCompile Include="Geometry.cpp">
+      <Filter>Utility\Geometry</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
@@ -584,9 +616,21 @@
     <MeshContentTask Include="Assets\Models\Cube.fbx">
       <Filter>Assets\Models</Filter>
     </MeshContentTask>
+    <MeshContentTask Include="Assets\Models\Building\models-building-corner0_0.fbx">
+      <Filter>Assets\Models</Filter>
+    </MeshContentTask>
+    <MeshContentTask Include="Assets\Models\Building\models-building-floor0_0.fbx">
+      <Filter>Assets\Models</Filter>
+    </MeshContentTask>
+    <MeshContentTask Include="Assets\Models\Building\models-building-wall0_0.fbx">
+      <Filter>Assets\Models</Filter>
+    </MeshContentTask>
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico">
+      <Filter>Assets\Textures</Filter>
+    </Image>
+    <Image Include="Assets\Textures\Building\interior_paint.png">
       <Filter>Assets\Textures</Filter>
     </Image>
   </ItemGroup>

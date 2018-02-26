@@ -92,5 +92,6 @@ typedef std::shared_ptr<Entity> EntityPtr;
 #include "ReadData.h"
 #include "ConversionUtil.h"
 #include "Utility.h"
+#include "Geometry.h"
 #include "ProUtil.h"
 #include "MathConstants.h"

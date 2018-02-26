@@ -25,12 +25,10 @@ void SoundAsset::Export(std::ofstream & ofs)
 
 void SoundAsset::Import(JsonParser & jp)
 {
-	Path = (string)jp["Path"];
 }
 
 JsonParser SoundAsset::Export()
 {
 	JsonParser jp;
-	jp.Set("Path", Path);
 	return jp;
 }

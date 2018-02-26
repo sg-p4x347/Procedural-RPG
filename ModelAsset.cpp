@@ -1,12 +1,7 @@
 #include "pch.h"
 #include "ModelAsset.h"
 
-
-ModelAsset::ModelAsset()
-{
-}
-
-ModelAsset::ModelAsset(string path, int lodSpacing, int lodCount) : Path(path), LodSpacing(lodSpacing), LodCount(lodCount)
+ModelAsset::ModelAsset(int lodSpacing, int lodCount) : LodSpacing(lodSpacing), LodCount(lodCount)
 {
 
 }
@@ -29,7 +24,6 @@ void ModelAsset::Export(std::ofstream & ofs)
 
 void ModelAsset::Import(JsonParser & jp)
 {
-	Path = (string)jp["Path"];
 	LodSpacing = (int)jp["LodSpacing"];
 	LodCount = (int)jp["LodCount"];
 
@@ -38,7 +32,6 @@ void ModelAsset::Import(JsonParser & jp)
 JsonParser ModelAsset::Export()
 {
 	JsonParser jp;
-	jp.Set("Path", Path);
 	jp.Set("LodSpacing", LodSpacing);
 	jp.Set("LodCount", LodCount);
 	return jp;

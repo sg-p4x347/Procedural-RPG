@@ -9,6 +9,12 @@ using namespace Architecture;
 namespace Architecture {
 	Rectangle::Rectangle() {
 	}
+	Rectangle::Rectangle(const SimpleMath::Rectangle & B) {
+		x = B.x;
+		y = B.y;
+		width = B.width;
+		height = B.height;
+	}
 	Rectangle::Rectangle(const Rectangle & B)
 	{
 		x = B.x;
@@ -45,7 +51,7 @@ namespace Architecture {
 		bool yOverlap = min(Top(), B.Top()) - max(Bottom(), B.Bottom()) > 0;
 		return (xAdjacent && yOverlap) || (yAdjacent && xOverlap);
 	}
-	Architecture::Line Rectangle::Touching(Rectangle & B)
+	Line Rectangle::Touching(Rectangle & B)
 	{
 		Vector3 pA, pB;
 		pA.x = max(x, B.x);
@@ -53,7 +59,7 @@ namespace Architecture {
 
 		pA.y = max(y, B.y);
 		pB.y = min(y + height, B.y + B.height);
-		return Architecture::Line(pA, pB);
+		return Line(pA, pB);
 
 	}
 	int Rectangle::Area()

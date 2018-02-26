@@ -11,6 +11,15 @@ HeightMap::HeightMap(int w, float i, float d, int z) : Map<float>::Map(w,i,d,z)
 {
 }
 
+HeightMap::HeightMap(int width, int length) : Map<float>::Map(width,length)
+{
+}
+
+HeightMap::HeightMap(Rectangle area) : Map<float>::Map(area)
+{
+
+}
+
 DirectX::SimpleMath::Vector2 HeightMap::GradientDirection(float x, float z)
 {
 	if (Bounded(x, z)) {
@@ -84,7 +93,7 @@ float HeightMap::Height(float x, float z)
 	if (std::floorf(x) == x && std::floorf(z) == z) {
 		return Height((int)x, (int)z);
 	}
-	else if (x < 0.f || z < 0.f || x > width || z > width) {
+	else if (x < 0.f || z < 0.f || x > width || z > length) {
 		return 0.f;
 	}
 	else {
@@ -102,5 +111,10 @@ float HeightMap::Height(int x, int z)
 		return map[x][z];
 	}
 	return 0.0f;
+}
+
+float HeightMap::HeightAbsPos(Vector2 position)
+{
+	return Height(position.x - (float)area.x, position.y - (float)area.y);
 }
 
