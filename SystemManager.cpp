@@ -11,6 +11,7 @@
 #include "CollisionSystem.h"
 #include "IEventManager.h"
 #include "SoundSystem.h"
+#include "BuildingSystem.h"
 //#include "InfrastructureSystem.h"
 
 SystemManager::SystemManager(
@@ -21,8 +22,8 @@ SystemManager::SystemManager(
 
 	
 	AddSystem(std::shared_ptr<System>(new GuiSystem( 1)));
-	AddSystem(std::shared_ptr<System>(new RenderSystem(1, window, width, height, dynamic_pointer_cast<GuiSystem>(m_systems["Gui"]))));
-	AddSystem(std::shared_ptr<System>(new SoundSystem()));
+	AddSystem(std::shared_ptr<System>(new RenderSystem(this,1, window, width, height, dynamic_pointer_cast<GuiSystem>(m_systems["Gui"]))));
+	//AddSystem(std::shared_ptr<System>(new SoundSystem()));
 	//AddSystem(std::shared_ptr<System>(new InfrastructureSystem(m_entityManager, vector<string>{"Infrastructure"}, 0)));
 
 	//----------------------------------------------------------------
@@ -79,7 +80,7 @@ void SystemManager::LoadWorld(Filesystem::path worldDir)
 	AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Movement"}, 1, renderSystem)));
 	AddSystem(std::shared_ptr<System>(new ActionSystem(this, m_entityManager, vector<string>{"Action", "Position"}, 10)));
 	AddSystem(std::shared_ptr<System>(new CollisionSystem(this, m_entityManager, vector<string>{"Movement", "Position", "Collision"}, 1)));
-
+	AddSystem(std::shared_ptr<System>(new BuildingSystem(m_entityManager, vector<string>{"Building"}, 0)));
 }
 
 void SystemManager::CloseWorld()

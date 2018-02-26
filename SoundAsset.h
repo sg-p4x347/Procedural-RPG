@@ -9,7 +9,6 @@ class SoundAsset :
 public:
 	SoundAsset();
 	// Data
-	string Path;
 
 	// Inherited via Component
 	virtual string GetName() override;

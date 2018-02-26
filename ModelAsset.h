@@ -7,10 +7,8 @@ class ModelAsset :
 	public JSON
 {
 public:
-	ModelAsset();
-	ModelAsset(string path, int lodSpacing = 1, int lodCount = 1);
+	ModelAsset(int lodSpacing = 1, int lodCount = 1);
 	// Data
-	string Path;
 	int LodSpacing; // how far apart each LOD is
 	int LodCount; // how many LOD levels are there
 	vector<shared_ptr<Model>> LODs; // indexed by LOD level

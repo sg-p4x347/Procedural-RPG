@@ -132,6 +132,11 @@ namespace Utility {
 		return std::min(max, std::max(min, x));
 	}
 
+	float Floor(float x, float precision)
+	{
+		return std::floor((1.f / precision) * x) * precision;
+	}
+
 	float SigmoidDecay(float x, float width, float transitionPercent)
 	{
 		return Sigmoid(x, 1.f, 0.5 * width, -10 / (width * transitionPercent));

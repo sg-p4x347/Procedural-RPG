@@ -12,6 +12,7 @@
 #include "Model.h"
 #include "Action.h"
 #include "EntityRegion.h"
+#include "Building.h"
 class WorldEntityManager :
 	public PersistenceEntityManager
 {

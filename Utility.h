@@ -23,6 +23,15 @@ namespace Utility {
 	int Probability(vector<float> probabilities);
 	int sign(int integer);
 	// Data tools
+	template<typename T>
+	void Concat(vector<T> & target, vector<T> & other) {
+		if (target.size() == 0) {
+			target = other;
+		}
+		else {
+			target.insert(target.end(), other.begin(), other.end());
+		}
+	}
 	void Normalize(std::vector<float> & set);
 	template<typename T>
 	inline void InitArray(T * array,const int & size,const T & value) {
@@ -43,6 +52,7 @@ namespace Utility {
 	float BinomialCoefficient(int n, int k);
 
 	float Clamp(float x, float min, float max);
+	float Floor(float x, float precision);
 	//----------------------------------------------------------------
 	// Interpolation functions
 	// 1 Dimension

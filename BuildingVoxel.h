@@ -1,27 +1,40 @@
 #pragma once
-#include "JSON.h"
-class BuildingVoxel : public JSON
+#include "ISerialization.h"
+class BuildingVoxel : public ISerialization
 {
 public:
 	BuildingVoxel();
-	BuildingVoxel(JsonParser & voxel);
-	void Wall( int unitX,  int unitY, unsigned int interiorType);
-	void Floor( int unitX,  int unitY, unsigned int floorType);
-	// Inherited via JSON
-	virtual void Import(JsonParser & jp) override;
+	void Wall( int unitX,  int unitZ, unsigned int type);
+	void Floor( int unitX,  int unitZ, unsigned int floorType);
+	void Corner(int unitX, int unitZ, unsigned int type);
+	// Inherited via ISerialization
+	virtual void Import(std::ifstream & ifs) override;
+	virtual void Export(std::ofstream & ofs) override;
+	// Getters
+	const UINT* GetFloors();
+	const UINT* GetWalls();
+	const UINT* GetCorners();
 
-	virtual JsonParser Export() override;
+	XMMATRIX TransformWall(unsigned int index);
+	// Static Getters
+	static const UINT GetFloorCount();
+	static const UINT GetWallCount();
+	static const UINT GetCornerCount();
 private:
-	void SetWall(unsigned int cardinalIndex, unsigned int interiorSign, unsigned int interiorType);
-	void SetFloor(unsigned int cornerIndex, unsigned int floorType);
+	const static UINT m_floorCount = 1;
+	const static UINT m_wallCount = 4;
+	const static UINT m_cornerCount = 4;
 
-	unsigned int m_floors[4];
-	unsigned int m_walls[8];
-	unsigned int m_corners[4];
+	unsigned int m_floors[m_floorCount];
+	unsigned int m_walls[m_wallCount];
+	unsigned int m_corners[m_cornerCount];
 
 
 
 
+
+
+	
 
 };
 

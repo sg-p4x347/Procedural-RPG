@@ -46,8 +46,8 @@ double Line::Length()
 //
 //	return Anormalized == Bnormalized;
 //}
-//bool Line::SharedCoord(int x)
-//{
-//	return get<0>(m_points).x == (float)x || get<0>(m_points).y == (float)x
-//		|| get<1>(m_points).x == (float)x || get<1>(m_points).y == (float)x;
-//}
+bool Line::SharedCoord(int x)
+{
+	return A.x == (float)x || A.y == (float)x
+		|| B.x == (float)x || B.y == (float)x;
+}

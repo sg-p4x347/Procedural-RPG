@@ -15,7 +15,7 @@ WorldEntityManager::WorldEntityManager(Filesystem::path directory) : Persistence
 	RegisterComponent([] {return new Components::Model();});
 	RegisterComponent([] {return new Components::Action();});
 	RegisterComponent([] {return new Components::EntityRegion();});
-
+	RegisterComponent([] {return new Components::Building();});
 	//----------------------------------------------------------------
 	// Tags
 	RegisterDelegate([](string type) {return new Components::Tag(type);}, vector<string>{

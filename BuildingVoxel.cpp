@@ -10,117 +10,140 @@ BuildingVoxel::BuildingVoxel()
 	InitArray<unsigned int>(m_corners, 4, 0);
 }
 
-BuildingVoxel::BuildingVoxel(JsonParser & voxel)
+void BuildingVoxel::Wall(int unitX, int unitZ, unsigned int type)
 {
-	Import(voxel);
-}
+	/*
+	^
+	|
+	+X
+			  1
+	 +--------+--------+
+	 |		  |		   |
+	 |		  |		   |
+	 |		  |		   |
+	2+--------*--------+0
+	 |		  |		   |
+	 |		  |		   |
+	 |		  |		   |
+	 +--------+--------+
+		 	  3
+	+Z --->
 
-void BuildingVoxel::Wall(int unitX, int unitY, unsigned int interiorType)
-{
+	The '*' in the above diagram represents the local
+	origin of this voxel
+
+	Each '+' in the above diagram represents a valid
+	Unit square position; the two interior walls that
+	intersect this point are selected
+	*/
+	if (abs(unitZ) == 1)
+		m_walls[2 - (unitZ + 1)] = type;
+
 	if (abs(unitX) == 1) {
-		// vertical walls
-		if (unitY >= 0) {
-			// -y wall
-			SetWall(3, sign(unitX), interiorType);
-		}
-		if (unitY <= 0) {
-			// +y wall
-			SetWall(1, sign(unitX), interiorType);
-		}
-	}
-	if (abs(unitY) == 1) {
-		// horizontal walls
-		if (unitX >= 0) {
-			// -x wall
-			SetWall(2, sign(unitY), interiorType);
-		}
-		if (unitX <= 0) {
-			// +x wall
-			SetWall(0, sign(unitY), interiorType);
-		}
+		m_walls[3 - (unitX + 1)] = type;
 	}
 }
 
 void BuildingVoxel::Floor(int unitX,  int unitY, unsigned int floorType)
 {
-	if (unitX >= 0) {
-		// -x floors
-		if (unitY >= 0) {
-			// -y floor
-			SetFloor(2, floorType);
-		}
-		if (unitY <= 0) {
-			// +y floor
-			SetFloor(1, floorType);
-		}
-	}
-	if (unitX <= 0) {
-		// +x floors
-		if (unitX >= 0) {
-			// -y floor
-			SetFloor(3, floorType);
-		}
-		if (unitX <= 0) {
-			// +y floor
-			SetFloor(2, floorType);
-		}
-	}
+	m_floors[0] = floorType;
 }
 
-void BuildingVoxel::SetWall(unsigned int cardinalIndex, unsigned int exteriorSign, unsigned int interiorType)
+void BuildingVoxel::Corner(int unitX, int unitZ, unsigned int type)
 {
-	// cardinalIndex {0 = +x, 1 = +y, 2 = -x, 3 = -y}
-	int interiorIndex = 0;
-	int exteriorIndex = 1;
-	if (exteriorSign < 0) {
-		// exterior is in the positive x or y direction
-		exteriorIndex = cardinalIndex;
-		interiorIndex = cardinalIndex + 1;
+	/*
+	^
+	|
+	+X
+	1				  0
+	+-----------------+
+	|		 |		  |
+	|		 |		  |
+	|		 |		  |
+	|--------*--------|
+	|		 |		  |
+	|		 |		  |
+	|		 |		  |
+	+-----------------+
+	2				  3
+	+Z --->
+	*/
+	if (unitZ == 1) {
+		if (unitX == 1) {
+			m_corners[0] = type;
+		}
+		else {
+			m_corners[3] = type;
+		}
 	}
 	else {
-		// exterior is in the negative x or y direction
-		interiorIndex = cardinalIndex;
-		exteriorIndex = cardinalIndex + 1;
-	}
-	m_walls[interiorIndex] = interiorType;
-}
-
-void BuildingVoxel::SetFloor(unsigned int cornerIndex, unsigned int floorType)
-{
-	// cornerIndex: {0 = +x+y, 1 = -x+y, 2 = -x-y, 3 = +x-y}
-	if (cornerIndex < 4) {
-		m_floors[cornerIndex] == floorType;
-	}
-}
-
-void BuildingVoxel::Import(JsonParser & voxel)
-{
-	for (int i = 0; i < voxel["floors"].Count(); i++) {
-		m_floors[i] = voxel["floors"][i].To<unsigned int>();
-	}
-	for (int i = 0; i < voxel["walls"].Count(); i++) {
-		m_walls[i] = voxel["walls"][i].To<unsigned int>();
-	}
-	for (int i = 0; i < voxel["corners"].Count(); i++) {
-		m_corners[i] = voxel["corners"][i].To<unsigned int>();
-	}
-}
-
-JsonParser BuildingVoxel::Export()
-{
-	JsonParser voxel;
-	JsonParser floors(JsonType::array);
-	JsonParser walls(JsonType::array);
-	JsonParser corners(JsonType::array);
-	for (int i = 0; i < 8; i++) {
-		if (i < 4) {
-			floors.Add(m_floors[i]);
-			corners.Add(m_corners[i]);
+		if (unitX == 1) {
+			m_corners[1] = type;
 		}
-		walls.Add(m_walls[i]);
+		else {
+			m_corners[2] = type;
+		}
 	}
-	voxel.Set("floors", floors);
-	voxel.Set("walls", walls);
-	voxel.Set("corners", corners);
-	return voxel;
+}
+
+void BuildingVoxel::Import(std::ifstream & ifs)
+{
+	for (int i = 0; i < m_floorCount; i++) {
+		DeSerialize(m_floors[i],ifs);
+	}
+	for (int i = 0; i < m_wallCount; i++) {
+		DeSerialize(m_walls[i], ifs);
+	}
+	for (int i = 0; i < m_cornerCount; i++) {
+		DeSerialize(m_corners[i], ifs);
+	}
+}
+
+void BuildingVoxel::Export(std::ofstream & ofs)
+{
+	for (int i = 0; i < m_floorCount; i++) {
+		Serialize(m_floors[i], ofs);
+	}
+	for (int i = 0; i < m_wallCount; i++) {
+		Serialize(m_walls[i], ofs);
+	}
+	for (int i = 0; i < m_cornerCount; i++) {
+		Serialize(m_corners[i], ofs);
+	}
+}
+
+const UINT * BuildingVoxel::GetFloors()
+{
+	return m_floors;
+}
+
+const UINT * BuildingVoxel::GetWalls()
+{
+	return m_walls;
+}
+
+const UINT * BuildingVoxel::GetCorners()
+{
+	return m_corners;
+}
+
+XMMATRIX BuildingVoxel::TransformWall(unsigned int index)
+{
+
+	return XMMATRIX();
+}
+
+const UINT BuildingVoxel::GetFloorCount()
+{
+	return m_floorCount;
+}
+
+const UINT BuildingVoxel::GetWallCount()
+{
+	return m_wallCount;
+}
+
+const UINT BuildingVoxel::GetCornerCount()
+{
+	return m_cornerCount;
 }

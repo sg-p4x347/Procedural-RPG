@@ -192,6 +192,63 @@ Filesystem::path AssetManager::AppendPath(string path, string type)
 	return Filesystem::path( m_authoredDir / type / path);
 }
 
+std::shared_ptr<Model> AssetManager::GetModel(EntityPtr entity, float distance, bool procedural)
+{
+	try {
+		string path = entity->GetComponent<PathID>("PathID")->Path;
+		try {
+			if (m_d3dDevice == nullptr) throw std::exception("AssetManager device not set");
+			// get the component
+			shared_ptr<ModelAsset> modelAsset = entity->GetComponent<ModelAsset>("ModelAsset");
+
+			// get the LOD level
+			int lod = std::min(modelAsset->LodCount - 1, (int)distance / modelAsset->LodSpacing);
+			// Get the model
+			std::shared_ptr<Model> model;
+			if (modelAsset->LODs.size() <= lod || !modelAsset->LODs[lod]) {
+				//----------------------------------------------------------------
+				// Cache the LOD
+
+				// get the path
+				Filesystem::path fullPath = FullPath(path + '_' + std::to_string(lod), procedural, procedural ? ".vbo" : ".cmo");
+				// Load from file
+				if (procedural) {
+					model.reset(Model::CreateFromVBO(m_d3dDevice.Get(), fullPath.c_str()).release());
+				}
+				else {
+					model.reset(Model::CreateFromCMO(m_d3dDevice.Get(), fullPath.c_str(), *m_fxFactory).release());
+				}
+				if (modelAsset->LODs.size() <= lod) {
+					modelAsset->LODs.resize(lod + 1);
+				}
+				modelAsset->LODs.insert(modelAsset->LODs.begin() + lod, model);
+			}
+			else {
+				model = modelAsset->LODs[lod];
+			}
+			return model;
+			//model->UpdateEffects([=](IEffect* effect)
+			//{
+			//	auto basic = dynamic_cast<BasicEffect*>(effect);
+			//	if (basic)
+			//	{
+			//		basic->SetAlpha(0.5);
+			//		/*basic->SetTextureEnabled(true);
+			//		basic->SetTexture(tex.Get());
+			//		basic->EnableDefaultLighting();*/
+			//	}
+			//});
+
+		}
+		catch (std::exception ex) {
+			Utility::OutputException(path + ' ' + ex.what());
+		}
+	}
+	catch (std::exception ex) {
+		Utility::OutputException("Could not get PathID from model asset");
+	}
+}
+
 
 
 AssetManager * AssetManager::Get()
@@ -304,52 +361,25 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::GetWicTexture(str
 
 std::shared_ptr<Model> AssetManager::GetModel(string path, float distance, bool procedural)
 {
-	try {
-		if (m_d3dDevice == nullptr) throw std::exception("AssetManager device not set");
-		// get the entity
-		shared_ptr<ModelAsset> modelAsset = procedural ? m_proceduralEM->GetModel(path) : m_authoredEM->GetModel(path);
-		// get the LOD level
-		int lod = std::min(modelAsset->LodCount-1,(int)distance / modelAsset->LodSpacing);
-		// Get the model
-		std::shared_ptr<Model> model;
-		if (modelAsset->LODs.size() <= lod || !modelAsset->LODs[lod]) {
-			//----------------------------------------------------------------
-			// Cache the LOD
-
-			// get the path
-			Filesystem::path fullPath = FullPath(path + '_' + std::to_string(lod), procedural, procedural ? ".vbo" : ".cmo");
-			// Load from file
-			if (procedural) {
-				model.reset(Model::CreateFromVBO(m_d3dDevice.Get(), fullPath.c_str()).release());
-			}
-			else {
-				model.reset(Model::CreateFromCMO(m_d3dDevice.Get(), fullPath.c_str(), *m_fxFactory).release());
-			}
-			if (modelAsset->LODs.size() <= lod) {
-				modelAsset->LODs.resize(lod + 1);
-			}
-			modelAsset->LODs.insert(modelAsset->LODs.begin() + lod, model);
-		}
-		else {
-			model = modelAsset->LODs[lod];
-		}
-		return model;
-		//model->UpdateEffects([=](IEffect* effect)
-		//{
-		//	auto basic = dynamic_cast<BasicEffect*>(effect);
-		//	if (basic)
-		//	{
-		//		basic->SetAlpha(0.5);
-		//		/*basic->SetTextureEnabled(true);
-		//		basic->SetTexture(tex.Get());
-		//		basic->EnableDefaultLighting();*/
-		//	}
-		//});
-		
+	EntityPtr entity;
+	if (procedural) {
+		m_proceduralEM->Find(path, entity);
 	}
-	catch (std::exception ex) {
-		Utility::OutputException(path + ' ' + ex.what());
+	else {
+		m_authoredEM->Find(path, entity);
 	}
+	return GetModel(entity, distance, procedural);
+}
+std::shared_ptr<Model> AssetManager::GetModel(unsigned int id, float distance, bool procedural)
+{
+	EntityPtr entity;
+	if (procedural) {
+		m_proceduralEM->BaseEntityManager::Find(id, entity);
+	}
+	else {
+		m_authoredEM->BaseEntityManager::Find(id, entity);
+	}
+	return GetModel(entity, distance, procedural);
 }
 Microsoft::WRL::ComPtr<ID3D11InputLayout> AssetManager::GetInputLayout(string name)
 {
@@ -365,6 +395,10 @@ int AssetManager::GetFontSize()
 VboParser * AssetManager::ProVboParser()
 {
 	return m_vboParser.get();
+}
+bool AssetManager::Find(string path, EntityPtr & entity)
+{
+	return m_authoredEM->Find(path, entity);
 }
 void AssetManager::AddEffect(string name, shared_ptr<IEffect> effect)
 {

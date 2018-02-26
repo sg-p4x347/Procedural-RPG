@@ -17,6 +17,7 @@
 #include "TreeGenerator.h"
 #include "SystemManager.h"
 #include "ActionSystem.h"
+#include "BuildingSystem.h"
 static const bool g_erosion = false;
 
 using namespace DirectX::SimpleMath;
@@ -237,7 +238,7 @@ void TerrainSystem::Generate()
 		EntityPtr test = EM->NewEntity();
 		test->AddComponent(new Components::Model("Tree","Terrain",true,false));
 		test->AddComponent(new Components::Position(Vector3(0, 20, 0)));
-/*
+		/*
 		auto vbo = test->GetComponent<Components::PositionNormalTextureVBO>("PositionNormalTextureVBO");
 		vbo->Effect = "Terrain";
 		vbo->LODchanged = true;
@@ -245,6 +246,17 @@ void TerrainSystem::Generate()
 
 	}
 	AssetManager::Get()->GetProceduralEM()->Save();
+
+	Utility::OutputLine("Generating Buildings...");
+	Rectangle footprint = Rectangle(ProUtil::RandWithin(32, 200), ProUtil::RandWithin(32, 200), ProUtil::RandWithin(6,10), ProUtil::RandWithin(6, 10));
+	Rectangle flattenArea = Rectangle(footprint.x - 1, footprint.y - 1, footprint.width + 2, footprint.height + 2);
+	Rectangle cacheArea = Rectangle(flattenArea.x - 10, flattenArea.y - 10, flattenArea.width + 20, flattenArea.height + 20);
+	HeightMap cache = HeightMap(cacheArea);
+	ImportMap(cache);
+	float height = Flatten(cache, flattenArea,10);
+	SM->GetSystem<BuildingSystem>("Building")->CreateBuilding(Vector3(footprint.x, height + 0.1f, footprint.y), Rectangle(0, 0, footprint.width, footprint.height), "residential");
+	Save(cache);
+	
 }
 
 void TerrainSystem::Update(double & elapsed)
@@ -831,12 +843,14 @@ void TerrainSystem::UpdateCache(Vector3 center)
 	float dz = center.z - m_cachePos.y;
 	if (!m_cache || dx > m_cache->width || dx < 0.f || dz > m_cache->width || dz < 0.f) {
 		if (!m_cache) // initialize the local cache
-			m_cache.reset(new HeightMap(32, 0, 0, 0));
+			m_cache.reset(new HeightMap(Rectangle(m_cachePos.x, m_cachePos.y, 32, 32)));
 		// Update the cache
 		m_cachePos.x = ((int)center.x / m_cache->width) * m_cache->width;
 		m_cachePos.y = ((int)center.z / m_cache->width) * m_cache->width;
-
-		ImportMap(*m_cache,(int)m_cachePos.x,(int)m_cachePos.y);
+		
+		m_cache->area.x = m_cachePos.x;
+		m_cache->area.y = m_cachePos.y;
+		ImportMap(*m_cache);
 	}
 }
 
@@ -865,14 +879,93 @@ Vector3 TerrainSystem::Normal(std::ifstream & ifs, const int & index)
 	return normal;
 }
 
-void TerrainSystem::ImportMap(HeightMap & map, int x, int z)
+void TerrainSystem::ImportMap(HeightMap & map)
 {
 	ifstream terrainStream(m_directory / "terrain.dat", ios::binary);
 	for (int i = 0; i <=  map.width; i++) {
-		for (int j = 0; j <= map.width; j++) {
-			map.map[i][j] = InternalHeight(terrainStream, Utility::posToIndex(x + i, z + j, m_width + 1), 10.f);
+		for (int j = 0; j <= map.length; j++) {
+			map.map[i][j] = InternalHeight(terrainStream, Utility::posToIndex(map.area.x + i, map.area.y + j, m_width + 1), 10.f);
 		}
 	}
+}
+
+float TerrainSystem::Average(HeightMap & map, Rectangle area)
+{
+	float sum = 0.f;
+	for (int x = area.x; x <= area.x + area.width; x++) {
+		for (int z = area.y; z <= area.y + area.height; z++) {
+			sum += map.ValueAt(x,z);
+		}
+	}
+	return sum / ((area.width + 1) * (area.height + 1));
+}
+
+void TerrainSystem::Save(HeightMap & map)
+{
+	std::fstream terrainStream(m_directory / "terrain.dat", ios::ate | ios::out | ios::in | std::ios_base::binary);
+	for (int i = map.area.x; i <= map.area.x + map.area.width; i++) {
+		for (int j = map.area.y; j <= map.area.y + map.area.height; j++) {
+			short vertexShort = (short)(map.ValueAt(i,j) * 10.f);
+			char * buffer = new char[sizeof(short)];
+			std::memcpy(buffer, &vertexShort, sizeof(short));
+			terrainStream.seekp(Utility::posToIndex(i, j,m_width + 1) * sizeof(short));
+			terrainStream.write(buffer, sizeof(short));
+			delete[] buffer;
+		}
+	}
+	terrainStream.close();
+}
+
+float TerrainSystem::Flatten(HeightMap & cache,Rectangle area, const int margin)
+{
+	Rectangle footprint = Rectangle(area.x - margin, area.y - margin, area.width + 2 *margin, area.height + 2 * margin);
+	
+	float targetHeight = Average(cache, footprint);
+	for (int x = footprint.x; x <= footprint.x + footprint.width;x++) {
+		for (int z = footprint.y; z <= footprint.y + footprint.height;z++) {
+			if (x == footprint.x + footprint.width - margin && z == footprint.y + footprint.height) {
+				auto test = 9;
+			}
+			Vector2 location = Vector2(x, z);
+			if (area.Contains(location)) {
+				cache.ValueAt(location.x, location.y) = targetHeight;
+			}
+			else {
+				Vector2 inner = Geom::Clamp(area, location);
+				
+				Vector2 tangent = location - inner;
+				float t = tangent.Length();
+				if (t <= margin) {
+					tangent.Normalize();
+					Vector2 outer = inner + tangent * margin;
+					
+					cache.ValueAt(location.x, location.y) = Utility::Lerp(targetHeight, cache.HeightAbsPos(outer), t / float(margin));
+
+				}
+				/*if (location.x < area.x) {
+					cache.ValueAt(location.x,location.y) = Utility::Lerp(targetHeight, cache.ValueAt(area.x - margin,location.y), float(area.x - location.x)/(float)margin);
+				}
+				else if (location.x > area.x + area.width) {
+					cache.ValueAt(location.x, location.y) = Utility::Lerp(targetHeight, cache.ValueAt(area.x + area.width + margin,location.y), float(location.x-(area.x + area.width)) / (float)margin);
+				} else {
+					
+				}
+
+				if (location.y < area.y) {
+					cache.ValueAt(location.x, location.y) = Utility::Lerp(targetHeight, cache.ValueAt(location.x, area.y - margin), float(area.y - location.y) / (float)margin);
+				}
+				else if (location.y > area.y + area.height) {
+					cache.ValueAt(location.x, location.y) = Utility::Lerp(targetHeight, cache.ValueAt(location.x, area.y + area.height + margin), float(location.y - (area.y + area.height)) / (float)margin);
+				}*/
+			}
+		}
+	}
+	return Utility::Floor(targetHeight,0.1f);
+}
+
+float TerrainSystem::Height(HeightMap & map, int x, int z)
+{
+	return 0.0f;
 }
 
 float TerrainSystem::InternalHeight(std::ifstream & ifs, const int & index,float precision)

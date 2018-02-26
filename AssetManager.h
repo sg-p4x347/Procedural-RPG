@@ -16,6 +16,7 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetTexture(string path,bool procedural = false);
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetWicTexture(string path);
 	std::shared_ptr<Model> GetModel(string path, float distance = 0.f, bool procedural = false);
+	std::shared_ptr<Model> GetModel(unsigned int id, float distance = 0.f, bool procedural = false);
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> GetInputLayout(string name);
 	template <typename EffectType>
 	inline bool GetEffect(string name, shared_ptr<EffectType> & effect) {
@@ -28,6 +29,8 @@ public:
 	}
 	int GetFontSize();
 	VboParser * ProVboParser();
+	// Query an asset entity by path
+	bool Find(string path, EntityPtr & entity);
 	//----------------------------------------------------------------
 	// Asset Storage
 	void AddEffect(string name, shared_ptr<IEffect> effect);
@@ -58,7 +61,7 @@ private:
 	map<string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> m_WicTextures;
 	//----------------------------------------------------------------
 	// Models
-	
+	std::shared_ptr<Model> GetModel(EntityPtr entity, float distance, bool procedural);
 	unique_ptr<VboParser> m_vboParser;
 	//----------------------------------------------------------------
 	// Effects

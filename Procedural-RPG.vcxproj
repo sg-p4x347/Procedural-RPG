@@ -194,16 +194,22 @@
     <ClInclude Include="Box.h" />
     <ClInclude Include="Building.h" />
     <ClInclude Include="BuildingGenerator.h" />
+    <ClInclude Include="BuildingSystem.h" />
     <ClInclude Include="BuildingVoxel.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="CollisionSystem.h" />
+    <ClInclude Include="CompositeModel.h" />
     <ClInclude Include="CubicSpline.h" />
     <ClInclude Include="CustomEffect.h" />
     <ClInclude Include="EntityRegion.h" />
     <ClInclude Include="EventHandler.h" />
     <ClInclude Include="EventManager.h" />
+    <ClInclude Include="Geometry.h" />
     <ClInclude Include="IEventManager.h" />
     <ClInclude Include="Line.h" />
+    <ClInclude Include="PathID.h" />
+    <ClInclude Include="Rectangle.h" />
+    <ClInclude Include="Room.h" />
     <ClInclude Include="SoundAsset.h" />
     <ClInclude Include="SoundSystem.h" />
     <ClInclude Include="TreeBranch.h" />
@@ -272,14 +278,20 @@
     <ClCompile Include="Box.cpp" />
     <ClCompile Include="Building.cpp" />
     <ClCompile Include="BuildingGenerator.cpp" />
+    <ClCompile Include="BuildingSystem.cpp" />
     <ClCompile Include="BuildingVoxel.cpp" />
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CollisionSystem.cpp" />
+    <ClCompile Include="CompositeModel.cpp" />
     <ClCompile Include="CubicSpline.cpp" />
     <ClCompile Include="CustomEffect.cpp" />
     <ClCompile Include="EntityRegion.cpp" />
+    <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="IEventManager.cpp" />
     <ClCompile Include="Line.cpp" />
+    <ClCompile Include="PathID.cpp" />
+    <ClCompile Include="Rectangle.cpp" />
+    <ClCompile Include="Room.cpp" />
     <ClCompile Include="SoundAsset.cpp" />
     <ClCompile Include="SoundSystem.cpp" />
     <ClCompile Include="TreeBranch.cpp" />
@@ -352,6 +364,7 @@
     <ImageContentTask Include="Assets\Textures\leaves.png" />
     <ImageContentTask Include="Assets\Textures\leaves2.png" />
     <ImageContentTask Include="Assets\Textures\wood.png" />
+    <ImageContentTask Include="Assets\Textures\Building\interior_paint.png" />
     <Image Include="directx.ico" />
   </ItemGroup>
   <ItemGroup>
@@ -374,6 +387,9 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <MeshContentTask Include="Assets\Models\Building\models-building-corner0_0.fbx" />
+    <MeshContentTask Include="Assets\Models\Building\models-building-floor0_0.fbx" />
+    <MeshContentTask Include="Assets\Models\Building\models-building-wall0_0.fbx" />
     <MeshContentTask Include="Assets\Models\Cube.fbx" />
     <MeshContentTask Include="Assets\Models\Tree.fbx">
       <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)/Assets%(Filename).cmo</ContentOutput>
