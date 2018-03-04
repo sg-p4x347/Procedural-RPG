@@ -86,6 +86,9 @@
     <Filter Include="World\Generator\Building">
       <UniqueIdentifier>{97760ea1-03e6-4512-914c-f1b032a2f189}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Threading">
+      <UniqueIdentifier>{608aa36f-10e7-41b2-a46d-6622740c5e4b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -326,6 +329,15 @@
     <ClInclude Include="Geometry.h">
       <Filter>Utility\Geometry</Filter>
     </ClInclude>
+    <ClInclude Include="Task.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskManager.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="WorkerThread.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -546,6 +558,15 @@
     <ClCompile Include="Geometry.cpp">
       <Filter>Utility\Geometry</Filter>
     </ClCompile>
+    <ClCompile Include="Task.cpp">
+      <Filter>Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskManager.cpp">
+      <Filter>Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="WorkerThread.cpp">
+      <Filter>Threading</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
@@ -608,6 +629,9 @@
     <ImageContentTask Include="Assets\Textures\wood.png">
       <Filter>Assets\Textures</Filter>
     </ImageContentTask>
+    <ImageContentTask Include="Assets\Textures\Building\interior_paint.png">
+      <Filter>Assets</Filter>
+    </ImageContentTask>
   </ItemGroup>
   <ItemGroup>
     <MeshContentTask Include="Assets\Models\Tree.fbx">
@@ -628,9 +652,6 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico">
-      <Filter>Assets\Textures</Filter>
-    </Image>
-    <Image Include="Assets\Textures\Building\interior_paint.png">
       <Filter>Assets\Textures</Filter>
     </Image>
   </ItemGroup>

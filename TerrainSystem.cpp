@@ -18,6 +18,7 @@
 #include "SystemManager.h"
 #include "ActionSystem.h"
 #include "BuildingSystem.h"
+#include "TaskManager.h"
 static const bool g_erosion = false;
 
 using namespace DirectX::SimpleMath;
@@ -261,10 +262,16 @@ void TerrainSystem::Generate()
 
 void TerrainSystem::Update(double & elapsed)
 {
-	Vector3 velocity = EM->Player()->GetComponent<Components::Movement>("Movement")->Velocity;
-	if (velocity.Length() < 100) {
-		UpdateRegions(EM->PlayerPos()->Pos);
-	}
+	TaskManager::Get().Push(Task([=] {
+		Vector3 velocity = EM->Player()->GetComponent<Components::Movement>("Movement")->Velocity;
+		if (velocity.Length() < 100) {
+			UpdateRegions(EM->PlayerPos()->Pos);
+		}
+	
+	
+	}, std::set<shared_ptr<Components::Component>>()));
+
+	
 	//m_worker = std::thread(&TerrainSystem::UpdateRegions, *this,PlayerPos()->Pos);
 }
 
@@ -463,7 +470,6 @@ void TerrainSystem::CreateWaterEntities()
 		}
 	}
 }
-
 void TerrainSystem::NewWater(DirectX::SimpleMath::Vector3 & position)
 {
 	EntityPtr entity = EM->NewEntity();
@@ -555,6 +561,7 @@ void TerrainSystem::UpdateRegions(Vector3 center)
 			int z = (int)std::floor(position.z / (double)(int)m_regionWidth);
 
 			std::thread([this, vbo, waterVBO, x, z]() {
+
 				try {
 					UpdateWaterVBO(waterVBO, UpdateTerrainVBO(vbo, x, z), x, z);
 				}

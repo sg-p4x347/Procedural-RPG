@@ -212,6 +212,8 @@
     <ClInclude Include="Room.h" />
     <ClInclude Include="SoundAsset.h" />
     <ClInclude Include="SoundSystem.h" />
+    <ClInclude Include="Task.h" />
+    <ClInclude Include="TaskManager.h" />
     <ClInclude Include="TreeBranch.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="ConversionUtil.h" />
@@ -265,6 +267,7 @@
     <ClInclude Include="ThermalCell.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="VBO.h" />
+    <ClInclude Include="WorkerThread.h" />
     <ClInclude Include="WorldEntityManager.h" />
     <ClInclude Include="WorldSystem.h" />
   </ItemGroup>
@@ -294,6 +297,8 @@
     <ClCompile Include="Room.cpp" />
     <ClCompile Include="SoundAsset.cpp" />
     <ClCompile Include="SoundSystem.cpp" />
+    <ClCompile Include="Task.cpp" />
+    <ClCompile Include="TaskManager.cpp" />
     <ClCompile Include="TreeBranch.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="ConversionUtil.cpp" />
@@ -348,6 +353,7 @@
     <ClCompile Include="ThermalCell.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="VBO.cpp" />
+    <ClCompile Include="WorkerThread.cpp" />
     <ClCompile Include="WorldEntityManager.cpp" />
     <ClCompile Include="WorldSystem.cpp" />
   </ItemGroup>
