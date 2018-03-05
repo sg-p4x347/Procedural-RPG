@@ -1,264 +1,155 @@
 #include "pch.h"
 #include "World.h"
-#include "JsonParser.h"
-#include "Utility.h"
-#include "EntityManager.h"
-#include <iostream>
-#include "Filesystem.h"
+// Systems
+#include "WorldSystem.h"
 #include "TerrainSystem.h"
 #include "PlayerSystem.h"
-
-using namespace DirectX::SimpleMath;
-using namespace std;
+#include "RenderSystem.h"
+#include "MovementSystem.h"
+#include "GuiSystem.h"
+#include "ActionSystem.h"
+#include "CollisionSystem.h"
+#include "IEventManager.h"
+#include "SoundSystem.h"
+#include "BuildingSystem.h"
+// Resources
+#include "IEventManager.h"
+#include "AssetManager.h"
+#include "SystemManager.h"
+World::World(
+	SystemManager & systemManager,
+	Filesystem::path parentDir,
+	string name
+) : m_systemManager(systemManager), m_directory(parentDir / name), m_name(name)
+{
+	Load();
+}
 
 World::World(
-	string directory,
-	HWND window, int width, int height,
-	std::shared_ptr<DirectX::Mouse> mouse,
-	std::shared_ptr<DirectX::Keyboard> keyboard
-) : m_directory(directory) {
-	//----------------------------------------------------------------
-	// Initialize Filesystem Dependencies
-	Filesystem::create_directory(m_directory);
+	SystemManager & systemManager, 
+	Filesystem::path parentDir, 
+	string name, 
+	int seed
+) : World::World(systemManager,parentDir,name)
+{
+	Generate(seed);
+}
 
-	//----------------------------------------------------------------
-	// Initialize Managers
-	m_entityManager = std::shared_ptr<EntityManager>(new EntityManager(m_directory / "Component"));
-	m_systemManager = std::unique_ptr<SystemManager>(new SystemManager(m_directory,m_entityManager, window, width, height,mouse,keyboard));
+World::~World()
+{
+	PauseGame();
+	AssetManager::Get()->CleanupProceduralAssets();
 	
+
 	//----------------------------------------------------------------
-	// Misc
-	//CreateDevice(device);
-	//m_d3dDevice = device;
-	//JsonParser config(std::ifstream("config/continent.json"));
-	//m_worldWidth = config["terrainMap"]["width"].To<int>();
-	//m_regionWidth = 512;
-	//m_loadWidth = 2;
-	//m_NG = shared_ptr<NameGenerator>(new NameGenerator());
+	// Save all systems
+	m_systemManager.Save();
+	//----------------------------------------------------------------
+	// Deconstruct the entity manager
+	if (m_entityManager) {
+		m_entityManager->Save();
+		m_entityManager.reset();
+	}
+	//----------------------------------------------------------------
+	// Update render targets
+	m_systemManager.GetSystem<RenderSystem>("Render")->InitializeWorldRendering(nullptr);
+	//----------------------------------------------------------------
+	// Remove world systems
+	m_systemManager.Remove<WorldSystem>();
 }
-World::World(const string directory) : m_directory(directory)
-{
 
-}
-void World::Initialize()
-{
-	m_systemManager->Initialize();
-}
-unique_ptr<SystemManager>& World::GetSystemManager()
-{
-	return m_systemManager;
-}
-// creates a new world
-void World::Generate(int seed) {
 
+void World::PauseGame()
+{
+	DirectX::Mouse::Get().SetMode(DirectX::Mouse::Mode::MODE_ABSOLUTE);
+	m_systemManager.GetSystem<GuiSystem>("Gui")->OpenMenu("game_paused");
+	HaltWorldSystems();
+	m_paused = true;
+	IEventManager::Invoke(EventTypes::Sound_StopMusic);
+}
+
+void World::ResumeGame()
+{
+	
+	DirectX::Mouse::Get().SetMode(DirectX::Mouse::Mode::MODE_RELATIVE);
+	m_systemManager.GetSystem<GuiSystem>("Gui")->CloseMenu();
+	RunWorldSystems();
+	m_paused = false;
+	IEventManager::Invoke(EventTypes::Sound_PlayMusic);
+	srand(clock());
+}
+
+void World::TogglePause()
+{
+	if (m_paused) {
+		ResumeGame();
+	}
+	else {
+		PauseGame();
+	}
+}
+
+void World::HaltWorldSystems()
+{
+	m_systemManager.Halt<WorldSystem>();
+}
+
+void World::RunWorldSystems()
+{
+	m_systemManager.Run<WorldSystem>();
+}
+void World::Generate(int seed)
+{
+	// Create an empty directory for the world
+	/*try {
+		Filesystem::remove_all(m_directory);
+		Filesystem::create_directories(m_directory);
+	}
+	catch (std::exception ex) {
+		Utility::OutputException(ex.what());
+	}*/
 	// seed the RNG
 	srand(seed);
 
-	// generators
+	m_systemManager.GetSystem<TerrainSystem>("Terrain")->Generate();
+	m_systemManager.GetSystem<PlayerSystem>("Player")->CreatePlayer();
+}
 
-	m_systemManager->GetSystem<TerrainSystem>("Terrain")->Generate();
-	m_systemManager->GetSystem<PlayerSystem>("Player")->CreatePlayer();
-	//shared_ptr<Continent> terrain = world->CreateTerrain(worldDir);
-	//world->CreateCities(terrain);
-	//GenerateHistory(m_cities);
-	CreatePlayer();
-	Save();
+bool World::Load()
+{
 	
-}
-//shared_ptr<Continent> World::CreateTerrain(string directory)
-//{
-//	// generate the heightmap
-//	OutputDebugString(L"Generating heightmap...");
-//	Continent continent(directory);
-//	return std::make_shared<Continent>(continent);
-//	OutputDebugString(L"Finished!\n");
-//}
-void World::Save()
-{
-	m_entityManager->Save();
-	m_systemManager->Save();
-}
-//void World::CreateCities(shared_ptr<Continent> Continent)
-//{
-//	OutputDebugString(L"Generating cities...");
-//	JsonParser continentCfg(std::ifstream("config/continent.json"));
-//	JsonParser cityCfg(std::ifstream("config/city.json"));
-//	int maxCities = cityCfg["maxCities"].To<int>();
-//	double maxElevation = cityCfg["maxElevation"].To<double>();
-//	double minDistance = cityCfg["minDistance"].To<double>();
-//	int areaWidth = cityCfg["areaWidth"].To<int>();
-//
-//	int i = 0;
-//	while (i < maxCities) {
-//	newCity:
-//		Rectangle areaRect = Rectangle(randWithin(0, Continent->GetWidth() - areaWidth), randWithin(0, Continent->GetWidth() - areaWidth), areaWidth, areaWidth);
-//		// TEMP
-//		City city = City(areaRect, Continent->GetTerrain(), Continent->GetBiome());
-//		m_cities.push_back(city);
-//		i++;
-//		continue;
-//		//------------
-//		
-//		Vector2 pos = areaRect.Center();
-//		// check elevation
-//		float elevation = Continent->GetTerrain().map[(int)pos.x][(int)pos.y];
-//		if (elevation > 0 && elevation < maxElevation) {
-//			// check to see if the average of the four corners is close to the center
-//			// this ensures that the terrain is not too rough
-//			double sum = 0;
-//			sum += Continent->GetTerrain().map[areaRect.x][areaRect.y];
-//			sum += Continent->GetTerrain().map[areaRect.x + areaRect.width][areaRect.y];
-//			sum += Continent->GetTerrain().map[areaRect.x][areaRect.y + areaRect.height];
-//			sum += Continent->GetTerrain().map[areaRect.x + areaRect.width][areaRect.y + areaRect.height];
-//			sum /= 4;
-//			if (abs(Continent->GetTerrain().map[pos.x][pos.y] - sum) > 10.0) {
-//				goto newCity;
-//			}
-//
-//			// check proximity to all other cities
-//			for (unsigned int j = 0; j < m_cities.size(); j++) {
-//				if (abs(m_cities[j].GetPosition().x - pos.x) <= minDistance, abs(m_cities[j].GetPosition().y - pos.y) <= minDistance) {
-//					goto newCity;
-//				}
-//			}
-//
-//			City city = City(areaRect, Continent->GetTerrain(), Continent->GetBiome());
-//			m_cities.push_back(city);
-//			i++;
-//		}
-//	}
-//	OutputDebugString(L"Finished!\n");
-//	
-//}
-//void World::GenerateHistory(vector<City> cities)
-//{
-//	m_federal = new Federal(cities);
-//	m_federal->Update();
-//}
-void World::CreatePlayer() {
-	
-}
-void World::LoadWorld(string directory, string name) {
-	m_name = name;
-	// load assets
-	//LoadPlayer();
-	//LoadCities(directory + '/' + name + "/cities");
-	//FillRegions();
-}
-void World::LoadRegions() {
-	
-}
-//vector<shared_ptr<Architecture::Building>> World::BuildingsInRegion(const Rectangle & regionArea)
-//{
-//	vector<shared_ptr<Architecture::Building>> buildings;
-//	// for each city
-//	for (City & city : m_cities) {
-//		if (city.GetArea().Intersects(regionArea)) {
-//			// for each buliding
-//			for (shared_ptr<Architecture::Building> & building : city.GetBuildings()) {
-//				if (regionArea.Contains(building->GetFootprint().Center())) {
-//					// this building is in the region
-//					buildings.push_back(building);
-//				}
-//			}
-//		}
-//	}
-//	return buildings;
-//}
-
-
-XMFLOAT3 World::globalToRegionCoord(XMFLOAT3 position) {
-	return XMFLOAT3(float(int(floor(position.x)) % (m_regionWidth+1)), position.y, float(int(floor(position.x)) % (m_regionWidth+1)));
-}
-void World::Import(JsonParser & jp)
-{
-}
-JsonParser World::Export()
-{
-	return JsonParser();
-}
-void World::Update(double elapsed)
-{
-	m_systemManager->Tick(elapsed);
-}
-void World::CreateDevice(Microsoft::WRL::ComPtr<ID3D11Device> device)
-{
-	//// Create DGSL Effect
-	//auto blob = DX::ReadData(L"Terrain.cso"); // .cso is the compiled version of the hlsl shader (compiled shader object)
-	//DX::ThrowIfFailed(device->CreatePixelShader(&blob.front(), blob.size(),
-	//	nullptr, m_pixelShader.ReleaseAndGetAddressOf()));
-
-	//m_effect = std::make_unique<DGSLEffect>(device.Get(), m_pixelShader.Get());
-	//m_effect->SetTextureEnabled(true);
-	//m_effect->SetVertexColorEnabled(true);
-	////---Textures---
-	//DX::ThrowIfFailed(
-	//	CreateDDSTextureFromFile(device.Get(), L"dirt.dds", nullptr,
-	//		m_texture.ReleaseAndGetAddressOf()));
-
-	//m_effect->SetTexture(m_texture.Get());
-
-	//DX::ThrowIfFailed(
-	//	CreateDDSTextureFromFile(device.Get(), L"grass.dds", nullptr,
-	//		m_texture2.ReleaseAndGetAddressOf()));
-
-	//m_effect->SetTexture(1, m_texture2.Get());
-
-	//DX::ThrowIfFailed(
-	//	CreateDDSTextureFromFile(device.Get(), L"stone.dds", nullptr,
-	//		m_texture3.ReleaseAndGetAddressOf()));
-
-	//m_effect->SetTexture(2, m_texture3.Get());
-
-	//DX::ThrowIfFailed(
-	//	CreateDDSTextureFromFile(device.Get(), L"snow.dds", nullptr,
-	//		m_texture4.ReleaseAndGetAddressOf()));
-
-	//m_effect->SetTexture(3, m_texture4.Get());
-	////---Textures---
-
-	//m_effect->EnableDefaultLighting();
-
-	//void const* shaderByteCode;
-	//size_t byteCodeLength;
-
-	//m_effect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
-
-	//DX::ThrowIfFailed(device->CreateInputLayout(
-	//	VertexPositionNormalTangentColorTexture::InputElements,
-	//	VertexPositionNormalTangentColorTexture::InputElementCount,
-	//	shaderByteCode, byteCodeLength,
-	//	m_inputLayout.ReleaseAndGetAddressOf()));
-
-	//// Matricies
-	//m_worldMatrix = Matrix::Identity;
-
-}
-float World::yOnABC(float x, float z, XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) {
-	XMFLOAT3 u = XMFLOAT3(B.x - A.x, B.y - A.y, B.z - A.z);
-	XMFLOAT3 v = XMFLOAT3(C.x = A.x, C.y - A.y, C.z - A.z);
-	XMFLOAT3 N = XMFLOAT3(-u.y*v.z + u.z*v.y, -u.z*v.x + u.x*v.z, -u.x*v.y + u.y*v.x);
-	XMFLOAT3 V = XMFLOAT3(A.x - x, 0, A.z - z);
-	return A.y + ((N.z * V.z) + (N.x * V.x)) / N.y;
-
-}
-
-void World::CreateResources(unsigned int backBufferWidth, unsigned int backBufferHeight, SimpleMath::Matrix & projMatrix)
-{
-
 	
 
-	
-}
-void World::OnDeviceLost()
-{
-	m_effect.reset();
-	m_inputLayout.Reset();
-	m_texture.Reset();
-	m_texture2.Reset();
-	m_texture3.Reset();
-	m_pixelShader.Reset();
-}
-World::~World() {
-	
+
+	IEventManager::NewVersion();
+	m_systemManager.GetSystem<GuiSystem>("Gui")->BindHandlers();
+	//----------------------------------------------------------------
+	// Filesystem dependencies
+	Filesystem::path systemsDir = m_directory / "System";
+	Filesystem::create_directories(systemsDir);
+
+	Filesystem::path assetsDir = m_directory / "Assets";
+	Filesystem::create_directories(assetsDir);
+	AssetManager::Get()->SetProceduralAssetDir(assetsDir);
+
+	Filesystem::path componentDir = m_directory / "Component";
+	Filesystem::create_directory(componentDir);
+	//----------------------------------------------------------------
+	// Create a new entity manager
+	m_entityManager.reset(new WorldEntityManager(componentDir));
+	//----------------------------------------------------------------
+	// Update render targets
+	auto renderSystem = m_systemManager.GetSystem<RenderSystem>("Render");
+	renderSystem->InitializeWorldRendering(m_entityManager.get());
+	//----------------------------------------------------------------
+	// Add world systems
+	m_systemManager.AddSystem(std::shared_ptr<System>(new TerrainSystem(&m_systemManager, m_entityManager, vector<string>{ "Terrain", "Position", "VBO" }, 1, 64, systemsDir)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new PlayerSystem(&m_systemManager, m_entityManager, vector<string>{ "Player", "Position" }, 1)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Movement"}, 1, renderSystem)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new ActionSystem(&m_systemManager, m_entityManager, vector<string>{"Action", "Position"}, 10)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new CollisionSystem(&m_systemManager, m_entityManager, vector<string>{"Movement", "Position", "Collision"}, 1)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new BuildingSystem(m_entityManager, vector<string>{"Building"}, 0)));
+
+	m_systemManager.Initialize();
+	return true;
 }

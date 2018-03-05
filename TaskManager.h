@@ -6,19 +6,21 @@ class TaskManager
 {
 public:
 	static TaskManager & Get();
-	void Push(Task & task);
+	void Push(Task task);
 private:
 	TaskManager();
 	~TaskManager();
+	
 private:
 	//----------------------------------------------------------------
-	// Dependencies
-	WorkerThread * FindThreadWith(std::set<shared_ptr<Components::Component>> dependencies);
-	//----------------------------------------------------------------
 	// Threads
+	static const UINT m_threadCount = 4;
 	vector<shared_ptr<WorkerThread>> m_threads;
+	recursive_mutex m_mutex;
 	//----------------------------------------------------------------
 	// Tasks
 	std::queue<Task> m_queue;
+	// Tries to run as many tasks as possible with the current dependency graph
+	void Peek();
 };
 

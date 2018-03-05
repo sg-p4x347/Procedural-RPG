@@ -268,6 +268,7 @@
     <ClInclude Include="Utility.h" />
     <ClInclude Include="VBO.h" />
     <ClInclude Include="WorkerThread.h" />
+    <ClInclude Include="World.h" />
     <ClInclude Include="WorldEntityManager.h" />
     <ClInclude Include="WorldSystem.h" />
   </ItemGroup>
@@ -354,6 +355,7 @@
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="VBO.cpp" />
     <ClCompile Include="WorkerThread.cpp" />
+    <ClCompile Include="World.cpp" />
     <ClCompile Include="WorldEntityManager.cpp" />
     <ClCompile Include="WorldSystem.cpp" />
   </ItemGroup>

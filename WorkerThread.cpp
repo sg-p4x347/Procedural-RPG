@@ -2,35 +2,29 @@
 #include "WorkerThread.h"
 
 
-WorkerThread::WorkerThread(vector<shared_ptr<WorkerThread>> & threads) : m_threads(threads)
+WorkerThread::WorkerThread() : Active(false), ReadDependencies(0), WriteDependencies(0)
 {
 }
 
-void WorkerThread::Push(Task & task)
-{
-	// Union the dependencies with this thread
-	Dependencies |= task.Dependencies;
-	m_tasks.push(task);
-}
 
-void WorkerThread::Run()
+void WorkerThread::Run(Task & task, std::function<void()> && taskFinished)
 {
-	m_thread = std::thread([=] {
-		while (!m_tasks.empty()) {
-			m_tasks.front().Callback();
-			m_tasks.pop();
-		}
-		// remove this thread
-		auto & it = m_threads
-		m_threads.erase()
-	});
-	m_thread.detach();
-}
+	std::thread([=] {
+		// Declare this thread as active
+		Active = true;
+		// Register dependencies
+		ReadDependencies = task.ReadDependencies;
+		WriteDependencies = task.WriteDependencies;
 
-void WorkerThread::UpdateDependencies()
-{
-	Dependencies = 0;
-	for (auto task) {
-		Dependencies += task.Dependency;
-	}
+		// Execute this task
+		task.Callback();
+
+		// Unregister dependencies
+		ReadDependencies = 0;
+		WriteDependencies = 0;
+		// Declare this thread as inactive
+		Active = false;
+		// Finished callback
+		taskFinished();
+	}).detach();
 }

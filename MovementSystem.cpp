@@ -3,6 +3,7 @@
 #include "Position.h"
 #include "Movement.h"
 #include "IEventManager.h"
+#include "TaskManager.h"
 const float MovementSystem::m_updateRange = 100.f;
 
 MovementSystem::MovementSystem(
@@ -28,14 +29,17 @@ string MovementSystem::Name()
 
 void MovementSystem::Update(double & elapsed)
 {
-	for (auto & entity : m_entities) {
-		auto position = entity->GetComponent<Components::Position>("Position");
-		auto movement = entity->GetComponent<Components::Movement>("Movement");
-		movement->Velocity += movement->Acceleration * elapsed;
-		position->Pos += movement->Velocity * elapsed;
+	TaskManager::Get().Push(Task([=] {
+		for (auto & entity : m_entities) {
+			auto position = entity->GetComponent<Components::Position>("Position");
+			auto movement = entity->GetComponent<Components::Movement>("Movement");
+			movement->Velocity += movement->Acceleration * elapsed;
+			position->Pos += movement->Velocity * elapsed;
 
-		position->Rot += movement->AngularVelocity * elapsed;
-	}
+			position->Rot += movement->AngularVelocity * elapsed;
+		}
+	}, m_componentMask, m_componentMask));
+	
 	// check to see if the player has moved enough for an entity resync
 	if (m_lastPos == Vector3::Zero && EM->Player()) {
 		m_lastPos = EM->PlayerPos()->Pos;

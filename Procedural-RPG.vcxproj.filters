@@ -338,6 +338,9 @@
     <ClInclude Include="WorkerThread.h">
       <Filter>Threading</Filter>
     </ClInclude>
+    <ClInclude Include="World.h">
+      <Filter>World</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -566,6 +569,9 @@
     </ClCompile>
     <ClCompile Include="WorkerThread.cpp">
       <Filter>Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="World.cpp">
+      <Filter>World</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -2,7 +2,6 @@
 #include "System.h"
 #include "WorldEntityManager.h"
 #include "EventManager.h"
-//#include "RenderSystem.h"
 
 class SystemManager
 {
@@ -14,13 +13,12 @@ public:
 	// Updates systems according to their update period
 	void Tick(double & elapsed);
 	void Initialize();
-	void LoadWorld(Filesystem::path worldDir);
-	void CloseWorld();
 	void Save();
 	template <typename SystemType>
 	inline shared_ptr<SystemType> GetSystem(string name) {
 		return dynamic_pointer_cast<SystemType>(m_systems[name]);
 	}
+	void AddSystem(shared_ptr<System> system);
 	template <typename SystemType>
 	inline void Remove() {
 		for (auto & pair : map<string,shared_ptr<System>>(m_systems)) {
@@ -45,11 +43,7 @@ public:
 private:
 	//----------------------------------------------------------------
 	// Systems
-	void AddSystem(shared_ptr<System> system);
+	
 	map<string, shared_ptr<System>> m_systems;
-	//----------------------------------------------------------------
-	// Entities
-	unique_ptr<WorldEntityManager> m_entityManager;
-
 };
 

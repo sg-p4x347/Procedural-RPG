@@ -262,17 +262,11 @@ void TerrainSystem::Generate()
 
 void TerrainSystem::Update(double & elapsed)
 {
-	TaskManager::Get().Push(Task([=] {
-		Vector3 velocity = EM->Player()->GetComponent<Components::Movement>("Movement")->Velocity;
-		if (velocity.Length() < 100) {
-			UpdateRegions(EM->PlayerPos()->Pos);
-		}
-	
-	
-	}, std::set<shared_ptr<Components::Component>>()));
-
-	
-	//m_worker = std::thread(&TerrainSystem::UpdateRegions, *this,PlayerPos()->Pos);
+	Vector3 velocity = EM->Player()->GetComponent<Components::Movement>("Movement")->Velocity;
+	Vector3 position = EM->PlayerPos()->Pos;
+	if (velocity.Length() < 100) {
+		UpdateRegions(position);
+	}
 }
 
 string TerrainSystem::Name()
@@ -560,15 +554,18 @@ void TerrainSystem::UpdateRegions(Vector3 center)
 			int x = (int)std::floor(position.x / (double)(int)m_regionWidth);
 			int z = (int)std::floor(position.z / (double)(int)m_regionWidth);
 
-			std::thread([this, vbo, waterVBO, x, z]() {
-
+			TaskManager::Get().Push(Task([=] {
 				try {
 					UpdateWaterVBO(waterVBO, UpdateTerrainVBO(vbo, x, z), x, z);
 				}
 				catch (std::exception ex) {
 					Utility::OutputException(ex.what());
 				}
-			}).detach();
+			}));
+			/*std::thread([this, vbo, waterVBO, x, z]() {
+
+				
+			}).detach();*/
 			//m_worker.join();
 			//UpdateTerrainVBO(vbo, x, z);
 			

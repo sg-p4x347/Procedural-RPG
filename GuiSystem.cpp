@@ -8,6 +8,7 @@
 #include "GuiText.h"
 #include "AssetManager.h"
 #include "IEventManager.h"
+#include "World.h"
 
 using namespace GUI;
 using namespace DirectX;
@@ -114,7 +115,10 @@ m_scrollTicks(1200)
 			return style;
 		}(), vector<EntityPtr>{
 			GuiEM.NewButton("Resume Game", [=](Event evt) {
-				Game::Get().ResumeGame();
+				World * world = nullptr;
+				if (Game::Get().TryGetWorld(world)) {
+					world->ResumeGame();
+				}
 			}),
 			GuiEM.NewButton("Main Menu", [=](Event evt) {
 				Game::Get().CloseWorld();
@@ -165,7 +169,6 @@ m_scrollTicks(1200)
 			return style;
 		}(), vector<EntityPtr>{
 			GuiEM.NewButton("Controls", [=] (Event evt){
-				Game::Get().ResumeGame();
 			}),
 			MainMenuBtn()
 		})
@@ -228,7 +231,7 @@ m_scrollTicks(1200)
 							// parse seed
 							string seedText = seedTextbox->GetComponent<Text>("Text")->String;
 							// valid
-							Game::Get().GenerateWorld(ProUtil::ToRandom(seedText), name->String);
+							Game::Get().GenerateWorld(name->String,ProUtil::ToRandom(seedText));
 						}
 						else {
 							// invalid name

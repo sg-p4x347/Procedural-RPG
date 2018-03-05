@@ -20,7 +20,7 @@ void System::Tick(double & elapsed)
 }
 void System::Initialize()
 {
-	SyncEntities();
+	//SyncEntities();
 }
 
 void System::Save()
