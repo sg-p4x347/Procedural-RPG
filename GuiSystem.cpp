@@ -232,6 +232,9 @@ m_scrollTicks(1200)
 							string seedText = seedTextbox->GetComponent<Text>("Text")->String;
 							// valid
 							Game::Get().GenerateWorld(name->String,ProUtil::ToRandom(seedText));
+							Game::Get().CloseWorld();
+							// load up the new world
+							Game::Get().LoadWorld(name->String);
 						}
 						else {
 							// invalid name

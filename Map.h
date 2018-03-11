@@ -14,7 +14,6 @@ struct Map :
 		squareDeviation = i;
 		deviationDecrease = d;
 		zoom = z;
-		
 	}
 	Map(int width, int length = width);
 	Map(Rectangle area);
@@ -33,13 +32,17 @@ struct Map :
 	bool Bounded(int x, int y);
 	bool Bounded(float x, float y);
 
+	virtual void Resize(int width, int length = width) {
+		map = vector<vector<DataType>>(width, vector<DataType>(length));
+	}
 	// Inherited via ISerialization
 	virtual void Import(std::ifstream & ifs) override
 	{
 		DeSerialize(width, ifs);
 		DeSerialize(length, ifs);
-
+		Resize(width + 1, length + 1);
 	}
+	
 	virtual void Export(std::ofstream & ofs) override
 	{
 		Serialize(width, ofs);
@@ -56,7 +59,7 @@ inline Map<DataType>::Map(int width, int length) : Map<DataType>::Map(SimpleMath
 template<typename DataType>
 inline Map<DataType>::Map(SimpleMath::Rectangle area) : area(area), width(area.width), length(area.height)
 {
-	map = vector< vector<DataType> >(area.width + 1, vector<DataType>(area.height + 1));
+	Resize(area.width + 1, area.height + 1);
 }
 
 template<typename DataType>

@@ -125,7 +125,7 @@ void RenderSystem::Render()
 void RenderSystem::SyncEntities()
 {
 	//std::thread([=] {
-		
+	if (EM && EM->Player()) {
 		std::map<string, vector<shared_ptr<Components::PositionNormalTextureVBO>>> vbos;
 		for (auto & entity : EM->FindEntities(m_VBOmask)) {
 			shared_ptr<Components::PositionNormalTextureVBO> vbo = entity->GetComponent<Components::PositionNormalTextureVBO>("PositionNormalTextureVBO");
@@ -138,7 +138,7 @@ void RenderSystem::SyncEntities()
 		m_VBOs = vbos;
 		m_mutex.unlock();
 		std::map<string, vector<shared_ptr<Components::Model>>> models;
-		for (auto & entity : EM->Filter(EM->EntitiesByRegion(EM->PlayerPos()->Pos, 100.f),m_ModelMask)) {
+		for (auto & entity : EM->Filter(EM->EntitiesByRegion(EM->PlayerPos()->Pos, 100.f), m_ModelMask)) {
 			shared_ptr<Components::Model> model = entity->GetComponent<Components::Model>("Model");
 			if (models.find(model->Effect) == models.end()) {
 				models.insert(std::pair<string, vector<shared_ptr<Components::Model>>>(model->Effect, vector<shared_ptr<Components::Model>>()));
@@ -148,8 +148,9 @@ void RenderSystem::SyncEntities()
 		m_mutex.lock();
 		m_Models = models;
 		m_mutex.unlock();
-		
-	//}).detach();
+
+		//}).detach();
+	}
 }
 void RenderSystem::SetViewport(int width, int height)
 {

@@ -13,6 +13,8 @@ namespace Components {
 		bool Enabled;
 		// Inherited via Component
 		virtual string GetName() override;
+		virtual void Import(ifstream & ifs) override;
+		virtual void Export(ofstream & ofs) override;
 	};
 }
 

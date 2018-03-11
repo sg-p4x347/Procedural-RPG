@@ -29,7 +29,7 @@ string MovementSystem::Name()
 
 void MovementSystem::Update(double & elapsed)
 {
-	TaskManager::Get().Push(Task([=] {
+	//TaskManager::Get().Push(Task([=] {
 		for (auto & entity : m_entities) {
 			auto position = entity->GetComponent<Components::Position>("Position");
 			auto movement = entity->GetComponent<Components::Movement>("Movement");
@@ -38,7 +38,7 @@ void MovementSystem::Update(double & elapsed)
 
 			position->Rot += movement->AngularVelocity * elapsed;
 		}
-	}, m_componentMask, m_componentMask));
+	//}, m_componentMask, m_componentMask));
 	
 	// check to see if the player has moved enough for an entity resync
 	if (m_lastPos == Vector3::Zero && EM->Player()) {
@@ -53,5 +53,10 @@ void MovementSystem::Update(double & elapsed)
 void MovementSystem::SyncEntities()
 {
 	m_entities = EM->FindEntities(m_componentMask);
+}
+
+void MovementSystem::Initialize()
+{
+	SyncEntities();
 }
 

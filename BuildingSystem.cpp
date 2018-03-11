@@ -44,9 +44,10 @@ shared_ptr<CompositeModel> BuildingSystem::GetModel(EntityPtr building, float di
 				unsigned int assetID = voxel.GetFloors()[i];
 				if (assetID) {
 					shared_ptr<Model> floorComp = AssetManager::Get()->GetModel(assetID, distance);
-					
-					for (auto & mesh : floorComp->meshes) {
-						model->AddMesh(mesh, voxelTranslate);
+					if (floorComp) {
+						for (auto & mesh : floorComp->meshes) {
+							model->AddMesh(mesh, voxelTranslate);
+						}
 					}
 					//Utility::Concat(model->meshes, floorComp->meshes);
 				}
@@ -57,17 +58,19 @@ shared_ptr<CompositeModel> BuildingSystem::GetModel(EntityPtr building, float di
 				unsigned int assetID = voxel.GetWalls()[i];
 				if (assetID) {
 					shared_ptr<Model> wallComp = AssetManager::Get()->GetModel(assetID, distance);
-					float yaw = ((i + 1) % 4)  * HALF_PI;
-					XMMATRIX rotation = XMMatrixRotationNormal(Vector3::UnitY, yaw);
-					XMMATRIX translate = XMMatrixTranslation(-0.5f, 0.f, 0.f);
-					XMMATRIX transform = XMMatrixMultiply(translate, rotation);
-					// Move to the voxel location in the map
-					transform = XMMatrixMultiply(transform, voxelTranslate);
+					if (wallComp) {
+						float yaw = ((i + 1) % 4)  * HALF_PI;
+						XMMATRIX rotation = XMMatrixRotationNormal(Vector3::UnitY, yaw);
+						XMMATRIX translate = XMMatrixTranslation(-0.5f, 0.f, 0.f);
+						XMMATRIX transform = XMMatrixMultiply(translate, rotation);
+						// Move to the voxel location in the map
+						transform = XMMatrixMultiply(transform, voxelTranslate);
 
-					for (auto & mesh : wallComp->meshes) {
-						model->AddMesh(mesh, transform);
+						for (auto & mesh : wallComp->meshes) {
+							model->AddMesh(mesh, transform);
+						}
+						//Utility::Concat(model->meshes, wallComp->meshes);
 					}
-					//Utility::Concat(model->meshes, wallComp->meshes);
 				}
 			}
 			//----------------------------------------------------------------
@@ -76,15 +79,17 @@ shared_ptr<CompositeModel> BuildingSystem::GetModel(EntityPtr building, float di
 				unsigned int assetID = voxel.GetCorners()[i];
 				if (assetID) {
 					shared_ptr<Model> wallComp = AssetManager::Get()->GetModel(assetID, distance);
-					float yaw = (i % 4)  * HALF_PI;
-					XMMATRIX rotation = XMMatrixRotationNormal(Vector3::UnitY, yaw);
-					// Move to the voxel location in the map
-					XMMATRIX transform = XMMatrixMultiply(rotation, voxelTranslate);
+					if (wallComp) {
+						float yaw = (i % 4)  * HALF_PI;
+						XMMATRIX rotation = XMMatrixRotationNormal(Vector3::UnitY, yaw);
+						// Move to the voxel location in the map
+						XMMATRIX transform = XMMatrixMultiply(rotation, voxelTranslate);
 
-					for (auto & mesh : wallComp->meshes) {
-						model->AddMesh(mesh, transform);
+						for (auto & mesh : wallComp->meshes) {
+							model->AddMesh(mesh, transform);
+						}
+						//Utility::Concat(model->meshes, wallComp->meshes);
 					}
-					//Utility::Concat(model->meshes, wallComp->meshes);
 				}
 			}
 		}

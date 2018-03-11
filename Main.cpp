@@ -60,9 +60,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
         if (!hwnd)
             return 1;
-
-        ShowWindow(hwnd, nCmdShow);
+		
+        //ShowWindow(hwnd, nCmdShow);
         // TODO: Change nCmdShow to SW_SHOWMAXIMIZED to default to fullscreen.
+		ShowWindow(hwnd, SW_SHOWMAXIMIZED);
 
         SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(&Game::Get()) );
 

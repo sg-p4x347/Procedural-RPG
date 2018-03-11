@@ -374,10 +374,10 @@ std::shared_ptr<Model> AssetManager::GetModel(unsigned int id, float distance, b
 {
 	EntityPtr entity;
 	if (procedural) {
-		m_proceduralEM->BaseEntityManager::Find(id, entity);
+		if (!m_proceduralEM->BaseEntityManager::Find(id, entity)) return nullptr;
 	}
 	else {
-		m_authoredEM->BaseEntityManager::Find(id, entity);
+		if (!m_authoredEM->BaseEntityManager::Find(id, entity)) return nullptr;
 	}
 	return GetModel(entity, distance, procedural);
 }

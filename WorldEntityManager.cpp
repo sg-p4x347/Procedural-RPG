@@ -115,7 +115,7 @@ EntityPtr WorldEntityManager::Player()
 		auto results = FindEntities(ComponentMask("Player"));
 		m_player = results.size() != 0 ? results[0] : nullptr;
 		if (!m_player) {
-			throw std::exception("Player data missing");
+			Utility::OutputException("Player data missing");
 		}
 	}
 	return m_player;

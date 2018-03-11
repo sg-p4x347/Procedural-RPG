@@ -26,8 +26,8 @@ string Components::Building::GetName()
 void Components::Building::Export(ofstream & ofs)
 {
 	Voxels.Export(ofs);
-	for (int x = 0; x < Voxels.width; x++) {
-		for (int z = 0; z < Voxels.length; z++) {
+	for (int x = 0; x <= Voxels.width; x++) {
+		for (int z = 0; z <= Voxels.length; z++) {
 			Voxels.map[x][z].Export(ofs);
 		}
 	}
@@ -36,8 +36,8 @@ void Components::Building::Export(ofstream & ofs)
 void Components::Building::Import(ifstream & ifs)
 {
 	Voxels.Import(ifs);
-	for (int x = 0; x < Voxels.width; x++) {
-		for (int z = 0; z < Voxels.length; z++) {
+	for (int x = 0; x <= Voxels.width; x++) {
+		for (int z = 0; z <= Voxels.length; z++) {
 			Voxels.map[x][z].Import(ifs);
 		}
 	}

@@ -11,6 +11,7 @@ public:
 	virtual string Name() override;
 	virtual void Update(double & elapsed) override;
 	virtual void SyncEntities() override;
+	virtual void Initialize() override;
 private:
 	vector<EntityPtr> m_entities;
 	Vector3 m_lastPos;

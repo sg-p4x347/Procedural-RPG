@@ -19,7 +19,7 @@
 #include "ActionSystem.h"
 #include "BuildingSystem.h"
 #include "TaskManager.h"
-static const bool g_erosion = false;
+static const bool g_erosion = true;
 
 using namespace DirectX::SimpleMath;
 static EntityPtr waterEntity;
@@ -248,7 +248,7 @@ void TerrainSystem::Generate()
 	}
 	AssetManager::Get()->GetProceduralEM()->Save();
 
-	Utility::OutputLine("Generating Buildings...");
+	/*Utility::OutputLine("Generating Buildings...");
 	Rectangle footprint = Rectangle(ProUtil::RandWithin(32, 200), ProUtil::RandWithin(32, 200), ProUtil::RandWithin(6,10), ProUtil::RandWithin(6, 10));
 	Rectangle flattenArea = Rectangle(footprint.x - 1, footprint.y - 1, footprint.width + 2, footprint.height + 2);
 	Rectangle cacheArea = Rectangle(flattenArea.x - 10, flattenArea.y - 10, flattenArea.width + 20, flattenArea.height + 20);
@@ -256,7 +256,7 @@ void TerrainSystem::Generate()
 	ImportMap(cache);
 	float height = Flatten(cache, flattenArea,10);
 	SM->GetSystem<BuildingSystem>("Building")->CreateBuilding(Vector3(footprint.x, height + 0.1f, footprint.y), Rectangle(0, 0, footprint.width, footprint.height), "residential");
-	Save(cache);
+	Save(cache);*/
 	
 }
 

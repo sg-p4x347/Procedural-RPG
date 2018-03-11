@@ -37,7 +37,7 @@ World::World(
 
 World::~World()
 {
-	PauseGame();
+	IEventManager::Invoke(EventTypes::Sound_StopMusic);
 	AssetManager::Get()->CleanupProceduralAssets();
 	
 
@@ -46,10 +46,8 @@ World::~World()
 	m_systemManager.Save();
 	//----------------------------------------------------------------
 	// Deconstruct the entity manager
-	if (m_entityManager) {
-		m_entityManager->Save();
-		m_entityManager.reset();
-	}
+	m_entityManager->Save();
+	m_entityManager.reset();
 	//----------------------------------------------------------------
 	// Update render targets
 	m_systemManager.GetSystem<RenderSystem>("Render")->InitializeWorldRendering(nullptr);
@@ -100,14 +98,7 @@ void World::RunWorldSystems()
 }
 void World::Generate(int seed)
 {
-	// Create an empty directory for the world
-	/*try {
-		Filesystem::remove_all(m_directory);
-		Filesystem::create_directories(m_directory);
-	}
-	catch (std::exception ex) {
-		Utility::OutputException(ex.what());
-	}*/
+	
 	// seed the RNG
 	srand(seed);
 
@@ -145,9 +136,12 @@ bool World::Load()
 	// Add world systems
 	m_systemManager.AddSystem(std::shared_ptr<System>(new TerrainSystem(&m_systemManager, m_entityManager, vector<string>{ "Terrain", "Position", "VBO" }, 1, 64, systemsDir)));
 	m_systemManager.AddSystem(std::shared_ptr<System>(new PlayerSystem(&m_systemManager, m_entityManager, vector<string>{ "Player", "Position" }, 1)));
+	
 	m_systemManager.AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Movement"}, 1, renderSystem)));
-	m_systemManager.AddSystem(std::shared_ptr<System>(new ActionSystem(&m_systemManager, m_entityManager, vector<string>{"Action", "Position"}, 10)));
 	m_systemManager.AddSystem(std::shared_ptr<System>(new CollisionSystem(&m_systemManager, m_entityManager, vector<string>{"Movement", "Position", "Collision"}, 1)));
+
+	m_systemManager.AddSystem(std::shared_ptr<System>(new ActionSystem(&m_systemManager, m_entityManager, vector<string>{"Action", "Position"}, 10)));
+	
 	m_systemManager.AddSystem(std::shared_ptr<System>(new BuildingSystem(m_entityManager, vector<string>{"Building"}, 0)));
 
 	m_systemManager.Initialize();
