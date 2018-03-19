@@ -184,6 +184,16 @@ unsigned long PersistenceEntityManager::ComponentMaskOf(const unsigned int & id)
 	return mask;
 }
 
+void PersistenceEntityManager::DeleteEntity(EntityPtr & entity)
+{
+	string filename = (std::to_string(entity->ID()) + ".dat");
+	// Remove these components from the file system
+	for (auto& component : Filesystem::directory_iterator(m_directory)) {
+		Filesystem::remove_all(component.path() / filename);
+	}
+	BaseEntityManager::DeleteEntity(entity);
+}
+
 //PersistenceEntityManager::~PersistenceEntityManager()
 //{
 //	//Save();

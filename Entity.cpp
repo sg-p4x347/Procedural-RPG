@@ -2,7 +2,8 @@
 #include "Entity.h"
 #include "IEventManager.h"
 
-Entity::Entity(const unsigned int & id, const unsigned long & mask, BaseEntityManager * entityManager) : m_id(id), m_mask(mask), m_entityManager(entityManager)
+
+Entity::Entity(const unsigned int & id, const unsigned long & mask, BaseEntityManager * entityManager) : m_id(id), m_mask(mask), m_entityManager(entityManager), m_removed(false)
 {
 }
 
@@ -51,4 +52,23 @@ void Entity::AddComponent(shared_ptr<Components::Component>& component)
 	m_mask |= componentMask;
 	m_components.insert(std::pair < unsigned long, shared_ptr<Components::Component>>(componentMask, component));
 	
+}
+
+void Entity::RemoveComponents(unsigned long mask)
+{
+	m_mask &= ~mask;
+	for (auto & compMask : m_entityManager->ExtractMasks(mask)) {
+		m_components.erase(compMask);
+	}
+}
+
+void Entity::RemoveComponents()
+{
+	m_mask = 0;
+	m_components.clear();
+}
+
+void Entity::RemoveEntity()
+{
+	m_removed = true;
 }

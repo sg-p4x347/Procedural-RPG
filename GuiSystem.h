@@ -3,12 +3,14 @@
 #include "GuiEntityManager.h"
 #include "Sprite.h"
 #include "GuiText.h"
+#include "Inventory.h"
 using namespace GUI;
+class SystemManager;
 class GuiSystem :
 	public System
 {
 public:
-	GuiSystem(
+	GuiSystem(SystemManager * systemManager,
 		unsigned short updatePeriod);
 	~GuiSystem();
 
@@ -34,6 +36,7 @@ public:
 	void CharTyped(char ch);
 	void Backspace();
 private:
+	SystemManager * SM;
 	GUI::GuiEntityManager GuiEM;
 	Rectangle m_outputRect;
 	//----------------------------------------------------------------
@@ -45,6 +48,10 @@ private:
 	void AddDynamicMenu(string name, std::function<EntityPtr(void)> constructor);
 	EntityPtr GetMenu(string name);
 	void OpenMenu(EntityPtr menu);
+	//----------------------------------------------------------------
+	// Menu factories
+	EntityPtr CreateInventory();
+	EntityPtr CreateInventoryGrid(vector<Components::InventoryItem> inventory);
 	//----------------------------------------------------------------
 	// HUD
 	EntityPtr m_HUDhint;
@@ -103,7 +110,11 @@ private:
 	EntityPtr NewTextBox(string id,string placeholder = "");
 	//----------------------------------------------------------------
 	// Misc helpers
+	void DeleteChildren(EntityPtr & parent);
+	void DeleteRecursive(EntityPtr & parent);
+	void ReplaceChildren(EntityPtr parent, EntityPtr child);
 	shared_ptr<Sprite> GetSprite(EntityPtr entity);
+	shared_ptr<Style> GetStyle(EntityPtr entity);
 	void AddRectIfValid(Rectangle rect, vector<Rectangle> & rects);
 	void AddScrollbarsRecursive(EntityPtr & entity);
 	EntityPtr GetElementByID(string id);

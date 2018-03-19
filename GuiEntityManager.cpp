@@ -17,6 +17,7 @@ namespace GUI {
 		RegisterComponent([] {return new Children();});
 		RegisterComponent([] {return new Panel();});
 		RegisterComponent([] {return new Text();});
+		RegisterComponent([] {return new Sprite();});
 		//----------------------------------------------------------------
 		// Styles
 		RegisterDelegate([](string type) {return new Style(type);}, vector<string>{
@@ -46,7 +47,7 @@ namespace GUI {
 		entity->AddComponent(new Panel(id));
 		entity->AddComponent(style);
 		entity->AddComponent(new Sprite());
-		if (children.size() != 0) AddChildren(entity,children);
+		if (!children.empty()) AddChildren(entity,children);
 		return entity;
 	}
 

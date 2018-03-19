@@ -5,6 +5,7 @@ AssetEntityManager::AssetEntityManager(Filesystem::path directory) : Persistence
 {
 	RegisterComponent([] {return new ModelAsset();});
 	RegisterComponent([] {return new PathID();});
+	RegisterComponent([] {return new Item();});
 }
 
 shared_ptr<ModelAsset> AssetEntityManager::GetModel(string path)
@@ -22,13 +23,13 @@ shared_ptr<ModelAsset> AssetEntityManager::GetModel(string path)
 	//	}
 	//}
 	EntityPtr entity;
-	if (Find(path, entity)) {
+	if (TryFindByPathID(path, entity)) {
 		return entity->GetComponent<ModelAsset>("ModelAsset");
 	}
 	return nullptr;
 }
 
-bool AssetEntityManager::Find(string path, EntityPtr & entity)
+bool AssetEntityManager::TryFindByPathID(string path, EntityPtr & entity)
 {
 	if(m_assets.find(path) != m_assets.end()) {
 		entity = m_assets[path];

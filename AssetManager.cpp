@@ -287,6 +287,11 @@ void AssetManager::SetDevice(Microsoft::WRL::ComPtr<ID3D11Device> device)
 	m_fxFactory->SetDirectory(L".\\Assets\\");
 }
 
+AssetEntityManager * AssetManager::GetStaticEM()
+{
+	return m_authoredEM.get();
+}
+
 shared_ptr<SpriteFont> AssetManager::GetFont(string name,int size)
 {
 	string path = name + '_' + to_string(size);
@@ -363,10 +368,10 @@ std::shared_ptr<Model> AssetManager::GetModel(string path, float distance, bool 
 {
 	EntityPtr entity;
 	if (procedural) {
-		m_proceduralEM->Find(path, entity);
+		m_proceduralEM->TryFindByPathID(path, entity);
 	}
 	else {
-		m_authoredEM->Find(path, entity);
+		m_authoredEM->TryFindByPathID(path, entity);
 	}
 	return GetModel(entity, distance, procedural);
 }
@@ -398,7 +403,7 @@ VboParser * AssetManager::ProVboParser()
 }
 bool AssetManager::Find(string path, EntityPtr & entity)
 {
-	return m_authoredEM->Find(path, entity);
+	return m_authoredEM->TryFindByPathID(path, entity);
 }
 void AssetManager::AddEffect(string name, shared_ptr<IEffect> effect)
 {

@@ -43,6 +43,11 @@ public:
 		ss >> std::boolalpha >> value;
 		return value;
 	}
+	template<>
+	inline string To() const
+	{
+		return DeQuote(m_value);
+	}
 	template<typename T>
 	inline vector<T> ToVector()
 	{

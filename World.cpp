@@ -12,6 +12,7 @@
 #include "IEventManager.h"
 #include "SoundSystem.h"
 #include "BuildingSystem.h"
+#include "ItemSystem.h"
 // Resources
 #include "IEventManager.h"
 #include "AssetManager.h"
@@ -69,8 +70,6 @@ void World::PauseGame()
 void World::ResumeGame()
 {
 	
-	DirectX::Mouse::Get().SetMode(DirectX::Mouse::Mode::MODE_RELATIVE);
-	m_systemManager.GetSystem<GuiSystem>("Gui")->CloseMenu();
 	RunWorldSystems();
 	m_paused = false;
 	IEventManager::Invoke(EventTypes::Sound_PlayMusic);
@@ -108,9 +107,6 @@ void World::Generate(int seed)
 
 bool World::Load()
 {
-	
-	
-
 
 	IEventManager::NewVersion();
 	m_systemManager.GetSystem<GuiSystem>("Gui")->BindHandlers();
@@ -140,8 +136,9 @@ bool World::Load()
 	m_systemManager.AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Movement"}, 1, renderSystem)));
 	m_systemManager.AddSystem(std::shared_ptr<System>(new CollisionSystem(&m_systemManager, m_entityManager, vector<string>{"Movement", "Position", "Collision"}, 1)));
 
-	m_systemManager.AddSystem(std::shared_ptr<System>(new ActionSystem(&m_systemManager, m_entityManager, vector<string>{"Action", "Position"}, 10)));
+	//m_systemManager.AddSystem(std::shared_ptr<System>(new ActionSystem(&m_systemManager, m_entityManager, vector<string>{"Action", "Position"}, 10)));
 	
+	m_systemManager.AddSystem(std::shared_ptr<System>(new ItemSystem(m_entityManager, vector<string>{"Inventory", "Item"}, 0)));
 	m_systemManager.AddSystem(std::shared_ptr<System>(new BuildingSystem(m_entityManager, vector<string>{"Building"}, 0)));
 
 	m_systemManager.Initialize();

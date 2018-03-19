@@ -11,6 +11,9 @@ public:
 	void CleanupProceduralAssets();
 	void SetDevice(Microsoft::WRL::ComPtr<ID3D11Device> device);
 	//----------------------------------------------------------------
+	// Entity manager
+	AssetEntityManager * GetStaticEM();
+	//----------------------------------------------------------------
 	// Asset Retrieval
 	shared_ptr<SpriteFont> GetFont(string name,int size);
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetTexture(string path,bool procedural = false);

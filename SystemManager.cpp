@@ -21,7 +21,7 @@ SystemManager::SystemManager(
 	// Construct the core systems 
 
 	
-	AddSystem(std::shared_ptr<System>(new GuiSystem( 1)));
+	AddSystem(std::shared_ptr<System>(new GuiSystem(this, 1)));
 	AddSystem(std::shared_ptr<System>(new RenderSystem(this,1, window, width, height, dynamic_pointer_cast<GuiSystem>(m_systems["Gui"]))));
 	//AddSystem(std::shared_ptr<System>(new SoundSystem()));
 	//AddSystem(std::shared_ptr<System>(new InfrastructureSystem(m_entityManager, vector<string>{"Infrastructure"}, 0)));

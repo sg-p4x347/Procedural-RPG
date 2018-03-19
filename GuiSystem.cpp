@@ -1,5 +1,9 @@
 #include "pch.h"
+#include "SystemManager.h"
+
 #include "GuiSystem.h"
+#include "ItemSystem.h"
+
 #include "GuiStyle.h"
 #include "GuiPanel.h"
 #include "GuiChildren.h"
@@ -15,9 +19,11 @@ using namespace DirectX;
 using ButtonState = DirectX::Mouse::ButtonStateTracker::ButtonState;
 
 GuiSystem::GuiSystem(
+	SystemManager * systemManager,
 	unsigned short updatePeriod
 ) : System::System(updatePeriod),
-m_scrollTicks(1200)
+m_scrollTicks(1200),
+SM(systemManager)
 {
 	//----------------------------------------------------------------
 	// Initialize spritesheets
@@ -140,6 +146,13 @@ m_scrollTicks(1200)
 		return style;
 	}());
 	AddMenu("HUD", m_HUDhint);
+#pragma endregion
+	//----------------------------------------------------------------
+	// Inventory
+#pragma region Inventory
+	AddDynamicMenu("inventory", [this] {return CreateInventory();});
+#pragma endregion
+
 	//----------------------------------------------------------------
 	// Options
 #pragma region options
@@ -472,6 +485,13 @@ void GuiSystem::BindHandlers()
 	IEventManager::RegisterHandler(GUI_HideHint, std::function<void(void)>([=]() {
 		HideHint();
 	}));
+
+	IEventManager::RegisterHandler(GUI_OpenMenu, std::function<void(string)>([this](string menu) {
+		OpenMenu(menu);
+	}));
+	IEventManager::RegisterHandler(GUI_CloseMenu, std::function<void()>([this] {
+		CloseMenu();
+	}));
 }
 
 void GuiSystem::CharTyped(char ch)
@@ -517,6 +537,104 @@ void GuiSystem::OpenMenu(EntityPtr menu)
 		m_currentMenu = menu;
 		UpdateUI(m_outputRect.width, m_outputRect.height);
 	}
+}
+
+EntityPtr GuiSystem::CreateInventory()
+{
+	vector<EntityPtr> tabs;
+	EntityPtr gridContainer = GuiEM.NewPanel([] {
+		Style * style = new Style();
+		style->Justify = "center";
+		style->Height = "85%";
+		style->Width = "100%";
+		return style;
+	}());
+	for (string category : SM->GetSystem<ItemSystem>("Item")->GetItemCatagories()) {
+		tabs.push_back([=] {
+			EntityPtr tab = GuiEM.NewButton(category, [=](GUI::Event evt) {
+				ReplaceChildren(gridContainer, CreateInventoryGrid(
+					SM->GetSystem<ItemSystem>("Item")->ItemsInCategory(
+						SM->GetSystem<ItemSystem>("Item")->GetPlayerInventory(),
+						category
+					)
+				));
+				UpdateFlowRecursive(gridContainer,1);
+			},"rgba(0,0,0,0)","rgba(1,1,1,0.5)","rgba(0,0,0.25,0.5)");
+			shared_ptr<Style> style = GetStyle(tab);
+			style->FontColor = "rgb(0,0,0)";
+			style->TextAlign = "center";
+			style->Height = "48px";
+			style->Width = "256px";
+			return tab;
+		}());
+	}
+
+	return GuiEM.NewPanel([] {
+		Style * style = new Style();
+		return style;
+	}(), vector<EntityPtr>{
+		// Header
+		GuiEM.NewPanel(
+			[] {
+				Style * style = new Style();
+				style->Background = "rgba(1,1,1,0.5)";
+				style->FlowDirection = "row";
+				
+				style->Height = "48px";
+				return style;
+			}(), 
+			tabs
+		),
+		// Grid Container
+		gridContainer
+	});
+}
+
+EntityPtr GuiSystem::CreateInventoryGrid(vector<Components::InventoryItem> items)
+{
+	static const int columnCount = 12; // Cells
+	static const int cellWidth = 128; // Pixels
+	vector<EntityPtr> rows;
+	int itemIndex = 0;
+	for (int rowIndex = 0; rowIndex < std::ceil((float)items.size() / (float)columnCount);rowIndex++) {
+		// Add a row
+		rows.push_back(GuiEM.NewPanel([] {
+			Style * style = new Style();
+			style->Height = to_string(cellWidth) + "px";
+			style->FlowDirection = "row";
+			return style;
+		}(), [&,this] {
+			vector<EntityPtr> row;
+			int column = 0;
+			while (column < columnCount && itemIndex < items.size()) {
+				Components::InventoryItem & item = items[itemIndex];
+				// Add a grid cell
+				row.push_back(
+					GuiEM.NewTextPanel(to_string(item.Quantity), [&] {
+					Style * style = new Style();
+					style->FontSize = "16px";
+					style->Font = "Impact";
+					style->AlignItems = "end";
+					style->VerticalTextAlign = "end";
+					style->TextAlign = "center";
+					style->FontColor = "rgb(1,1,1)";
+					style->Height = to_string(cellWidth) + "px";
+					style->Width = to_string(cellWidth) + "px";
+					style->Background = SM->GetSystem<ItemSystem>("Item")->TypeOf(item)->GetComponent<Item>("Item")->Sprite;
+					return style;
+				}())
+				);
+				itemIndex++;
+				column++;
+			}
+			return row;
+		}()));
+	}
+	return GuiEM.NewPanel([] {
+		Style * style = new Style();
+		style->FlowDirection = "column";
+		return style;
+	}(),rows);
 }
 
 void GuiSystem::AddSpriteSheet(string path, map<string, Rectangle> mapping)
@@ -669,7 +787,7 @@ EntityPtr GuiSystem::FindOccupiedRecursive(EntityPtr entity, Vector2 mousePos)
 			EntityPtr child;
 			if (GuiEM.Find(childID, child)) {
 				auto childSprite = GetSprite(child);
-				if (childSprite->Rect.Contains(mousePos)) {
+				if (childSprite && childSprite->Rect.Contains(mousePos)) {
 					occupied = FindOccupiedRecursive(child,mousePos);
 				}
 			}
@@ -1066,9 +1184,50 @@ EntityPtr GuiSystem::NewTextBox(string id,string placeholder)
 	return textbox;
 }
 
+void GuiSystem::DeleteChildren(EntityPtr & parent)
+{
+	auto children = parent->GetComponent<Children>("Children");
+
+	if (children) {
+		for (auto & childID : children->Entities) {
+			EntityPtr child;
+			if (GuiEM.Find(childID, child)) {
+				DeleteRecursive(child);
+			}
+		}
+		children->Entities.clear();
+	}
+}
+
+void GuiSystem::DeleteRecursive(EntityPtr & parent)
+{
+	auto children = parent->GetComponent<Children>("Children");
+	
+	if (children) {
+		for (auto & childID : children->Entities) {
+			EntityPtr child;
+			if (GuiEM.Find(childID, child)) {
+				DeleteRecursive(child);
+			}
+		}
+	}
+	GuiEM.DeleteEntity(parent);
+}
+
+void GuiSystem::ReplaceChildren(EntityPtr parent, EntityPtr child)
+{
+	DeleteChildren(parent);
+	GuiEM.AddChildren(parent, vector<EntityPtr>{child});
+}
+
 shared_ptr<Sprite> GuiSystem::GetSprite(EntityPtr entity)
 {
 	return entity->GetComponent<Sprite>("Sprite");
+}
+
+shared_ptr<Style> GuiSystem::GetStyle(EntityPtr entity)
+{
+	return entity->GetComponent<Style>("Style_Default");
 }
 
 void GuiSystem::AddRectIfValid(Rectangle rect, vector<Rectangle>& rects)

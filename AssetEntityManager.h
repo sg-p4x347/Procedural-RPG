@@ -4,15 +4,17 @@
 #include "PathID.h"
 #include "VboParser.h"
 #include "VBO.h"
+#include "Item.h"
 class AssetEntityManager :
 	public PersistenceEntityManager
 {
 public:
 	AssetEntityManager(Filesystem::path directory);
 	//----------------------------------------------------------------
-	// Accessors
+	// Queries
 	shared_ptr<ModelAsset> GetModel(string path);
-	bool Find(string path, EntityPtr & entity);
+	bool TryFindByPathID(string path, EntityPtr & entity);
+	
 	//----------------------------------------------------------------
 	// Factories
 	template <typename VertexType>
@@ -24,8 +26,11 @@ public:
 		return entity;
 	}
 private:
-	// Lookup by PathID
+	
+	// Asset lookup
 	map<string, EntityPtr> m_assets;
+	
+	// Utility
 	VboParser m_vboParser;
 };
 

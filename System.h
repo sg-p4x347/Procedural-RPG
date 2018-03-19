@@ -15,8 +15,8 @@ public:
 	virtual string Name() = 0;
 
 	// Update control
-	void Halt();
-	void Run();
+	virtual void Halt();
+	virtual void Run();
 protected:
 	virtual void Update(double & elapsed) = 0;
 	double m_elapsed;				// seconds elapsed since last update

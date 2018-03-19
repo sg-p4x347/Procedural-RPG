@@ -2,6 +2,8 @@
 #include "WorldEntityManager.h"
 #include "JsonParser.h"
 #include "IEventManager.h"
+
+#include "Inventory.h"
 WorldEntityManager::WorldEntityManager(Filesystem::path directory) : PersistenceEntityManager::PersistenceEntityManager(directory), m_player(nullptr)
 {
 	//----------------------------------------------------------------
@@ -16,6 +18,7 @@ WorldEntityManager::WorldEntityManager(Filesystem::path directory) : Persistence
 	RegisterComponent([] {return new Components::Action();});
 	RegisterComponent([] {return new Components::EntityRegion();});
 	RegisterComponent([] {return new Components::Building();});
+	RegisterComponent([] {return new Components::Inventory();});
 	//----------------------------------------------------------------
 	// Tags
 	RegisterDelegate([](string type) {return new Components::Tag(type);}, vector<string>{

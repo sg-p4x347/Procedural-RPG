@@ -11,10 +11,14 @@ enum EventTypes {
 	GUI_ShowHint,
 	GUI_HideHint,
 	GUI_OpenMenu,
+	GUI_CloseMenu,
 
 	Sound_PlayEffect,
 	Sound_PlayMusic,
-	Sound_StopMusic
+	Sound_StopMusic,
+
+	Item_OpenInventory,
+	Item_CloseInventory
 };
 template <typename ... Signature>
 class EventManager

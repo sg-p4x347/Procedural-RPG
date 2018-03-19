@@ -1,5 +1,6 @@
 #pragma once
 #include "Component.h"
+#include <queue>
 class BaseEntityManager
 {
 public:
@@ -13,11 +14,15 @@ public:
 	// Mask helpers
 	unsigned long ComponentMask(vector<string> components);
 	unsigned long ComponentMask(string component);
+	vector<unsigned long> ExtractMasks(unsigned long mask);
 	virtual unsigned long ComponentMaskOf(const unsigned int & id);
 	string NameOf(const unsigned long & mask);
 	//----------------------------------------------------------------
 	// Entity creation
 	EntityPtr NewEntity();
+	//----------------------------------------------------------------
+	// Entity removal
+	virtual void DeleteEntity(EntityPtr & entity);
 	//----------------------------------------------------------------
 	// Entity retrieval
 	vector<EntityPtr> FindEntities(string compName);
@@ -51,6 +56,11 @@ protected:
 	// ID management
 	void SetNextID(unsigned int & id);
 	unsigned int GetNextID();
+	queue<unsigned int> m_removedIDs;
+
+	// Mask, index
+	map<unsigned long, unsigned int> m_indices;
+	static const int m_maskSize = 64;
 private:
 	//----------------------------------------------------------------
 	// Component management
@@ -69,8 +79,12 @@ private:
 	// Mask, Name
 	map<unsigned long, string> m_names;
 	
+
 	// map locking
 	std::shared_mutex m_mutex;
+
+	
+	
 	
 
 };

@@ -341,6 +341,15 @@
     <ClInclude Include="World.h">
       <Filter>World</Filter>
     </ClInclude>
+    <ClInclude Include="Item.h">
+      <Filter>Assets\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Inventory.h">
+      <Filter>World\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemSystem.h">
+      <Filter>World\System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -573,6 +582,15 @@
     <ClCompile Include="World.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="Item.cpp">
+      <Filter>Assets\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Inventory.cpp">
+      <Filter>World\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemSystem.cpp">
+      <Filter>World\System</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
@@ -658,6 +676,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico">
+      <Filter>Assets\Textures</Filter>
+    </Image>
+    <Image Include="Assets\Textures\Item\logs.png">
       <Filter>Assets\Textures</Filter>
     </Image>
   </ItemGroup>

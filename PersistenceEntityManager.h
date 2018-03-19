@@ -23,7 +23,7 @@ public:
 	// Mask helpers
 	unsigned long ComponentMaskOf(const unsigned int & id) override;
 
-	
+	void DeleteEntity(EntityPtr & entity) override;
 protected:
 	//----------------------------------------------------------------
 	// Component management
@@ -40,9 +40,7 @@ private:
 	// Next entity ID file relative to working directory
 	const static Filesystem::path m_nextEntityFile; 
 	
-	// Mask, index
-	map<unsigned long, unsigned int> m_indices;
-	static const int m_maskSize = 64;
+	
 	
 
 };

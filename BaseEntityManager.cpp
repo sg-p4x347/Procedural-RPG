@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "BaseEntityManager.h"
 #include "Entity.h"
-
+#include <bitset>
 BaseEntityManager::BaseEntityManager()
 {
 	m_nextID = 1;
@@ -25,6 +25,17 @@ unsigned long BaseEntityManager::ComponentMask(string component)
 	return m_masks[component];
 }
 
+vector<unsigned long> BaseEntityManager::ExtractMasks(unsigned long mask)
+{
+	vector<unsigned long> masks;
+	std::bitset<m_maskSize> bitmask(mask);
+	for (int i = 0; i < m_maskSize; i++) {
+		if (bitmask[i])
+			masks.push_back(std::pow(2, i));
+	}
+	return masks;
+}
+
 unsigned long BaseEntityManager::ComponentMaskOf(const unsigned int & id)
 {
 	EntityPtr entity;
@@ -45,9 +56,34 @@ string BaseEntityManager::NameOf(const unsigned long & mask)
 EntityPtr BaseEntityManager::NewEntity()
 {
 	std::lock_guard<shared_mutex> lock(m_mutex);
-	auto entity = std::shared_ptr<Entity>(new Entity(m_nextID++,0,this));
-	m_entities.insert(std::pair<unsigned int, EntityPtr>(entity->ID(), entity));
+	std::shared_ptr<Entity> entity;
+	if (m_removedIDs.empty()) {
+		//----------------------------------------------------------------
+		// new ID
+		entity = std::shared_ptr<Entity>(new Entity(m_nextID++, 0, this));
+	}
+	else {
+		//----------------------------------------------------------------
+		// Recycled ID
+		entity = std::shared_ptr<Entity>(new Entity(m_removedIDs.front(), 0, this));
+		m_removedIDs.pop();
+		
+	}
+	if (m_entities.find(entity->ID()) != m_entities.end()) {
+		m_entities[entity->ID()] = entity;
+	}
+	else {
+		m_entities.insert(std::pair<unsigned int, EntityPtr>(entity->ID(), entity));
+	}
 	return entity;
+}
+
+void BaseEntityManager::DeleteEntity(EntityPtr & entity)
+{
+	m_removedIDs.push(entity->ID());
+	// Remove all components from the entity
+	entity->RemoveComponents();
+	entity->RemoveEntity();
 }
 
 vector<EntityPtr> BaseEntityManager::FindEntities(string compName)

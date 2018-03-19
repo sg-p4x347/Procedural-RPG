@@ -1,28 +1,35 @@
 #pragma once
-#include <map>
-#include "InventoryItem.h"
+#include "Component.h"
+namespace Components {
+	struct InventoryItem {
+		InventoryItem() {}
+		InventoryItem(unsigned int typeEntity, bool procedural, unsigned int quantity) :
+			TypeEntity(typeEntity),
+			Procedural(procedural),
+			Quantity(quantity) {}
+		// ID of entity that conains meta-data about this type
+		unsigned int TypeEntity;
+		// If true, the TypeEntity is located in the world domain
+		bool Procedural;
+		// Integral count of this item
+		unsigned int Quantity;
+	};
 
-using namespace std;
-
-struct Inventory {
-	Inventory();
-	// updates item quantities based off of supply and demand
-	void Update(int pop);
-	// adds an inventory to this
-	void operator+=(Inventory & other);
-	// takes a reference to the seller's inventory, a ref to buyer's bank account credit
-	// and returns the transaction quantity (used to set the seller's income)
-	float Buy(Inventory & seller, float & credit);
-	// copies supply and demand rates from other inventory
-	void SetRates(Inventory & other);
-	bool IsProfitable(Inventory & other);
-
-	//===========================
-	// properties
-	//===========================
-	float currency;
-	map<string, InventoryItem> items;
-	bool selling = false;
-	bool buying = false;
-};
+	class Inventory :
+		public Component
+	{
+	public:
+		Inventory();
+		Inventory(float maxVolume, float maxWeight);
+		// Data
+		vector<InventoryItem> Items;
+		float MaxVolume;
+		float MaxWeight;
+		bool Open;
+		// Inherited via Component
+		virtual string GetName() override;
+		void Import(std::ifstream & ifs) override;
+		void Export(std::ofstream & ofs) override;
+	};
+}
 
