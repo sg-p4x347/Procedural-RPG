@@ -81,6 +81,11 @@ vector<EntityPtr> WorldEntityManager::Filter(vector<EntityPtr>&& entities, unsig
 	return results;
 }
 
+void WorldEntityManager::AddEntityToRegion(EntityPtr entity)
+{
+	AddEntityToRegion(entity->ID());
+}
+
 void WorldEntityManager::GenerateEntityRegions()
 {
 	const int dimension = m_worldWidth / m_entityRegionWidth;
@@ -93,7 +98,7 @@ void WorldEntityManager::GenerateEntityRegions()
 	}
 }
 
-void WorldEntityManager::AddEntityToRegion(unsigned int & entity)
+void WorldEntityManager::AddEntityToRegion(unsigned int entity)
 {
 	EntityPtr target;
 	if (Find(entity, target)) {

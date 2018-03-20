@@ -138,8 +138,9 @@ void RenderSystem::SyncEntities()
 		m_VBOs = vbos;
 		m_mutex.unlock();
 		std::map<string, vector<shared_ptr<Components::Model>>> models;
-		for (auto & entity : EM->Filter(EM->EntitiesByRegion(EM->PlayerPos()->Pos, 100.f), m_ModelMask)) {
-			shared_ptr<Components::Model> model = entity->GetComponent<Components::Model>("Model");
+		//for (auto & entity : EM->Filter(EM->EntitiesByRegion(EM->PlayerPos()->Pos, 1000.f), m_ModelMask)) {
+		for (auto & entity : EM->FindEntities( m_ModelMask)) {
+		shared_ptr<Components::Model> model = entity->GetComponent<Components::Model>("Model");
 			if (models.find(model->Effect) == models.end()) {
 				models.insert(std::pair<string, vector<shared_ptr<Components::Model>>>(model->Effect, vector<shared_ptr<Components::Model>>()));
 			}

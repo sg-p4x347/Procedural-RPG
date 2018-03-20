@@ -195,7 +195,7 @@ void TerrainSystem::Generate()
 	SaveWater(water);
 
 	// Trees
-	CreateTreeEntities(terrain,water);
+	//CreateTreeEntities(terrain,water);
 
 
 	// TEMP
@@ -239,11 +239,11 @@ void TerrainSystem::Generate()
 		EntityPtr test = EM->NewEntity();
 		test->AddComponent(new Components::Model("Tree","Terrain",true,false));
 		test->AddComponent(new Components::Position(Vector3(0, 20, 0)));
-		/*
-		auto vbo = test->GetComponent<Components::PositionNormalTextureVBO>("PositionNormalTextureVBO");
+		EM->AddEntityToRegion(test);
+		/*auto vbo = test->GetComponent<Components::PositionNormalTextureVBO>("PositionNormalTextureVBO");
 		vbo->Effect = "Terrain";
 		vbo->LODchanged = true;
-		vp.ImportVBO(Filesystem::path("test.vbo"), *vbo);*/
+		vp->ImportVBO(Filesystem::path("test.vbo"), *vbo);*/
 
 	}
 	AssetManager::Get()->GetProceduralEM()->Save();

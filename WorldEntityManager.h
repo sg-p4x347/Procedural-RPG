@@ -30,6 +30,8 @@ public:
 	//----------------------------------------------------------------
 	// Filter a vector of entities with a mask
 	vector<EntityPtr> Filter(vector<EntityPtr> && entities, unsigned long componentMask);
+
+	void AddEntityToRegion(EntityPtr entity);
 private:
 	// Commonly used
 	EntityPtr m_player;
@@ -39,6 +41,6 @@ private:
 	unsigned int m_entityRegionWidth;
 	unsigned int m_worldWidth;
 	void GenerateEntityRegions();
-	void AddEntityToRegion(unsigned int & entity);
+	void AddEntityToRegion(unsigned int entity);
 };
 
