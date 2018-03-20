@@ -65,6 +65,12 @@ namespace Components {
 			DX::ThrowIfFailed(device->CreateBuffer(&desc, &initData,
 				IB.ReleaseAndGetAddressOf()));
 		}
+
+		// Inherited via Component
+		virtual string GetName() override
+		{
+			return "VBO";
+		}
 	};
 }
 

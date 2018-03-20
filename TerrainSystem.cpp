@@ -201,44 +201,44 @@ void TerrainSystem::Generate()
 	// TEMP
 	VboParser * vp = AssetManager::Get()->ProVboParser();
 	{
-		//TopologyCruncher tc = TopologyCruncher();
-		//
-		//{
-		//	// Strip
-		//	vector<Vector3> path = vector<Vector3>{
-		//		Vector3(0,0,0) * 10,
-		//		Vector3(0.05f,0.1f,0.05f) * 10,
-		//		Vector3(0.1f,0.05f,0.1f) * 10 };
-		//	tc.Strip(path, [](float & t) {
-		//		return 0.f;
-		//	}, [](float & t) {
-		//		float ends[2]{ 0.01f,0.f };
-		//		return Utility::LinearInterpolate(ends, t) * 10;
-		//	},30);
-		//}
-		//{
-		//	// Tube
-		//	vector<Vector3> path = vector<Vector3>{
-		//		Vector3(0,0,0),
-		//		Vector3(5,0,2),
-		//		Vector3(5,5,5),
-		//		Vector3(0,10,0),
-		//		Vector3(5,15,3)
-		//	};
-		//	tc.Tube(path, [](float & t) {
-		//		return 10 * exp(-10 * t);
-		//	}, 20,10);
-		//}
+		TopologyCruncher tc = TopologyCruncher();
+		
+		{
+			// Strip
+			vector<Vector3> path = vector<Vector3>{
+				Vector3(0,0,0) * 10,
+				Vector3(0.05f,0.1f,0.05f) * 10,
+				Vector3(0.1f,0.05f,0.1f) * 10 };
+			tc.Strip(path, [](float & t) {
+				return 0.f;
+			}, [](float & t) {
+				float ends[2]{ 0.01f,0.f };
+				return Utility::LinearInterpolate(ends, t) * 10;
+			},30);
+		}
+		{
+			// Tube
+			vector<Vector3> path = vector<Vector3>{
+				Vector3(0,0,0),
+				Vector3(5,0,2),
+				Vector3(5,5,5),
+				Vector3(0,10,0),
+				Vector3(5,15,3)
+			};
+			tc.Tube(path, [](float & t) {
+				return 10 * exp(-10 * t);
+			}, 20,10);
+		}
 		TreeGenerator tg;
-		Components::VBO<VertexPositionNormalTangentColorTexture> * vbo = new Components::PositionNormalTextureVBO(tg.Generate());
+		Components::VBO<VertexPositionNormalTexture> * vbo = new Components::VBO<VertexPositionNormalTexture>(tc.CreateVBO()/*tg.Generate()*/);
 		
 		AssetManager::Get()->GetProceduralEM()->CreateModel("Tree", *vbo);
 		delete vbo;
 	}
 	{
 		EntityPtr test = EM->NewEntity();
-		test->AddComponent(new Components::Model("Tree","Terrain",true,false));
-		test->AddComponent(new Components::Position(Vector3(0, 20, 0)));
+		test->AddComponent(new Components::Model("Tree","Default",true,false));
+		test->AddComponent(new Components::Position(Vector3(10, 20, 10)));
 		EM->AddEntityToRegion(test);
 		/*auto vbo = test->GetComponent<Components::PositionNormalTextureVBO>("PositionNormalTextureVBO");
 		vbo->Effect = "Terrain";

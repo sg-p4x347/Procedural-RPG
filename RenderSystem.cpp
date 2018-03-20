@@ -106,7 +106,7 @@ void RenderSystem::Render()
 					auto position = entity->GetComponent<Components::Position>("Position");
 					auto dxModel = AssetManager::Get()->GetModel(model->Path,Vector3::Distance(EM->PlayerPos()->Pos,position->Pos),model->Procedural);
 					
-					RenderModel(dxModel, position->Pos, position->Rot, model->BackfaceCulling);
+					RenderModel(dxModel, position->Pos, position->Rot, false/* model->BackfaceCulling*/);
 					
 				}
 			}
@@ -297,7 +297,7 @@ void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model, Vector3 & posit
 		RenderModelMesh(mesh, final, backfaceCulling);
 		
 	}
-	//dxModel->Draw(m_d3dContext.Get(), *m_states, final, m_viewMatrix, m_projMatrix);
+	//model->Draw(m_d3dContext.Get(), *m_states, final, m_viewMatrix, m_projMatrix);
 }
 
 void RenderSystem::RenderCompositeModel(shared_ptr<CompositeModel> model, Vector3 & position, Vector3 & rotation, bool backfaceCulling)
@@ -320,6 +320,7 @@ void RenderSystem::RenderModelMesh(DirectX::ModelMesh * mesh, XMMATRIX world, bo
 	}
 	else {
 		m_d3dContext->RSSetState(m_states->CullCounterClockwise());
+
 	}
 	//// Do model-level setCustomState work here
 	//m_d3dContext->RSSetState(m_states->CullNone());
