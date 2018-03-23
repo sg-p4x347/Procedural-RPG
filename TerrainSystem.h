@@ -3,7 +3,7 @@
 #include "WorldSystem.h"
 #include "HeightMap.h"
 #include "Position.h"
-#include "PositionNormalTextureVBO.h"
+#include "PositionNormalTextureTangentColorVBO.h"
 #include "Position.h"
 #include "WaterCell.h"
 #include "Droplet.h"
@@ -101,8 +101,8 @@ protected:
 	//----------------------------------------------------------------
 	// Updating meshes
 	void UpdateRegions(DirectX::SimpleMath::Vector3 center);
-	shared_ptr<HeightMap> UpdateTerrainVBO(shared_ptr<Components::PositionNormalTextureVBO> vbo, int  x, int  z);
-	void UpdateWaterVBO(shared_ptr<Components::PositionNormalTextureVBO> vbo, shared_ptr<HeightMap> terrain, int  x, int z);
+	shared_ptr<HeightMap> UpdateTerrainVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo, int  x, int  z);
+	void UpdateWaterVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo, shared_ptr<HeightMap> terrain, int  x, int z);
 	VertexPositionNormalTangentColorTexture CreateVertex(Vector3 position, Vector3 normal, Vector2 texture);
 	float LowestNeighbor(HeightMap & water,HeightMap & terrain, int x, int z);
 	//----------------------------------------------------------------

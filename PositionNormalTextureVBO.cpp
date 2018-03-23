@@ -3,7 +3,7 @@
 
 namespace Components {
 
-	PositionNormalTextureVBO::PositionNormalTextureVBO() : VBO<VertexPositionNormalTangentColorTexture>::VBO()
+	PositionNormalTextureVBO::PositionNormalTextureVBO() : VBO<VertexPositionNormalTexture>::VBO()
 	{
 	}
 

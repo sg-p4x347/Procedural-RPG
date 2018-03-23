@@ -19,7 +19,7 @@ Components::PositionNormalTextureVBO TreeGenerator::Generate()
 	Branch trunk = Branch(Vector3::Zero, Vector3(0.f, Utility::randWithin(2.f, 4.f), 0.f));
 	trunk.GrowVertical(4);
 	float height = trunk.TotalLength();
-	//GenerateBranches(trunk);
+	GenerateBranches(trunk);
 
 	TopologyCruncher tc;
 	//tc.Tube(vector<Vector3>{Vector3(0, 0, 0), Vector3(10.f, 10.f, 10.f), Vector3(0, 15, 0)}, [](float t) {return t;}, 30, 10, PathType::BezierPath);
@@ -80,7 +80,7 @@ void TreeGenerator::GenerateTopologyRecursive(Tree::Branch & branch, TopologyCru
 		// make the tube
 		tc.Tube(points, [diameter](float & t) {
 			return Utility::Lerp(diameter, 0.f, t);
-		},10,10,PathType::BezierPath);
+		},10,10,PathType::CubicPath);
 	}
 
 }

@@ -2,7 +2,7 @@
 #include "WorldEntityManager.h"
 #include "JsonParser.h"
 #include "IEventManager.h"
-
+#include "PositionNormalTextureTangentColorVBO.h"
 #include "Inventory.h"
 WorldEntityManager::WorldEntityManager(Filesystem::path directory) : PersistenceEntityManager::PersistenceEntityManager(directory), m_player(nullptr)
 {
@@ -14,6 +14,7 @@ WorldEntityManager::WorldEntityManager(Filesystem::path directory) : Persistence
 	RegisterComponent([] {return new Components::Collision();});
 	RegisterComponent([] {return new Components::Terrain();});
 	RegisterComponent([] {return new Components::PositionNormalTextureVBO();});
+	RegisterComponent([] {return new Components::PositionNormalTextureTangentColorVBO(); });
 	RegisterComponent([] {return new Components::Model();});
 	RegisterComponent([] {return new Components::Action();});
 	RegisterComponent([] {return new Components::EntityRegion();});

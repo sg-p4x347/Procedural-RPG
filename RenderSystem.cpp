@@ -126,11 +126,11 @@ void RenderSystem::SyncEntities()
 {
 	//std::thread([=] {
 	if (EM && EM->Player()) {
-		std::map<string, vector<shared_ptr<Components::PositionNormalTextureVBO>>> vbos;
+		std::map<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>> vbos;
 		for (auto & entity : EM->FindEntities(m_VBOmask)) {
-			shared_ptr<Components::PositionNormalTextureVBO> vbo = entity->GetComponent<Components::PositionNormalTextureVBO>("PositionNormalTextureVBO");
+			shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo = entity->GetComponent<Components::PositionNormalTextureTangentColorVBO>("PositionNormalTextureTangentColorVBO");
 			if (vbos.find(vbo->Effect) == vbos.end()) {
-				vbos.insert(std::pair<string, vector<shared_ptr<Components::PositionNormalTextureVBO>>>(vbo->Effect, vector<shared_ptr<Components::PositionNormalTextureVBO>>()));
+				vbos.insert(std::pair<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>>(vbo->Effect, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>()));
 			}
 			vbos[vbo->Effect].push_back(vbo);
 		}
@@ -169,7 +169,7 @@ void RenderSystem::InitializeWorldRendering(WorldEntityManager * entityManager)
 {
 	EM = entityManager;
 	if (EM) {
-		m_VBOmask = entityManager->ComponentMask("PositionNormalTextureVBO");
+		m_VBOmask = entityManager->ComponentMask( "PositionNormalTextureTangentColorVBO");
 		m_ModelMask = entityManager->ComponentMask("Model");
 	}
 }
@@ -626,7 +626,7 @@ void RenderSystem::SetStates()
 	m_d3dContext->OMSetDepthStencilState(m_states->DepthDefault(), 0);
 }
 
-void RenderSystem::RenderVBO(shared_ptr<Components::PositionNormalTextureVBO> vbo)
+void RenderSystem::RenderVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo)
 {
 	// make sure the buffers have been updated
 	if (vbo->LODchanged && vbo->Vertices.size() != 0) {

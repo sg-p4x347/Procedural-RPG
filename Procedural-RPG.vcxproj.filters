@@ -350,6 +350,7 @@
     <ClInclude Include="ItemSystem.h">
       <Filter>World\System</Filter>
     </ClInclude>
+    <ClInclude Include="PositionNormalTextureTangentColorVBO.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -591,6 +592,7 @@
     <ClCompile Include="ItemSystem.cpp">
       <Filter>World\System</Filter>
     </ClCompile>
+    <ClCompile Include="PositionNormalTextureTangentColorVBO.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">

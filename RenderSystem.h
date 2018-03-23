@@ -2,6 +2,7 @@
 #include "WorldSystem.h"
 #include "GuiSystem.h"
 #include "PositionNormalTextureVBO.h"
+#include "PositionNormalTextureTangentColorVBO.h"
 #include "Model.h"
 #include "CompositeModel.h";
 #include "AssetManager.h"
@@ -71,9 +72,9 @@ private:
 	//----------------------------------------------------------------
 	// Components::VBO
 	unsigned long m_VBOmask;
-	std::map<string, vector<shared_ptr<Components::PositionNormalTextureVBO>>> m_VBOs;
+	std::map<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>> m_VBOs;
 	
-	void RenderVBO(shared_ptr<Components::PositionNormalTextureVBO> vbo);
+	void RenderVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo);
 	//----------------------------------------------------------------
 	// Components::Model using DirectX::Model
 	unsigned long m_ModelMask;

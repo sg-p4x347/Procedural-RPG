@@ -2,7 +2,7 @@
 #include "TerrainSystem.h"
 #include "Terrain.h"
 #include "Position.h"
-#include "PositionNormalTextureVBO.h"
+#include "PositionNormalTextureTangentColorVBO.h"
 #include "Movement.h"
 #include "ProUtil.h"
 #include "Utility.h"
@@ -201,36 +201,36 @@ void TerrainSystem::Generate()
 	// TEMP
 	VboParser * vp = AssetManager::Get()->ProVboParser();
 	{
-		TopologyCruncher tc = TopologyCruncher();
-		
-		{
-			// Strip
-			vector<Vector3> path = vector<Vector3>{
-				Vector3(0,0,0) * 10,
-				Vector3(0.05f,0.1f,0.05f) * 10,
-				Vector3(0.1f,0.05f,0.1f) * 10 };
-			tc.Strip(path, [](float & t) {
-				return 0.f;
-			}, [](float & t) {
-				float ends[2]{ 0.01f,0.f };
-				return Utility::LinearInterpolate(ends, t) * 10;
-			},30);
-		}
-		{
-			// Tube
-			vector<Vector3> path = vector<Vector3>{
-				Vector3(0,0,0),
-				Vector3(5,0,2),
-				Vector3(5,5,5),
-				Vector3(0,10,0),
-				Vector3(5,15,3)
-			};
-			tc.Tube(path, [](float & t) {
-				return 10 * exp(-10 * t);
-			}, 20,10);
-		}
+		//TopologyCruncher tc = TopologyCruncher();
+		//
+		//{
+		//	// Strip
+		//	vector<Vector3> path = vector<Vector3>{
+		//		Vector3(0,0,0) * 10,
+		//		Vector3(0.05f,0.1f,0.05f) * 10,
+		//		Vector3(0.1f,0.05f,0.1f) * 10 };
+		//	tc.Strip(path, [](float & t) {
+		//		return 0.f;
+		//	}, [](float & t) {
+		//		float ends[2]{ 0.01f,0.f };
+		//		return Utility::LinearInterpolate(ends, t) * 10;
+		//	},30);
+		//}
+		//{
+		//	// Tube
+		//	vector<Vector3> path = vector<Vector3>{
+		//		Vector3(0,0,0),
+		//		Vector3(5,0,2),
+		//		Vector3(5,5,5),
+		//		Vector3(0,10,0),
+		//		Vector3(5,15,3)
+		//	};
+		//	tc.Tube(path, [](float & t) {
+		//		return 10 * exp(-10 * t);
+		//	}, 20,10);
+		//}
 		TreeGenerator tg;
-		Components::VBO<VertexPositionNormalTexture> * vbo = new Components::VBO<VertexPositionNormalTexture>(tc.CreateVBO()/*tg.Generate()*/);
+		Components::PositionNormalTextureVBO * vbo = new Components::PositionNormalTextureVBO(tg.Generate());
 		
 		AssetManager::Get()->GetProceduralEM()->CreateModel("Tree", *vbo);
 		delete vbo;
@@ -472,7 +472,7 @@ void TerrainSystem::NewWater(DirectX::SimpleMath::Vector3 & position)
 		new Components::Position(position, SimpleMath::Vector3::Zero));
 	entity->AddComponent(
 		new Components::Tag("Water"));
-	auto vbo = new Components::PositionNormalTextureVBO();
+	auto vbo = new Components::PositionNormalTextureTangentColorVBO();
 	vbo->Effect = "Water";
 	entity->AddComponent(vbo);
 }
@@ -541,8 +541,8 @@ void TerrainSystem::UpdateRegions(Vector3 center)
 		position.y = 0;
 		double distance = Vector3::Distance(center, position);
 		
-		shared_ptr<Components::PositionNormalTextureVBO> vbo = terrainEntity->GetComponent<Components::PositionNormalTextureVBO>("PositionNormalTextureVBO");
-		shared_ptr<Components::PositionNormalTextureVBO> waterVBO = waterEntity->GetComponent<Components::PositionNormalTextureVBO>("PositionNormalTextureVBO");
+		shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo = terrainEntity->GetComponent<Components::PositionNormalTextureTangentColorVBO>("PositionNormalTextureTangentColorVBO");
+		shared_ptr<Components::PositionNormalTextureTangentColorVBO> waterVBO = waterEntity->GetComponent<Components::PositionNormalTextureTangentColorVBO>("PositionNormalTextureTangentColorVBO");
 		// Update the Level Of Detail as a funtion of distance
 		int lod = LOD(distance, (int)m_regionWidth);
 		// Only update this VBO if the LOD has changed
@@ -573,7 +573,7 @@ void TerrainSystem::UpdateRegions(Vector3 center)
 	}
 }
 
-void TerrainSystem::UpdateWaterVBO(shared_ptr<Components::PositionNormalTextureVBO> vbo, shared_ptr<HeightMap> terrain, int  regionX, int  regionZ)
+void TerrainSystem::UpdateWaterVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo, shared_ptr<HeightMap> terrain, int  regionX, int  regionZ)
 {
 	// calculate quad size based off of LOD (Level Of Detail)
 	int quadWidth = std::pow(2, vbo->LOD);
@@ -709,7 +709,7 @@ float TerrainSystem::LowestNeighbor(HeightMap & water, HeightMap & terrain, int 
 	return minY;
 }
 
-shared_ptr<HeightMap> TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::PositionNormalTextureVBO> vbo, int  regionX, int regionZ)
+shared_ptr<HeightMap> TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo, int  regionX, int regionZ)
 {
 	// calculate quad size based off of LOD (Level Of Detail)
 	int quadWidth = std::pow(2, vbo->LOD);
@@ -867,7 +867,7 @@ void TerrainSystem::NewTerrain(DirectX::SimpleMath::Vector3 & position)
 	entity->AddComponent(
 		new Components::Terrain());
 
-	Components::PositionNormalTextureVBO * vbo = new Components::PositionNormalTextureVBO();
+	Components::PositionNormalTextureTangentColorVBO * vbo = new Components::PositionNormalTextureTangentColorVBO();
 	vbo->Effect = "Terrain";
 	entity->AddComponent(vbo);
 }

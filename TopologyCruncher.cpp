@@ -38,7 +38,7 @@ void TopologyCruncher::Strip(vector<Vector3>& path, std::function<float(float&t)
 	for (int i = 0; i <= divisions; i++) {
 		Bezier bezierCurve = Bezier(path);
 		Bezier & derivative = bezierCurve.GetDerivative();
-		
+		Bezier & derivative2 = derivative.GetDerivative();
 		Vector3 point = bezierCurve.GetPoint(t);
 
 		Vector3 forward = derivative.GetPoint(t);
@@ -59,7 +59,7 @@ void TopologyCruncher::Strip(vector<Vector3>& path, std::function<float(float&t)
 		);*/
 
 		//Vector3 left = Vector3(-cosY * sinP*sinR - sinY * cosR, -sinY * sinP*sinR + cosY * cosR, cosP*sinR);
-		Vector3 left = previousLeft;
+		/*Vector3 left = derivative2.GetPoint(t);
 		Vector3 right = previousRight;
 		if (std::abs(forward.x) > 0.0001f || std::abs(forward.z) > 0.0001f) {
 			left = Vector3(forward.x, 0, -forward.z);
@@ -68,9 +68,12 @@ void TopologyCruncher::Strip(vector<Vector3>& path, std::function<float(float&t)
 			Vector3 right = Vector3(-forward.x, 0, forward.z);
 			right.Normalize();
 			previousRight = right;
-		}
+		}*/
 		
-		Vector3 normal = forward.Cross(left);
+		Vector3 normal = derivative2.GetPoint(t);
+		normal.Normalize();
+		Vector3 right = forward.Cross(normal);
+		Vector3 left = -right;
 
 		float radius = width(t) / 2.f;
 
@@ -218,7 +221,7 @@ void TopologyCruncher::Tube(
 	}
 }
 
-VertexPositionNormalTangentColorTexture TopologyCruncher::CreateVertex(Vector3 position, Vector3 normal, Vector2 texture)
+VertexPositionNormalTexture TopologyCruncher::CreateVertex(Vector3 position, Vector3 normal, Vector2 texture)
 {
-	return VertexPositionNormalTangentColorTexture(position,normal,Vector4::Zero,Vector4::Zero,texture);
+	return VertexPositionNormalTexture(position,normal,texture);
 }
