@@ -18,11 +18,13 @@ public:
 	//----------------------------------------------------------------
 	// Factories
 	template <typename VertexType>
-	EntityPtr CreateModel(string path, Components::VBO<VertexType> & vbo,int lod = 0) {
+	EntityPtr CreateModel(string path, vector<shared_ptr<Components::VBO<VertexType>>> vbos, int lodSpacing) {
 		EntityPtr entity = NewEntity();
-		entity->AddComponent(new ModelAsset());
+		entity->AddComponent(new ModelAsset(lodSpacing,vbos.size()));
 		entity->AddComponent(new PathID(path));
-		m_vboParser.ExportVBO<VertexType>(path + '_' + to_string(lod), vbo);
+		for (int lod = 0; lod < vbos.size(); lod++) {
+			m_vboParser.ExportVBO<VertexType>(path + '_' + to_string(lod), *(vbos[lod]));
+		}
 		return entity;
 	}
 private:

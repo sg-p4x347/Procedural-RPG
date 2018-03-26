@@ -25,7 +25,6 @@ public:
 		Filesystem::path directory
 	);
 	~TerrainSystem();
-
 	
 	// Inherited via System
 	virtual void Update(double & elapsed) override;
@@ -47,6 +46,10 @@ public:
 	void Save(HeightMap & map);
 	// terrain manipulation (TEMP currently only updates the VBO)
 	void SetVertex(const int & x, const int & z, const float value);
+public:
+	// TEMP
+	unique_ptr<Map<WaterCell>> WaterMap;
+	unique_ptr<HeightMap> TerrainMap;
 protected:
 	SystemManager * SM;
 	//----------------------------------------------------------------
@@ -56,7 +59,7 @@ protected:
 	//----------------------------------------------------------------
 	// Threading
 	//Map<std::thread> m_workers;
-	std::thread m_workers[64][64];
+	//std::thread m_workers[64][64];
 	//----------------------------------------------------------------
 	// Loading and Updating Regions
 	int LOD(double distance, unsigned int modelWidth);
@@ -71,7 +74,7 @@ protected:
 	Filesystem::path m_directory;
 	float InternalHeight(std::ifstream & ifs, const int & index, float precision);
 	Vector3 Normal(std::ifstream & ifs, const int & index);
-	
+
 	//----------------------------------------------------------------
 	// Generation parameters
 	int m_sampleSpacing;
@@ -92,12 +95,12 @@ protected:
 	
 	//----------------------------------------------------------------
 	// Droplet and Thermal based erosion
-	shared_ptr<Map<WaterCell>> InitializeErosionMap();
+	void InitializeErosionMap();
 	shared_ptr<Map<ThermalCell>> InitializeThermalErosionMap();
 	shared_ptr<vector<Droplet>> InitializeDroplets();
 
 	void UpdateDroplets(HeightMap & terrain, shared_ptr<vector<Droplet>> droplets, shared_ptr<Map<ThermalCell>> thermal);
-	void UpdateWater(HeightMap & terrain, shared_ptr<Map<WaterCell>> water);
+	void UpdateWater(HeightMap & terrain, Map<WaterCell> & water);
 	//----------------------------------------------------------------
 	// Updating meshes
 	void UpdateRegions(DirectX::SimpleMath::Vector3 center);
@@ -114,12 +117,6 @@ protected:
 	// Water
 	void CreateWaterEntities();
 	void NewWater(DirectX::SimpleMath::Vector3 & position);
-	void SaveWater(shared_ptr<Map<WaterCell>> water);
-	//----------------------------------------------------------------
-	// Trees
-	void CreateTreeEntities(HeightMap & terrain, shared_ptr<Map<WaterCell>> water);
-	void NewTree(DirectX::SimpleMath::Vector3 & position,Vector3 & rotation);
-	float TreeGradientProbability(float gradient);
-	float TreeElevationProbability(float elevation);
+	void SaveWater(Map<WaterCell> & water);
 };
 

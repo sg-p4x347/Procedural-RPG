@@ -221,7 +221,7 @@ float Sigmoid(float x, float a, float b, float c) {
 // fade one color into another
 //
 float3 Transition(float3 color1, float3 color2, float ratio) {
-	return color1 * ratio + color2 * (1 - ratio);
+	return color1*ratio + color2*(1 - ratio);
 }
 P2F main(V2P pixel)
 {

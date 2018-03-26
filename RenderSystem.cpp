@@ -106,7 +106,7 @@ void RenderSystem::Render()
 					auto position = entity->GetComponent<Components::Position>("Position");
 					auto dxModel = AssetManager::Get()->GetModel(model->Path,Vector3::Distance(EM->PlayerPos()->Pos,position->Pos),model->Procedural);
 					
-					RenderModel(dxModel, position->Pos, position->Rot, false/* model->BackfaceCulling*/);
+					RenderModel(dxModel,effect, position->Pos, position->Rot, model->BackfaceCulling);
 					
 				}
 			}
@@ -281,22 +281,83 @@ void RenderSystem::SpriteBatchEnd()
 	m_spriteBatch->End();
 }
 
-void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model, Vector3 & position, Vector3 & rotation, bool backfaceCulling)
+void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model,shared_ptr<IEffect> effect, Vector3 & position, Vector3 & rotation, bool backfaceCulling)
 {
 	XMMATRIX translation = XMMatrixTranslation(position.x, position.y, position.z);
 	XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(rotation);
-	XMMATRIX final = XMMatrixMultiply(rotMat, translation);
+	XMMATRIX world = XMMatrixMultiply(rotMat, translation);
 
-	final = XMMatrixMultiply(final, m_worldMatrix);
+	world = XMMatrixMultiply(world, m_worldMatrix);
 
+	// An example of using a single custom effect when drawing all the parts of a Model
+	if (effect) {
+		// Creating input layouts is expensive, so it shouldn't be done every frame
+		//std::vector<Microsoft::WRL::ComPtr<ID3D11InputLayout>> newInputLayouts;
+		bool effectsChanged = false;
+		for (auto mit = model->meshes.cbegin(); mit != model->meshes.cend(); ++mit)
+		{
+			auto mesh = mit->get();
+			assert(mesh != 0);
+			
+			for (auto it = mesh->meshParts.cbegin(); it != mesh->meshParts.cend(); ++it)
+			{
+				auto part = it->get();
+				assert(part != 0);
+				// Change the effect
+				if (part->effect != effect) {
+					
+					part->effect = effect;
+					part->ModifyEffect(m_d3dDevice.Get(), effect, false);
+					/*Microsoft::WRL::ComPtr<ID3D11InputLayout> il;
+					part->CreateInputLayout(m_d3dDevice.Get(), effect.get(), il.GetAddressOf());
+					part->inputLayout = il;*/
+					//newInputLayouts.emplace_back(il);
+					effectsChanged = true;
+				}
+			}
+		}
+		if (effectsChanged) model->Modified();
 
-	for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
-	{
-		auto mesh = it->get();
-		assert(mesh != 0);
-		RenderModelMesh(mesh, final, backfaceCulling);
-		
+		// Draw Model with custom effect override
+		//auto imatrices = dynamic_cast<IEffectMatrices*>(effect.get());
+		//if (imatrices)
+		//{
+		//	imatrices->SetWorld(world);
+		//	imatrices->SetView(m_viewMatrix);
+		//	imatrices->SetProjection(m_projMatrix);
+		//}
+
+		//size_t count = 0;
+		//for (auto mit = model->meshes.cbegin(); mit != model->meshes.cend(); ++mit)
+		//{
+		//	auto mesh = mit->get();
+		//	assert(mesh != 0);
+
+		//	for (auto it = mesh->meshParts.cbegin(); it != mesh->meshParts.cend(); ++it)
+		//	{
+		//		auto part = it->get();
+		//		assert(part != 0);
+
+		//		// Could call if a custom transformation was desired for each part
+		//		// if (imatricies) imatrices->SetWorld( local ) 
+
+		//		/*part->Draw(m_d3dContext.Get(), effect,
+		//			newInputLayouts[count++].Get());*/
+		//		part->Draw(m_d3dContext.Get(), effect.get(),
+		//			part->inputLayout.Get());
+		//	}
+		//}
 	}
+	//else {
+		for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
+		{
+			auto mesh = it->get();
+			assert(mesh != 0);
+			RenderModelMesh(mesh, world, backfaceCulling);
+
+		}
+	//}
+	
 	//model->Draw(m_d3dContext.Get(), *m_states, final, m_viewMatrix, m_projMatrix);
 }
 
@@ -579,7 +640,7 @@ void RenderSystem::CreateDevice()
 
 	
 	
-	m_effectOrder = vector<string>{ "Terrain", "Water","Test","Default" };
+	m_effectOrder = vector<string>{ "Terrain","Wood", "Water","Test","Default" };
 
 	m_spriteBatch = std::make_unique<SpriteBatch>(m_d3dContext.Get());
 

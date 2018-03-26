@@ -351,6 +351,10 @@
       <Filter>World\System</Filter>
     </ClInclude>
     <ClInclude Include="PositionNormalTextureTangentColorVBO.h" />
+    <ClInclude Include="PlantSystem.h" />
+    <ClInclude Include="CustomModelLoadVBO.h">
+      <Filter>Utility\Serialization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -593,6 +597,10 @@
       <Filter>World\System</Filter>
     </ClCompile>
     <ClCompile Include="PositionNormalTextureTangentColorVBO.cpp" />
+    <ClCompile Include="PlantSystem.cpp" />
+    <ClCompile Include="CustomModelLoadVBO.cpp">
+      <Filter>Utility\Serialization</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
@@ -623,10 +631,16 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Assets\Shaders\Water.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </FxCompile>
     <FxCompile Include="Assets\Shaders\Terrain.hlsl">
       <Filter>Assets\Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Assets\Shaders\Water.hlsl">
+    <FxCompile Include="Assets\Shaders\Wood.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\Test.hlsl">
       <Filter>Assets\Shaders</Filter>
     </FxCompile>
   </ItemGroup>
@@ -681,6 +695,9 @@
       <Filter>Assets\Textures</Filter>
     </Image>
     <Image Include="Assets\Textures\Item\logs.png">
+      <Filter>Assets\Textures</Filter>
+    </Image>
+    <Image Include="Assets\Textures\test.png">
       <Filter>Assets\Textures</Filter>
     </Image>
   </ItemGroup>

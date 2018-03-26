@@ -81,7 +81,7 @@ private:
 	std::map<string, vector<shared_ptr<Components::Model>>> m_Models;
 	//----------------------------------------------------------------
 	// DX::Model
-	void RenderModel(shared_ptr<DirectX::Model> model, Vector3 & position , Vector3 & rotation, bool backfaceCulling);
+	void RenderModel(shared_ptr<DirectX::Model> model,shared_ptr<IEffect> effect, Vector3 & position , Vector3 & rotation, bool backfaceCulling);
 	void RenderCompositeModel(shared_ptr<CompositeModel> model, Vector3 & position, Vector3 & rotation, bool backfaceCulling);
 	void RenderModelMesh(DirectX::ModelMesh * mesh, XMMATRIX world, bool backfaceCulling);
 	//----------------------------------------------------------------

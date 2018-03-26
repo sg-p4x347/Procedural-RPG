@@ -201,6 +201,7 @@
     <ClInclude Include="CompositeModel.h" />
     <ClInclude Include="CubicSpline.h" />
     <ClInclude Include="CustomEffect.h" />
+    <ClInclude Include="CustomModelLoadVBO.h" />
     <ClInclude Include="EntityRegion.h" />
     <ClInclude Include="EventHandler.h" />
     <ClInclude Include="EventManager.h" />
@@ -211,6 +212,7 @@
     <ClInclude Include="ItemSystem.h" />
     <ClInclude Include="Line.h" />
     <ClInclude Include="PathID.h" />
+    <ClInclude Include="PlantSystem.h" />
     <ClInclude Include="PositionNormalTextureTangentColorVBO.h" />
     <ClInclude Include="Rectangle.h" />
     <ClInclude Include="Room.h" />
@@ -293,6 +295,7 @@
     <ClCompile Include="CompositeModel.cpp" />
     <ClCompile Include="CubicSpline.cpp" />
     <ClCompile Include="CustomEffect.cpp" />
+    <ClCompile Include="CustomModelLoadVBO.cpp" />
     <ClCompile Include="EntityRegion.cpp" />
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="IEventManager.cpp" />
@@ -301,6 +304,7 @@
     <ClCompile Include="ItemSystem.cpp" />
     <ClCompile Include="Line.cpp" />
     <ClCompile Include="PathID.cpp" />
+    <ClCompile Include="PlantSystem.cpp" />
     <ClCompile Include="PositionNormalTextureTangentColorVBO.cpp" />
     <ClCompile Include="Rectangle.cpp" />
     <ClCompile Include="Room.cpp" />
@@ -382,6 +386,7 @@
     <ImageContentTask Include="Assets\Textures\wood.png" />
     <ImageContentTask Include="Assets\Textures\Building\interior_paint.png" />
     <Image Include="Assets\Textures\Item\logs.png" />
+    <ImageContentTask Include="Assets\Textures\test.png" />
     <Image Include="directx.ico" />
   </ItemGroup>
   <ItemGroup>
@@ -399,7 +404,19 @@
     <FxCompile Include="Assets\Shaders\Terrain.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
+    <FxCompile Include="Assets\Shaders\Test.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
     <FxCompile Include="Assets\Shaders\Water.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Assets\Shaders\Wood.hlsl">
+      <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</DisableOptimizations>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DisableOptimizations>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
   </ItemGroup>

@@ -45,6 +45,7 @@ public:
 		vbo.Indices.resize(numIndices);
 		vboFile.read(reinterpret_cast<char*>(&vbo.Indices.front()), sizeof(uint16_t) * numIndices);
 	}
+
 private:
 	Filesystem::path m_directory;
 };

@@ -32,13 +32,13 @@ string ActionSystem::Name()
 
 void ActionSystem::Update(double & elapsed)
 {
-	EntityPtr actionNode;
+	/*EntityPtr actionNode;
 	if (CanInteract(actionNode)) {
 		IEventManager::Invoke(GUI_ShowHint, string("E"));
 	}
 	else {
 		IEventManager::Invoke(GUI_HideHint);
-	}
+	}*/
 }
 
 void ActionSystem::Check()

@@ -36,4 +36,12 @@ namespace ProUtil {
 		}
 		return result;
 	}
+	Vector3 RandomVec3(float rx, float ry, float rz)
+	{
+		return Vector3(RandWithin(-rx,rx),RandWithin(-ry,ry),RandWithin(-rz,rz));
+	}
+	Vector3 RandomVec3(float radius)
+	{
+		return RandomVec3(radius, radius, radius);
+	}
 }

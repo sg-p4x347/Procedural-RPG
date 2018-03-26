@@ -4,6 +4,7 @@ class CubicSpline
 {
 public:
 	CubicSpline(vector<Vector3> controlPoints,float tightness = 1.f,int subDivisions = 10);
+	~CubicSpline();
 	//----------------------------------------------------------------
 	// Get point on the curve with respect to t (0.0 -> 1.0)
 	Vector3 GetPoint(float t);

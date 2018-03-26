@@ -1,5 +1,5 @@
 #pragma once
-#include "PositionNormalTextureVBO.h"
+#include "PositionNormalTextureTangentColorVBO.h"
 enum PathType {
 	BezierPath,
 	CubicPath,
@@ -12,7 +12,7 @@ public:
 	~TopologyCruncher();
 	//----------------------------------------------------------------
 	// Returns a Vertex Buffer Object (VBO) representing all sub meshes
-	Components::PositionNormalTextureVBO CreateVBO();
+	Components::PositionNormalTextureTangentColorVBO CreateVBO();
 
 	//----------------------------------------------------------------
 	// One dimensional
@@ -34,8 +34,40 @@ public:
 	);
 
 private:
-	VertexPositionNormalTexture CreateVertex(Vector3 position, Vector3 normal, Vector2 texture);
-	vector<VertexPositionNormalTexture> m_VB;
+	VertexPositionNormalTangentColorTexture CreateVertex(Vector3 position, Vector3 normal, Vector2 texture);
+	vector<VertexPositionNormalTangentColorTexture> m_VB;
 	vector<uint16_t> m_IB;
 };
+
+//----------------------------------------------------------------
+// Usage examples
+
+//{
+//	// Strip
+//	vector<Vector3> path = vector<Vector3>{
+//		Vector3(0,0,0),
+//		Vector3(5.f,10.f,5.f),
+//		Vector3(10.f,5.f,10.f),
+//		Vector3(20.f,20.f,20.f)
+//	};
+//	topologyCruncher.Strip(path, [](float & t) {
+//		return t * 5.f;
+//	}, [](float & t) {
+//		float ends[2]{ 1.f,0.1f };
+//		return Utility::LinearInterpolate(ends, t);
+//	},60);
+//}
+//{
+//	// Tube
+//	vector<Vector3> path = vector<Vector3>{
+//		Vector3(0,0,0),
+//		Vector3(5,0,0),
+//		Vector3(5,0,5),
+//		Vector3(0,0,5),
+//		Vector3(0,0,0)
+//	};
+//	topologyCruncher.Tube(path, [](float & t) {
+//		return 2.f;
+//	}, 50,20,PathType::CubicPath);
+//}
 

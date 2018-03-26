@@ -2,6 +2,7 @@
 #include "AssetManager.h"
 #include "ModelAsset.h"
 #include "CustomEffect.h"
+#include "CustomModelLoadVBO.h"
 AssetManager * AssetManager::m_instance = nullptr;
 void AssetManager::CreateDgslEffect(string name, vector<string> textures, const D3D11_INPUT_ELEMENT_DESC * inputElements, const UINT elementCount)
 {
@@ -98,13 +99,21 @@ void AssetManager::CreateEffects(Microsoft::WRL::ComPtr<ID3D11DeviceContext> con
 		VertexPositionNormalTangentColorTexture::InputElementCount
 	);
 	//----------------------------------------------------------------
+	// Wood Effect
+	CreateDgslEffect(
+		"Wood",
+		vector<string>{"wood"},
+		VertexPositionNormalTangentColorTexture::InputElements,
+		VertexPositionNormalTangentColorTexture::InputElementCount
+	);
+	//----------------------------------------------------------------
 	// Test Effect
-	/*CreateCustomEffect(
+	CreateDgslEffect(
 		"Test",
-		vector<string>(),
-		VertexPositionColor::InputElements,
-		VertexPositionColor::InputElementCount
-	);*/
+		vector<string>{"test"},
+		VertexPositionNormalTangentColorTexture::InputElements,
+		VertexPositionNormalTangentColorTexture::InputElementCount
+	);
 
 	//Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
 	//m_pixelShaders.insert(std::pair<string, Microsoft::WRL::ComPtr<ID3D11PixelShader>>("Terrain", pixelShader));
@@ -213,7 +222,8 @@ std::shared_ptr<Model> AssetManager::GetModel(EntityPtr entity, float distance, 
 				Filesystem::path fullPath = FullPath(path + '_' + std::to_string(lod), procedural, procedural ? ".vbo" : ".cmo");
 				// Load from file
 				if (procedural) {
-					model.reset(Model::CreateFromVBO(m_d3dDevice.Get(), fullPath.c_str()).release());
+					//model.reset(Model::CreateFromVBO(m_d3dDevice.Get(), fullPath.c_str()).release());
+					model.reset(CustomModelLoadVBO::CreateFromVBO(m_d3dDevice.Get(), fullPath.string()).release());
 				}
 				else {
 					model.reset(Model::CreateFromCMO(m_d3dDevice.Get(), fullPath.c_str(), *m_fxFactory).release());

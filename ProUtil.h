@@ -1,4 +1,5 @@
 #pragma once
+using DirectX::SimpleMath::Vector3;
 using DirectX::SimpleMath::Vector2;
 using DirectX::SimpleMath::Rectangle;
 //----------------------------------------------------------------
@@ -14,5 +15,6 @@ namespace ProUtil {
 	float RandWithin(float min, float max);
 	int RandWithin(int min, int max);
 	int ToRandom(string input);
-	
+	Vector3 RandomVec3(float rx, float ry, float rz);
+	Vector3 RandomVec3(float radius);
 }

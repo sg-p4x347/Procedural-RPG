@@ -26,18 +26,19 @@ CubicSpline::CubicSpline(vector<Vector3> controlPoints, float tightness, int sub
 			// average the two vectors to get the normal of reflection
 			endTangent = Vector3((line1.x + line2.x) / 2.f, (line1.y + line2.y) / 2.f, (line1.z + line2.z) / 2.f);
 			//endTangent.Normalize();
-			//endTangent *= tightness;
+			endTangent *= tightness;
 			path.push_back(endTangent + end);
 		}
 		path.push_back(end);
 		Bezier bezier = Bezier(path);
 		float length = bezier.Length(subDivisions);
-		if (length > 100) {
-			auto test = 0;
-		}
 		m_length += length;
 		m_bezierSections.push_back(std::make_pair(Bezier(bezier), length));
 	}
+}
+
+CubicSpline::~CubicSpline()
+{
 }
 
 Vector3 CubicSpline::GetPoint(float t)
