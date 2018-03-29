@@ -9,6 +9,7 @@ public:
 	// Getters
 	unsigned int ID();
 	unsigned long GetMask();
+	bool IsRemoved();
 	//----------------------------------------------------------------
 	// Mask Queries
 	bool HasComponents(const unsigned long & mask);

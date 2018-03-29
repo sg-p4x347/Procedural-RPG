@@ -17,6 +17,11 @@ unsigned long Entity::GetMask()
 	return m_mask;
 }
 
+bool Entity::IsRemoved()
+{
+	return m_removed;
+}
+
 bool Entity::HasComponents(const unsigned long & mask)
 {
 	return mask == (mask & m_mask);

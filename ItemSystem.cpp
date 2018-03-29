@@ -46,6 +46,19 @@ void ItemSystem::AddItem(shared_ptr<Components::Inventory> inventory, string ite
 	inventory->Items.push_back(Components::InventoryItem(item->ID(), false, quantity));
 }
 
+void ItemSystem::AddItem(shared_ptr<Components::Inventory> inventory, Components::InventoryItem item)
+{
+	for (auto & invItem : inventory->Items) {
+		if (!invItem.Procedural && invItem.TypeEntity == item.TypeEntity) {
+			// combine with existing InventoryItem
+			invItem.Quantity += item.Quantity;
+			return;
+		}
+	}
+	// add a new item
+	inventory->Items.push_back(item);
+}
+
 vector<Components::InventoryItem> ItemSystem::ItemsInCategory(shared_ptr<Components::Inventory> inventory, string category)
 {
 	vector<Components::InventoryItem> items;
@@ -71,7 +84,7 @@ void ItemSystem::RegisterHandlers()
 	>([this](shared_ptr<Components::Inventory> source, shared_ptr<Components::Inventory> target) {
 		// transfer the items
 		for (auto & item : source->Items) {
-			target->Items.push_back(item);
+			AddItem(target, item);
 		}
 		// clear the source inventory;
 		source->Items.clear();

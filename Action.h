@@ -14,5 +14,8 @@ namespace Components {
 		unsigned int TargetEntity;
 		// Inherited via Component
 		virtual string GetName() override;
+
+		void Import(ifstream & ifs) override;
+		void Export(ofstream & ofs) override;
 	};
 }

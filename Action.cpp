@@ -16,4 +16,16 @@ namespace Components {
 	{
 		return "Action";
 	}
+	void Action::Import(ifstream & ifs)
+	{
+		DeSerialize(Size, ifs);
+		DeSerialize(Event, ifs);
+		DeSerialize(TargetEntity, ifs);
+	}
+	void Action::Export(ofstream & ofs)
+	{
+		Serialize(Size, ofs);
+		Serialize(Event, ofs);
+		Serialize(TargetEntity, ofs);
+	}
 }

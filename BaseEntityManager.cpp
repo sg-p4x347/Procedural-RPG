@@ -127,7 +127,8 @@ bool BaseEntityManager::Find(const unsigned int & id, EntityPtr& entity)
 	// search cache
 	if (m_entities.find(id) != m_entities.end()) {
 		entity = m_entities[id];
-		return true;
+
+		return !entity->IsRemoved();
 	}
 	else {
 		entity = nullptr;

@@ -13,6 +13,7 @@ public:
 	//----------------------------------------------------------------
 	// Modifiers
 	void AddItem(shared_ptr<Components::Inventory> inventory, string itemType, int quantity);
+	void AddItem(shared_ptr<Components::Inventory> inventory, Components::InventoryItem item);
 	//----------------------------------------------------------------
 	// Categorization
 	std::unordered_set<string> GetItemCatagories();
