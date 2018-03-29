@@ -12,6 +12,7 @@
 #include "IEventManager.h"
 #include "SoundSystem.h"
 #include "BuildingSystem.h"
+
 //#include "InfrastructureSystem.h"
 
 SystemManager::SystemManager(

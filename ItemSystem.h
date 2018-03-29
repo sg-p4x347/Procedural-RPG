@@ -11,6 +11,9 @@ public:
 	shared_ptr<Components::Inventory> GetPlayerInventory();
 	EntityPtr TypeOf(Components::InventoryItem & item);
 	//----------------------------------------------------------------
+	// Modifiers
+	void AddItem(shared_ptr<Components::Inventory> inventory, string itemType, int quantity);
+	//----------------------------------------------------------------
 	// Categorization
 	std::unordered_set<string> GetItemCatagories();
 	vector<Components::InventoryItem> ItemsInCategory(shared_ptr<Components::Inventory> inventory, string category);

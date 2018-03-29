@@ -5,7 +5,7 @@
 #include "Item.h"
 #include "AssetManager.h"
 ItemSystem::ItemSystem(unique_ptr<WorldEntityManager> & entityManager, vector<string> & components, unsigned short updatePeriod) :
-	WorldSystem::WorldSystem(entityManager,components,updatePeriod)
+	WorldSystem::WorldSystem(entityManager, components, updatePeriod)
 {
 	RegisterHandlers();
 	InitializeItemCatagories();
@@ -32,6 +32,20 @@ EntityPtr ItemSystem::TypeOf(Components::InventoryItem & item)
 	return type;
 }
 
+void ItemSystem::AddItem(shared_ptr<Components::Inventory> inventory, string itemType, int quantity)
+{
+	EntityPtr item = FindItem(itemType);
+	for (auto & invItem : inventory->Items) {
+		if (!invItem.Procedural && invItem.TypeEntity == item->ID()) {
+			// combine with existing InventoryItem
+			invItem.Quantity += quantity;
+			return;
+		}
+	}
+	// add a new item
+	inventory->Items.push_back(Components::InventoryItem(item->ID(), false, quantity));
+}
+
 vector<Components::InventoryItem> ItemSystem::ItemsInCategory(shared_ptr<Components::Inventory> inventory, string category)
 {
 	vector<Components::InventoryItem> items;
@@ -50,6 +64,17 @@ void ItemSystem::RegisterHandlers()
 	}));
 	IEventManager::RegisterHandler(EventTypes::Item_CloseInventory, std::function<void(EntityPtr)>([this](EntityPtr entity) {
 		CloseInventory(entity);
+	}));
+	IEventManager::RegisterHandler(EventTypes::Item_Transfer, std::function<void(
+		shared_ptr<Components::Inventory>,
+		shared_ptr<Components::Inventory>)
+	>([this](shared_ptr<Components::Inventory> source, shared_ptr<Components::Inventory> target) {
+		// transfer the items
+		for (auto & item : source->Items) {
+			target->Items.push_back(item);
+		}
+		// clear the source inventory;
+		source->Items.clear();
 	}));
 }
 

@@ -20,7 +20,7 @@ public:
 	virtual void Update(double & elapsed) override;
 
 	void Check();
-	void CreateAction(Vector3 position, Vector3 size, EventTypes event, unsigned int targetEntity);
+	void CreateAction(Vector3 position, Vector3 size, EventTypes event, EntityPtr targetEntity);
 private:
 
 	SystemManager * SM;

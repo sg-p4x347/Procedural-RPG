@@ -4,7 +4,8 @@
 #include "TreeGenerator.h"
 #include "AssetManager.h"
 #include "TerrainSystem.h"
-
+#include "Inventory.h"
+#include "ItemSystem.h"
 PlantSystem::PlantSystem(SystemManager * systemManager, unique_ptr<WorldEntityManager>& entityManager, vector<string>& components, unsigned short updatePeriod) : WorldSystem::WorldSystem(entityManager,components,updatePeriod),
 SM(systemManager)
 {
@@ -93,6 +94,15 @@ void PlantSystem::NewTree(DirectX::SimpleMath::Vector3 & position, Vector3 & rot
 		new Components::Tag("Tree"));
 	entity->AddComponent(
 		new Components::Model("Tree", "Wood", true));
+	entity->AddComponent(
+		new Components::Inventory());
+	entity->AddComponent(
+		new Components::Action(Vector3(1.f, 10.f, 1.f),EventTypes::Resource_Aquire,entity->ID()));
+
+	// Fill the tree's inventory with logs
+	shared_ptr<Components::Inventory> inv = entity->GetComponent<Components::Inventory>("Inventory");
+	auto itemSys = SM->GetSystem<ItemSystem>("Item");
+	itemSys->AddItem(inv, "Logs", 3);
 	//new Components::Model("Tree", "Default")
 	// Add action node
 	//SM->GetSystem<ActionSystem>("Action")->CreateAction(position, Vector3(1.f, 10.f, 1.f), EventTypes::Action_GatherWood, entity->ID());

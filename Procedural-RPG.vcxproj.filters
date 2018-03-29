@@ -351,10 +351,16 @@
       <Filter>World\System</Filter>
     </ClInclude>
     <ClInclude Include="PositionNormalTextureTangentColorVBO.h" />
-    <ClInclude Include="PlantSystem.h" />
     <ClInclude Include="CustomModelLoadVBO.h">
       <Filter>Utility\Serialization</Filter>
     </ClInclude>
+    <ClInclude Include="PlantSystem.h">
+      <Filter>World\System</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceSystem.h">
+      <Filter>World\System</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -597,10 +603,16 @@
       <Filter>World\System</Filter>
     </ClCompile>
     <ClCompile Include="PositionNormalTextureTangentColorVBO.cpp" />
-    <ClCompile Include="PlantSystem.cpp" />
     <ClCompile Include="CustomModelLoadVBO.cpp">
       <Filter>Utility\Serialization</Filter>
     </ClCompile>
+    <ClCompile Include="PlantSystem.cpp">
+      <Filter>World\System</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceSystem.cpp">
+      <Filter>World\System</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
@@ -672,6 +684,9 @@
     <ImageContentTask Include="Assets\Textures\Building\interior_paint.png">
       <Filter>Assets</Filter>
     </ImageContentTask>
+    <ImageContentTask Include="Assets\Textures\test.png">
+      <Filter>Assets</Filter>
+    </ImageContentTask>
   </ItemGroup>
   <ItemGroup>
     <MeshContentTask Include="Assets\Models\Tree.fbx">
@@ -695,9 +710,6 @@
       <Filter>Assets\Textures</Filter>
     </Image>
     <Image Include="Assets\Textures\Item\logs.png">
-      <Filter>Assets\Textures</Filter>
-    </Image>
-    <Image Include="Assets\Textures\test.png">
       <Filter>Assets\Textures</Filter>
     </Image>
   </ItemGroup>

@@ -16,13 +16,7 @@ ActionSystem::ActionSystem(
 		Check();
 	}));
 
-	IEventManager::RegisterHandler(EventTypes::Action_GatherWood, std::function<void(unsigned int)>([=](unsigned int target) {
-		EntityPtr tree;
-		if (EM->Find(target, tree)) {
-			tree->AddComponent(new Components::Movement(Vector3::Zero, Vector3(0.f, -9.8f, 0.f), Vector3::Zero, Vector3::Zero));
-			//tree->GetComponent<Components::Movement>("Movement")->Acceleration.y = -9.8f;
-		}
-	}));
+	
 }
 
 string ActionSystem::Name()
@@ -43,18 +37,25 @@ void ActionSystem::Update(double & elapsed)
 
 void ActionSystem::Check()
 {
+	//for (auto & actionNode : EM->FindEntitiesInRange(EM->ComponentMask("Action"), EM->PlayerPos()->Pos, 5.f)) {
 	EntityPtr actionNode;
 	if (CanInteract(actionNode)) {
-		shared_ptr<Components::Action> action = actionNode->GetComponent<Components::Action>("Action");
-		IEventManager::Invoke(action->Event, action->TargetEntity);
-	}
+			shared_ptr<Components::Action> action = actionNode->GetComponent<Components::Action>("Action");
+			EntityPtr target;
+			if (!EM->Find(action->TargetEntity, target)) {
+				target = actionNode;
+			}
+			// (EntityPtr actor, EntityPtr target)
+			IEventManager::Invoke(action->Event, EM->Player(), actionNode);
+		}
+	//}
 }
 
-void ActionSystem::CreateAction(Vector3 position, Vector3 size, EventTypes event, unsigned int targetEntity)
+void ActionSystem::CreateAction(Vector3 position, Vector3 size, EventTypes event, EntityPtr targetEntity)
 {
 	auto action = EM->NewEntity();
 	action->AddComponent(new Components::Position(position));
-	action->AddComponent(new Components::Action(size, event, targetEntity));
+	action->AddComponent(new Components::Action(size, event, targetEntity->ID()));
 }
 
 Vector3 ActionSystem::GetPlayerLookRay()

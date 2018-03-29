@@ -19,7 +19,7 @@
 #include "ActionSystem.h"
 #include "BuildingSystem.h"
 #include "TaskManager.h"
-static const bool g_erosion = true;
+static const bool g_erosion = false;
 
 using namespace DirectX::SimpleMath;
 static EntityPtr waterEntity;

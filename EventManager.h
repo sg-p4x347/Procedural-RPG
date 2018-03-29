@@ -6,7 +6,6 @@ enum EventTypes {
 	Game_Resume,
 
 	Action_Check,
-	Action_GatherWood,
 
 	GUI_ShowHint,
 	GUI_HideHint,
@@ -18,7 +17,10 @@ enum EventTypes {
 	Sound_StopMusic,
 
 	Item_OpenInventory,
-	Item_CloseInventory
+	Item_CloseInventory,
+	Item_Transfer,
+
+	Resource_Aquire
 };
 template <typename ... Signature>
 class EventManager

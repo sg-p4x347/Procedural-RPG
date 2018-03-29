@@ -215,6 +215,8 @@
     <ClInclude Include="PlantSystem.h" />
     <ClInclude Include="PositionNormalTextureTangentColorVBO.h" />
     <ClInclude Include="Rectangle.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="ResourceSystem.h" />
     <ClInclude Include="Room.h" />
     <ClInclude Include="SoundAsset.h" />
     <ClInclude Include="SoundSystem.h" />
@@ -307,6 +309,8 @@
     <ClCompile Include="PlantSystem.cpp" />
     <ClCompile Include="PositionNormalTextureTangentColorVBO.cpp" />
     <ClCompile Include="Rectangle.cpp" />
+    <ClCompile Include="Resource.cpp" />
+    <ClCompile Include="ResourceSystem.cpp" />
     <ClCompile Include="Room.cpp" />
     <ClCompile Include="SoundAsset.cpp" />
     <ClCompile Include="SoundSystem.cpp" />
