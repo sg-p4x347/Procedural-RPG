@@ -32,6 +32,9 @@ public:
 	vector<EntityPtr> Filter(vector<EntityPtr> && entities, unsigned long componentMask);
 
 	void AddEntityToRegion(EntityPtr entity);
+	//----------------------------------------------------------------
+	// Sectors
+	void MoveEntity(EntityPtr entity, EntityPtr source, EntityPtr target);
 private:
 	// Commonly used
 	EntityPtr m_player;
@@ -42,5 +45,7 @@ private:
 	unsigned int m_worldWidth;
 	void GenerateEntityRegions();
 	void AddEntityToRegion(unsigned int entity);
+	
+
 };
 

@@ -87,6 +87,11 @@ void WorldEntityManager::AddEntityToRegion(EntityPtr entity)
 	AddEntityToRegion(entity->ID());
 }
 
+void WorldEntityManager::MoveEntity(EntityPtr entity, EntityPtr source, EntityPtr target)
+{
+	
+}
+
 void WorldEntityManager::GenerateEntityRegions()
 {
 	const int dimension = m_worldWidth / m_entityRegionWidth;
@@ -94,7 +99,7 @@ void WorldEntityManager::GenerateEntityRegions()
 		for (int regionZ = 0; regionZ < dimension; regionZ++) {
 			EntityPtr region = NewEntity();
 			region->AddComponent(new Components::Position(Vector3(((float)regionX + 0.5) * (float)m_entityRegionWidth, 0.f, ((float)regionZ + 0.5) * (float)m_entityRegionWidth)));
-			region->AddComponent(new Components::EntityRegion());
+			region->AddComponent(new Components::EntityRegion(m_entityRegionWidth));
 		}
 	}
 }
@@ -134,3 +139,8 @@ shared_ptr<Components::Position> WorldEntityManager::PlayerPos()
 {
 	return Player()->GetComponent<Components::Position>("Position");
 }
+
+
+//----------------------------------------------------------------
+// Sectors
+

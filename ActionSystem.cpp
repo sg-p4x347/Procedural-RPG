@@ -40,14 +40,14 @@ void ActionSystem::Check()
 	//for (auto & actionNode : EM->FindEntitiesInRange(EM->ComponentMask("Action"), EM->PlayerPos()->Pos, 5.f)) {
 	EntityPtr actionNode;
 	if (CanInteract(actionNode)) {
-			shared_ptr<Components::Action> action = actionNode->GetComponent<Components::Action>("Action");
-			EntityPtr target;
-			if (!EM->Find(action->TargetEntity, target)) {
-				target = actionNode;
-			}
-			// (EntityPtr actor, EntityPtr target)
-			IEventManager::Invoke(action->Event, EM->Player(), actionNode);
+		shared_ptr<Components::Action> action = actionNode->GetComponent<Components::Action>("Action");
+		EntityPtr target;
+		if (!EM->Find(action->TargetEntity, target)) {
+			target = actionNode;
 		}
+		// (EntityPtr actor, EntityPtr target)
+		IEventManager::Invoke(action->Event, EM->Player(), actionNode);
+	}
 	//}
 }
 
