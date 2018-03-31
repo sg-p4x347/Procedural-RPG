@@ -4,7 +4,7 @@
 #include "Movement.h"
 #include "IEventManager.h"
 #include "TaskManager.h"
-const float MovementSystem::m_updateRange = 100.f;
+const float MovementSystem::m_updateRange = 5.f;
 
 MovementSystem::MovementSystem(
 	unique_ptr<WorldEntityManager> &  entityManager,

@@ -361,6 +361,12 @@
       <Filter>World\System</Filter>
     </ClInclude>
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="QuadTree.h">
+      <Filter>Utility\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityQuadTree.h">
+      <Filter>World</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -613,6 +619,12 @@
       <Filter>World\System</Filter>
     </ClCompile>
     <ClCompile Include="Resource.cpp" />
+    <ClCompile Include="QuadTree.cpp">
+      <Filter>Utility\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityQuadTree.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
@@ -702,6 +714,12 @@
       <Filter>Assets\Models</Filter>
     </MeshContentTask>
     <MeshContentTask Include="Assets\Models\Building\models-building-wall0_0.fbx">
+      <Filter>Assets\Models</Filter>
+    </MeshContentTask>
+    <MeshContentTask Include="Assets\Models\Boulder_0.fbx">
+      <Filter>Assets\Models</Filter>
+    </MeshContentTask>
+    <MeshContentTask Include="Assets\Models\Iron_Boulder_0.fbx">
       <Filter>Assets\Models</Filter>
     </MeshContentTask>
   </ItemGroup>

@@ -138,9 +138,9 @@ void RenderSystem::SyncEntities()
 		m_VBOs = vbos;
 		m_mutex.unlock();
 		std::map<string, vector<shared_ptr<Components::Model>>> models;
-		//for (auto & entity : EM->Filter(EM->EntitiesByRegion(EM->PlayerPos()->Pos, 1000.f), m_ModelMask)) {
-		for (auto & entity : EM->FindEntities( m_ModelMask)) {
-		shared_ptr<Components::Model> model = entity->GetComponent<Components::Model>("Model");
+		for (auto & entity : EM->FindEntitiesInRange( m_ModelMask,EM->PlayerPos()->Pos,128.f)) {
+		//for (auto & entity : EM->FindEntities(m_ModelMask)) {
+			shared_ptr<Components::Model> model = entity->GetComponent<Components::Model>("Model");
 			if (models.find(model->Effect) == models.end()) {
 				models.insert(std::pair<string, vector<shared_ptr<Components::Model>>>(model->Effect, vector<shared_ptr<Components::Model>>()));
 			}
@@ -348,6 +348,7 @@ void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model,shared_ptr<IEffe
 		//	}
 		//}
 	}
+	//model->Draw(m_d3dContext.Get(), *m_states, world, m_viewMatrix, m_projMatrix);
 	//else {
 		for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
 		{
@@ -383,6 +384,7 @@ void RenderSystem::RenderModelMesh(DirectX::ModelMesh * mesh, XMMATRIX world, bo
 		m_d3dContext->RSSetState(m_states->CullCounterClockwise());
 
 	}
+	
 	//// Do model-level setCustomState work here
 	//m_d3dContext->RSSetState(m_states->CullNone());
 	mesh->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix, false);

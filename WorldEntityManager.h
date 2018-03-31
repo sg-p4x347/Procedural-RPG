@@ -1,5 +1,6 @@
 #pragma once
 #include "PersistenceEntityManager.h"
+#include "EntityQuadTree.h"
 //----------------------------------------------------------------
 // World Components
 #include "Position.h"
@@ -17,7 +18,7 @@ class WorldEntityManager :
 	public PersistenceEntityManager
 {
 public:
-	WorldEntityManager(Filesystem::path directory);
+	WorldEntityManager(Filesystem::path directory, int worldWidth, int minQuadWidth);
 	//----------------------------------------------------------------
 	// Entity queries
 	EntityPtr Player();
@@ -26,15 +27,14 @@ public:
 	vector<EntityPtr> FindEntitiesInRange(unsigned long componentMask, Vector3 center, float range);
 	//----------------------------------------------------------------
 	// Returns entities within the immediate entity regions
-	vector<EntityPtr> EntitiesByRegion(Vector3 center, float range);
+	//vector<EntityPtr> EntitiesByRegion(Vector3 center, float range);
+	void AddEntityToRegion(EntityPtr entity);
+	void GenerateEntityRegions();
 	//----------------------------------------------------------------
 	// Filter a vector of entities with a mask
 	vector<EntityPtr> Filter(vector<EntityPtr> && entities, unsigned long componentMask);
 
-	void AddEntityToRegion(EntityPtr entity);
-	//----------------------------------------------------------------
-	// Sectors
-	void MoveEntity(EntityPtr entity, EntityPtr source, EntityPtr target);
+	
 private:
 	// Commonly used
 	EntityPtr m_player;
@@ -43,9 +43,15 @@ private:
 	// Configuration
 	unsigned int m_entityRegionWidth;
 	unsigned int m_worldWidth;
-	void GenerateEntityRegions();
-	void AddEntityToRegion(unsigned int entity);
 	
+	void AddEntityToRegion(unsigned int entity);
+	//----------------------------------------------------------------
+	// Caching
+	void SyncRegions(Vector3 center, float range);
+	Rectangle RegionArea(EntityPtr region);
+	set<EntityPtr> m_entityRegions;
+	set<EntityPtr> m_loadedEntityRegions;
+	EntityQuadTree m_quadTree;
 
 };
 

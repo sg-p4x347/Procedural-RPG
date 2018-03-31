@@ -26,13 +26,13 @@ string ActionSystem::Name()
 
 void ActionSystem::Update(double & elapsed)
 {
-	/*EntityPtr actionNode;
+	EntityPtr actionNode;
 	if (CanInteract(actionNode)) {
 		IEventManager::Invoke(GUI_ShowHint, string("E"));
 	}
 	else {
 		IEventManager::Invoke(GUI_HideHint);
-	}*/
+	}
 }
 
 void ActionSystem::Check()
@@ -69,7 +69,7 @@ bool ActionSystem::CanInteract(EntityPtr & actionNode)
 {
 	const float range = 1.f;
 	Vector3 lookVec = GetPlayerLookRay();
-	auto closeActions = EM->FindEntitiesInRange(EM->ComponentMask(vector<string>{"Action"}), EM->PlayerPos()->Pos, 10.f);
+	auto closeActions = EM->FindEntitiesInRange(EM->ComponentMask(vector<string>{"Action"}), EM->PlayerPos()->Pos, 5.f);
 	for (auto & entity : closeActions) {
 		Vector3 position = entity->GetComponent<Components::Position>("Position")->Pos;
 		auto action = entity->GetComponent<Components::Action>("Action");

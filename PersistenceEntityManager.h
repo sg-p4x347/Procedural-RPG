@@ -24,6 +24,7 @@ public:
 	unsigned long ComponentMaskOf(const unsigned int & id) override;
 
 	void DeleteEntity(EntityPtr & entity) override;
+	bool Find(const unsigned int & id, EntityPtr & entity) override;
 protected:
 	//----------------------------------------------------------------
 	// Component management

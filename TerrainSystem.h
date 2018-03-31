@@ -21,6 +21,7 @@ public:
 		unique_ptr<WorldEntityManager> & entityManager,
 		vector<string> & components, 
 		unsigned short updatePeriod, 
+		int worldWidth,
 		int regionWidth,
 		Filesystem::path directory
 	);
@@ -118,5 +119,10 @@ protected:
 	void CreateWaterEntities();
 	void NewWater(DirectX::SimpleMath::Vector3 & position);
 	void SaveWater(Map<WaterCell> & water);
+	//----------------------------------------------------------------
+	// Resources
+	void CreateResourceEntities();
+	void NewResourceNode(Vector3 & position,Vector3 & rotation,string model,std::map<string,int> inventoryItems);
+	float ResourceGradientProbability(float gradient);
 };
 

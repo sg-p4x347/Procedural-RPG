@@ -28,7 +28,7 @@ public:
 	vector<EntityPtr> FindEntities(string compName);
 	vector<EntityPtr> FindEntities(unsigned long componentMask);
 	vector<EntityPtr> FindEntities(vector<unsigned int> ids);
-	bool Find(const unsigned int & id, EntityPtr & entity);
+	virtual bool Find(const unsigned int & id, EntityPtr & entity);
 	
 protected:
 	//----------------------------------------------------------------

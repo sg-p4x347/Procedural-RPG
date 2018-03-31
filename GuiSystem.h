@@ -42,16 +42,19 @@ private:
 	//----------------------------------------------------------------
 	// Menus
 	EntityPtr m_currentMenu;
+	string m_currentMenuName;
 	map<string, EntityPtr> m_menus;
 	map<string, std::function<EntityPtr(void)>> m_dynamicMenus;
 	void AddMenu(string name, EntityPtr menu);
 	void AddDynamicMenu(string name, std::function<EntityPtr(void)> constructor);
 	EntityPtr GetMenu(string name);
 	void OpenMenu(EntityPtr menu);
+	bool IsMenuOpen(string name);
 	//----------------------------------------------------------------
 	// Menu factories
 	EntityPtr CreateInventory();
 	EntityPtr CreateInventoryGrid(vector<Components::InventoryItem> inventory);
+	void SelectInventoryTab(EntityPtr gridContainer, string category);
 	//----------------------------------------------------------------
 	// HUD
 	EntityPtr m_HUDhint;

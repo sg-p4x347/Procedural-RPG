@@ -6,24 +6,15 @@ namespace Components {
 		public Component
 	{
 	public:
-		EntityRegion(int regionWidth);
+		EntityRegion(int regionWidth = 0);
 		vector<unsigned int> Entities;
 		int RegionWidth;
 		// Inherited via Component
 		virtual string GetName() override;
-		//----------------------------------------------------------------
-		// Sector operations
-		//void AddEntity(EntityPtr entity);
-		//vector<unsigned int> FindEntities(Vector3 center, float range);
-		//void MoveEntity(EntityPtr entity, Vector3 lastPos);
+		void AddEntity(unsigned int entity);
 	protected:
 		virtual void Export(ofstream & ofs) override;
 		virtual void Import(ifstream & ifs) override;
-	private:
-		static const int m_sectorDivisions;
-		/*Sectors provide a fine grained lookup of entities by position*/
-		Map<vector<unsigned int>> m_sectors;
-		vector<unsigned int> m_sector
 	};
 }
 

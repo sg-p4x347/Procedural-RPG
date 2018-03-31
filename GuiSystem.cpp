@@ -145,6 +145,7 @@ SM(systemManager)
 		style->Height = "100%";
 		return style;
 	}());
+	m_HUDhint->GetComponent<GUI::Panel>("Panel")->ElementID = "HUDhint";
 	AddMenu("HUD", m_HUDhint);
 #pragma endregion
 	//----------------------------------------------------------------
@@ -152,7 +153,6 @@ SM(systemManager)
 #pragma region Inventory
 	AddDynamicMenu("inventory", [this] {return CreateInventory();});
 #pragma endregion
-
 	//----------------------------------------------------------------
 	// Options
 #pragma region options
@@ -423,6 +423,7 @@ void GuiSystem::UpdateUI(int outputWidth, int outputHeight)
 void GuiSystem::OpenMenu(string name)
 {
 	OpenMenu(GetMenu(name));
+	m_currentMenuName = name;
 }
 
 EntityPtr GuiSystem::GetCurrentMenu()
@@ -433,6 +434,7 @@ EntityPtr GuiSystem::GetCurrentMenu()
 void GuiSystem::CloseMenu()
 {
 	m_currentMenu = nullptr;
+	m_currentMenuName = "";
 }
 
 GuiEntityManager & GuiSystem::GetEM()
@@ -466,15 +468,15 @@ void GuiSystem::DisplayException(std::exception e)
 
 void GuiSystem::ShowHint(string hint)
 {
-	
-	auto textComp = m_HUDhint->GetComponent<GUI::Text>("Text");
-	textComp->String = hint;
-	OpenMenu("HUD");
+	if (IsMenuOpen("HUD")) {
+		auto textComp = GetElementByID("HUDhint")->GetComponent<GUI::Text>("Text");
+		textComp->String = hint;
+	}
 }
 
 void GuiSystem::HideHint()
 {
-	CloseMenu();
+	ShowHint("");
 }
 
 void GuiSystem::BindHandlers()
@@ -539,26 +541,30 @@ void GuiSystem::OpenMenu(EntityPtr menu)
 	}
 }
 
+bool GuiSystem::IsMenuOpen(string name)
+{
+	return m_currentMenuName == name;
+}
+
 EntityPtr GuiSystem::CreateInventory()
 {
 	vector<EntityPtr> tabs;
 	EntityPtr gridContainer = GuiEM.NewPanel([] {
 		Style * style = new Style();
 		style->Justify = "center";
-		style->Height = "85%";
+		style->Height = "100%";
+		style->Height2 = "-48px";
 		style->Width = "100%";
+		style->Background = "rgba(1,1,1,0.2)";
 		return style;
 	}());
+	static string currentCategory = "All";
+	
 	for (string category : SM->GetSystem<ItemSystem>("Item")->GetItemCatagories()) {
 		tabs.push_back([=] {
 			EntityPtr tab = GuiEM.NewButton(category, [=](GUI::Event evt) {
-				ReplaceChildren(gridContainer, CreateInventoryGrid(
-					SM->GetSystem<ItemSystem>("Item")->ItemsInCategory(
-						SM->GetSystem<ItemSystem>("Item")->GetPlayerInventory(),
-						category
-					)
-				));
-				UpdateFlowRecursive(gridContainer,1);
+				currentCategory = category;
+				SelectInventoryTab(gridContainer, category);
 			},"rgba(0,0,0,0)","rgba(1,1,1,0.5)","rgba(0,0,0.25,0.5)");
 			shared_ptr<Style> style = GetStyle(tab);
 			style->FontColor = "rgb(0,0,0)";
@@ -568,7 +574,9 @@ EntityPtr GuiSystem::CreateInventory()
 			return tab;
 		}());
 	}
-
+	// Initialize the current tab
+	SelectInventoryTab(gridContainer, currentCategory);
+	//****************************
 	return GuiEM.NewPanel([] {
 		Style * style = new Style();
 		return style;
@@ -635,6 +643,17 @@ EntityPtr GuiSystem::CreateInventoryGrid(vector<Components::InventoryItem> items
 		style->FlowDirection = "column";
 		return style;
 	}(),rows);
+}
+
+void GuiSystem::SelectInventoryTab(EntityPtr gridContainer, string category)
+{
+	ReplaceChildren(gridContainer, CreateInventoryGrid(
+		SM->GetSystem<ItemSystem>("Item")->ItemsInCategory(
+			SM->GetSystem<ItemSystem>("Item")->GetPlayerInventory(),
+			category
+		)
+	));
+	UpdateFlowRecursive(gridContainer, 1);
 }
 
 void GuiSystem::AddSpriteSheet(string path, map<string, Rectangle> mapping)

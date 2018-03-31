@@ -23,9 +23,6 @@ public:
 	}
 	template <typename CompType>
 	inline shared_ptr<CompType> GetComponent(string name) {
-		if (m_removed) {
-			auto test = 7;
-		}
 		unsigned long componentMask = m_entityManager->ComponentMask(name);
 		if (HasComponents(componentMask)) {
 			if (m_components.find(componentMask) != m_components.end()) {

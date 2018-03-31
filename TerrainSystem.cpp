@@ -19,6 +19,8 @@
 #include "ActionSystem.h"
 #include "BuildingSystem.h"
 #include "TaskManager.h"
+#include "Inventory.h"
+#include "ItemSystem.h"
 static const bool g_erosion = false;
 
 using namespace DirectX::SimpleMath;
@@ -28,17 +30,18 @@ TerrainSystem::TerrainSystem(
 	unique_ptr<WorldEntityManager> &  entityManager,
 	vector<string> & components, 
 	unsigned short updatePeriod, 
+	int worldWidth,
 	int regionWidth,
 	Filesystem::path directory
 )
 	: WorldSystem::WorldSystem(entityManager,components,updatePeriod),
 	SM(systemManager),
+	m_width(worldWidth),
 	m_regionWidth(regionWidth)
 {
 	m_directory = directory / Name();
 	Filesystem::create_directory(m_directory);
-	JsonParser terrainMap = JsonParser(std::ifstream("config/continent.json"))["terrainMap"];
-	m_width = terrainMap["width"].To<int>();
+	
 	//m_workerThread = TaskThread()
 	//m_workers = Map<std::thread>(m_width / m_regionWidth,0,0,0);
 
@@ -194,7 +197,8 @@ void TerrainSystem::Generate()
 	CreateWaterEntities();
 	SaveWater(*WaterMap);
 
-	
+	// Resources
+	CreateResourceEntities();
 	
 	/*Utility::OutputLine("Generating Buildings...");
 	Rectangle footprint = Rectangle(ProUtil::RandWithin(32, 200), ProUtil::RandWithin(32, 200), ProUtil::RandWithin(6,10), ProUtil::RandWithin(6, 10));
@@ -204,7 +208,8 @@ void TerrainSystem::Generate()
 	ImportMap(cache);
 	float height = Flatten(cache, flattenArea,10);
 	SM->GetSystem<BuildingSystem>("Building")->CreateBuilding(Vector3(footprint.x, height + 0.1f, footprint.y), Rectangle(0, 0, footprint.width, footprint.height), "residential");
-	Save(cache);*/
+	Save(cache);
+	*/
 	
 }
 
@@ -383,6 +388,62 @@ void TerrainSystem::SaveWater(Map<WaterCell> & water)
 	ofstream waterStream(m_directory / "water.dat", std::ios::binary);
 	waterStream.write((const char *)terrainBuffer.get(), vertexCount * sizeof(short));
 	waterStream.close();
+}
+
+void TerrainSystem::CreateResourceEntities()
+{
+	Utility::OutputLine("Generating Resources...");
+	static const float density = 0.005f;
+	for (int x = 0; x <= TerrainMap->width; x++) {
+		for (int z = 0; z <= TerrainMap->length; z++) {
+			float probability = density;
+			probability *= ResourceGradientProbability(TerrainMap->GradientAngle(x, z));
+
+			if (probability > 0.0001f && Utility::Chance(probability)) {
+				Vector3 pos(x, TerrainMap->Height(x, z) - 1.f, z);
+				Vector3 rot(Utility::randWithin(0.f, XM_2PI), Utility::randWithin(0.f, XM_2PI), Utility::randWithin(0.f, XM_2PI));
+				if (Utility::Chance(0.5f)) {
+					NewResourceNode(pos, rot, "Iron_Boulder", std::map<string, int>{ 
+						{"Iron Ore", 1}
+					});
+				}
+				else {
+					NewResourceNode(pos, rot, "Boulder", std::map<string, int>{
+						{"Cut Limestone", 1}
+					});
+				}
+			}
+		}
+	}
+	Utility::OutputLine("Finished");
+}
+
+void TerrainSystem::NewResourceNode(Vector3 & position, Vector3 & rotation, string model, std::map<string, int> inventoryItems)
+{
+	EntityPtr entity = EM->NewEntity();
+
+	entity->AddComponent(
+		new Components::Position(position, rotation));
+	entity->AddComponent(
+		new Components::Model(model, "Default"));
+	entity->AddComponent(
+		new Components::Inventory());
+	entity->AddComponent(
+		new Components::Action(Vector3(3.f, 3.f, 3.f), EventTypes::Resource_Aquire, entity->ID()));
+
+	// Fill the tree's inventory with logs
+	shared_ptr<Components::Inventory> inv = entity->GetComponent<Components::Inventory>("Inventory");
+	auto itemSys = SM->GetSystem<ItemSystem>("Item");
+	for (auto & item : inventoryItems) {
+		itemSys->AddItem(inv, item.first, item.second);
+	}
+	
+}
+
+float TerrainSystem::ResourceGradientProbability(float gradient)
+{
+	static const float minGradient = Utility::DegToRad(60);
+	return 1.f - Utility::SigmoidDecay(gradient, minGradient);
 }
 
 void TerrainSystem::CreateTerrainEntities()

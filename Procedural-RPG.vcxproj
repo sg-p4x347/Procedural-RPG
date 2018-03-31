@@ -202,6 +202,7 @@
     <ClInclude Include="CubicSpline.h" />
     <ClInclude Include="CustomEffect.h" />
     <ClInclude Include="CustomModelLoadVBO.h" />
+    <ClInclude Include="EntityQuadTree.h" />
     <ClInclude Include="EntityRegion.h" />
     <ClInclude Include="EventHandler.h" />
     <ClInclude Include="EventManager.h" />
@@ -214,6 +215,7 @@
     <ClInclude Include="PathID.h" />
     <ClInclude Include="PlantSystem.h" />
     <ClInclude Include="PositionNormalTextureTangentColorVBO.h" />
+    <ClInclude Include="QuadTree.h" />
     <ClInclude Include="Rectangle.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ResourceSystem.h" />
@@ -298,6 +300,7 @@
     <ClCompile Include="CubicSpline.cpp" />
     <ClCompile Include="CustomEffect.cpp" />
     <ClCompile Include="CustomModelLoadVBO.cpp" />
+    <ClCompile Include="EntityQuadTree.cpp" />
     <ClCompile Include="EntityRegion.cpp" />
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="IEventManager.cpp" />
@@ -308,6 +311,7 @@
     <ClCompile Include="PathID.cpp" />
     <ClCompile Include="PlantSystem.cpp" />
     <ClCompile Include="PositionNormalTextureTangentColorVBO.cpp" />
+    <ClCompile Include="QuadTree.cpp" />
     <ClCompile Include="Rectangle.cpp" />
     <ClCompile Include="Resource.cpp" />
     <ClCompile Include="ResourceSystem.cpp" />
@@ -425,10 +429,12 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <MeshContentTask Include="Assets\Models\Boulder_0.fbx" />
     <MeshContentTask Include="Assets\Models\Building\models-building-corner0_0.fbx" />
     <MeshContentTask Include="Assets\Models\Building\models-building-floor0_0.fbx" />
     <MeshContentTask Include="Assets\Models\Building\models-building-wall0_0.fbx" />
     <MeshContentTask Include="Assets\Models\Cube.fbx" />
+    <MeshContentTask Include="Assets\Models\Iron_Boulder_0.fbx" />
     <MeshContentTask Include="Assets\Models\Tree.fbx">
       <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)/Assets%(Filename).cmo</ContentOutput>
     </MeshContentTask>

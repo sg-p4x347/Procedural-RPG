@@ -46,7 +46,7 @@ void Entity::AddComponent(Components::Component * component)
 {
 	
 	AddComponent(shared_ptr<Components::Component>(component));
-	//IEventManager::Invoke(Entity_ComponentAdded, m_id, m_entityManager->ComponentMask(component->GetName()));
+	IEventManager::Invoke(Entity_ComponentAdded, m_id, m_entityManager->ComponentMask(component->GetName()));
 }
 
 void Entity::AddComponent(shared_ptr<Components::Component>& component)
@@ -55,7 +55,7 @@ void Entity::AddComponent(shared_ptr<Components::Component>& component)
 	unsigned long componentMask = m_entityManager->ComponentMask(component->GetName());
 	
 	m_mask |= componentMask;
-	m_components.insert(std::pair < unsigned long, shared_ptr<Components::Component>>(componentMask, component));
+	m_components.insert(std::pair<unsigned long, shared_ptr<Components::Component>>(componentMask, component));
 	
 }
 

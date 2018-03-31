@@ -14,6 +14,7 @@ ItemSystem::ItemSystem(unique_ptr<WorldEntityManager> & entityManager, vector<st
 std::unordered_set<string> ItemSystem::GetItemCatagories()
 {
 	std::unordered_set<string> catagories;
+	catagories.insert("All");
 	for (auto & catagory : m_itemCatagories) {
 		catagories.insert(catagory.first);
 	}
@@ -63,7 +64,7 @@ vector<Components::InventoryItem> ItemSystem::ItemsInCategory(shared_ptr<Compone
 {
 	vector<Components::InventoryItem> items;
 	for (auto & item : inventory->Items) {
-		if (m_itemCatagories[category].find(item.TypeEntity) != m_itemCatagories[category].end()) {
+		if (category == "All" || m_itemCatagories[category].find(item.TypeEntity) != m_itemCatagories[category].end()) {
 			items.push_back(item);
 		}
 	}

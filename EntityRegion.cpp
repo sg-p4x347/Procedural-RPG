@@ -2,8 +2,7 @@
 #include "EntityRegion.h"
 
 namespace Components {
-	const int EntityRegion::m_sectorDivisions = 16;
-	EntityRegion::EntityRegion(int regionWidth) : RegionWidth(regionWidth), m_sectors(m_sectorDivisions)
+	EntityRegion::EntityRegion(int regionWidth) : RegionWidth(regionWidth)
 	{
 	}
 	string EntityRegion::GetName()
@@ -11,16 +10,8 @@ namespace Components {
 		return "EntityRegion";
 	}
 
-	void EntityRegion::AddEntity(EntityPtr entity) {
-		Entities.push_back(entity->ID());
-		//
-	}
-	vector<unsigned int> EntityRegion::FindEntities(Vector3 center, float range)
-	{
-	}
-	void EntityRegion::MoveEntity(EntityPtr entity, Vector3 lastPos)
-	{
-		
+	void EntityRegion::AddEntity(unsigned int entity) {
+		Entities.push_back(entity);
 	}
 	void EntityRegion::Export(ofstream & ofs)
 	{

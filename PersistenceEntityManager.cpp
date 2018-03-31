@@ -194,10 +194,27 @@ void PersistenceEntityManager::DeleteEntity(EntityPtr & entity)
 	BaseEntityManager::DeleteEntity(entity);
 }
 
-//PersistenceEntityManager::~PersistenceEntityManager()
-//{
-//	//Save();
-//}
+bool PersistenceEntityManager::Find(const unsigned int & id, EntityPtr & entity)
+{
+	if (BaseEntityManager::Find(id, entity)) {
+		return true;
+	}
+	else {
+		// convert to Entity pointer
+		unsigned long mask = ComponentMaskOf(id);
+		if (mask != 0) {
+			entity = EntityPtr(new Entity(id, mask, this));
+			// cache the entity
+			m_entities.insert(std::make_pair(id,entity));
+			return true;
+		}
+		else {
+			return false;
+		}
+		
+	}
+}
+
 
 void PersistenceEntityManager::Save()
 {

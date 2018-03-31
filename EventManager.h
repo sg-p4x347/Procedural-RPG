@@ -2,6 +2,8 @@
 #include "pch.h"
 #include "EventHandler.h"
 enum EventTypes {
+	Entity_ComponentAdded,
+
 	Game_Suspend,
 	Game_Resume,
 

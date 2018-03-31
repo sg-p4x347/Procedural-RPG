@@ -175,7 +175,7 @@ void PlayerSystem::SetInteractionState(Components::InteractionStates state)
 	case Components::InteractionStates::World:
 		Mouse::Get().SetMode(Mouse::MODE_RELATIVE);
 		IEventManager::Invoke(EventTypes::Item_CloseInventory, EM->Player());
-		IEventManager::Invoke(EventTypes::GUI_CloseMenu);
+		IEventManager::Invoke(EventTypes::GUI_OpenMenu, string("HUD"));
 		break;
 	case Components::InteractionStates::InventoryUI:
 		Mouse::Get().SetMode(Mouse::MODE_ABSOLUTE);

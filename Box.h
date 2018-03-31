@@ -8,7 +8,7 @@ struct Box
 	Vector3 Size;
 
 	bool Contains(Vector3 point);
-	bool Intersects(Line segment, int tests = 10);
+	bool Intersects(Line segment, int tests = 2);
 	
 };
 
