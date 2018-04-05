@@ -24,7 +24,7 @@ function ToggleItem(itemElement) {
 }
 
 function SelectTab(tabElement) {
-	var children = document.getElementById("Header").children;
+	var children = document.getElementById("Tabs").children;
 	for (var i = 0; i < children.length; i++) {
 		children[i].classList.remove("item-selected");
 	}

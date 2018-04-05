@@ -21,7 +21,7 @@
 #include "TaskManager.h"
 #include "Inventory.h"
 #include "ItemSystem.h"
-static const bool g_erosion = false;
+static const bool g_erosion = true;
 
 using namespace DirectX::SimpleMath;
 static EntityPtr waterEntity;
@@ -198,7 +198,7 @@ void TerrainSystem::Generate()
 	SaveWater(*WaterMap);
 
 	// Resources
-	CreateResourceEntities();
+	//CreateResourceEntities();
 	
 	/*Utility::OutputLine("Generating Buildings...");
 	Rectangle footprint = Rectangle(ProUtil::RandWithin(32, 200), ProUtil::RandWithin(32, 200), ProUtil::RandWithin(6,10), ProUtil::RandWithin(6, 10));

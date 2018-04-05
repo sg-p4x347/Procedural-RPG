@@ -51,10 +51,11 @@ private:
 	void OpenMenu(EntityPtr menu);
 	bool IsMenuOpen(string name);
 	//----------------------------------------------------------------
-	// Menu factories
+	// Inventory
 	EntityPtr CreateInventory();
 	EntityPtr CreateInventoryGrid(vector<Components::InventoryItem> inventory);
 	void SelectInventoryTab(EntityPtr gridContainer, string category);
+
 	//----------------------------------------------------------------
 	// HUD
 	EntityPtr m_HUDhint;
