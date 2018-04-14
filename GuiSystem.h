@@ -35,6 +35,9 @@ public:
 	void BindHandlers();
 	void CharTyped(char ch);
 	void Backspace();
+	//----------------------------------------------------------------
+	// Serialization
+	void ImportMarkup(string name);
 private:
 	SystemManager * SM;
 	GUI::GuiEntityManager GuiEM;

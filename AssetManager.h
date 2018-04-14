@@ -1,7 +1,7 @@
 #pragma once
 #include "VboParser.h"
 #include "AssetEntityManager.h"
-
+#include "XmlParser.h"
 class AssetManager
 {
 public:
@@ -15,6 +15,7 @@ public:
 	AssetEntityManager * GetStaticEM();
 	//----------------------------------------------------------------
 	// Asset Retrieval
+	shared_ptr<XmlParser> GetXml(string path);
 	shared_ptr<SpriteFont> GetFont(string name,int size);
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetTexture(string path,bool procedural = false);
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetWicTexture(string path);

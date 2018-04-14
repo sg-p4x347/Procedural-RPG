@@ -13,6 +13,7 @@
 #include "AssetManager.h"
 #include "IEventManager.h"
 #include "World.h"
+#include "XmlParser.h"
 
 using namespace GUI;
 using namespace DirectX;
@@ -25,6 +26,7 @@ GuiSystem::GuiSystem(
 m_scrollTicks(1200),
 SM(systemManager)
 {
+	shared_ptr<XmlParser> xml = AssetManager::Get()->GetXml("UI/test");
 	//----------------------------------------------------------------
 	// Initialize spritesheets
 	AddSpriteSheet("widget.png", std::map<string, Rectangle>{
@@ -504,6 +506,11 @@ void GuiSystem::CharTyped(char ch)
 void GuiSystem::Backspace()
 {
 	OnKeydown(m_activeElement, Event(Vector2::Zero, 0, '\0', Keyboard::Keys::Back));
+}
+
+void GuiSystem::ImportMarkup(string name)
+{
+	
 }
 
 void GuiSystem::AddMenu(string name, EntityPtr menu)

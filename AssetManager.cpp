@@ -3,6 +3,7 @@
 #include "ModelAsset.h"
 #include "CustomEffect.h"
 #include "CustomModelLoadVBO.h"
+#include "XmlParser.h"
 AssetManager * AssetManager::m_instance = nullptr;
 void AssetManager::CreateDgslEffect(string name, vector<string> textures, const D3D11_INPUT_ELEMENT_DESC * inputElements, const UINT elementCount)
 {
@@ -189,6 +190,7 @@ AssetEntityManager * AssetManager::GetProceduralEM()
 }
 AssetManager::AssetManager() : m_fontSize(32)
 {
+
 }
 
 Filesystem::path AssetManager::FullPath(string path, bool procedural, string extension)
@@ -300,6 +302,12 @@ void AssetManager::SetDevice(Microsoft::WRL::ComPtr<ID3D11Device> device)
 AssetEntityManager * AssetManager::GetStaticEM()
 {
 	return m_authoredEM.get();
+}
+
+shared_ptr<XmlParser> AssetManager::GetXml(string path)
+{
+	ifstream ifs = ifstream(FullPath(path, false, ".xml"));
+	return make_shared<XmlParser>(ifs);
 }
 
 shared_ptr<SpriteFont> AssetManager::GetFont(string name,int size)

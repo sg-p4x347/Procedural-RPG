@@ -199,6 +199,7 @@
     <ClInclude Include="Collision.h" />
     <ClInclude Include="CollisionSystem.h" />
     <ClInclude Include="CompositeModel.h" />
+    <ClInclude Include="CssParser.h" />
     <ClInclude Include="CubicSpline.h" />
     <ClInclude Include="CustomEffect.h" />
     <ClInclude Include="CustomModelLoadVBO.h" />
@@ -281,6 +282,7 @@
     <ClInclude Include="World.h" />
     <ClInclude Include="WorldEntityManager.h" />
     <ClInclude Include="WorldSystem.h" />
+    <ClInclude Include="XmlParser.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Action.cpp" />
@@ -297,6 +299,7 @@
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CollisionSystem.cpp" />
     <ClCompile Include="CompositeModel.cpp" />
+    <ClCompile Include="CssParser.cpp" />
     <ClCompile Include="CubicSpline.cpp" />
     <ClCompile Include="CustomEffect.cpp" />
     <ClCompile Include="CustomModelLoadVBO.cpp" />
@@ -378,6 +381,7 @@
     <ClCompile Include="World.cpp" />
     <ClCompile Include="WorldEntityManager.cpp" />
     <ClCompile Include="WorldSystem.cpp" />
+    <ClCompile Include="XmlParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc" />

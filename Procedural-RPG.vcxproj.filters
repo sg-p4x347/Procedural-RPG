@@ -367,6 +367,10 @@
     <ClInclude Include="EntityQuadTree.h">
       <Filter>World</Filter>
     </ClInclude>
+    <ClInclude Include="XmlParser.h">
+      <Filter>Utility\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="CssParser.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -625,6 +629,10 @@
     <ClCompile Include="EntityQuadTree.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="XmlParser.cpp">
+      <Filter>Utility\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="CssParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
