@@ -84,3 +84,18 @@ XmlParser::XmlParser(istream & ifs)
 	}
 }
 
+string & XmlParser::GetTag()
+{
+	return m_tag;
+}
+
+map<string, string>& XmlParser::GetAttributes()
+{
+	return m_attributes;
+}
+
+vector<shared_ptr<XmlParser>>& XmlParser::GetChildren()
+{
+	return m_children;
+}
+

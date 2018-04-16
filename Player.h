@@ -10,6 +10,7 @@ namespace Components {
 	enum InteractionStates {
 		World,
 		InventoryUI,
+		ContainerUI,
 		GamePausedUI
 	};
 	class Player :
@@ -20,6 +21,7 @@ namespace Components {
 		MovementStates MovementState;
 		InteractionStates InteractionState;
 		string InventoryCategory;
+		unsigned int OpenContainer;
 
 		// Inherited via Component
 		virtual string GetName() override;

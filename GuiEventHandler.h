@@ -25,6 +25,9 @@ namespace GUI {
 
 		// Inherited via Delegate
 		virtual string GetDiscreteName() override;
+
+		// Inherited via Delegate
+		virtual shared_ptr<Components::Component> Copy(shared_ptr<Components::Component> source) override;
 	};
 }
 

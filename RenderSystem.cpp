@@ -179,11 +179,17 @@ void RenderSystem::RenderGUI()
 {
 	auto currentMenu = m_guiSystem->GetCurrentMenu();
 	if (currentMenu) {
+		
 		vector<EntityPtr> spriteBatches{currentMenu };
+		auto handMenu = m_guiSystem->GetHandMenu();
+		if (handMenu) {
+			spriteBatches.push_back(handMenu);
+		}
 		while (spriteBatches.size() > 0) {
 			vector<EntityPtr> spriteBatchesTemp;
 			for (EntityPtr entity : spriteBatches) {
 				auto sprite = entity->GetComponent<Sprite>("Sprite");
+				
 				SpriteBatchBegin(sprite->ClippingRects);
 				RenderGuiEntityRecursive(entity, spriteBatchesTemp);
 				SpriteBatchEnd();
@@ -197,31 +203,32 @@ void RenderSystem::RenderGuiEntityRecursive(EntityPtr entity, vector<EntityPtr>&
 {
 	
 	shared_ptr<Sprite> sprite = entity->GetComponent<Sprite>("Sprite");
-	shared_ptr<Text> text = entity->GetComponent<Text>("Text");
-	if (sprite) {
-		SpriteBatchDraw(sprite);
-	}
-	if (text) {
-		DrawText(text->String, text->Font, text->Position, text->FontSize, text->Color);
-	}
-	shared_ptr<GUI::Children> children = entity->GetComponent<GUI::Children>("Children");
-	if (children) {
-		for (auto & childID : children->Entities) {
-			EntityPtr child;
-			if (m_guiSystem->GetEM().Find(childID, child)) {
-				auto childSprite = child->GetComponent<Sprite>("Sprite");
-				if (childSprite) {
-					if (childSprite->ClippingRects.size() > 0) {
-						spriteBatches.push_back(child);
-					}
-					else {
-						RenderGuiEntityRecursive(child, spriteBatches);
+	if (sprite->Visible) {
+		shared_ptr<Text> text = entity->GetComponent<Text>("Text");
+		if (sprite) {
+			SpriteBatchDraw(sprite);
+		}
+		if (text) {
+			DrawText(text->String, text->Font, text->Position, text->FontSize, text->Color, 1.f / (float)sprite->Zindex);
+		}
+		shared_ptr<GUI::Children> children = entity->GetComponent<GUI::Children>("Children");
+		if (children) {
+			for (auto & childID : children->Entities) {
+				EntityPtr child;
+				if (m_guiSystem->GetEM().Find(childID, child)) {
+					auto childSprite = child->GetComponent<Sprite>("Sprite");
+					if (childSprite) {
+						if (childSprite->ClippingRects.size() > 0) {
+							spriteBatches.push_back(child);
+						}
+						else {
+							RenderGuiEntityRecursive(child, spriteBatches);
+						}
 					}
 				}
 			}
 		}
 	}
-	
 }
 
 void RenderSystem::SpriteBatchBegin(vector<Rectangle> clippingRects)
@@ -268,11 +275,11 @@ shared_ptr<SpriteFont> RenderSystem::GetFont(string path,int size)
 	return AssetManager::Get()->GetFont(path,size);
 }
 
-void RenderSystem::DrawText(string text,string font, Vector2 position,int size, SimpleMath::Color color)
+void RenderSystem::DrawText(string text,string font, Vector2 position,int size, SimpleMath::Color color,float layer)
 {
 	auto spriteFont = GetFont(font, size);
 	if (spriteFont) {
-		spriteFont->DrawString(m_spriteBatch.get(), ansi2unicode(text).c_str(), position, color);
+		spriteFont->DrawString(m_spriteBatch.get(), ansi2unicode(text).c_str(), position, color,0.f,Vector2::Zero,Vector2::One,DirectX::SpriteEffects::SpriteEffects_None,layer);
 	}
 }
 

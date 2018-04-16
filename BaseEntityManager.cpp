@@ -78,12 +78,24 @@ EntityPtr BaseEntityManager::NewEntity()
 	return entity;
 }
 
+EntityPtr BaseEntityManager::Copy(Entity * source)
+{
+	EntityPtr copy = NewEntity();
+	// copy each component
+	for (auto & component : source->GetComponents()) {
+		copy->AddComponent(component->Copy(component));
+	}
+	return copy;
+}
+
 void BaseEntityManager::DeleteEntity(EntityPtr & entity)
 {
 	m_removedIDs.push(entity->ID());
 	// Remove all components from the entity
 	entity->RemoveComponents();
 	entity->RemoveEntity();
+	// remove the entity from the cache
+	m_entities.erase(entity->ID());
 }
 
 vector<EntityPtr> BaseEntityManager::FindEntities(string compName)
@@ -133,6 +145,12 @@ bool BaseEntityManager::Find(const unsigned int & id, EntityPtr& entity)
 	else {
 		entity = nullptr;
 		return false;
+	}
+}
+void BaseEntityManager::CollectGarbage()
+{
+	for (EntityPtr & entity : UnreferencedEntities()) {
+		m_entities.erase(entity->ID());
 	}
 }
 void BaseEntityManager::RegisterComponent(std::function<Components::Component*()>&& instantiate)
@@ -189,6 +207,15 @@ shared_ptr<Components::Component> BaseEntityManager::GetComponent(unsigned long 
 vector<EntityPtr> BaseEntityManager::LoadEntities(unsigned long & mask)
 {
 	return vector<EntityPtr>();
+}
+
+vector<EntityPtr> BaseEntityManager::UnreferencedEntities()
+{
+	vector<EntityPtr> unreferenced;
+	for (pair<const unsigned int, EntityPtr> & cache : m_entities) {
+		if (cache.second.use_count() == 1) unreferenced.push_back(cache.second);
+	}
+	return unreferenced;
 }
 
 void BaseEntityManager::SetNextID(unsigned int & id)

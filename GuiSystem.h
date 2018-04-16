@@ -4,6 +4,7 @@
 #include "Sprite.h"
 #include "GuiText.h"
 #include "Inventory.h"
+#include "XmlParser.h"
 using namespace GUI;
 class SystemManager;
 class GuiSystem :
@@ -23,6 +24,7 @@ public:
 
 	void OpenMenu(string name);
 	EntityPtr GetCurrentMenu();
+	EntityPtr GetHandMenu();
 	void CloseMenu();
 	GuiEntityManager & GetEM();
 	void DisplayException(std::exception e);
@@ -35,9 +37,7 @@ public:
 	void BindHandlers();
 	void CharTyped(char ch);
 	void Backspace();
-	//----------------------------------------------------------------
-	// Serialization
-	void ImportMarkup(string name);
+	
 private:
 	SystemManager * SM;
 	GUI::GuiEntityManager GuiEM;
@@ -46,6 +46,8 @@ private:
 	// Menus
 	EntityPtr m_currentMenu;
 	string m_currentMenuName;
+	EntityPtr m_handMenu;
+
 	map<string, EntityPtr> m_menus;
 	map<string, std::function<EntityPtr(void)>> m_dynamicMenus;
 	void AddMenu(string name, EntityPtr menu);
@@ -56,7 +58,7 @@ private:
 	//----------------------------------------------------------------
 	// Inventory
 	EntityPtr CreateInventory();
-	EntityPtr CreateInventoryGrid(vector<Components::InventoryItem> inventory);
+	EntityPtr CreateInventoryGrid(string gridTemplate, vector<Components::InventoryItem> inventory);
 	void SelectInventoryTab(EntityPtr gridContainer, string category);
 
 	//----------------------------------------------------------------
@@ -71,7 +73,7 @@ private:
 	//----------------------------------------------------------------
 	// Style Updates
 	EntityPtr m_activeElement;
-	EntityPtr m_hoverElement;
+	unordered_set<EntityPtr> m_hoverElements;
 	void UpdateSprite(EntityPtr entity, shared_ptr<Style> style, shared_ptr<Sprite> sprite, int zIndex);
 	void UpdateText(shared_ptr<Text> text, shared_ptr<Sprite> sprite, shared_ptr<Style> style);
 
@@ -100,9 +102,11 @@ private:
 	// View engine
 	void UpdateFlowRecursive(EntityPtr entity, int zIndex);
 	void PositionChildren(EntityPtr parent);
+	void PositionRects(Rectangle & parent, vector<Rectangle> & children, FlowType flow, AlignmentType & justify, AlignmentType & alignment);
 
 	Rectangle CalculateChildRect(Rectangle parentRect, shared_ptr<Style> childStyle);
 	void SetPosition(FlowType flow, Rectangle & rect, int primary, int secondary);
+	void SetDimension(FlowType flow, Rectangle & rect, int primary, int secondary);
 
 	int GetPrimaryDimension(FlowType flow, Rectangle rect);
 	int GetSecondaryDimension(FlowType flow, Rectangle rect);
@@ -119,12 +123,17 @@ private:
 	// Misc helpers
 	void DeleteChildren(EntityPtr & parent);
 	void DeleteRecursive(EntityPtr & parent);
-	void ReplaceChildren(EntityPtr parent, EntityPtr child);
+	void ReplaceChildren(EntityPtr parent, vector<EntityPtr> children);
+	void ReplaceChild(EntityPtr parent, EntityPtr child);
 	shared_ptr<Sprite> GetSprite(EntityPtr entity);
 	shared_ptr<Style> GetStyle(EntityPtr entity);
 	void AddRectIfValid(Rectangle rect, vector<Rectangle> & rects);
 	void AddScrollbarsRecursive(EntityPtr & entity);
 	EntityPtr GetElementByID(string id);
 	EntityPtr FindElementByIdRecursive(EntityPtr entity, string id);
+	// Converts an XML object into a new entity hierarchy
+	EntityPtr ImportMarkup(string path);
+	EntityPtr CreateElementFromXml(shared_ptr<XmlParser> xml);
+	Style * ParseStyle(string selector, string css);
 };
 

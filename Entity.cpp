@@ -7,6 +7,11 @@ Entity::Entity(const unsigned int & id, const unsigned long & mask, BaseEntityMa
 {
 }
 
+EntityPtr Entity::Copy()
+{
+	return m_entityManager->Copy(this);
+}
+
 unsigned int Entity::ID()
 {
 	return m_id;
@@ -33,11 +38,20 @@ unsigned long Entity::MissingComponents(const unsigned long & mask)
 	return (mask ^ m_mask) ^ m_mask;
 }
 
-vector<shared_ptr<Components::Component>> Entity::GetComponents()
+vector<shared_ptr<Components::Component>> Entity::GetLoadedComponents()
 {
 	vector<shared_ptr<Components::Component>> components;
 	for (auto & pair : m_components) {
 		components.push_back(pair.second);
+	}
+	return components;
+}
+
+vector<shared_ptr<Components::Component>> Entity::GetComponents()
+{
+	vector<shared_ptr<Components::Component>> components;
+	for (auto & mask : m_entityManager->ExtractMasks(m_mask)) {
+		components.push_back(GetComponent<Components::Component>(mask));
 	}
 	return components;
 }

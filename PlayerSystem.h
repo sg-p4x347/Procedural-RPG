@@ -39,11 +39,14 @@ public:
 	// Utility
 	Quaternion GetPlayerQuaternion(bool ignorePitch = false);
 	void Run() override;
-
+	//----------------------------------------------------------------
+	// Interaction state
+	void SetInteractionState(Components::InteractionStates state);
 private:
 	SystemManager * SM;
 	shared_ptr<DirectX::Mouse> m_mouse;
 	shared_ptr<DirectX::Keyboard> m_keyboard;
+	void RegisterHandlers();
 	//----------------------------------------------------------------
 	// Helpers
 	shared_ptr<Components::Player> GetPlayerComp();
@@ -52,9 +55,7 @@ private:
 	Vector3 m_direction;
 	void SetMovementToNormal();
 	void SetMovementToSpectator();
-	//----------------------------------------------------------------
-	// Interaction state
-	void SetInteractionState(Components::InteractionStates state);
+	
 	//----------------------------------------------------------------
 	// Input Actions
 	void UpdateActions();

@@ -436,6 +436,7 @@
     <MeshContentTask Include="Assets\Models\Building\models-building-corner0_0.fbx" />
     <MeshContentTask Include="Assets\Models\Building\models-building-floor0_0.fbx" />
     <MeshContentTask Include="Assets\Models\Building\models-building-wall0_0.fbx" />
+    <MeshContentTask Include="Assets\Models\Crate_0.fbx" />
     <MeshContentTask Include="Assets\Models\Cube.fbx" />
     <MeshContentTask Include="Assets\Models\Tree.fbx">
       <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)/Assets%(Filename).cmo</ContentOutput>
@@ -448,6 +449,20 @@
     <ProjectReference Include="DirectXTK\DirectXTK_Desktop_2017.vcxproj">
       <Project>{e0b52ae7-e160-4d32-bf3f-910b785e5a8e}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="Assets\UI\half_inv_grid.xml">
+      <SubType>Designer</SubType>
+    </Xml>
+    <Xml Include="Assets\UI\inv.xml" />
+    <Xml Include="Assets\UI\inv_divider.xml" />
+    <Xml Include="Assets\UI\inv_grid.xml" />
+    <Xml Include="Assets\UI\inv_item.xml">
+      <SubType>Designer</SubType>
+    </Xml>
+    <Xml Include="Assets\UI\inv_tab.xml">
+      <SubType>Designer</SubType>
+    </Xml>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -11,8 +11,12 @@ namespace GUI {
 		// Data
 		unsigned int Parent;
 		string ElementID;
+		bool EventBubbling;
 		// Inherited via Component
 		virtual string GetName() override;
+
+		// Inherited via Component
+		virtual shared_ptr<Components::Component> Copy(shared_ptr<Components::Component> source) override;
 	};
 }
 

@@ -20,4 +20,8 @@ namespace GUI {
 	{
 		return "Children";
 	}
+	shared_ptr<Components::Component> Children::Copy(shared_ptr<Components::Component> source)
+	{
+		return make_shared<GUI::Children>(*dynamic_pointer_cast<GUI::Children>(source));
+	}
 }

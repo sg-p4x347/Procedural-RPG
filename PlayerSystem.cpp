@@ -14,6 +14,7 @@ SM(systemManager)
 {
 	RegisterInputActions();
 	MapKeys();
+	RegisterHandlers();
 }
 
 
@@ -148,6 +149,17 @@ void PlayerSystem::Run()
 	SetInteractionState(GetPlayerComp()->InteractionState);
 }
 
+void PlayerSystem::RegisterHandlers()
+{
+	IEventManager::RegisterHandler(EventTypes::Player_SetInteractionState, std::function<void(Components::InteractionStates)>([this](Components::InteractionStates state) {
+		SetInteractionState(state);
+	}));
+	IEventManager::RegisterHandler(EventTypes::Item_OpenInventory, std::function<void(EntityPtr,EntityPtr)>([this](EntityPtr actor, EntityPtr target) {
+		actor->GetComponent<Components::Player>("Player")->OpenContainer = target->ID();
+		SetInteractionState(Components::InteractionStates::InventoryUI);
+	}));
+}
+
 shared_ptr<Components::Player> PlayerSystem::GetPlayerComp()
 {
 	return EM->Player()->GetComponent<Components::Player>("Player");
@@ -171,16 +183,23 @@ void PlayerSystem::SetInteractionState(Components::InteractionStates state)
 {
 	auto playerComp = GetPlayerComp();
 	playerComp->InteractionState = state;
+
+	//EntityPtr openContainer;
 	switch (state) {
 	case Components::InteractionStates::World:
 		Mouse::Get().SetMode(Mouse::MODE_RELATIVE);
-		IEventManager::Invoke(EventTypes::Item_CloseInventory, EM->Player());
+
+		EM->Player()->GetComponent<Components::Player>("Player")->OpenContainer = 0;
+		//IEventManager::Invoke(EventTypes::Item_CloseInventory, EM->Player(),openContainer);
 		IEventManager::Invoke(EventTypes::GUI_OpenMenu, string("HUD"));
 		break;
 	case Components::InteractionStates::InventoryUI:
+	case Components::InteractionStates::ContainerUI:
 		Mouse::Get().SetMode(Mouse::MODE_ABSOLUTE);
-		IEventManager::Invoke(EventTypes::Item_OpenInventory, EM->Player());
+		//EM->Find(EM->Player()->GetComponent<Components::Player>("Player")->OpenContainer, openContainer);
+		//IEventManager::Invoke(EventTypes::Item_OpenInventory, EM->Player(),(openContainer ? openContainer : EM->Player()));
 		IEventManager::Invoke(EventTypes::GUI_OpenMenu, string("inventory"));
+		
 		break;
 	case Components::InteractionStates::GamePausedUI:
 		Mouse::Get().SetMode(Mouse::MODE_ABSOLUTE);
@@ -250,17 +269,10 @@ void PlayerSystem::RegisterInputActions()
 	//----------------------------------------------------------------
 	// Inventory
 	RegisterInputAction(InputAction("ToggleInventory", "Toggle inventory", [this] {
-		auto inventory = EM->Player()->GetComponent<Components::Inventory>("Inventory");
-		if (inventory) {
-			if (inventory->Open) {
-				SetInteractionState(Components::InteractionStates::World);
-				
-			}
-			else {
-				SetInteractionState(Components::InteractionStates::InventoryUI);
-				
-				
-			}
+		if (EM->Player()->GetComponent<Components::Player>("Player")->InteractionState == Components::InteractionStates::InventoryUI) {
+			SetInteractionState(Components::InteractionStates::World);
+		} else {
+			SetInteractionState(Components::InteractionStates::InventoryUI);
 		}
 	},true,false));
 

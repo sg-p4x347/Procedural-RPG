@@ -22,7 +22,10 @@ enum EventTypes {
 	Item_CloseInventory,
 	Item_Transfer,
 
-	Resource_Aquire
+	Resource_Aquire,
+
+	Player_SetInteractionState,
+	Player_OpenInventory
 };
 template <typename ... Signature>
 class EventManager

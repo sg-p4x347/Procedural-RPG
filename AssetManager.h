@@ -53,6 +53,7 @@ private:
 	Filesystem::path m_authoredDir;
 	Filesystem::path m_proceduralDir;
 	Filesystem::path FullPath(string path, bool procedural,string extension);
+	Filesystem::path FullPath(string path);
 	Filesystem::path AppendPath(string path, string type);
 
 	//----------------------------------------------------------------

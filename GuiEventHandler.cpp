@@ -22,4 +22,8 @@ namespace GUI {
 	{
 		return "EventHandler";
 	}
+	shared_ptr<Components::Component> EventHandler::Copy(shared_ptr<Components::Component> source)
+	{
+		return make_shared<GUI::EventHandler>(*dynamic_pointer_cast<GUI::EventHandler>(source));
+	}
 }

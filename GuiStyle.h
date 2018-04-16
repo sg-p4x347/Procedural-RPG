@@ -52,7 +52,8 @@ namespace GUI {
 			string textAlign = "start",
 			string verticalTextAlign = "center",
 
-			string visibility = "visible"
+			string visibility = "visible",
+			bool wrapItems = false
 		);
 		~Style();
 		/*
@@ -63,10 +64,12 @@ namespace GUI {
 			Image: example.png
 			Dimension: 12px | 12%
 		*/
-		// Box model attributes
+		// Display properties
 		string Background;		// Color | Image
-		string FontColor;		// Color
 		string Foreground;		// Color | Image
+		string Visibility;		// Visible | Hidden
+
+		// Box model attributes
 		string Width;			// Dimension
 		string Height;			// Dimension
 		string Width2;			// Dimension
@@ -76,15 +79,14 @@ namespace GUI {
 		string OverflowY;		// hidden | scroll
 		string Justify;			// start | center | end
 		string AlignItems;		// start | center | end
-		
+		bool WrapItems;			// if true, items will wrap into rows rather than overflowing across the primary axis
 		// Text
 		string Font;
+		string FontColor;		// Color
 		string FontSize;
 		string TextAlign;
 		string VerticalTextAlign;
 		
-		// Misc
-		string Visibility;
 
 
 		//----------------------------------------------------------------
@@ -124,6 +126,9 @@ namespace GUI {
 		OverflowType GetOverflow(string value);
 		// Inherited via Delegate
 		virtual string GetDiscreteName() override;
+
+		// Inherited via Delegate
+		virtual shared_ptr<Components::Component> Copy(shared_ptr<Components::Component> source) override;
 	};
 }
 

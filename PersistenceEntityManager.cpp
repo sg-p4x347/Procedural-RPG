@@ -221,7 +221,7 @@ void PersistenceEntityManager::Save()
 	//----------------------------------------------------------------
 	// Components
 	for (std::unordered_map<unsigned int, EntityPtr>::iterator it = m_entities.begin(); it != m_entities.end(); ++it) {
-		for (auto & component : it->second->GetComponents()) {
+		for (auto & component : it->second->GetLoadedComponents()) {
 			component->Save(m_directory);
 		}
 	}

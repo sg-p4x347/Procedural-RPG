@@ -89,6 +89,9 @@
     <Filter Include="Threading">
       <UniqueIdentifier>{608aa36f-10e7-41b2-a46d-6622740c5e4b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Assets\UI">
+      <UniqueIdentifier>{b57dd812-079f-40f4-8b9f-a40836a3e483}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -724,6 +727,9 @@
     <MeshContentTask Include="Assets\Models\Building\models-building-wall0_0.fbx">
       <Filter>Assets\Models</Filter>
     </MeshContentTask>
+    <MeshContentTask Include="Assets\Models\Crate_0.fbx">
+      <Filter>Assets\Models</Filter>
+    </MeshContentTask>
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico">
@@ -737,5 +743,25 @@
     <Manifest Include="settings.manifest">
       <Filter>VS</Filter>
     </Manifest>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="Assets\UI\inv_grid.xml">
+      <Filter>Assets\UI</Filter>
+    </Xml>
+    <Xml Include="Assets\UI\half_inv_grid.xml">
+      <Filter>Assets\UI</Filter>
+    </Xml>
+    <Xml Include="Assets\UI\inv_item.xml">
+      <Filter>Assets\UI</Filter>
+    </Xml>
+    <Xml Include="Assets\UI\inv.xml">
+      <Filter>Assets\UI</Filter>
+    </Xml>
+    <Xml Include="Assets\UI\inv_tab.xml">
+      <Filter>Assets\UI</Filter>
+    </Xml>
+    <Xml Include="Assets\UI\inv_divider.xml">
+      <Filter>Assets\UI</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

@@ -20,6 +20,7 @@ public:
 	//----------------------------------------------------------------
 	// Entity creation
 	EntityPtr NewEntity();
+	EntityPtr Copy(Entity * source);
 	//----------------------------------------------------------------
 	// Entity removal
 	virtual void DeleteEntity(EntityPtr & entity);
@@ -29,7 +30,12 @@ public:
 	vector<EntityPtr> FindEntities(unsigned long componentMask);
 	vector<EntityPtr> FindEntities(vector<unsigned int> ids);
 	virtual bool Find(const unsigned int & id, EntityPtr & entity);
-	
+	//----------------------------------------------------------------
+	// Cache management
+
+	// removes any entities that are stored in the cache but have no other references in
+	// the rest of the application
+	virtual void CollectGarbage();
 protected:
 	//----------------------------------------------------------------
 	// Component management
@@ -51,6 +57,8 @@ protected:
 	virtual vector<EntityPtr> LoadEntities(unsigned long & mask);
 	// Entity ID, Entity pointer
 	unordered_map<unsigned int, EntityPtr> m_entities;
+	// Find all entities that have no outside references
+	vector<EntityPtr> UnreferencedEntities();
 
 	//----------------------------------------------------------------
 	// ID management

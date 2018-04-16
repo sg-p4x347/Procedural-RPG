@@ -83,11 +83,51 @@ namespace GUI {
 		return btn;
 	}
 
+	EntityPtr GuiEntityManager::Copy(EntityPtr source)
+	{
+		EntityPtr copy = source->Copy();
+		if (source->HasComponents(ComponentMask("Children"))) {
+			vector<unsigned int> & copyChildren = copy->GetComponent<GUI::Children>("Children")->Entities;
+			copyChildren.clear();
+			for (auto & childID : source->GetComponent<GUI::Children>("Children")->Entities) {
+				EntityPtr child;
+				if (Find(childID, child)) {
+					// copy childern recursively
+					AddChild(copy,Copy(child));
+					//copyChildren.push_back(Copy(child)->ID());
+				}
+			}
+		}
+		if (source->HasComponents(ComponentMask("Panel"))) {
+			source->GetComponent<GUI::Panel>("Panel")->Parent = 0;
+		}
+		return copy;
+	}
+
+	void GuiEntityManager::AddChild(EntityPtr entity, EntityPtr child)
+	{
+		if (entity && child) {
+			child->GetComponent<GUI::Panel>("Panel")->Parent = entity->ID();
+			if (entity->HasComponents(ComponentMask("Children"))) {
+				// Add children to existing component
+				shared_ptr<Children> comp = entity->GetComponent<Children>("Children");
+				comp->Entities.push_back(child->ID());
+			}
+			else {
+				// Add new children component
+				entity->AddComponent(
+					new Children(vector<unsigned int>{child->ID()})
+				);
+			}
+		}
+	}
+
 	void GuiEntityManager::AddChildren(EntityPtr entity, vector<EntityPtr> children)
 	{
 		if (entity) {
 			vector<unsigned int> ids;
 			for (auto & child : children) {
+				child->GetComponent<GUI::Panel>("Panel")->Parent = entity->ID();
 				ids.push_back(child->ID());
 				shared_ptr<Panel> panel = child->GetComponent<Panel>("Panel");
 				if (panel) panel->Parent = entity->ID();
@@ -117,6 +157,13 @@ namespace GUI {
 	{
 		if (entity && text != "") {
 			entity->AddComponent(new Text(text));
+		}
+	}
+
+	void GuiEntityManager::CollectGarbage()
+	{
+		for (auto & entity : UnreferencedEntities()) {
+			DeleteEntity(entity);
 		}
 	}
 

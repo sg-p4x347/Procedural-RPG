@@ -45,6 +45,11 @@ namespace Components {
 		}
 	}
 
+	shared_ptr<Components::Component> Component::Copy(shared_ptr<Components::Component> source)
+	{
+		return nullptr;
+	}
+
 	// ISerialization
 	void Component::Import(std::ifstream & ifs)
 	{

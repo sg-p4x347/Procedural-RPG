@@ -14,6 +14,7 @@
 #include "IEventManager.h"
 #include "World.h"
 #include "XmlParser.h"
+#include "CssParser.h"
 
 using namespace GUI;
 using namespace DirectX;
@@ -26,7 +27,7 @@ GuiSystem::GuiSystem(
 m_scrollTicks(1200),
 SM(systemManager)
 {
-	shared_ptr<XmlParser> xml = AssetManager::Get()->GetXml("UI/test");
+	
 	//----------------------------------------------------------------
 	// Initialize spritesheets
 	AddSpriteSheet("widget.png", std::map<string, Rectangle>{
@@ -93,6 +94,7 @@ SM(systemManager)
 			})
 		})
 	}));
+		
 #pragma endregion
 	//----------------------------------------------------------------
 	// game_paused
@@ -370,7 +372,11 @@ void GuiSystem::Update(double & elapsed)
 			char character = '\0';
 			Event evt = Event(mousePos, -scrollTicks, character, Keyboard::Keys::None);
 			EntityPtr occupied = FindOccupiedRecursive(m_currentMenu, mousePos);
-			
+			// hover out of all
+			for (auto & hoverElement : m_hoverElements) {
+				OnHoverOut(hoverElement, evt);
+			}
+			m_hoverElements.clear();
 			OnHover(occupied,evt);
 			
 			switch (Game::MouseTracker.leftButton) {
@@ -409,6 +415,15 @@ void GuiSystem::Update(double & elapsed)
 			//}
 		}
 	}
+	if (m_handMenu) {
+		if (Game::MouseState.positionMode == Mouse::MODE_ABSOLUTE) {
+			Vector2 mousePos(Game::MouseState.x, Game::MouseState.y);
+			auto sprite = GetSprite(m_handMenu);
+			sprite->Rect.x = mousePos.x;
+			sprite->Rect.y = mousePos.y;
+			UpdateFlowRecursive(m_handMenu, 1);
+		}
+	}
 }
 
 void GuiSystem::UpdateUI(int outputWidth, int outputHeight)
@@ -433,9 +448,15 @@ EntityPtr GuiSystem::GetCurrentMenu()
 	return m_currentMenu;
 }
 
+EntityPtr GuiSystem::GetHandMenu()
+{
+	return m_handMenu;
+}
+
 void GuiSystem::CloseMenu()
 {
 	m_currentMenu = nullptr;
+	m_handMenu = nullptr;
 	m_currentMenuName = "";
 }
 
@@ -508,9 +529,124 @@ void GuiSystem::Backspace()
 	OnKeydown(m_activeElement, Event(Vector2::Zero, 0, '\0', Keyboard::Keys::Back));
 }
 
-void GuiSystem::ImportMarkup(string name)
+EntityPtr GuiSystem::ImportMarkup(string path)
 {
+	return CreateElementFromXml(AssetManager::Get()->GetXml(path));
+}
+
+EntityPtr GuiSystem::CreateElementFromXml(shared_ptr<XmlParser> xml)
+{
+	auto attributes = xml->GetAttributes();
+	//----------------------------------------------------------------
+	// Default Style
+	Style * style;
 	
+	if (attributes.find("style") != attributes.end()) {
+		style = ParseStyle("Default", attributes["style"]);
+	}
+	else {
+		style = new Style();
+	}
+	//----------------------------------------------------------------
+	// ID
+	string id = attributes.find("id") != attributes.end() ? attributes["id"] : "";
+	
+
+	//----------------------------------------------------------------
+	// Children
+	vector<EntityPtr> children;
+	// recursively create children
+	for (auto & childXml : xml->GetChildren()) {
+		children.push_back(CreateElementFromXml(childXml));
+	}
+
+	// construct the element
+	EntityPtr element = GuiEM.NewPanel(style, children, id);
+	//----------------------------------------------------------------
+	// Event bubbling
+	if (attributes.find("event-bubbling") != attributes.end()) {
+		if (attributes["event-bubbling"] == "true") {
+			element->GetComponent<GUI::Panel>("Panel")->EventBubbling = true;
+		}
+	}
+	//----------------------------------------------------------------
+	// Text
+	if (attributes.find("text") != attributes.end()) {
+		element->AddComponent(new Text(attributes["text"]));
+	}
+	//----------------------------------------------------------------
+	// Other styles
+	if (attributes.find("hover-style") != attributes.end()) {
+		element->AddComponent(ParseStyle("Hover", attributes["hover-style"]));
+	}
+	if (attributes.find("active-style") != attributes.end()) {
+		element->AddComponent(ParseStyle("Active", attributes["active-style"]));
+	}
+
+	return element;
+}
+
+Style * GuiSystem::ParseStyle(string selector, string cssString)
+{
+	Style * style = new Style(selector);
+	CssParser css(cssString);
+	for (auto & pair : css.GetStyles()) {
+		if (pair.first == "background") {
+			style->Background = pair.second;
+		}
+		else if (pair.first == "font-color") {
+			style->FontColor = pair.second;
+		}
+		else if (pair.first == "foreground") {
+			style->Foreground = pair.second;
+		}
+		else if (pair.first == "width") {
+			style->Width = pair.second;
+		}
+		else if (pair.first == "width-2") {
+			style->Width2 = pair.second;
+		}
+		else if (pair.first == "height") {
+			style->Height = pair.second;
+		}
+		else if (pair.first == "height-2") {
+			style->Height2 = pair.second;
+		}
+		else if (pair.first == "flow-direction") {
+			style->FlowDirection = pair.second;
+		}
+		else if (pair.first == "overflow-x") {
+			style->OverflowX = pair.second;
+		}
+		else if (pair.first == "overflow-y") {
+			style->OverflowY = pair.second;
+		}
+		else if (pair.first == "justify") {
+			style->Justify = pair.second;
+		}
+		else if (pair.first == "align-items") {
+			style->AlignItems = pair.second;
+		}
+		else if (pair.first == "font") {
+			style->Font = pair.second;
+		}
+		else if (pair.first == "font-size") {
+			style->FontSize = pair.second;
+		}
+		else if (pair.first == "text-align") {
+			style->TextAlign = pair.second;
+		}
+		else if (pair.first == "vertical-text-align") {
+			style->VerticalTextAlign = pair.second;
+		}
+		else if (pair.first == "visibility") {
+			style->Visibility = pair.second;
+		}
+		else if (pair.first == "wrap-items") {
+			style->WrapItems = pair.second == "true";
+		}
+	}
+	return style;
 }
 
 void GuiSystem::AddMenu(string name, EntityPtr menu)
@@ -544,6 +680,7 @@ void GuiSystem::OpenMenu(EntityPtr menu)
 {
 	if (menu) {
 		m_currentMenu = menu;
+		m_handMenu = nullptr;
 		UpdateUI(m_outputRect.width, m_outputRect.height);
 	}
 }
@@ -555,111 +692,96 @@ bool GuiSystem::IsMenuOpen(string name)
 
 EntityPtr GuiSystem::CreateInventory()
 {
-	vector<EntityPtr> tabs;
-	EntityPtr gridContainer = GuiEM.NewPanel([] {
-		Style * style = new Style();
-		style->Justify = "center";
-		style->Height = "100%";
-		style->Height2 = "-48px";
-		style->Width = "100%";
-		style->Background = "rgba(1,1,1,0.2)";
-		return style;
-	}());
-	static string currentCategory = "All";
 	
-	for (string category : SM->GetSystem<ItemSystem>("Item")->GetItemCatagories()) {
+	EntityPtr inv = ImportMarkup("UI/inv.xml");
+	EntityPtr header = FindElementByIdRecursive(inv, "header");
+	EntityPtr body = FindElementByIdRecursive(inv, "body");
+
+	vector<EntityPtr> tabs;
+	EntityPtr tabTemplate = ImportMarkup("UI/inv_tab.xml");
+
+	
+	static string currentCategory = "All";
+	auto categories = SM->GetSystem<ItemSystem>("Item")->GetItemCatagories();
+	categories.insert("craft");
+	for (string category : categories) {
 		tabs.push_back([=] {
-			EntityPtr tab = GuiEM.NewButton(category, [=](GUI::Event evt) {
+			EntityPtr tab = GuiEM.Copy(tabTemplate);
+			GuiEM.AddText(tab, category);
+			GuiEM.AddEventHandler(tab,new GUI::EventHandler("Click", [=](GUI::Event evt) {
 				currentCategory = category;
-				SelectInventoryTab(gridContainer, category);
-			},"rgba(0,0,0,0)","rgba(1,1,1,0.5)","rgba(0,0,0.25,0.5)");
-			shared_ptr<Style> style = GetStyle(tab);
-			style->FontColor = "rgb(0,0,0)";
-			style->TextAlign = "center";
-			style->Height = "48px";
-			style->Width = "256px";
+				SelectInventoryTab(body, category);
+			}));
 			return tab;
 		}());
 	}
+	
 	// Initialize the current tab
-	SelectInventoryTab(gridContainer, currentCategory);
-	//****************************
-	return GuiEM.NewPanel([] {
-		Style * style = new Style();
-		return style;
-	}(), vector<EntityPtr>{
-		// Header
-		GuiEM.NewPanel(
-			[] {
-				Style * style = new Style();
-				style->Background = "rgba(1,1,1,0.5)";
-				style->FlowDirection = "row";
-				
-				style->Height = "48px";
-				return style;
-			}(), 
-			tabs
-		),
-		// Grid Container
-		gridContainer
-	});
+	SelectInventoryTab(body, currentCategory);
+	// Add the tabs to the header
+	GuiEM.AddChildren(header, tabs);
+	return inv;
 }
 
-EntityPtr GuiSystem::CreateInventoryGrid(vector<Components::InventoryItem> items)
+EntityPtr GuiSystem::CreateInventoryGrid(string gridTemplate,vector<Components::InventoryItem> items)
 {
-	static const int columnCount = 12; // Cells
-	static const int cellWidth = 128; // Pixels
+	auto invGrid = ImportMarkup(gridTemplate);
+	auto cellTemplate = ImportMarkup("UI/inv_item.xml");
 	vector<EntityPtr> rows;
-	int itemIndex = 0;
-	for (int rowIndex = 0; rowIndex < std::ceil((float)items.size() / (float)columnCount);rowIndex++) {
-		// Add a row
-		rows.push_back(GuiEM.NewPanel([] {
-			Style * style = new Style();
-			style->Height = to_string(cellWidth) + "px";
-			style->FlowDirection = "row";
-			return style;
-		}(), [&,this] {
-			vector<EntityPtr> row;
-			int column = 0;
-			while (column < columnCount && itemIndex < items.size()) {
-				Components::InventoryItem & item = items[itemIndex];
-				// Add a grid cell
-				row.push_back(
-					GuiEM.NewTextPanel(to_string(item.Quantity), [&] {
-					Style * style = new Style();
-					style->FontSize = "16px";
-					style->Font = "Impact";
-					style->AlignItems = "end";
-					style->VerticalTextAlign = "end";
-					style->TextAlign = "center";
-					style->FontColor = "rgb(1,1,1)";
-					style->Height = to_string(cellWidth) + "px";
-					style->Width = to_string(cellWidth) + "px";
-					style->Background = SM->GetSystem<ItemSystem>("Item")->TypeOf(item)->GetComponent<Item>("Item")->Sprite;
-					return style;
-				}())
-				);
-				itemIndex++;
-				column++;
-			}
-			return row;
-		}()));
+	for (auto & item : items) {
+		auto itemType = SM->GetSystem<ItemSystem>("Item")->TypeOf(item)->GetComponent<Item>("Item");
+		// Add a grid cell
+		auto cell = GuiEM.Copy(cellTemplate);
+		GuiEM.AddEventHandler(cell, new GUI::EventHandler("Click", [=](Event evt) {
+			m_handMenu = GuiEM.Copy(cell);
+		}));
+		// label
+		auto label = FindElementByIdRecursive(cell, "label");
+		if (label) GuiEM.AddText(label, itemType->Name);
+
+		GuiEM.AddText(cell, to_string(item.Quantity));
+		GetStyle(cell)->Background = itemType->Sprite;
+
+		GuiEM.AddChild(invGrid, cell);
 	}
-	return GuiEM.NewPanel([] {
-		Style * style = new Style();
-		style->FlowDirection = "column";
-		return style;
-	}(),rows);
+	return invGrid;
 }
 
 void GuiSystem::SelectInventoryTab(EntityPtr gridContainer, string category)
 {
-	ReplaceChildren(gridContainer, CreateInventoryGrid(
-		SM->GetSystem<ItemSystem>("Item")->ItemsInCategory(
-			SM->GetSystem<ItemSystem>("Item")->GetPlayerInventory(),
-			category
-		)
-	));
+	auto & itemSystem = SM->GetSystem<ItemSystem>("Item");
+	DeleteChildren(gridContainer);
+	EntityPtr openContainer = itemSystem->GetOpenContainer();
+	if (openContainer && openContainer != itemSystem->GetPlayer()) {
+		EntityPtr playerGrid = CreateInventoryGrid(
+			"UI/half_inv_grid.xml",
+			itemSystem->ItemsInCategory(
+				itemSystem->GetPlayerInventory(),
+				category
+			)
+		);
+		GuiEM.AddChild(gridContainer, playerGrid);
+		GuiEM.AddChild(gridContainer, ImportMarkup("UI/inv_divider.xml"));
+		EntityPtr containerGrid = CreateInventoryGrid(
+			"UI/half_inv_grid.xml",
+			itemSystem->ItemsInCategory(
+				itemSystem->GetInventoryOf(openContainer),
+				category
+			)
+		);
+		GuiEM.AddChild(gridContainer, containerGrid);
+	}
+	else {
+		EntityPtr grid = CreateInventoryGrid(
+			"UI/inv_grid.xml",
+			SM->GetSystem<ItemSystem>("Item")->ItemsInCategory(
+				SM->GetSystem<ItemSystem>("Item")->GetPlayerInventory(),
+				category
+			)
+		);
+		GuiEM.AddChild(gridContainer, grid);
+	}
+	
 	UpdateFlowRecursive(gridContainer, 1);
 }
 
@@ -717,13 +839,17 @@ void GuiSystem::UpdateFlowRecursive(EntityPtr entity,int zIndex)
 void GuiSystem::OnHover(EntityPtr entity, Event evt)
 {
 	if (m_activeElement != entity) {
-		if (m_hoverElement && m_hoverElement != entity) OnHoverOut(m_hoverElement,evt);
 		if (entity->HasComponents(GuiEM.ComponentMask("Style_Hover"))) {
 			shared_ptr<Style> hoverStyle = entity->GetComponent<Style>("Style_Hover");
 			shared_ptr<Sprite> sprite = GetSprite(entity);
 			UpdateSprite(entity, hoverStyle, sprite, sprite->Zindex);
 		}
-		m_hoverElement = entity;
+		m_hoverElements.insert(entity);
+	}
+	auto panel = entity->GetComponent<GUI::Panel>("Panel");
+	EntityPtr parent;
+	if (panel->EventBubbling && panel->Parent && GuiEM.Find(panel->Parent, parent)) {
+		OnHover(parent, evt);
 	}
 }
 
@@ -766,6 +892,11 @@ void GuiSystem::OnClick(EntityPtr entity, Event evt)
 	if (entity->HasComponents(GuiEM.ComponentMask("EventHandler_Click"))) {
 		shared_ptr<GUI::EventHandler> clickHandler = entity->GetComponent<GUI::EventHandler>("EventHandler_Click");
 		if (clickHandler) clickHandler->Callback(evt);
+	}
+	shared_ptr<GUI::Panel> panel = entity->GetComponent<GUI::Panel>("Panel");
+	EntityPtr parent;
+	if (panel && panel->EventBubbling && GuiEM.Find(panel->Parent, parent)) {
+		OnClick(parent, evt);
 	}
 	OnHover(entity,evt);
 }
@@ -841,7 +972,7 @@ void GuiSystem::UpdateSprite(EntityPtr entity, shared_ptr<Style> style, shared_p
 	sprite->BackgroundColor = Colors::Transparent;
 	sprite->BackgroundImage = "";
 	sprite->UseSourceRect = false;
-
+	sprite->Visible = style->GetVisibility() == VisibilityType::Visible;
 	switch (style->GetBackgroundType()) {
 	case ContentType::SpriteSheet: 
 		sprite->BackgroundImage = style->GetBackgroundImage();
@@ -906,32 +1037,99 @@ void GuiSystem::PositionChildren(EntityPtr parent)
 
 
 		FlowType flow = parentStyle->GetFlowDirection();
-		vector<shared_ptr<Sprite>> childSprites;
-		
+		AlignmentType alignment = parentStyle->GetAlignItems();
+		AlignmentType justify = parentStyle->GetJustify();
+
+		vector<shared_ptr<Sprite>> allChildSprites;
 		//----------------------------------------------------------------
-		// Get total childen length
+		// Calculate row rectangles
+		vector<vector<Rectangle>> rowChildren;
+		vector<Rectangle> rows;
+
+		vector<Rectangle> childRects;
+
 		int totalChildPrimary = 0;
 		int totalChildSecondary = 0;
+		int i = 0;
+		const int lastChildIndex = children->Entities.size() - 1;
 		for (auto & childID : children->Entities) {
 			EntityPtr child;
 			if (GuiEM.Find(childID, child)) {
 				auto childSprite = child->GetComponent<Sprite>("Sprite");
+				allChildSprites.push_back(childSprite);
 				if (childSprite) {
-					childSprites.push_back(childSprite);
-					childSprite->Rect = CalculateChildRect(parentRect, child->GetComponent<Style>("Style_Default"));
-					totalChildPrimary += GetPrimaryDimension(flow, childSprite->Rect);
-					int secondary = GetSecondaryDimension(flow, childSprite->Rect);
-					if (secondary > totalChildSecondary) {
-						totalChildSecondary = secondary;
+					Rectangle childRect = CalculateChildRect(parentRect, child->GetComponent<Style>("Style_Default"));
+					int primary = GetPrimaryDimension(flow, childRect);
+					if (i == lastChildIndex) {
+						childRects.push_back(childRect);
+						totalChildPrimary += primary;
+						totalChildSecondary = std::max(totalChildSecondary, GetSecondaryDimension(flow, childRect));
 					}
+					if (i == lastChildIndex || parentStyle->WrapItems && totalChildPrimary + primary >= GetPrimaryDimension(flow, parentRect)) {
+						// A new row
+						Rectangle rowRect;
+						SetDimension(flow, rowRect, totalChildPrimary, totalChildSecondary);
+						rows.push_back(rowRect);
+						rowChildren.push_back(childRects);
+						// reset variables
+						childRects.clear();
+						totalChildPrimary = 0;
+						totalChildSecondary = 0;
+					}
+					if (i != lastChildIndex) {
+						childRects.push_back(childRect);
+						totalChildPrimary += primary;
+						totalChildSecondary = std::max(totalChildSecondary, GetSecondaryDimension(flow, childRect));
+					}
+					
 				}
 			}
+			i++;
 		}
-		int primary = std::max(GetPrimaryDimension(flow, parentRect), totalChildPrimary);
-		int primaryBisector = primary / 2;
-		int secondary = std::max(GetSecondaryDimension(flow, parentRect),totalChildSecondary);
-		int secondaryBisector = secondary / 2;
+		//----------------------------------------------------------------
+		// Position rows
+		PositionRects(parentRect, rows, flow == FlowType::Column ? FlowType::Row : FlowType::Column, alignment, justify);
+		//----------------------------------------------------------------
+		// Position row children
+		vector<Rectangle> allChildRects;
+		int childIndex = 0;
+		for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+			PositionRects(rows[rowIndex], rowChildren[rowIndex], flow, justify, alignment);
+			for (auto & childRect : rowChildren[rowIndex]) {
+				allChildSprites[childIndex]->Rect = childRect;
+				childIndex++;
+			}
+			totalChildPrimary = std::max(totalChildPrimary, GetPrimaryPosition(flow,rows[rowIndex]) + GetPrimaryDimension(flow, rows[rowIndex]));
+			totalChildSecondary = std::max(totalChildSecondary, GetSecondaryPosition(flow, rows[rowIndex]) + GetSecondaryDimension(flow, rows[rowIndex]));
+		}
+		////----------------------------------------------------------------
+		//// Get total childen length
+		//int totalChildPrimary = 0;
+		//int totalChildSecondary = 0;
+		//for (auto & childID : children->Entities) {
+		//	EntityPtr child;
+		//	if (GuiEM.Find(childID, child)) {
+		//		auto childSprite = child->GetComponent<Sprite>("Sprite");
+		//		if (childSprite) {
+		//			childSprites.push_back(childSprite);
+		//			childSprite->Rect = CalculateChildRect(parentRect, child->GetComponent<Style>("Style_Default"));
+		//			totalChildPrimary += GetPrimaryDimension(flow, childSprite->Rect);
+		//			int secondary = GetSecondaryDimension(flow, childSprite->Rect);
+		//			if (secondary > totalChildSecondary) {
+		//				totalChildSecondary = secondary;
+		//			}
+		//		}
+		//	}
+		//}
+		//int primary = std::max(GetPrimaryDimension(flow, parentRect), totalChildPrimary);
+		//int primaryBisector = primary / 2;
+		//int secondary = std::max(GetSecondaryDimension(flow, parentRect),totalChildSecondary);
+		//int secondaryBisector = secondary / 2;
 
+		//----------------------------------------------------------------
+		// Get total dimensions of the content
+		//totalChildPrimary = maxChildPrimary;
+		//totalChildSecondary = rowOffset;
 		//----------------------------------------------------------------
 		// Scroll offsets
 		Vector2 contentSize = GetVector(flow, totalChildPrimary, totalChildSecondary);
@@ -944,50 +1142,75 @@ void GuiSystem::PositionChildren(EntityPtr parent)
 		if (contentSize.x <= parentSize.x) {
 			contentPos.x = parentPos.x;
 		}
-		// Create clipping rects
-		/*float topDiff = parentRect.y - contentPos.y;
-		float bottomDiff = (contentPos.y + contentSize.y) - (parentRect.y + parentRect.height);
-		float leftDiff = parentRect.x - contentPos.x;
-		float rightDiff = (contentSize.x + contentPos.x) - (parentRect.x + parentRect.width);*/
-
-		/*Rectangle clipTop = Rectangle(contentPos.x, contentPos.y, contentSize.x, topDiff);
-		Rectangle clipBottom = Rectangle(contentPos.x, parentRect.y + parentRect.height, contentSize.x, bottomDiff);
-		Rectangle clipLeft = Rectangle(contentPos.x, contentPos.y + topDiff, leftDiff, parentRect.height);
-		Rectangle clipRight = Rectangle(parentRect.x + parentRect.width, parentRect.y, rightDiff, parentRect.height);*/
+		// Create clipping rect
 		parentSprite->ClippingRects.clear();
-		/*AddRectIfValid(clipTop, parentSprite->ClippingRects);
-		AddRectIfValid(clipBottom, parentSprite->ClippingRects);
-		AddRectIfValid(clipLeft, parentSprite->ClippingRects);
-		AddRectIfValid(clipRight, parentSprite->ClippingRects);*/
 		if (parentStyle->GetOverflowY() == OverflowType::Scroll) {
 			AddRectIfValid(parentRect, parentSprite->ClippingRects);
 		}
-		//----------------------------------------------------------------
-		// Calculate primary axis offsets
-		int primaryOffset = GetPrimaryPosition(flow, parentRect);
-		switch (parentStyle->GetJustify()) {
-		case AlignmentType::Center: primaryOffset += (primaryBisector - totalChildPrimary / 2); break;
-		case AlignmentType::End: primaryOffset += (primary - totalChildPrimary); break;
-		}
-		int secondaryOffset = GetSecondaryPosition(flow, parentRect);
+		////----------------------------------------------------------------
+		//// Calculate primary axis offsets
+		//int primaryOffset = GetPrimaryPosition(flow, parentRect);
+		//switch (parentStyle->GetJustify()) {
+		//case AlignmentType::Center: primaryOffset += (primaryBisector - totalChildPrimary / 2); break;
+		//case AlignmentType::End: primaryOffset += (primary - totalChildPrimary); break;
+		//}
+		//int secondaryOffset = GetSecondaryPosition(flow, parentRect);
 		//----------------------------------------------------------------
 		// Apply offsets
-		for (auto & childSprite : childSprites) {
-			Rectangle & childRect = childSprite->Rect;
-			
-			// secondary
-			int childSecondaryOffset = secondaryOffset;
-			switch (parentStyle->GetAlignItems()) {
-			case AlignmentType::Center: childSecondaryOffset += (secondaryBisector - GetSecondaryDimension(flow, childRect) / 2);break;
-			case AlignmentType::End: childSecondaryOffset += (secondary - GetSecondaryDimension(flow, childRect));break;
-			}
-			SetPosition(flow, childRect, primaryOffset, childSecondaryOffset);
+		for (auto & childSprite : allChildSprites) {
+			//Rectangle & childRect = childSprite->Rect;
+			//
+			//// secondary
+			//int childSecondaryOffset = secondaryOffset;
+			//switch (parentStyle->GetAlignItems()) {
+			//case AlignmentType::Center: childSecondaryOffset += (secondaryBisector - GetSecondaryDimension(flow, childRect) / 2);break;
+			//case AlignmentType::End: childSecondaryOffset += (secondary - GetSecondaryDimension(flow, childRect));break;
+			//}
 			// apply scroll offsets
-			childRect.x += contentPos.x - parentRect.x;
-			childRect.y += contentPos.y - parentRect.y;
+			childSprite->Rect.x += contentPos.x - parentRect.x;
+			childSprite->Rect.y += contentPos.y - parentRect.y;
 			// move the primary offset past this child
-			primaryOffset += GetPrimaryDimension(flow, childRect);
+			//primaryOffset += GetPrimaryDimension(flow, childRect);
 		}
+	}
+}
+
+void GuiSystem::PositionRects(Rectangle & parent, vector<Rectangle> & children, FlowType flow, AlignmentType & justify, AlignmentType & alignment)
+{
+	//----------------------------------------------------------------
+	// Get total childen length
+	int totalChildPrimary = 0;
+	int totalChildSecondary = 0;
+	for (auto & child : children) {
+		totalChildPrimary += GetPrimaryDimension(flow, child);
+		totalChildSecondary = std::max(totalChildSecondary,GetSecondaryDimension(flow, child));
+	}
+	int primary = std::max(GetPrimaryDimension(flow, parent), totalChildPrimary);
+	int primaryBisector = primary / 2;
+	int secondary = std::max(GetSecondaryDimension(flow, parent), totalChildSecondary);
+	int secondaryBisector = secondary / 2;
+
+	//----------------------------------------------------------------
+	// Calculate primary axis offsets
+	int primaryOffset = GetPrimaryPosition(flow, parent);
+	switch (justify) {
+	case AlignmentType::Center: primaryOffset += (primaryBisector - totalChildPrimary / 2); break;
+	case AlignmentType::End: primaryOffset += (primary - totalChildPrimary); break;
+	}
+	int secondaryOffset = GetSecondaryPosition(flow, parent);
+	//----------------------------------------------------------------
+	// Apply offsets
+	for (auto & child : children) {
+
+		// secondary
+		int childSecondaryOffset = secondaryOffset;
+		switch (alignment) {
+		case AlignmentType::Center: childSecondaryOffset += (secondaryBisector - GetSecondaryDimension(flow, child) / 2);break;
+		case AlignmentType::End: childSecondaryOffset += (secondary - GetSecondaryDimension(flow, child));break;
+		}
+		SetPosition(flow, child, primaryOffset, childSecondaryOffset);
+		// move the primary offset past this child
+		primaryOffset += GetPrimaryDimension(flow, child);
 	}
 }
 
@@ -1023,6 +1246,14 @@ void GuiSystem::SetPosition(FlowType flow, Rectangle & rect, int primary, int se
 	switch (flow) {
 	case FlowType::Column: rect.x = secondary; rect.y = primary;break;
 	case FlowType::Row: rect.x = primary; rect.y = secondary;break;
+	}
+}
+
+void GuiSystem::SetDimension(FlowType flow, Rectangle & rect, int primary, int secondary)
+{
+	switch (flow) {
+	case FlowType::Column: rect.width = secondary; rect.height = primary;break;
+	case FlowType::Row: rect.width = primary; rect.height = secondary;break;
 	}
 }
 
@@ -1240,10 +1471,16 @@ void GuiSystem::DeleteRecursive(EntityPtr & parent)
 	GuiEM.DeleteEntity(parent);
 }
 
-void GuiSystem::ReplaceChildren(EntityPtr parent, EntityPtr child)
+void GuiSystem::ReplaceChildren(EntityPtr parent, vector<EntityPtr> children)
 {
 	DeleteChildren(parent);
-	GuiEM.AddChildren(parent, vector<EntityPtr>{child});
+	GuiEM.AddChildren(parent, children);
+}
+
+void GuiSystem::ReplaceChild(EntityPtr parent, EntityPtr child)
+{
+	DeleteChildren(parent);
+	GuiEM.AddChild(parent, child);
 }
 
 shared_ptr<Sprite> GuiSystem::GetSprite(EntityPtr entity)

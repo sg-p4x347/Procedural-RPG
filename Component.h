@@ -21,7 +21,8 @@ namespace Components {
 		unsigned int ID;
 		// Component name
 		virtual string GetName() = 0;
-
+		// Copy
+		virtual shared_ptr<Components::Component> Copy(shared_ptr<Components::Component> source);
 		// Inherited via ISerialization
 		virtual void Import(std::ifstream & ifs) override;
 		virtual void Export(std::ofstream & ofs) override;

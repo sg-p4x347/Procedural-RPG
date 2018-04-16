@@ -23,7 +23,24 @@ std::unordered_set<string> ItemSystem::GetItemCatagories()
 
 shared_ptr<Components::Inventory> ItemSystem::GetPlayerInventory()
 {
-	return EM->Player()->GetComponent<Components::Inventory>("Inventory");
+	return GetInventoryOf(EM->Player());
+}
+
+shared_ptr<Components::Inventory> ItemSystem::GetInventoryOf(EntityPtr entity)
+{
+	return entity->GetComponent<Components::Inventory>("Inventory");
+}
+
+EntityPtr ItemSystem::GetOpenContainer()
+{
+	EntityPtr container;
+	EM->Find(EM->Player()->GetComponent<Components::Player>("Player")->OpenContainer, container);
+	return container;
+}
+
+EntityPtr ItemSystem::GetPlayer()
+{
+	return EM->Player();
 }
 
 EntityPtr ItemSystem::TypeOf(Components::InventoryItem & item)
@@ -71,13 +88,33 @@ vector<Components::InventoryItem> ItemSystem::ItemsInCategory(shared_ptr<Compone
 	return items;
 }
 
+EntityPtr ItemSystem::NewContainer(Vector3 position, Vector3 rotation, string model)
+{
+	EntityPtr entity = EM->NewEntity();
+
+	entity->AddComponent(
+		new Components::Position(position, rotation));
+	entity->AddComponent(
+		new Components::Model(model, "Default"));
+	entity->AddComponent(
+		new Components::Inventory());
+	entity->AddComponent(
+		new Components::Action(Vector3(3.f, 3.f, 3.f), EventTypes::Item_OpenInventory, entity->ID()));
+	return entity;
+}
+
 void ItemSystem::RegisterHandlers()
 {
-	IEventManager::RegisterHandler(EventTypes::Item_OpenInventory, std::function<void(EntityPtr)>([this](EntityPtr entity) {
-		OpenInventory(entity);
+	IEventManager::RegisterHandler(EventTypes::Item_OpenInventory, std::function<void(EntityPtr,EntityPtr)>([this](EntityPtr actor,EntityPtr target) {
+		if (target && actor) {
+			OpenInventory(target);
+			
+		}
 	}));
-	IEventManager::RegisterHandler(EventTypes::Item_CloseInventory, std::function<void(EntityPtr)>([this](EntityPtr entity) {
-		CloseInventory(entity);
+	IEventManager::RegisterHandler(EventTypes::Item_CloseInventory, std::function<void(EntityPtr,EntityPtr)>([this](EntityPtr actor, EntityPtr target) {
+		if (target && actor) {
+			CloseInventory(target);
+		}
 	}));
 	IEventManager::RegisterHandler(EventTypes::Item_Transfer, std::function<void(
 		shared_ptr<Components::Inventory>,

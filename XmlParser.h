@@ -4,10 +4,18 @@ class XmlParser
 public:
 	XmlParser();
 	XmlParser(istream & filestream);
+
+	string & GetTag();
+	map<string, string> & GetAttributes();
+	vector<shared_ptr<XmlParser>> & GetChildren();
+	
+
 private:
-	vector<shared_ptr<XmlParser>> m_children;
 	string m_tag;
 	map<string, string> m_attributes;
+	vector<shared_ptr<XmlParser>> m_children;
+	
+	
 
 
 };

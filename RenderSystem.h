@@ -98,7 +98,7 @@ private:
 	void SpriteBatchDraw(shared_ptr<Sprite> sprite);
 	map<string,shared_ptr<SpriteFont>> m_font;
 	shared_ptr<SpriteFont> GetFont(string path,int size);
-	void DrawText(string text,string font, Vector2 position,int size,SimpleMath::Color color=SimpleMath::Color(Colors::Black));
+	void DrawText(string text,string font, Vector2 position,int size,SimpleMath::Color color=SimpleMath::Color(Colors::Black),float layer = 0.f);
 	void SpriteBatchEnd();
 	// clipping rasterizer state
 	ID3D11RasterizerState * m_scissorState;

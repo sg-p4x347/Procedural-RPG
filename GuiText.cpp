@@ -14,4 +14,8 @@ namespace GUI {
 	{
 		return "Text";
 	}
+	shared_ptr<Components::Component> Text::Copy(shared_ptr<Components::Component> source)
+	{
+		return make_shared<GUI::Text>(*dynamic_pointer_cast<GUI::Text>(source));
+	}
 }

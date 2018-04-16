@@ -198,6 +198,11 @@ Filesystem::path AssetManager::FullPath(string path, bool procedural, string ext
 	return Filesystem::path((procedural ? m_proceduralDir : m_authoredDir) / (path + extension));
 }
 
+Filesystem::path AssetManager::FullPath(string path)
+{
+	return Filesystem::path(m_authoredDir / path);
+}
+
 Filesystem::path AssetManager::AppendPath(string path, string type)
 {
 	return Filesystem::path( m_authoredDir / type / path);
@@ -306,7 +311,7 @@ AssetEntityManager * AssetManager::GetStaticEM()
 
 shared_ptr<XmlParser> AssetManager::GetXml(string path)
 {
-	ifstream ifs = ifstream(FullPath(path, false, ".xml"));
+	ifstream ifs = ifstream(FullPath(path));
 	return make_shared<XmlParser>(ifs);
 }
 

@@ -2,11 +2,11 @@
 #include "GuiPanel.h"
 
 namespace GUI {
-	Panel::Panel() : Parent(0), ElementID("")
+	Panel::Panel() : Panel::Panel("")
 	{
 	}
 
-	Panel::Panel(string id) : Parent(0), ElementID(id)
+	Panel::Panel(string id) : Parent(0), ElementID(id), EventBubbling(false)
 	{
 	}
 
@@ -18,5 +18,9 @@ namespace GUI {
 	string Panel::GetName()
 	{
 		return "Panel";
+	}
+	shared_ptr<Components::Component> Panel::Copy(shared_ptr<Components::Component> source)
+	{
+		return make_shared<GUI::Panel>(*dynamic_pointer_cast<GUI::Panel>(source));
 	}
 }

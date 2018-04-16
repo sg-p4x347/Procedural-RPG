@@ -9,6 +9,10 @@ public:
 	//----------------------------------------------------------------
 	// Queries
 	shared_ptr<Components::Inventory> GetPlayerInventory();
+	shared_ptr<Components::Inventory> GetInventoryOf(EntityPtr entity);
+	EntityPtr GetOpenContainer();
+	EntityPtr GetPlayer();
+
 	EntityPtr TypeOf(Components::InventoryItem & item);
 	//----------------------------------------------------------------
 	// Modifiers
@@ -18,7 +22,9 @@ public:
 	// Categorization
 	std::unordered_set<string> GetItemCatagories();
 	vector<Components::InventoryItem> ItemsInCategory(shared_ptr<Components::Inventory> inventory, string category);
-
+	//----------------------------------------------------------------
+	// Entity Factories
+	EntityPtr NewContainer(Vector3 position, Vector3 rotation, string model);
 private:
 	//----------------------------------------------------------------
 	// Helpers

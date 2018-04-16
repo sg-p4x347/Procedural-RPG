@@ -23,7 +23,8 @@ namespace GUI {
 		string textAlign,
 		string verticalTextAlign,
 
-		string visibility
+		string visibility,
+		bool wrapItems
 	) : Delegate::Delegate(selector) {
 		Background = background;
 		FontColor = fontColor;
@@ -44,6 +45,7 @@ namespace GUI {
 		VerticalTextAlign = verticalTextAlign;
 
 		Visibility = visibility;
+		WrapItems = wrapItems;
 	}
 
 	Style::~Style()
@@ -266,5 +268,9 @@ namespace GUI {
 	string Style::GetDiscreteName()
 	{
 		return "Style";
+	}
+	shared_ptr<Components::Component> Style::Copy(shared_ptr<Components::Component> source)
+	{
+		return make_shared<GUI::Style>(*dynamic_pointer_cast<GUI::Style>(source));
 	}
 }

@@ -5,6 +5,7 @@
 class Entity {
 public:
 	Entity(const unsigned int & id, const unsigned long & mask,BaseEntityManager * entityManager);
+	EntityPtr Copy();
 	//----------------------------------------------------------------
 	// Getters
 	unsigned int ID();
@@ -23,7 +24,10 @@ public:
 	}
 	template <typename CompType>
 	inline shared_ptr<CompType> GetComponent(string name) {
-		unsigned long componentMask = m_entityManager->ComponentMask(name);
+		return GetComponent<CompType>(m_entityManager->ComponentMask(name));
+	}
+	template <typename CompType>
+	inline shared_ptr<CompType> GetComponent(unsigned long componentMask) {
 		if (HasComponents(componentMask)) {
 			if (m_components.find(componentMask) != m_components.end()) {
 				return dynamic_pointer_cast<CompType>(m_components[componentMask]);
@@ -36,11 +40,7 @@ public:
 			return nullptr;
 		}
 	}
-	//template <typename CompType>
-	//inline shared_ptr<CompType> GetComponent() {
-	//	// get the mask
-	//	
-	//}
+	vector<shared_ptr<Components::Component>> GetLoadedComponents();
 	vector<shared_ptr<Components::Component>> GetComponents();
 	//----------------------------------------------------------------
 	// Component addition
