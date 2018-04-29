@@ -5,10 +5,18 @@
 #include "pch.h"
 #include "Game.h"
 #include <fcntl.h>
+#ifndef HID_USAGE_PAGE_GENERIC
+#define HID_USAGE_PAGE_GENERIC         ((USHORT) 0x01)
+#endif
+#ifndef HID_USAGE_GENERIC_MOUSE
+#define HID_USAGE_GENERIC_MOUSE        ((USHORT) 0x02)
+#endif
+RAWINPUTDEVICE Rid[1];
 
 using namespace DirectX;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
 void BindStdHandlesToConsole();
 // Entry point
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
@@ -21,6 +29,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         return 1;
 	BindStdHandlesToConsole();
 
+	
+	
     // Register class and create window
     {
         // Register class
@@ -61,6 +71,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         if (!hwnd)
             return 1;
 		
+		Rid[0].usUsagePage = HID_USAGE_GENERIC_MOUSE;
+		Rid[0].usUsage = RIDEV_NOLEGACY;
+		Rid[0].dwFlags = RIDEV_INPUTSINK;
+		Rid[0].hwndTarget = hwnd;
+		RegisterRawInputDevices(Rid, 1, sizeof(Rid[0]));
         //ShowWindow(hwnd, nCmdShow);
         // TODO: Change nCmdShow to SW_SHOWMAXIMIZED to default to fullscreen.
 		ShowWindow(hwnd, SW_SHOWMAXIMIZED);
@@ -229,6 +244,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
 	case WM_INPUT:
+	{
+		UINT dwSize = 40;
+		static BYTE lpb[40];
+
+		GetRawInputData((HRAWINPUT)lParam, RID_INPUT,
+			lpb, &dwSize, sizeof(RAWINPUTHEADER));
+
+		RAWINPUT* raw = (RAWINPUT*)lpb;
+		if (raw->header.dwType == RIM_TYPEMOUSE)
+		{
+			int xPosRelative = raw->data.mouse.lLastX;
+			int yPosRelative = raw->data.mouse.lLastY;
+			if (xPosRelative > 0 || yPosRelative > 0) {
+				auto test = 9;
+			}
+			Game::Get().MousePos = Vector2((float)xPosRelative, (float)yPosRelative);
+		}
+	}
+	break;
 	case WM_MOUSEMOVE:
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
@@ -240,6 +274,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_XBUTTONDOWN:
 	case WM_XBUTTONUP:
 	case WM_MOUSEHOVER:
+		
+		
 		Mouse::ProcessMessage(message, wParam, lParam);
 		break;
 

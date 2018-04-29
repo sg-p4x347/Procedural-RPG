@@ -730,6 +730,12 @@
     <MeshContentTask Include="Assets\Models\Crate_0.fbx">
       <Filter>Assets\Models</Filter>
     </MeshContentTask>
+    <MeshContentTask Include="Assets\Models\Boulder_0.fbx">
+      <Filter>Assets\Models</Filter>
+    </MeshContentTask>
+    <MeshContentTask Include="Assets\Models\Iron_Boulder_0.fbx">
+      <Filter>Assets\Models</Filter>
+    </MeshContentTask>
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico">

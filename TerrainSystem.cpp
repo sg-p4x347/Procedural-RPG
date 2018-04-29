@@ -203,8 +203,7 @@ void TerrainSystem::Generate()
 	// TEMP
 	SM->GetSystem<ItemSystem>("Item")->NewContainer(Vector3(32, TerrainMap->Height(32, 32), 32), Vector3::Zero, "Crate");
 
-
-	/*Utility::OutputLine("Generating Buildings...");
+	Utility::OutputLine("Generating Buildings...");
 	Rectangle footprint = Rectangle(ProUtil::RandWithin(32, 200), ProUtil::RandWithin(32, 200), ProUtil::RandWithin(6,10), ProUtil::RandWithin(6, 10));
 	Rectangle flattenArea = Rectangle(footprint.x - 1, footprint.y - 1, footprint.width + 2, footprint.height + 2);
 	Rectangle cacheArea = Rectangle(flattenArea.x - 10, flattenArea.y - 10, flattenArea.width + 20, flattenArea.height + 20);
@@ -213,7 +212,7 @@ void TerrainSystem::Generate()
 	float height = Flatten(cache, flattenArea,10);
 	SM->GetSystem<BuildingSystem>("Building")->CreateBuilding(Vector3(footprint.x, height + 0.1f, footprint.y), Rectangle(0, 0, footprint.width, footprint.height), "residential");
 	Save(cache);
-	*/
+	
 	
 }
 

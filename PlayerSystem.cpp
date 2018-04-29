@@ -30,15 +30,16 @@ void PlayerSystem::Update(double & elapsed)
 	shared_ptr<Components::Movement> movement = EM->Player()->GetComponent<Components::Movement>("Movement");
 	shared_ptr<Components::Player> playerComp = GetPlayerComp();
 	// mouse
-	auto mouseState = Game::MouseState;
+	//auto mouseState = m_mouse->GetState();
 	auto keyboardState = Game::KeyboardState;
-	if (mouseState.positionMode == Mouse::MODE_RELATIVE) {
-		SimpleMath::Vector2 delta = SimpleMath::Vector2(float(mouseState.x), float(mouseState.y))*2.f;
-		static const float MOUSE_GAIN = 1.f;
+	if (true /*mouseState.positionMode == Mouse::MODE_RELATIVE*/) {
+		Vector2 delta = Game::Get().MousePos;
+		//SimpleMath::Vector2 delta = SimpleMath::Vector2(float(mouseState.x), float(mouseState.y));
+		static const float MOUSE_GAIN = 0.016f;
 		//movement->AngularVelocity.y = -delta.y * MOUSE_GAIN;
 		//movement->AngularVelocity.x = -delta.x * MOUSE_GAIN;
-		position->Rot.y -= delta.y * elapsed;
-		position->Rot.x -= delta.x * elapsed;
+		position->Rot.y -= delta.y * MOUSE_GAIN;
+		position->Rot.x -= delta.x * MOUSE_GAIN;
 
 		// limit pitch to straight up or straight down
 		// with a little fudge-factor to avoid gimbal lock

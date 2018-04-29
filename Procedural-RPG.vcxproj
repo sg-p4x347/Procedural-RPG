@@ -433,11 +433,13 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <MeshContentTask Include="Assets\Models\Boulder_0.fbx" />
     <MeshContentTask Include="Assets\Models\Building\models-building-corner0_0.fbx" />
     <MeshContentTask Include="Assets\Models\Building\models-building-floor0_0.fbx" />
     <MeshContentTask Include="Assets\Models\Building\models-building-wall0_0.fbx" />
     <MeshContentTask Include="Assets\Models\Crate_0.fbx" />
     <MeshContentTask Include="Assets\Models\Cube.fbx" />
+    <MeshContentTask Include="Assets\Models\Iron_Boulder_0.fbx" />
     <MeshContentTask Include="Assets\Models\Tree.fbx">
       <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)/Assets%(Filename).cmo</ContentOutput>
     </MeshContentTask>

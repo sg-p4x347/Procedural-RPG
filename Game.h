@@ -36,6 +36,8 @@ public:
 	static DirectX::Mouse::ButtonStateTracker MouseTracker;
 	static DirectX::Keyboard::State KeyboardState;
 	static DirectX::Keyboard::KeyboardStateTracker KeyboardTracker;
+
+	static Vector2 MousePos;
 private:
 	Game();
 	//----------------------------------------------------------------

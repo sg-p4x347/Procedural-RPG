@@ -99,19 +99,33 @@ void RenderSystem::Render()
 		}
 
 		// Render all Components::Model with the effect
-		if (m_Models.find(effectName) != m_Models.end()) {
-			for (auto & model : m_Models[effectName]) {
-				EntityPtr entity;
-				if (EM->Find(model->ID, entity)) {
-					auto position = entity->GetComponent<Components::Position>("Position");
-					auto dxModel = AssetManager::Get()->GetModel(model->Path,Vector3::Distance(EM->PlayerPos()->Pos,position->Pos),model->Procedural);
-					
-					RenderModel(dxModel,effect, position->Pos, position->Rot, model->BackfaceCulling);
-					
-				}
-			}
-		}
+		//if (m_Models.find(effectName) != m_Models.end()) {
+		//	for (auto & model : m_Models[effectName]) {
+		//		EntityPtr entity;
+		//		if (EM->Find(model->ID, entity)) {
+		//			auto position = entity->GetComponent<Components::Position>("Position");
+		//			auto dxModel = AssetManager::Get()->GetModel(model->Path,Vector3::Distance(EM->PlayerPos()->Pos,position->Pos),model->Procedural);
+		//			
+		//			RenderModel(dxModel,effect, position->Pos, position->Rot, false/*model->BackfaceCulling*/);
+		//			
+		//		}
+		//	}
+		//}
 		
+	}
+	for (auto & model : m_models) {
+		EntityPtr entity;
+		shared_ptr<DirectX::IEffect> effect;
+		if (model->Effect != "") {
+			AssetManager::Get()->GetEffect(model->Effect, effect);
+		}
+		if (EM->Find(model->ID, entity)) {
+			auto position = entity->GetComponent<Components::Position>("Position");
+			auto dxModel = AssetManager::Get()->GetModel(model->Path, Vector3::Distance(EM->PlayerPos()->Pos, position->Pos), model->Procedural);
+
+			RenderModel(dxModel, effect, position->Pos, position->Rot, model->BackfaceCulling);
+
+		}
 	}
 	// Render all buildings
 	for (EntityPtr & building : EM->FindEntities("Building")) {
@@ -122,6 +136,37 @@ void RenderSystem::Render()
 		RenderCompositeModel(dxModel, position->Pos, position->Rot, true);
 	}
 }
+//void RenderSystem::SyncEntities()
+//{
+//	//std::thread([=] {
+//	if (EM && EM->Player()) {
+//		std::map<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>> vbos;
+//		for (auto & entity : EM->FindEntities(m_VBOmask)) {
+//			shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo = entity->GetComponent<Components::PositionNormalTextureTangentColorVBO>("PositionNormalTextureTangentColorVBO");
+//			if (vbos.find(vbo->Effect) == vbos.end()) {
+//				vbos.insert(std::pair<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>>(vbo->Effect, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>()));
+//			}
+//			vbos[vbo->Effect].push_back(vbo);
+//		}
+//		m_mutex.lock();
+//		m_VBOs = vbos;
+//		m_mutex.unlock();
+//		std::map<string, vector<shared_ptr<Components::Model>>> models;
+//		for (auto & entity : EM->FindEntitiesInRange(m_ModelMask, EM->PlayerPos()->Pos, 64)) {
+//			//for (auto & entity : EM->FindEntities(m_ModelMask)) {
+//			shared_ptr<Components::Model> model = entity->GetComponent<Components::Model>("Model");
+//			if (models.find(model->Effect) == models.end()) {
+//				models.insert(std::pair<string, vector<shared_ptr<Components::Model>>>(model->Effect, vector<shared_ptr<Components::Model>>()));
+//			}
+//			models[model->Effect].push_back(model);
+//		}
+//		m_mutex.lock();
+//		m_Models = models;
+//		m_mutex.unlock();
+//
+//		//}).detach();
+//	}
+//}
 void RenderSystem::SyncEntities()
 {
 	//std::thread([=] {
@@ -137,17 +182,14 @@ void RenderSystem::SyncEntities()
 		m_mutex.lock();
 		m_VBOs = vbos;
 		m_mutex.unlock();
-		std::map<string, vector<shared_ptr<Components::Model>>> models;
+		std::vector<shared_ptr<Components::Model>> models;
 		for (auto & entity : EM->FindEntitiesInRange( m_ModelMask,EM->PlayerPos()->Pos,64)) {
 		//for (auto & entity : EM->FindEntities(m_ModelMask)) {
 			shared_ptr<Components::Model> model = entity->GetComponent<Components::Model>("Model");
-			if (models.find(model->Effect) == models.end()) {
-				models.insert(std::pair<string, vector<shared_ptr<Components::Model>>>(model->Effect, vector<shared_ptr<Components::Model>>()));
-			}
-			models[model->Effect].push_back(model);
+			models.push_back(model);
 		}
 		m_mutex.lock();
-		m_Models = models;
+		m_models = models;
 		m_mutex.unlock();
 
 		//}).detach();
@@ -157,6 +199,8 @@ void RenderSystem::SetViewport(int width, int height)
 {
 	m_outputWidth = std::max(width, 1);
 	m_outputHeight = std::max(height, 1);
+	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f),
+		float(width) / float(height), 0.1f, 8000.f);
 	CreateResources();
 }
 
@@ -326,13 +370,13 @@ void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model,shared_ptr<IEffe
 		if (effectsChanged) model->Modified();
 
 		// Draw Model with custom effect override
-		//auto imatrices = dynamic_cast<IEffectMatrices*>(effect.get());
-		//if (imatrices)
-		//{
-		//	imatrices->SetWorld(world);
-		//	imatrices->SetView(m_viewMatrix);
-		//	imatrices->SetProjection(m_projMatrix);
-		//}
+		auto imatrices = dynamic_cast<IEffectMatrices*>(effect.get());
+		if (imatrices)
+		{
+			imatrices->SetWorld(world);
+			imatrices->SetView(m_viewMatrix);
+			imatrices->SetProjection(m_projMatrix);
+		}
 
 		//size_t count = 0;
 		//for (auto mit = model->meshes.cbegin(); mit != model->meshes.cend(); ++mit)
@@ -361,8 +405,9 @@ void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model,shared_ptr<IEffe
 		{
 			auto mesh = it->get();
 			assert(mesh != 0);
+			
 			RenderModelMesh(mesh, world, backfaceCulling);
-
+			
 		}
 	//}
 	

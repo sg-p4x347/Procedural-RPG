@@ -20,7 +20,7 @@ DirectX::Mouse::State Game::MouseState = DirectX::Mouse::State();
 DirectX::Keyboard::State Game::KeyboardState = DirectX::Keyboard::State();
 DirectX::Mouse::ButtonStateTracker Game::MouseTracker = DirectX::Mouse::ButtonStateTracker();
 DirectX::Keyboard::KeyboardStateTracker Game::KeyboardTracker = DirectX::Keyboard::KeyboardStateTracker();
-
+Vector2 Game::MousePos = Vector2::Zero;
 
 Game::Game()
 {
