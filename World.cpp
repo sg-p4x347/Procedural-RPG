@@ -154,3 +154,8 @@ bool World::Load()
 	m_systemManager.Initialize();
 	return true;
 }
+
+void World::SetMousePos(Vector2 pos)
+{
+	m_systemManager.GetSystem<PlayerSystem>("Player")->SetMousePos(pos);
+}

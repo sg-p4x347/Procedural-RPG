@@ -37,6 +37,19 @@ void MovementSystem::Update(double & elapsed)
 			position->Pos += movement->Velocity * elapsed;
 
 			position->Rot += movement->AngularVelocity * elapsed;
+			float limit = XM_PI / 2.0f - 0.01f;
+			position->Rot.y = std::max(-limit, position->Rot.y);
+			position->Rot.y = std::min(limit, position->Rot.y);
+
+			// keep longitude in sane range by wrapping
+			if (position->Rot.x > XM_PI)
+			{
+				position->Rot.x -= XM_PI * 2.0f;
+			}
+			else if (position->Rot.x < -XM_PI)
+			{
+				position->Rot.x += XM_PI * 2.0f;
+			}
 		}
 	//}, m_componentMask, m_componentMask));
 	

@@ -32,6 +32,9 @@ public:
 	virtual string Name() override;
 	virtual void Update(double & elapsed) override;
 	//----------------------------------------------------------------
+	// Input
+	void SetMousePos(Vector2 pos);
+	//----------------------------------------------------------------
 	// Generation
 	void CreatePlayer();
 

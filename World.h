@@ -24,7 +24,8 @@ public:
 	void Generate(int seed);
 	// Loads this world from file
 	bool Load();
-	
+	// Input
+	void SetMousePos(Vector2 pos);
 
 private:
 	//----------------------------------------------------------------

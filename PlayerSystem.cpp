@@ -36,26 +36,17 @@ void PlayerSystem::Update(double & elapsed)
 		Vector2 delta = Game::Get().MousePos;
 		//SimpleMath::Vector2 delta = SimpleMath::Vector2(float(mouseState.x), float(mouseState.y));
 		static const float MOUSE_GAIN = 0.016f;
-		//movement->AngularVelocity.y = -delta.y * MOUSE_GAIN;
-		//movement->AngularVelocity.x = -delta.x * MOUSE_GAIN;
-		position->Rot.y -= delta.y * MOUSE_GAIN;
-		position->Rot.x -= delta.x * MOUSE_GAIN;
+		/*if (movement->AngularVelocity.y > 0) {
+			movement->AngularVelocity.y -= 0.5;
+		}*/
+		//movement->AngularVelocity.y;
+		/*position->Rot.y -= delta.y * elapsed;
+		position->Rot.x -= delta.x * elapsed;*/
+		//Game::Get().MousePos = Vector2::Zero;
 
 		// limit pitch to straight up or straight down
 		// with a little fudge-factor to avoid gimbal lock
-		float limit = XM_PI / 2.0f - 0.01f;
-		position->Rot.y = std::max(-limit, position->Rot.y);
-		position->Rot.y = std::min(limit, position->Rot.y);
-
-		// keep longitude in sane range by wrapping
-		if (position->Rot.x > XM_PI)
-		{
-			position->Rot.x -= XM_PI * 2.0f;
-		}
-		else if (position->Rot.x < -XM_PI)
-		{
-			position->Rot.x += XM_PI * 2.0f;
-		}
+		
 	}
 	//----------------------------------------------------------------
 	// Directional input
@@ -123,6 +114,19 @@ void PlayerSystem::Update(double & elapsed)
 			break;
 		}
 	}
+}
+
+void PlayerSystem::SetMousePos(Vector2 pos)
+{
+	shared_ptr<Components::Movement> movement = EM->Player()->GetComponent < Components::Movement>("Movement");
+	//if (std::abs(pos.y) != 0)
+		movement->AngularVelocity.y = -pos.y;
+	//if (std::abs(pos.x) != 0)
+		movement->AngularVelocity.x = -pos.x;
+
+	/*if (std::abs(pos.x) == 0 && std::abs(pos.y) == 0) {
+		auto test = 0;
+	}*/
 }
 
 void PlayerSystem::CreatePlayer()

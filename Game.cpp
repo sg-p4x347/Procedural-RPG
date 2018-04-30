@@ -22,6 +22,13 @@ DirectX::Mouse::ButtonStateTracker Game::MouseTracker = DirectX::Mouse::ButtonSt
 DirectX::Keyboard::KeyboardStateTracker Game::KeyboardTracker = DirectX::Keyboard::KeyboardStateTracker();
 Vector2 Game::MousePos = Vector2::Zero;
 
+void Game::SetMousePos(Vector2 pos)
+{
+	if (m_world) {
+		m_world->SetMousePos(pos);
+	}
+}
+
 Game::Game()
 {
 	m_config = JsonParser(ifstream("Config/game.json"));

@@ -71,10 +71,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         if (!hwnd)
             return 1;
 		
-		Rid[0].usUsagePage = HID_USAGE_GENERIC_MOUSE;
-		Rid[0].usUsage = RIDEV_NOLEGACY;
-		Rid[0].dwFlags = RIDEV_INPUTSINK;
-		Rid[0].hwndTarget = hwnd;
+		Rid[0].usUsagePage = 0x01;
+		Rid[0].usUsage = 0x02;
+		Rid[0].dwFlags = RIDEV_NOLEGACY;   // adds HID mouse and also ignores legacy mouse messages
+		Rid[0].hwndTarget = 0;
 		RegisterRawInputDevices(Rid, 1, sizeof(Rid[0]));
         //ShowWindow(hwnd, nCmdShow);
         // TODO: Change nCmdShow to SW_SHOWMAXIMIZED to default to fullscreen.
@@ -93,12 +93,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	while (run) {
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
-			if (WM_QUIT == msg.message) {
-				run = false;
-			}
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-			
+		}
+		if (WM_QUIT == msg.message) {
+			run = false;
 		}
 		Game::Get().Tick();
 	}
@@ -121,8 +120,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     static bool s_fullscreen = false;
     // TODO: Set s_fullscreen to true if defaulting to fullscreen.
 
-	auto & game = Game::Get();reinterpret_cast<Game*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-
+	auto & game = Game::Get();
     switch (message)
     {
     case WM_PAINT:
@@ -245,24 +243,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 	case WM_INPUT:
 	{
-		UINT dwSize = 40;
-		static BYTE lpb[40];
-
+		UINT dwSize = 48;
+		static BYTE lpb[48];
+		
 		GetRawInputData((HRAWINPUT)lParam, RID_INPUT,
 			lpb, &dwSize, sizeof(RAWINPUTHEADER));
 
 		RAWINPUT* raw = (RAWINPUT*)lpb;
 		if (raw->header.dwType == RIM_TYPEMOUSE)
 		{
-			int xPosRelative = raw->data.mouse.lLastX;
-			int yPosRelative = raw->data.mouse.lLastY;
-			if (xPosRelative > 0 || yPosRelative > 0) {
-				auto test = 9;
-			}
-			Game::Get().MousePos = Vector2((float)xPosRelative, (float)yPosRelative);
+			float xPosRelative = (float)raw->data.mouse.lLastX;
+			float yPosRelative = (float)raw->data.mouse.lLastY;
+			Game::Get().SetMousePos(Vector2(xPosRelative, yPosRelative));
 		}
+		break;
 	}
-	break;
+	
 	case WM_MOUSEMOVE:
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
@@ -324,7 +320,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		}
     }
-
+	
     return DefWindowProc(hWnd, message, wParam, lParam);
 }
 // maximum mumber of lines the output console should have
