@@ -456,6 +456,7 @@
     <Xml Include="Assets\UI\half_inv_grid.xml">
       <SubType>Designer</SubType>
     </Xml>
+    <Xml Include="Assets\UI\hud.xml" />
     <Xml Include="Assets\UI\inv.xml" />
     <Xml Include="Assets\UI\inv_divider.xml" />
     <Xml Include="Assets\UI\inv_grid.xml" />

@@ -5,6 +5,7 @@
 #include "pch.h"
 #include "Game.h"
 #include <fcntl.h>
+#include <chrono>
 #ifndef HID_USAGE_PAGE_GENERIC
 #define HID_USAGE_PAGE_GENERIC         ((USHORT) 0x01)
 #endif
@@ -119,7 +120,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     static bool s_minimized = false;
     static bool s_fullscreen = false;
     // TODO: Set s_fullscreen to true if defaulting to fullscreen.
-
+	
 	auto & game = Game::Get();
     switch (message)
     {
@@ -255,6 +256,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			float xPosRelative = (float)raw->data.mouse.lLastX;
 			float yPosRelative = (float)raw->data.mouse.lLastY;
 			Game::Get().SetMousePos(Vector2(xPosRelative, yPosRelative));
+			
 		}
 		break;
 	}
@@ -273,6 +275,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		
 		
 		Mouse::ProcessMessage(message, wParam, lParam);
+		auto mouse = Mouse::Get().GetState();
+		//Game::Get().SetMousePos(Vector2(mouse.x, mouse.y));
+		
 		break;
 
 	case WM_KEYDOWN:

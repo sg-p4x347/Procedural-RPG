@@ -140,7 +140,8 @@ SM(systemManager)
 	//----------------------------------------------------------------
 	// HUD
 #pragma region HUD
-	m_HUDhint = GuiEM.NewTextPanel("Hint", [] {
+	AddMenu("HUD", ImportMarkup("UI/hud.xml"));
+	/*m_HUDhint = GuiEM.NewTextPanel("Hint", [] {
 		Style * style = new Style();
 		style->FontSize = "32px";
 		style->TextAlign = "center";
@@ -148,9 +149,10 @@ SM(systemManager)
 		style->VerticalTextAlign = "center";
 		style->Height = "100%";
 		return style;
-	}());
-	m_HUDhint->GetComponent<GUI::Panel>("Panel")->ElementID = "HUDhint";
-	AddMenu("HUD", m_HUDhint);
+	}());*/
+	
+	//m_HUDhint->GetComponent<GUI::Panel>("Panel")->ElementID = "HUDhint";
+	//AddMenu("HUD", m_HUDhint);
 #pragma endregion
 	//----------------------------------------------------------------
 	// Inventory
@@ -489,14 +491,15 @@ void GuiSystem::DisplayException(std::exception e)
 	}));
 }
 
-void GuiSystem::ShowHint(string hint)
+void GuiSystem::SetTextByID(string id, string text)
 {
-	if (IsMenuOpen("HUD")) {
-		auto textComp = GetElementByID("HUDhint")->GetComponent<GUI::Text>("Text");
-		textComp->String = hint;
-	}
+	GuiEM.AddText(GetElementByID(id), text);
 }
 
+void GuiSystem::ShowHint(string hint)
+{
+	SetTextByID("HUD", hint);
+}
 void GuiSystem::HideHint()
 {
 	ShowHint("");

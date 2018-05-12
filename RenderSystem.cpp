@@ -39,6 +39,9 @@ SM(systemManager)
 	//m_scissorState.reset(scissorState);
 		// error
 	//SetFont("impact");
+	for (int i = 0; i < 20; i++) {
+		m_frameDeltas.push_back(0);
+	}
 }
 
 RenderSystem::~RenderSystem()
@@ -61,6 +64,7 @@ void RenderSystem::Update(double & elapsed)
 
 	// Present the backbuffer to the screen
 	Present();
+	UpdateFramerate();
 }
 void RenderSystem::Render()
 {
@@ -726,6 +730,7 @@ DirectX::XMMATRIX RenderSystem::GetViewMatrix()
 
 	XMMATRIX view = XMMatrixLookAtRH(position->Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
 	m_viewMatrix = view;
+	
 	return view;
 }
 
@@ -771,4 +776,23 @@ void RenderSystem::RenderVBO(shared_ptr<Components::PositionNormalTextureTangent
 string RenderSystem::Name()
 {
 	return "Render";
+}
+
+void RenderSystem::UpdateFramerate()
+{
+	static std::chrono::milliseconds last;
+	auto now = std::chrono::duration_cast< std::chrono::milliseconds >(
+		std::chrono::system_clock::now().time_since_epoch()
+		);
+	m_frameDeltas.push_back((now - last).count());
+	m_frameDeltas.pop_front();
+	int avg = 0;
+	for (int delta : m_frameDeltas) {
+		avg += delta;
+	}
+	avg /= m_frameDeltas.size();
+	avg = 1.0 / ((double)avg / 1000);
+	// convert average milliseconds to frames per second
+	m_guiSystem->SetTextByID("Framerate","FPS: " + to_string(avg));
+	last = now;
 }

@@ -769,5 +769,8 @@
     <Xml Include="Assets\UI\inv_divider.xml">
       <Filter>Assets\UI</Filter>
     </Xml>
+    <Xml Include="Assets\UI\hud.xml">
+      <Filter>Assets\UI</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

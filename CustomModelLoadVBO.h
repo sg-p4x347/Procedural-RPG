@@ -18,5 +18,8 @@ public:
 		_In_opt_ std::shared_ptr<IEffect> ieffect = nullptr, bool ccw = false, bool pmalpha = false);
 	static std::unique_ptr<Model> __cdecl CreateFromVBO(_In_ ID3D11Device* d3dDevice, string fileName,
 		_In_opt_ std::shared_ptr<IEffect> ieffect = nullptr, bool ccw = false, bool pmalpha = false);
+	// Converts a VBO component into a Model
+	static std::unique_ptr<Model> __cdecl CreateFromVBO(_In_ ID3D11Device* d3dDevice, vector<VertexPositionNormalTangentColorTexture> & vertices, vector<uint16_t> & indices,
+		_In_opt_ std::shared_ptr<IEffect> ieffect = nullptr, bool ccw = false, bool pmalpha = false);
 };
 

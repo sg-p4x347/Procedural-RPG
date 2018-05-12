@@ -33,7 +33,7 @@ void PlayerSystem::Update(double & elapsed)
 	//auto mouseState = m_mouse->GetState();
 	auto keyboardState = Game::KeyboardState;
 	if (true /*mouseState.positionMode == Mouse::MODE_RELATIVE*/) {
-		Vector2 delta = Game::Get().MousePos;
+		//Vector2 delta = Game::Get().MousePos;
 		//SimpleMath::Vector2 delta = SimpleMath::Vector2(float(mouseState.x), float(mouseState.y));
 		static const float MOUSE_GAIN = 0.016f;
 		/*if (movement->AngularVelocity.y > 0) {
@@ -118,12 +118,19 @@ void PlayerSystem::Update(double & elapsed)
 
 void PlayerSystem::SetMousePos(Vector2 pos)
 {
+	
 	shared_ptr<Components::Movement> movement = EM->Player()->GetComponent < Components::Movement>("Movement");
+	shared_ptr<Components::Position> position = EM->Player()->GetComponent < Components::Position>("Position");
+	if (pos.x != 0 || pos.y != 0) {
+		auto test = 9;
+	}
 	//if (std::abs(pos.y) != 0)
-		movement->AngularVelocity.y = -pos.y;
+	position->Rot.y -= pos.y * 0.0016;
+	//movement->AngularVelocity.y = -pos.y * 0.16;
+	//movement->AngularVelocity.x = -pos.x * 0.16;
 	//if (std::abs(pos.x) != 0)
-		movement->AngularVelocity.x = -pos.x;
-
+	position->Rot.x -= pos.x * 0.0016;
+	
 	/*if (std::abs(pos.x) == 0 && std::abs(pos.y) == 0) {
 		auto test = 0;
 	}*/

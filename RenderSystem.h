@@ -30,6 +30,7 @@ private:
 	SystemManager * SM;
 	EntityPtr m_player;
 	std::mutex m_mutex;
+	std::deque<int> m_frameDeltas;
 	// DirectX
 	
 	vector<string>								m_effectOrder;
@@ -105,6 +106,8 @@ private:
 	ID3D11RasterizerState * m_scissorState;
 	// Inherited via System
 	virtual string Name() override;
-
+	//----------------------------------------------------------------
+	// Logging
+	void UpdateFramerate();
 };
 

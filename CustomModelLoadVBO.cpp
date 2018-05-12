@@ -1,15 +1,3 @@
-//--------------------------------------------------------------------------------------
-// File: ModelLoadVBO.cpp
-//
-// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
-// ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
-// PARTICULAR PURPOSE.
-//
-// Copyright (c) Microsoft Corporation. All rights reserved.
-//
-// http://go.microsoft.com/fwlink/?LinkId=248929
-//--------------------------------------------------------------------------------------
 #include "pch.h"
 #include "CustomModelLoadVBO.h"
 #include "DirectXTK/Inc/Model.h"
@@ -185,4 +173,23 @@ std::unique_ptr<Model> CustomModelLoadVBO::CreateFromVBO(ID3D11Device* d3dDevice
 	model->name = ansi2unicode(fileName).c_str();
 
 	return model;
+}
+
+std::unique_ptr<Model> CustomModelLoadVBO::CreateFromVBO(ID3D11Device * d3dDevice, vector<VertexPositionNormalTangentColorTexture>& vertices, vector<uint16_t> & indices, std::shared_ptr<IEffect> ieffect, bool ccw, bool pmalpha)
+{
+	// create the meshdata header
+	VBO::header_t header;
+	header.numVertices = vertices.size();
+	header.numIndices = indices.size();
+
+	unsigned long long headerSize = sizeof(VBO::header_t);
+	unsigned long long vertSize = sizeof(VertexPositionNormalTangentColorTexture) * header.numVertices;
+	unsigned long long indexSize = sizeof(uint16_t) * header.numIndices;
+
+	const uint8_t* meshData = new uint8_t[headerSize + vertSize + indexSize];
+
+	memcpy((void *)meshData, &header, headerSize);
+	memcpy((void *)(meshData + headerSize), &vertices[0], vertSize);
+	memcpy((void *)(meshData + headerSize + vertSize), &indices[0], indexSize);
+	return CreateFromVBO(d3dDevice, meshData, headerSize + vertSize + indexSize, ieffect, ccw, pmalpha);
 }
