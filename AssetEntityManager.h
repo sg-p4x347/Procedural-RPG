@@ -5,6 +5,9 @@
 #include "VboParser.h"
 #include "VBO.h"
 #include "Item.h"
+#include "HeightMapAsset.h"
+#include "NormalMapAsset.h"
+
 class AssetEntityManager :
 	public PersistenceEntityManager
 {
@@ -18,9 +21,9 @@ public:
 	//----------------------------------------------------------------
 	// Factories
 	template <typename VertexType>
-	EntityPtr CreateModel(string path, vector<shared_ptr<Components::VBO<VertexType>>> vbos, int lodSpacing) {
+	EntityPtr CreateModel(string path, vector<shared_ptr<Components::VBO<VertexType>>> vbos, int lodSpacing,string effect) {
 		EntityPtr entity = NewEntity();
-		entity->AddComponent(new ModelAsset(lodSpacing,vbos.size()));
+		entity->AddComponent(new ModelAsset(lodSpacing,vbos.size(), effect));
 		entity->AddComponent(new PathID(path));
 		for (int lod = 0; lod < vbos.size(); lod++) {
 			m_vboParser.ExportVBO<VertexType>(path + '_' + to_string(lod), *(vbos[lod]));

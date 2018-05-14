@@ -6,13 +6,13 @@
 #include "Game.h"
 #include <fcntl.h>
 #include <chrono>
-#ifndef HID_USAGE_PAGE_GENERIC
-#define HID_USAGE_PAGE_GENERIC         ((USHORT) 0x01)
-#endif
-#ifndef HID_USAGE_GENERIC_MOUSE
-#define HID_USAGE_GENERIC_MOUSE        ((USHORT) 0x02)
-#endif
-RAWINPUTDEVICE Rid[1];
+//#ifndef HID_USAGE_PAGE_GENERIC
+//#define HID_USAGE_PAGE_GENERIC         ((USHORT) 0x01)
+//#endif
+//#ifndef HID_USAGE_GENERIC_MOUSE
+//#define HID_USAGE_GENERIC_MOUSE        ((USHORT) 0x02)
+//#endif
+//RAWINPUTDEVICE Rid[1];
 
 using namespace DirectX;
 
@@ -72,11 +72,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         if (!hwnd)
             return 1;
 		
-		Rid[0].usUsagePage = 0x01;
-		Rid[0].usUsage = 0x02;
-		Rid[0].dwFlags = RIDEV_NOLEGACY;   // adds HID mouse and also ignores legacy mouse messages
-		Rid[0].hwndTarget = 0;
-		RegisterRawInputDevices(Rid, 1, sizeof(Rid[0]));
+		//Rid[0].usUsagePage = 0x01;
+		//Rid[0].usUsage = 0x02;
+		//Rid[0].dwFlags = RIDEV_NOLEGACY;   // adds HID mouse and also ignores legacy mouse messages
+		//Rid[0].hwndTarget = 0;
+		//RegisterRawInputDevices(Rid, 1, sizeof(Rid[0]));
         //ShowWindow(hwnd, nCmdShow);
         // TODO: Change nCmdShow to SW_SHOWMAXIMIZED to default to fullscreen.
 		ShowWindow(hwnd, SW_SHOWMAXIMIZED);
@@ -91,16 +91,15 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     // Main message loop
     MSG msg = { 0 };
 	bool run = true;
-	while (run) {
-		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+	while (WM_QUIT != msg.message) {
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-		if (WM_QUIT == msg.message) {
-			run = false;
+		else {
+			Game::Get().Tick();
 		}
-		Game::Get().Tick();
 	}
 	//Game::Get().reset();
 
@@ -243,7 +242,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
 	case WM_INPUT:
-	{
+	/*{
 		UINT dwSize = 48;
 		static BYTE lpb[48];
 		
@@ -259,7 +258,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			
 		}
 		break;
-	}
+	}*/
 	
 	case WM_MOUSEMOVE:
 	case WM_LBUTTONDOWN:
@@ -276,7 +275,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		
 		Mouse::ProcessMessage(message, wParam, lParam);
 		auto mouse = Mouse::Get().GetState();
-		//Game::Get().SetMousePos(Vector2(mouse.x, mouse.y));
+		Game::Get().MouseState = mouse;
+		Game::Get().SetMousePos(Vector2(mouse.x, mouse.y));
 		
 		break;
 

@@ -12,7 +12,8 @@
      width:200px;
      background:rgba(0,0,0,0.5);
      ">
-    <div id="Framerate" style="font-color:rgb(1,1,1);font-size:16px;" text="FPS:"></div>
-  
+		<div id="Output1" style="font-color:rgb(1,1,1);font-size:16px;height:32px;" text=""></div>
+		<div id="Framerate" style="font-color:rgb(1,1,1);font-size:16px;height:32px;" text="FPS:"></div>
+	
   </div>
 </div>

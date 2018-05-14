@@ -95,7 +95,7 @@ EntityPtr ItemSystem::NewContainer(Vector3 position, Vector3 rotation, string mo
 	entity->AddComponent(
 		new Components::Position(position, rotation));
 	entity->AddComponent(
-		new Components::Model(model, "Default"));
+		new Components::Model(model, AssetType::Authored));
 	entity->AddComponent(
 		new Components::Inventory());
 	entity->AddComponent(

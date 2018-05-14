@@ -44,7 +44,7 @@ void PlantSystem::GenerateTreeModels()
 		//Components::PositionNormalTextureVBO * vbo = new Components::PositionNormalTextureVBO(tc.CreateVBO());
 		
 	}
-	AssetManager::Get()->GetProceduralEM()->CreateModel("Tree",vbos, lodSpacing);
+	AssetManager::Get()->GetProceduralEM()->CreateModel("Tree",vbos, lodSpacing,"Wood");
 	//{
 	//	EntityPtr test = EM->NewEntity();
 	//	test->AddComponent(new Components::Model("Tree", "Default", true, false));
@@ -93,7 +93,7 @@ void PlantSystem::NewTree(DirectX::SimpleMath::Vector3 & position, Vector3 & rot
 	entity->AddComponent(
 		new Components::Tag("Tree"));
 	entity->AddComponent(
-		new Components::Model("Tree", "Wood", true));
+		new Components::Model("Tree", AssetType::Procedural));
 	entity->AddComponent(
 		new Components::Inventory());
 	entity->AddComponent(

@@ -68,67 +68,62 @@ void RenderSystem::Update(double & elapsed)
 }
 void RenderSystem::Render()
 {
-	for (string & effectName : m_effectOrder) {
-		// Bind this effect
-		shared_ptr<IEffect> effect;
-		//if (AssetManager::Get()->GetEffect<DGSLEffect>(effectName, effect)) {
-		//shared_ptr<IEffect> effect;
-		if (AssetManager::Get()->GetEffect<IEffect>(effectName, effect)) {
-			// camera
-			shared_ptr<IEffectMatrices> iEffectMatricies = dynamic_pointer_cast<IEffectMatrices>(effect);
-			if (iEffectMatricies) {
-				UpdateEffectMatricies(iEffectMatricies, m_outputWidth, m_outputHeight);
-				
-				//effect->SetViewport(float(m_outputWidth), float(m_outputHeight));
-			}
-			
-			effect->Apply(m_d3dContext.Get());
-			// Input Layout
-			m_d3dContext->IASetInputLayout(AssetManager::Get()->GetInputLayout(effectName).Get());
-			/*if (effectName == "Water") {
-				m_d3dContext->IASetInputLayout(m_waterLayout.Get());
-			}
-			else {
-				m_d3dContext->IASetInputLayout(m_inputLayout.Get());
-			}*/
-			// Render VBOs with the effect
-			if (m_mutex.try_lock()) {
-				if (m_VBOs.find(effectName) != m_VBOs.end()) {
-					for (auto & vbo : m_VBOs[effectName]) {
-						RenderVBO(vbo);
-					}
-				}
-				m_mutex.unlock();
-			}
-		}
+	//for (string & effectName : m_effectOrder) {
+	//	// Bind this effect
+	//	shared_ptr<IEffect> effect;
+	//	//if (AssetManager::Get()->GetEffect<DGSLEffect>(effectName, effect)) {
+	//	//shared_ptr<IEffect> effect;
+	//	if (AssetManager::Get()->GetEffect<IEffect>(effectName, effect)) {
+	//		// camera
+	//		shared_ptr<IEffectMatrices> iEffectMatricies = dynamic_pointer_cast<IEffectMatrices>(effect);
+	//		if (iEffectMatricies) {
+	//			UpdateEffectMatricies(iEffectMatricies, m_outputWidth, m_outputHeight);
+	//			
+	//			//effect->SetViewport(float(m_outputWidth), float(m_outputHeight));
+	//		}
+	//		
+	//		effect->Apply(m_d3dContext.Get());
+	//		// Input Layout
+	//		m_d3dContext->IASetInputLayout(AssetManager::Get()->GetInputLayout(effectName).Get());
+	//		/*if (effectName == "Water") {
+	//			m_d3dContext->IASetInputLayout(m_waterLayout.Get());
+	//		}
+	//		else {
+	//			m_d3dContext->IASetInputLayout(m_inputLayout.Get());
+	//		}*/
+	//		// Render VBOs with the effect
+	//		if (m_mutex.try_lock()) {
+	//			if (m_VBOs.find(effectName) != m_VBOs.end()) {
+	//				for (auto & vbo : m_VBOs[effectName]) {
+	//					RenderVBO(vbo);
+	//				}
+	//			}
+	//			m_mutex.unlock();
+	//		}
+	//	}
 
-		// Render all Components::Model with the effect
-		//if (m_Models.find(effectName) != m_Models.end()) {
-		//	for (auto & model : m_Models[effectName]) {
-		//		EntityPtr entity;
-		//		if (EM->Find(model->ID, entity)) {
-		//			auto position = entity->GetComponent<Components::Position>("Position");
-		//			auto dxModel = AssetManager::Get()->GetModel(model->Path,Vector3::Distance(EM->PlayerPos()->Pos,position->Pos),model->Procedural);
-		//			
-		//			RenderModel(dxModel,effect, position->Pos, position->Rot, false/*model->BackfaceCulling*/);
-		//			
-		//		}
-		//	}
-		//}
-		
-	}
-	for (auto & model : m_models) {
-		EntityPtr entity;
-		shared_ptr<DirectX::IEffect> effect;
-		if (model->Effect != "") {
-			AssetManager::Get()->GetEffect(model->Effect, effect);
-		}
-		if (EM->Find(model->ID, entity)) {
-			auto position = entity->GetComponent<Components::Position>("Position");
-			auto dxModel = AssetManager::Get()->GetModel(model->Path, Vector3::Distance(EM->PlayerPos()->Pos, position->Pos), model->Procedural);
+	//	// Render all Components::Model with the effect
+	//	//if (m_Models.find(effectName) != m_Models.end()) {
+	//	//	for (auto & model : m_Models[effectName]) {
+	//	//		EntityPtr entity;
+	//	//		if (EM->Find(model->ID, entity)) {
+	//	//			auto position = entity->GetComponent<Components::Position>("Position");
+	//	//			auto dxModel = AssetManager::Get()->GetModel(model->Path,Vector3::Distance(EM->PlayerPos()->Pos,position->Pos),model->Procedural);
+	//	//			
+	//	//			RenderModel(dxModel,effect, position->Pos, position->Rot, false/*model->BackfaceCulling*/);
+	//	//			
+	//	//		}
+	//	//	}
+	//	//}
+	//	
+	//}
+	for (auto & entity : m_models) {
+		auto position = entity->GetComponent<Components::Position>("Position");
+		auto model = entity->GetComponent<Components::Model>("Model");
+		if (position && model) {
+			auto dxModel = AssetManager::Get()->GetModel(model->Path, Vector3::Distance(EM->PlayerPos()->Pos, position->Pos),position->Pos, model->Type);
 
-			RenderModel(dxModel, effect, position->Pos, position->Rot, model->BackfaceCulling);
-
+			RenderModel(dxModel, position->Pos, position->Rot);
 		}
 	}
 	// Render all buildings
@@ -175,7 +170,7 @@ void RenderSystem::SyncEntities()
 {
 	//std::thread([=] {
 	if (EM && EM->Player()) {
-		std::map<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>> vbos;
+		/*std::map<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>> vbos;
 		for (auto & entity : EM->FindEntities(m_VBOmask)) {
 			shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo = entity->GetComponent<Components::PositionNormalTextureTangentColorVBO>("PositionNormalTextureTangentColorVBO");
 			if (vbos.find(vbo->Effect) == vbos.end()) {
@@ -185,12 +180,10 @@ void RenderSystem::SyncEntities()
 		}
 		m_mutex.lock();
 		m_VBOs = vbos;
-		m_mutex.unlock();
-		std::vector<shared_ptr<Components::Model>> models;
+		m_mutex.unlock();*/
+		std::vector<EntityPtr> models;
 		for (auto & entity : EM->FindEntitiesInRange( m_ModelMask,EM->PlayerPos()->Pos,64)) {
-		//for (auto & entity : EM->FindEntities(m_ModelMask)) {
-			shared_ptr<Components::Model> model = entity->GetComponent<Components::Model>("Model");
-			models.push_back(model);
+			models.push_back(entity);
 		}
 		m_mutex.lock();
 		m_models = models;
@@ -336,83 +329,83 @@ void RenderSystem::SpriteBatchEnd()
 	m_spriteBatch->End();
 }
 
-void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model,shared_ptr<IEffect> effect, Vector3 & position, Vector3 & rotation, bool backfaceCulling)
+void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model,Vector3 & position, Vector3 & rotation)
 {
 	XMMATRIX translation = XMMatrixTranslation(position.x, position.y, position.z);
 	XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(rotation);
 	XMMATRIX world = XMMatrixMultiply(rotMat, translation);
 
 	world = XMMatrixMultiply(world, m_worldMatrix);
-
+	model->Draw(m_d3dContext.Get(), *m_states, world, m_viewMatrix, m_projMatrix);
 	// An example of using a single custom effect when drawing all the parts of a Model
-	if (effect) {
-		// Creating input layouts is expensive, so it shouldn't be done every frame
-		//std::vector<Microsoft::WRL::ComPtr<ID3D11InputLayout>> newInputLayouts;
-		bool effectsChanged = false;
-		for (auto mit = model->meshes.cbegin(); mit != model->meshes.cend(); ++mit)
-		{
-			auto mesh = mit->get();
-			assert(mesh != 0);
-			
-			for (auto it = mesh->meshParts.cbegin(); it != mesh->meshParts.cend(); ++it)
-			{
-				auto part = it->get();
-				assert(part != 0);
-				// Change the effect
-				if (part->effect != effect) {
-					
-					part->effect = effect;
-					part->ModifyEffect(m_d3dDevice.Get(), effect, false);
-					/*Microsoft::WRL::ComPtr<ID3D11InputLayout> il;
-					part->CreateInputLayout(m_d3dDevice.Get(), effect.get(), il.GetAddressOf());
-					part->inputLayout = il;*/
-					//newInputLayouts.emplace_back(il);
-					effectsChanged = true;
-				}
-			}
-		}
-		if (effectsChanged) model->Modified();
+	//if (effect) {
+	//	// Creating input layouts is expensive, so it shouldn't be done every frame
+	//	//std::vector<Microsoft::WRL::ComPtr<ID3D11InputLayout>> newInputLayouts;
+	//	bool effectsChanged = false;
+	//	for (auto mit = model->meshes.cbegin(); mit != model->meshes.cend(); ++mit)
+	//	{
+	//		auto mesh = mit->get();
+	//		assert(mesh != 0);
+	//		
+	//		for (auto it = mesh->meshParts.cbegin(); it != mesh->meshParts.cend(); ++it)
+	//		{
+	//			auto part = it->get();
+	//			assert(part != 0);
+	//			// Change the effect
+	//			if (part->effect != effect) {
+	//				
+	//				part->effect = effect;
+	//				part->ModifyEffect(m_d3dDevice.Get(), effect, false);
+	//				/*Microsoft::WRL::ComPtr<ID3D11InputLayout> il;
+	//				part->CreateInputLayout(m_d3dDevice.Get(), effect.get(), il.GetAddressOf());
+	//				part->inputLayout = il;*/
+	//				//newInputLayouts.emplace_back(il);
+	//				effectsChanged = true;
+	//			}
+	//		}
+	//	}
+	//	if (effectsChanged) model->Modified();
 
-		// Draw Model with custom effect override
-		auto imatrices = dynamic_cast<IEffectMatrices*>(effect.get());
-		if (imatrices)
-		{
-			imatrices->SetWorld(world);
-			imatrices->SetView(m_viewMatrix);
-			imatrices->SetProjection(m_projMatrix);
-		}
+	//	// Draw Model with custom effect override
+	//	auto imatrices = dynamic_cast<IEffectMatrices*>(effect.get());
+	//	if (imatrices)
+	//	{
+	//		imatrices->SetWorld(world);
+	//		imatrices->SetView(m_viewMatrix);
+	//		imatrices->SetProjection(m_projMatrix);
+	//	}
 
-		//size_t count = 0;
-		//for (auto mit = model->meshes.cbegin(); mit != model->meshes.cend(); ++mit)
-		//{
-		//	auto mesh = mit->get();
-		//	assert(mesh != 0);
+	//	//size_t count = 0;
+	//	//for (auto mit = model->meshes.cbegin(); mit != model->meshes.cend(); ++mit)
+	//	//{
+	//	//	auto mesh = mit->get();
+	//	//	assert(mesh != 0);
 
-		//	for (auto it = mesh->meshParts.cbegin(); it != mesh->meshParts.cend(); ++it)
-		//	{
-		//		auto part = it->get();
-		//		assert(part != 0);
+	//	//	for (auto it = mesh->meshParts.cbegin(); it != mesh->meshParts.cend(); ++it)
+	//	//	{
+	//	//		auto part = it->get();
+	//	//		assert(part != 0);
 
-		//		// Could call if a custom transformation was desired for each part
-		//		// if (imatricies) imatrices->SetWorld( local ) 
+	//	//		// Could call if a custom transformation was desired for each part
+	//	//		// if (imatricies) imatrices->SetWorld( local ) 
 
-		//		/*part->Draw(m_d3dContext.Get(), effect,
-		//			newInputLayouts[count++].Get());*/
-		//		part->Draw(m_d3dContext.Get(), effect.get(),
-		//			part->inputLayout.Get());
-		//	}
-		//}
-	}
-	//model->Draw(m_d3dContext.Get(), *m_states, world, m_viewMatrix, m_projMatrix);
+	//	//		/*part->Draw(m_d3dContext.Get(), effect,
+	//	//			newInputLayouts[count++].Get());*/
+	//	//		part->Draw(m_d3dContext.Get(), effect.get(),
+	//	//			part->inputLayout.Get());
+	//	//	}
+	//	//}
+	//}
+	
 	//else {
-		for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
+	/*	for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
 		{
 			auto mesh = it->get();
 			assert(mesh != 0);
 			
-			RenderModelMesh(mesh, world, backfaceCulling);
+			RenderModelMesh(mesh, world);
 			
-		}
+		}*/
 	//}
 	
 	//model->Draw(m_d3dContext.Get(), *m_states, final, m_viewMatrix, m_projMatrix);

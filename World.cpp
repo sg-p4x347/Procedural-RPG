@@ -23,7 +23,7 @@ World::World(
 	SystemManager & systemManager,
 	Filesystem::path parentDir,
 	string name
-) : m_systemManager(systemManager), m_directory(parentDir / name), m_name(name)
+) : m_systemManager(systemManager), m_directory(parentDir / name), m_name(name), m_width(0)
 {
 	Load();
 }
@@ -57,6 +57,11 @@ World::~World()
 	//----------------------------------------------------------------
 	// Remove world systems
 	m_systemManager.Remove<WorldSystem>();
+}
+
+int World::GetWidth()
+{
+	return m_width;
 }
 
 
@@ -99,14 +104,12 @@ void World::RunWorldSystems()
 }
 void World::Generate(int seed)
 {
-	
 	// seed the RNG
 	srand(seed);
 	m_entityManager->GenerateEntityRegions();
 	m_systemManager.GetSystem<TerrainSystem>("Terrain")->Generate();
 	m_systemManager.GetSystem<PlantSystem>("Plant")->Generate();
 	m_systemManager.GetSystem<PlayerSystem>("Player")->CreatePlayer();
-
 	
 }
 
@@ -118,7 +121,7 @@ bool World::Load()
 	//----------------------------------------------------------------
 	// World configuration
 	JsonParser terrainMap = JsonParser(std::ifstream("config/continent.json"))["terrainMap"];
-	int worldWidth = terrainMap["width"].To<int>();
+	m_width = terrainMap["width"].To<int>();
 	//----------------------------------------------------------------
 	// Filesystem dependencies
 	Filesystem::path systemsDir = m_directory / "System";
@@ -132,15 +135,15 @@ bool World::Load()
 	Filesystem::create_directory(componentDir);
 	//----------------------------------------------------------------
 	// Create a new entity manager
-	m_entityManager.reset(new WorldEntityManager(componentDir, worldWidth,32));
+	m_entityManager.reset(new WorldEntityManager(componentDir, m_width,32));
 	//----------------------------------------------------------------
 	// Update render targets
 	auto renderSystem = m_systemManager.GetSystem<RenderSystem>("Render");
 	renderSystem->InitializeWorldRendering(m_entityManager.get());
 	//----------------------------------------------------------------
 	// Add world systems
-	m_systemManager.AddSystem(std::shared_ptr<System>(new TerrainSystem(&m_systemManager, m_entityManager, vector<string>{ "Terrain", "Position", "VBO" }, 1, worldWidth,64, systemsDir)));
 	m_systemManager.AddSystem(std::shared_ptr<System>(new PlayerSystem(&m_systemManager, m_entityManager, vector<string>{ "Player", "Position" }, 1)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new TerrainSystem(&m_systemManager, m_entityManager, vector<string>{ "Terrain", "Position", "VBO" }, 1, m_width,64, systemsDir)));
 	
 	m_systemManager.AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Movement"}, 1, renderSystem)));
 	m_systemManager.AddSystem(std::shared_ptr<System>(new CollisionSystem(&m_systemManager, m_entityManager, vector<string>{"Movement", "Position", "Collision"}, 1)));

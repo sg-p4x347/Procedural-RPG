@@ -428,7 +428,7 @@ void TerrainSystem::NewResourceNode(Vector3 & position, Vector3 & rotation, stri
 	entity->AddComponent(
 		new Components::Position(position, rotation));
 	entity->AddComponent(
-		new Components::Model(model, "Default"));
+		new Components::Model(model, AssetType::Authored));
 	entity->AddComponent(
 		new Components::Inventory());
 	entity->AddComponent(
@@ -800,7 +800,7 @@ shared_ptr<HeightMap> TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::Pos
 int TerrainSystem::LOD(double distance, unsigned int modelWidth)
 {
 	// add integer to decrease terrain detail
-	return 0 + std::min((int)std::log2(m_regionWidth),std::max(0,(int)std::floor(std::log2(distance / (double)modelWidth))));
+	return 0 + std::min((int)std::log2(modelWidth),std::max(0,(int)std::floor(std::log2(distance / (double)modelWidth))));
 }
 
 void TerrainSystem::UpdateCache(Vector3 center)

@@ -234,12 +234,14 @@ void TopologyCruncher::Tube(
 
 
 			m_VB.push_back(CreateVertex(v2, n2, Vector2(0, 0))); // 2
-			m_VB.push_back(CreateVertex(v4,n4, Vector2(1.f, 1.f))); // 4
 			m_VB.push_back(CreateVertex(v1, n1, Vector2(0.f, 1.f))); // 1
+			m_VB.push_back(CreateVertex(v4,n4, Vector2(1.f, 1.f))); // 4
+			
 
 			m_VB.push_back(CreateVertex(v2, n2, Vector2(0, 0))); // 2
-			m_VB.push_back(CreateVertex(v3, n3, Vector2(1.f, 0.f))); // 3
 			m_VB.push_back(CreateVertex(v4, n4, Vector2(1.f, 1.f))); // 4
+			m_VB.push_back(CreateVertex(v3, n3, Vector2(1.f, 0.f))); // 3
+			
 
 			m_IB.push_back(m_IB.size());
 			m_IB.push_back(m_IB.size());

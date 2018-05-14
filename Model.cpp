@@ -6,13 +6,9 @@ namespace Components {
 	}
 	Model::Model(
 		string path, 
-		string effect, 
-		bool procedural, 
-		bool backfaceCulling) :
+		AssetType type) :
 		Path(path),
-		Procedural(procedural),
-		Effect(effect),
-		BackfaceCulling(backfaceCulling)
+		Type(type)
 	{
 
 	}
@@ -24,15 +20,13 @@ namespace Components {
 	void Model::Export(std::ofstream & ofs)
 	{
 		Component::Export(ofs);
-		Serialize(Procedural,ofs);
 		Serialize(Path, ofs);
-		Serialize(Effect, ofs);
+		Serialize(Type, ofs);
 	}
 	void Model::Import(std::ifstream & ifs)
 	{
 		Component::Import(ifs);
-		DeSerialize(Procedural, ifs);
 		DeSerialize(Path, ifs);
-		DeSerialize(Effect, ifs);
+		DeSerialize(Type, ifs);
 	}
 }

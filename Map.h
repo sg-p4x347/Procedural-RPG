@@ -53,7 +53,7 @@ struct Map :
 template<typename DataType>
 inline Map<DataType>::Map(int width, int length) : Map<DataType>::Map(SimpleMath::Rectangle(0,0,width,length))
 {
-	
+	assert(std::abs(width * length) < 100000000);
 }
 
 template<typename DataType>

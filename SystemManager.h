@@ -18,7 +18,7 @@ public:
 	inline shared_ptr<SystemType> GetSystem(string name) {
 		return dynamic_pointer_cast<SystemType>(m_systems[name]);
 	}
-	void AddSystem(shared_ptr<System> system);
+	void AddSystem(shared_ptr<System> system,bool render=false);
 	template <typename SystemType>
 	inline void Remove() {
 		for (auto & pair : map<string,shared_ptr<System>>(m_systems)) {
@@ -45,5 +45,7 @@ private:
 	// Systems
 	
 	map<string, shared_ptr<System>> m_systems;
+	vector<shared_ptr<System>> m_tickSequence;
+	vector<shared_ptr<System>> m_renderSequence;
 };
 

@@ -3,6 +3,7 @@
 #include "Game.h"
 #include "IEventManager.h"
 #include "Inventory.h"
+#include "GuiSystem.h"
 PlayerSystem::PlayerSystem(
 	SystemManager * systemManager,
 	unique_ptr<WorldEntityManager> &  entityManager,
@@ -30,18 +31,30 @@ void PlayerSystem::Update(double & elapsed)
 	shared_ptr<Components::Movement> movement = EM->Player()->GetComponent<Components::Movement>("Movement");
 	shared_ptr<Components::Player> playerComp = GetPlayerComp();
 	// mouse
-	//auto mouseState = m_mouse->GetState();
+	auto mouseState = Game::MouseState;
 	auto keyboardState = Game::KeyboardState;
-	if (true /*mouseState.positionMode == Mouse::MODE_RELATIVE*/) {
-		//Vector2 delta = Game::Get().MousePos;
+	static int sampleCounter = 0;
+	if (mouseState.positionMode == Mouse::MODE_RELATIVE) {
+		Vector2 delta = Vector2(mouseState.x, mouseState.y);
+
+		
 		//SimpleMath::Vector2 delta = SimpleMath::Vector2(float(mouseState.x), float(mouseState.y));
-		static const float MOUSE_GAIN = 0.016f;
+		static const float MOUSE_GAIN = 0.1f;
 		/*if (movement->AngularVelocity.y > 0) {
 			movement->AngularVelocity.y -= 0.5;
 		}*/
-		//movement->AngularVelocity.y;
-		/*position->Rot.y -= delta.y * elapsed;
-		position->Rot.x -= delta.x * elapsed;*/
+		/*if (delta.x != 0.f || delta.y != 0.f || sampleCounter++ > 3) {
+			movement->AngularVelocity.x = -delta.x * elapsed * MOUSE_GAIN;
+			movement->AngularVelocity.y = -delta.y * elapsed * MOUSE_GAIN;
+			sampleCounter = 0;
+		}*/
+		float length = AccumulatedMousePos.Length();
+		if (length != 0.f)
+			SM->GetSystem<GuiSystem>("Gui")->SetTextByID("Output1", to_string(length));
+
+		position->Rot.y -= AccumulatedMousePos.y * elapsed * MOUSE_GAIN;
+		position->Rot.x -= AccumulatedMousePos.x * elapsed * MOUSE_GAIN;
+		AccumulatedMousePos = Vector2::Zero;
 		//Game::Get().MousePos = Vector2::Zero;
 
 		// limit pitch to straight up or straight down
@@ -121,19 +134,24 @@ void PlayerSystem::SetMousePos(Vector2 pos)
 	
 	shared_ptr<Components::Movement> movement = EM->Player()->GetComponent < Components::Movement>("Movement");
 	shared_ptr<Components::Position> position = EM->Player()->GetComponent < Components::Position>("Position");
-	if (pos.x != 0 || pos.y != 0) {
-		auto test = 9;
-	}
 	//if (std::abs(pos.y) != 0)
-	position->Rot.y -= pos.y * 0.0016;
+	//position->Rot.y -= pos.y * 0.0016;
 	//movement->AngularVelocity.y = -pos.y * 0.16;
 	//movement->AngularVelocity.x = -pos.x * 0.16;
 	//if (std::abs(pos.x) != 0)
-	position->Rot.x -= pos.x * 0.0016;
-	
+	//position->Rot.x -= std::min(pos.x,1.f) * 0.0016;
+	//position->Rot.y -= std::min(pos.y, 1.f) * 0.0016;
+	AccumulatedMousePos += pos;
+	/*static std::chrono::milliseconds last;
+	auto now = std::chrono::duration_cast< std::chrono::milliseconds >(
+		std::chrono::system_clock::now().time_since_epoch()
+		);
+	SM->GetSystem<GuiSystem>("Gui")->SetTextByID("Output1", to_string((now - last).count()));
+	last = now;*/
 	/*if (std::abs(pos.x) == 0 && std::abs(pos.y) == 0) {
 		auto test = 0;
 	}*/
+	
 }
 
 void PlayerSystem::CreatePlayer()

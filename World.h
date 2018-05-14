@@ -15,7 +15,8 @@ public:
 		int seed
 	);
 	~World();
-
+	// Properties
+	int GetWidth();
 	// Simulation state
 	void PauseGame();
 	void ResumeGame();
@@ -38,6 +39,7 @@ private:
 	// Metainformation
 	Filesystem::path m_directory;
 	string m_name;
+	int m_width;
 	//----------------------------------------------------------------
 	// World control
 	bool m_inWorld;

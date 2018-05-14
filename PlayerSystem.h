@@ -34,6 +34,7 @@ public:
 	//----------------------------------------------------------------
 	// Input
 	void SetMousePos(Vector2 pos);
+	Vector2 AccumulatedMousePos;
 	//----------------------------------------------------------------
 	// Generation
 	void CreatePlayer();

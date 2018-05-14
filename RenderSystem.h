@@ -80,10 +80,10 @@ private:
 	// Components::Model using DirectX::Model
 	unsigned long m_ModelMask;
 	std::map<string, vector<shared_ptr<Components::Model>>> m_Models;
-	std::vector<shared_ptr<Components::Model>> m_models;
+	std::vector<EntityPtr> m_models;
 	//----------------------------------------------------------------
 	// DX::Model
-	void RenderModel(shared_ptr<DirectX::Model> model,shared_ptr<IEffect> effect, Vector3 & position , Vector3 & rotation, bool backfaceCulling);
+	void RenderModel(shared_ptr<DirectX::Model> model, Vector3 & position , Vector3 & rotation);
 	void RenderCompositeModel(shared_ptr<CompositeModel> model, Vector3 & position, Vector3 & rotation, bool backfaceCulling);
 	void RenderModelMesh(DirectX::ModelMesh * mesh, XMMATRIX world, bool backfaceCulling);
 	//----------------------------------------------------------------

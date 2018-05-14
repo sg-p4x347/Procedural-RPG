@@ -78,8 +78,8 @@ void Game::Update(DX::StepTimer const& timer)
 
     // TODO: Add your game logic here.
 	// DX Input
-	MouseState = m_mouse->GetState();
-	KeyboardState = m_keyboard->GetState();
+	//MouseState = Mouse::Get().GetState();
+	KeyboardState = Keyboard::Get().GetState();
 	MouseTracker.Update(MouseState);
 	KeyboardTracker.Update(KeyboardState);
 

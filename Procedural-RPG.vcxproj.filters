@@ -374,6 +374,15 @@
       <Filter>Utility\Serialization</Filter>
     </ClInclude>
     <ClInclude Include="CssParser.h" />
+    <ClInclude Include="HeightMapAsset.h">
+      <Filter>Assets\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="AssetTypes.h">
+      <Filter>Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="NormalMapAsset.h">
+      <Filter>Assets\Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -636,6 +645,12 @@
       <Filter>Utility\Serialization</Filter>
     </ClCompile>
     <ClCompile Include="CssParser.cpp" />
+    <ClCompile Include="HeightMapAsset.cpp">
+      <Filter>Assets\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="NormalMapAsset.cpp">
+      <Filter>Assets\Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
@@ -705,10 +720,10 @@
       <Filter>Assets\Textures</Filter>
     </ImageContentTask>
     <ImageContentTask Include="Assets\Textures\Building\interior_paint.png">
-      <Filter>Assets</Filter>
+      <Filter>Assets\Textures</Filter>
     </ImageContentTask>
     <ImageContentTask Include="Assets\Textures\test.png">
-      <Filter>Assets</Filter>
+      <Filter>Assets\Textures</Filter>
     </ImageContentTask>
   </ItemGroup>
   <ItemGroup>

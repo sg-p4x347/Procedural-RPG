@@ -6,6 +6,8 @@ AssetEntityManager::AssetEntityManager(Filesystem::path directory) : Persistence
 	RegisterComponent([] {return new ModelAsset();});
 	RegisterComponent([] {return new PathID();});
 	RegisterComponent([] {return new Item();});
+	RegisterComponent([] {return new HeightMapAsset();});
+	RegisterComponent([] {return new NormalMapAsset();});
 }
 
 shared_ptr<ModelAsset> AssetEntityManager::GetModel(string path)
