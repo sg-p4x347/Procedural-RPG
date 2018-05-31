@@ -185,13 +185,13 @@ void AssetManager::CreateInputLayouts()
 		
 	}*/
 }
-void AssetManager::CreateHeightMapModel(string path, shared_ptr<HeightMap> heightMap,shared_ptr<Map<Vector3>> normalMap, float scaleFactor, int regionWidth, string effect)
+void AssetManager::CreateHeightMapModel(string path, HeightMap * heightMap,shared_ptr<Map<Vector3>> normalMap, float scaleFactor, int regionWidth, string effect)
 {
 	EntityPtr hmapEntity = CreateHeightMap(path, heightMap, scaleFactor, regionWidth);
 	hmapEntity->AddComponent(new ModelAsset(0, 0, effect));
-	CreateNormalMap(path + "_normal",CreateNormalMap(heightMap));
+	CreateNormalMap(path + "_normal",normalMap);
 }
-EntityPtr AssetManager::CreateHeightMap(string path, shared_ptr<HeightMap> heightMap, float scaleFactor, int regionWidth)
+EntityPtr AssetManager::CreateHeightMap(string path, HeightMap * heightMap, float scaleFactor, int regionWidth)
 {
 	EntityPtr entity = m_proceduralEM->NewEntity();
 	entity->AddComponent(new PathID(path));
@@ -200,13 +200,13 @@ EntityPtr AssetManager::CreateHeightMap(string path, shared_ptr<HeightMap> heigh
 	unsigned int vertexCount = (heightMap->width + 1) * (heightMap->length + 1);
 	unique_ptr<unsigned char[]> buffer(new unsigned char[vertexCount * sizeof(short)]);
 	unsigned int index = 0;
-	unsigned int biomeIndex = 0;
 
 	for (unsigned short vertY = 0; vertY <= heightMap->length; vertY++) {
 		for (unsigned short vertX = 0; vertX <= heightMap->width; vertX++) {
 			float vertex = heightMap->map[vertX][vertY];
 			short vertexShort = (short)(vertex * scaleFactor);
 			std::memcpy(&buffer.get()[index * sizeof(short)], &vertexShort, sizeof(short));
+			index++;
 		}
 	}
 	// save the heightmap to the file
@@ -215,7 +215,7 @@ EntityPtr AssetManager::CreateHeightMap(string path, shared_ptr<HeightMap> heigh
 
 	return entity;
 }
-shared_ptr<Map<Vector3>> AssetManager::CreateNormalMap(shared_ptr<HeightMap> heightMap)
+shared_ptr<Map<Vector3>> AssetManager::CreateNormalMap(HeightMap * heightMap)
 {
 	shared_ptr<Map<Vector3>> normalMap = std::shared_ptr<Map<Vector3>>(new Map<Vector3>(heightMap->width, heightMap->length));
 	for (int x = 0; x <= heightMap->width;x++) {
@@ -234,6 +234,25 @@ shared_ptr<Map<Vector3>> AssetManager::CreateNormalMap(shared_ptr<HeightMap> hei
 	}
 	return normalMap;
 }
+shared_ptr<Map<Vector3>> AssetManager::CreateNormalMap(int width, int length, std::function<float(int x, int y)> && getHeight)
+{
+	shared_ptr<Map<Vector3>> normalMap = std::shared_ptr<Map<Vector3>>(new Map<Vector3>(width, length));
+	for (int x = 0; x <= width;x++) {
+		for (int y = 0; y <= length;y++) {
+			float vertex = getHeight(x, y);
+			// adjacent vertices, if on the edge, this vertex is used
+			float left = x - 1 >= 0 ? getHeight(x - 1,y) : vertex;
+			float right = x + 1 <= width ? getHeight(x + 1,y) : vertex;
+			float up = y + 1 <= length ? getHeight(x,y + 1) : vertex;
+			float down = y - 1 >= 0 ? getHeight(x,y - 1) : vertex;
+
+			Vector3 normal = DirectX::SimpleMath::Vector3(left - right, 2.f, down - up);
+			normal.Normalize();
+			normalMap->map[x][y] = normal;
+		}
+	}
+	return normalMap;
+}
 EntityPtr AssetManager::CreateNormalMap(string path, shared_ptr<Map<Vector3>> normalMap)
 {
 	EntityPtr entity = m_proceduralEM->NewEntity();
@@ -241,14 +260,14 @@ EntityPtr AssetManager::CreateNormalMap(string path, shared_ptr<Map<Vector3>> no
 	entity->AddComponent(new NormalMapAsset(normalMap->width, normalMap->length));
 	// Compress the vertices into shorts, packed into a char array
 	unsigned int vertexCount = (normalMap->width + 1) * (normalMap->length + 1);
-	unique_ptr<unsigned char[]> buffer(new unsigned char[vertexCount * sizeof(short)]);
+	unique_ptr<unsigned char[]> buffer(new unsigned char[vertexCount * sizeof(int8_t) * 3]);
 	unsigned int index = 0;
 
 	for (unsigned short vertY = 0; vertY <= normalMap->length; vertY++) {
 		for (unsigned short vertX = 0; vertX <= normalMap->width; vertX++) {
 			Vector3 normal = normalMap->map[vertX][vertY];
 			// scale the vector up into the 8-bit range
-			normal *= 255;
+			normal *= 127;
 			buffer.get()[index * 3] = int8_t(normal.x);
 			buffer.get()[index * 3 + 1] = int8_t(normal.y);
 			buffer.get()[index * 3 + 2] = int8_t(normal.z);
@@ -258,7 +277,7 @@ EntityPtr AssetManager::CreateNormalMap(string path, shared_ptr<Map<Vector3>> no
 	}
 	// save the normalMap to the file
 	ofstream ofs(FullPath(path, Procedural, ".dat"), std::ios::binary);
-	ofs.write((const char *)buffer.get(), vertexCount * sizeof(short));
+	ofs.write((const char *)buffer.get(), vertexCount * sizeof(int8_t) * 3);
 
 	return entity;
 }
@@ -340,7 +359,7 @@ std::shared_ptr<Model> AssetManager::GetModel(EntityPtr entity, float distance, 
 				//----------------------------------------------------------------
 				// Heightmap models
 
-				if (modelAsset->RegionModels.width == 0) modelAsset->RegionModels.Resize(
+				if (modelAsset->RegionModels.map.size() != heightMapComp->Xsize / heightMapComp->RegionWidth) modelAsset->RegionModels.Resize(
 					heightMapComp->Xsize / heightMapComp->RegionWidth,
 					heightMapComp->Ysize / heightMapComp->RegionWidth);
 
@@ -351,19 +370,25 @@ std::shared_ptr<Model> AssetManager::GetModel(EntityPtr entity, float distance, 
 
 				int lod = LOD(distance, heightMapComp->RegionWidth);
 				if (modelAsset->RegionModels.map[x][z].second && modelAsset->RegionModels.map[x][z].first == lod) {
+					model = modelAsset->RegionModels.map[x][z].second;
+				}
+				else {
 					unsigned int sampleSpacing = std::pow(2, lod);
-					
+					sampleArea = Rectangle(x * heightMapComp->RegionWidth, z * heightMapComp->RegionWidth, heightMapComp->RegionWidth, heightMapComp->RegionWidth);
 					auto heightMap = GetHeightMap(path, type, sampleArea, sampleSpacing);
-					auto normalMap = GetNormalMap(path + "_normal", type, sampleArea, sampleSpacing);
+					auto normalMap = GetNormalMap(heightMapComp->Xsize, path + "_normal", type, sampleArea, sampleSpacing);
 
 					shared_ptr<IEffect> effect;
 					GetEffect(modelAsset->Effect, effect);
-					model = CreateModelFromHeightMap(heightMap, normalMap, sampleArea, sampleSpacing, effect);
-					// Cach the model;
+					if (path == "terrain") {
+						model = CreateTerrainModel(heightMapComp->Xsize,heightMapComp->RegionWidth, heightMap.get(), normalMap, sampleArea, sampleSpacing, effect);
+					}
+					else {
+						model = CreateModelFromHeightMap(heightMapComp->RegionWidth, heightMap.get(), normalMap, sampleArea, sampleSpacing, effect);
+					}
+					// Cache the model;
+					modelAsset->RegionModels.map[x][z].first = lod;
 					modelAsset->RegionModels.map[x][z].second = model;
-				}
-				else {
-					model = modelAsset->RegionModels.map[x][z].second;
 				}
 			}
 		}
@@ -431,7 +456,7 @@ shared_ptr<HeightMap> AssetManager::GetHeightMap(
 {
 	// Get the heightmap asset entity
 	EntityPtr entity;
-	if (Find(path, entity)) {
+	if (Find(type == AssetType::Authored ? m_authoredEM.get() : m_proceduralEM.get(),path, entity)) {
 		// Get the heightmap component
 		auto heightMapComp = entity->GetComponent<HeightMapAsset>("HeightMapAsset");
 		if (heightMapComp) {
@@ -439,6 +464,8 @@ shared_ptr<HeightMap> AssetManager::GetHeightMap(
 			int xSize = sampleArea.width / sampleSpacing;
 			int ySize = sampleArea.height / sampleSpacing;
 			shared_ptr<HeightMap> heightMap = std::make_shared<HeightMap>(xSize,ySize);
+			heightMap->area.x = sampleArea.x;
+			heightMap->area.y = sampleArea.y;
 			ifstream stream(FullPath(path,type,".dat"), ios::binary);
 
 
@@ -454,11 +481,11 @@ shared_ptr<HeightMap> AssetManager::GetHeightMap(
 						int index = Utility::posToIndex(globalX, globalY, heightMapComp->Xsize + 1);
 
 						char shortBuffer[2];
-						stream.seekg(index * heightMapComp->RegionWidth);
-						stream.read((char *)&shortBuffer, heightMapComp->RegionWidth);
+						stream.seekg(index * sizeof(short));
+						stream.read((char *)&shortBuffer, sizeof(short));
 
 						short vertex = 0;
-						memcpy(&vertex, &shortBuffer, heightMapComp->RegionWidth);
+						memcpy(&vertex, &shortBuffer, sizeof(short));
 						 
 						heightMap->map[vertX][vertY] = (float)vertex / heightMapComp->ScaleFactor;
 					}
@@ -472,45 +499,37 @@ shared_ptr<HeightMap> AssetManager::GetHeightMap(
 	return nullptr;
 }
 
-shared_ptr<Map<Vector3>> AssetManager::GetNormalMap(string path, AssetType type, Rectangle sampleArea, int sampleSpacing)
+shared_ptr<Map<Vector3>> AssetManager::GetNormalMap(int mapWidth,string path, AssetType type, Rectangle sampleArea, int sampleSpacing)
 {
-	// Get the heightmap asset entity
-	EntityPtr entity;
-	if (Find(path, entity)) {
-		// Get the heightmap component
-		auto heightMapComp = entity->GetComponent<HeightMapAsset>("HeightMapAsset");
-		if (heightMapComp) {
-			// Load the vertex array with data.
-			int xSize = sampleArea.width;
-			int ySize = sampleArea.height;
-			shared_ptr<Map<Vector3>> normalMap = std::make_shared<Map<Vector3>>(xSize, ySize);
-			ifstream stream(FullPath(path, type, ".dat"), ios::binary);
+	// Get the heightmap component
+	// Load the vertex array with data.
+	int xSize = sampleArea.width;
+	int ySize = sampleArea.height;
+	shared_ptr<Map<Vector3>> normalMap = std::make_shared<Map<Vector3>>(xSize, ySize);
+	ifstream stream(FullPath(path, type, ".dat"), ios::binary);
 
 
-			if (stream.is_open()) {
-				// stores the exact bytes from the file into memory
-				// move start position to the region, and proceed to read each line into the Char buffers
+	if (stream.is_open()) {
+		// reads the exact bytes from the file into memory
 
 
-				for (int vertY = 0; vertY <= ySize; vertY++) {
-					for (int vertX = 0; vertX <= xSize; vertX++) {
-						int globalX = vertX * sampleSpacing + sampleArea.x;
-						int globalY = vertY * sampleSpacing + sampleArea.y;
-						int index = Utility::posToIndex(globalX, globalY, heightMapComp->Xsize + 1);
+		for (int vertY = 0; vertY <= ySize; vertY++) {
+			for (int vertX = 0; vertX <= xSize; vertX++) {
+				int globalX = vertX * sampleSpacing + sampleArea.x;
+				int globalY = vertY * sampleSpacing + sampleArea.y;
+				int index = Utility::posToIndex(globalX, globalY, mapWidth + 1);
 
-						char normalBuffer[3];
-						stream.seekg(index * 3 * sizeof(char));
-						stream.read((char *)normalBuffer, 3 * sizeof(char));
-						Vector3 normal = Vector3(float(normalBuffer[0]), float(normalBuffer[1]), float(normalBuffer[2]));
-						normal.Normalize();
-						normalMap->map[vertX][vertY] = normal;
-					}
-				}
-
-				stream.close();
-				return normalMap;
+				char normalBuffer[3];
+				stream.seekg(index * 3 * sizeof(char));
+				stream.read((char *)normalBuffer, 3 * sizeof(char));
+				Vector3 normal = Vector3(float(normalBuffer[0]), float(normalBuffer[1]), float(normalBuffer[2]));
+				normal.Normalize();
+				normalMap->map[vertX][vertY] = normal;
 			}
 		}
+
+		stream.close();
+		return normalMap;
 	}
 	return nullptr;
 }
@@ -618,7 +637,8 @@ std::shared_ptr<Model> AssetManager::GetModel(unsigned int id, float distance, V
 }
 
 std::shared_ptr<Model> AssetManager::CreateModelFromHeightMap(
-	shared_ptr<HeightMap> heightMap,
+	int regionWidth,
+	HeightMap * heightMap,
 	shared_ptr<Map<Vector3>> normalMap, 
 	Rectangle sampleArea, 
 	int sampleSpacing,
@@ -635,24 +655,24 @@ std::shared_ptr<Model> AssetManager::CreateModelFromHeightMap(
 
 			// Upper left.
 			Vector3 vertex1(
-				(float)(x * sampleSpacing + sampleArea.x),
+				(float)(x * sampleSpacing - regionWidth/2/*+ sampleArea.x*/),
 				heightMap->map[x][z],
-				(float)(z * sampleSpacing + sampleArea.y));
+				(float)(z * sampleSpacing - regionWidth / 2/*+ sampleArea.y*/));
 			// Upper right.
 			Vector3 vertex2(
-				(float)((x + 1) * sampleSpacing + sampleArea.x),
+				(float)((x + 1) * sampleSpacing - regionWidth / 2/*+ sampleArea.x*/),
 				heightMap->map[x + 1][z],
-				(float)(z * sampleSpacing + sampleArea.y));
+				(float)(z * sampleSpacing - regionWidth / 2/*+ sampleArea.y*/));
 			// Bottom left.
 			Vector3 vertex3(
-				(float)(x * sampleSpacing + sampleArea.x),
+				(float)(x * sampleSpacing - regionWidth / 2/*+ sampleArea.x*/),
 				heightMap->map[x][z + 1],
-				(float)((z + 1) * sampleSpacing + sampleArea.y));
+				(float)((z + 1) * sampleSpacing - regionWidth / 2/*+ sampleArea.y*/));
 			// Bottom right.
 			Vector3 vertex4(
-				(float)((x + 1) * sampleSpacing + sampleArea.x),
+				(float)((x + 1) * sampleSpacing - regionWidth / 2/*+ sampleArea.x*/),
 				heightMap->map[x + 1][z + 1],
-				(float)((z + 1) * sampleSpacing + sampleArea.y));
+				(float)((z + 1) * sampleSpacing - regionWidth / 2/*+ sampleArea.y*/));
 
 			/*
 			1---2
@@ -668,19 +688,20 @@ std::shared_ptr<Model> AssetManager::CreateModelFromHeightMap(
 			);
 			indices[index] = index;
 			index++;
-			// Triangle 1 - Bottom right.
-			vertices[index] = CreateVertex(
-				XMFLOAT3(vertex4),										// position
-				XMFLOAT3(normalMap->map[x + 1][z + 1]),	// normal
-				XMFLOAT2(1.f, 1.f)										// texture
-			);
-			indices[index] = index;
-			index++;
+			
 			// Triangle 1 - Bottom left.
 			vertices[index] = CreateVertex(
 				XMFLOAT3(vertex3),											// position
 				XMFLOAT3(normalMap->map[x][z + 1]),	// normal
 				XMFLOAT2(0.f, 1.f)											// texture
+			);
+			indices[index] = index;
+			index++;
+			// Triangle 1 - Bottom right.
+			vertices[index] = CreateVertex(
+				XMFLOAT3(vertex4),										// position
+				XMFLOAT3(normalMap->map[x + 1][z + 1]),	// normal
+				XMFLOAT2(1.f, 1.f)										// texture
 			);
 			indices[index] = index;
 			index++;
@@ -692,14 +713,7 @@ std::shared_ptr<Model> AssetManager::CreateModelFromHeightMap(
 			);
 			indices[index] = index;
 			index++;
-			// Triangle 2 - Upper right.
-			vertices[index] = CreateVertex(
-				XMFLOAT3(vertex2),											// position
-				XMFLOAT3(normalMap->map[x + 1][z]),	// normal
-				XMFLOAT2(1.f, 0.f)											// texture
-			);
-			indices[index] = index;
-			index++;
+			
 			// Triangle 2 - Bottom right.
 			vertices[index] = CreateVertex(
 				XMFLOAT3(vertex4),												// position
@@ -708,9 +722,113 @@ std::shared_ptr<Model> AssetManager::CreateModelFromHeightMap(
 			);
 			indices[index] = index;
 			index++;
+			// Triangle 2 - Upper right.
+			vertices[index] = CreateVertex(
+				XMFLOAT3(vertex2),											// position
+				XMFLOAT3(normalMap->map[x + 1][z]),	// normal
+				XMFLOAT2(1.f, 0.f)											// texture
+			);
+			indices[index] = index;
+			index++;
 		}
 	}
 	return CustomModelLoadVBO::CreateFromVBO(m_d3dDevice.Get(), vertices, indices, effect);
+}
+std::shared_ptr<Model> AssetManager::CreateTerrainModel(int mapWidth,int regionWidth, HeightMap * heightMap, shared_ptr<Map<Vector3>> normalMap, Rectangle sampleArea, int sampleSpacing, shared_ptr<IEffect> effect)
+{
+	int halfRegionWidth = regionWidth / 2;
+	std::shared_ptr<HeightMap> waterMap = GetHeightMap("water", AssetType::Procedural, sampleArea, sampleSpacing);
+	std::shared_ptr<Map<Vector3>> waterNormalMap = GetNormalMap(mapWidth,"water_normal", AssetType::Procedural, sampleArea, sampleSpacing);
+ 	shared_ptr<Model> terrainModel = CreateModelFromHeightMap(regionWidth, heightMap, normalMap, sampleArea, sampleSpacing, effect);
+
+	vector<VertexPositionNormalTangentColorTexture> vertices(6 * heightMap->width * heightMap->length);
+
+	vector<uint16_t> indices(6 * heightMap->width * heightMap->length);
+
+	static const float push = 0.f;
+
+	for (int z = 0; z < heightMap->length; z++) {
+		for (int x = 0; x < heightMap->width; x++) {
+			const float worldX = x * sampleSpacing + sampleArea.x;
+			const float worldZ = z * sampleSpacing + sampleArea.y;
+			bool hasWater[4]{
+				waterMap->map[x][z] > push,
+				waterMap->map[x + 1][z] > push,
+				waterMap->map[x][z + 1] > push,
+				waterMap->map[x + 1][z + 1] > push,
+			};
+			DirectX::VertexPositionNormalTangentColorTexture quad[4]{
+				CreateVertex(Vector3(
+					(float)(x * sampleSpacing - halfRegionWidth),
+					heightMap->map[x][z] > 0.f ? (waterMap->map[x][z] == 0.f ? LowestNeighbor(*waterMap,*heightMap, x, z) : waterMap->map[x][z] + heightMap->map[x][z]) : 0.f,
+					(float)(z * sampleSpacing - halfRegionWidth)
+				),waterNormalMap->map[x][z],Vector2::Zero),
+				CreateVertex(Vector3(
+					(float)((x+1) * sampleSpacing - halfRegionWidth),
+					heightMap->map[x + 1][z] > 0.f ? (waterMap->map[x + 1][z] == 0.f ? LowestNeighbor(*waterMap,*heightMap, x + 1, z) : waterMap->map[x + 1][z] + heightMap->map[x + 1][z]) : 0.f,
+					(float)(z * sampleSpacing - halfRegionWidth)
+				),waterNormalMap->map[x+1][z],Vector2(1.f, 0.f)),
+				CreateVertex(Vector3(
+					(float)(x * sampleSpacing - halfRegionWidth),
+					heightMap->map[x][z + 1] > 0.f ? (waterMap->map[x][z + 1] == 0.f ? LowestNeighbor(*waterMap,*heightMap, x, z + 1) : waterMap->map[x][z + 1] + heightMap->map[x][z + 1]) : 0.f,
+					(float)((z + 1) * sampleSpacing - halfRegionWidth)
+				),waterNormalMap->map[x][z+1],Vector2(0.f,1.f)),
+				CreateVertex(Vector3(
+					(float)((x+1) * sampleSpacing - halfRegionWidth),
+					heightMap->map[x + 1][z + 1] > 0.f ? (waterMap->map[x + 1][z + 1] == 0.f ? LowestNeighbor(*waterMap,*heightMap, x + 1, z + 1) : waterMap->map[x + 1][z + 1] + heightMap->map[x + 1][z + 1]) : 0.f,
+					(float)((z+1) * sampleSpacing - halfRegionWidth)
+				),waterNormalMap->map[x+1][z+1],Vector2(1.f,1.f))
+			};
+			/*
+			0---1
+			| \ |
+			2---3
+			*/
+
+			// Left triangle
+			if (hasWater[0] || hasWater[3] || hasWater[2]) {
+				indices.push_back(vertices.size());
+				vertices.push_back(quad[0]);
+				indices.push_back(vertices.size());
+				vertices.push_back(quad[2]);
+				indices.push_back(vertices.size());
+				vertices.push_back(quad[3]);
+			}
+			// Right
+			if (hasWater[0] || hasWater[1] || hasWater[3]) {
+				indices.push_back(vertices.size());
+				vertices.push_back(quad[0]);
+				indices.push_back(vertices.size());
+				vertices.push_back(quad[3]);
+				indices.push_back(vertices.size());
+				vertices.push_back(quad[1]);
+			}
+
+		}
+	}
+	shared_ptr<IEffect> waterEffect;
+	GetEffect("Water", waterEffect);
+	shared_ptr<Model> waterModel = CustomModelLoadVBO::CreateFromVBO(m_d3dDevice.Get(), vertices, indices, waterEffect);
+	for (auto & mesh : waterModel->meshes) {
+		for (auto & part : mesh->meshParts) {
+			part->isAlpha = true;
+		}
+		terrainModel->meshes.push_back(mesh);
+	}
+	return terrainModel;
+}
+float AssetManager::LowestNeighbor(HeightMap & water, HeightMap & terrain, int x, int z)
+{
+	float minY = std::numeric_limits<float>::infinity();
+	for (int i = 0; i < 8; i++) {
+		int adjX = (i == 0 || i == 1 || i == 7 ? x + 1 : (i >= 3 && i <= 5 ? x - 1 : x));
+		int adjZ = (i >= 1 && i <= 3 ? z + 1 : (i >= 5 && i <= 7 ? z - 1 : z));
+		if (water.Bounded(adjX, adjZ)) {
+			float worldY = water.map[adjX][adjZ] + terrain.map[adjX][adjZ];
+			if (worldY < minY) minY = worldY;
+		}
+	}
+	return minY;
 }
 VertexPositionNormalTangentColorTexture AssetManager::CreateVertex(Vector3 position, Vector3 normal, Vector2 texture)
 {
@@ -731,9 +849,9 @@ VboParser * AssetManager::ProVboParser()
 {
 	return m_vboParser.get();
 }
-bool AssetManager::Find(string path, EntityPtr & entity)
+bool AssetManager::Find(AssetEntityManager * assetManager, string path, EntityPtr & entity)
 {
-	return m_authoredEM->TryFindByPathID(path, entity);
+	return assetManager->TryFindByPathID(path, entity);
 }
 void AssetManager::AddEffect(string name, shared_ptr<IEffect> effect)
 {

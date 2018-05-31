@@ -44,6 +44,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <climits>
+#include <limits>
 #include <stdexcept>
 #include <dirent.h>
 #include <stdio.h>

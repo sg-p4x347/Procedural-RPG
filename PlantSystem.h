@@ -7,7 +7,7 @@ class PlantSystem :
 	public WorldSystem
 {
 public:
-	PlantSystem(SystemManager * systemManger, unique_ptr<WorldEntityManager> & entityManager, vector<string> & components, unsigned short updatePeriod);
+	PlantSystem(SystemManager * systemManger, WorldEntityManager * entityManager, vector<string> & components, unsigned short updatePeriod);
 	// Inherited via WorldSystem
 	virtual string Name() override;
 	virtual void Update(double & elapsed) override;
@@ -24,5 +24,9 @@ private:
 	void NewTree(DirectX::SimpleMath::Vector3 & position, Vector3 & rotation);
 	float TreeGradientProbability(float gradient);
 	float TreeElevationProbability(float elevation);
+	//----------------------------------------------------------------
+	// Grass
+	void GenerateGrassEntities(HeightMap & terrain, Map<WaterCell> & water);
+	void NewGrass(DirectX::SimpleMath::Vector3 & position, Vector3 & rotation);
 };
 

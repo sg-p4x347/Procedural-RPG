@@ -402,6 +402,7 @@
     <ImageContentTask Include="Assets\Textures\leaves2.png" />
     <ImageContentTask Include="Assets\Textures\wood.png" />
     <ImageContentTask Include="Assets\Textures\Building\interior_paint.png" />
+    <ImageContentTask Include="Assets\Textures\iron_ore.png" />
     <Image Include="Assets\Textures\Item\logs.png" />
     <ImageContentTask Include="Assets\Textures\test.png" />
     <Image Include="directx.ico" />
@@ -414,6 +415,7 @@
     <None Include="config\city.json" />
     <None Include="config\continent.json" />
     <None Include="config\history.json" />
+    <None Include="config\world.json" />
     <None Include="config\WorldEntityManager.json" />
     <None Include="packages.config" />
   </ItemGroup>
@@ -444,6 +446,7 @@
     <MeshContentTask Include="Assets\Models\Building\models-building-wall0_0.fbx" />
     <MeshContentTask Include="Assets\Models\Crate_0.fbx" />
     <MeshContentTask Include="Assets\Models\Cube.fbx" />
+    <MeshContentTask Include="Assets\Models\Grass_0.fbx" />
     <MeshContentTask Include="Assets\Models\Iron_Boulder_0.fbx" />
     <MeshContentTask Include="Assets\Models\Tree.fbx">
       <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)/Assets%(Filename).cmo</ContentOutput>

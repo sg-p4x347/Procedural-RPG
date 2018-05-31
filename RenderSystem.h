@@ -7,6 +7,10 @@
 #include "CompositeModel.h";
 #include "AssetManager.h"
 class SystemManager;
+struct RenderEntityJob {
+	EntityPtr entity;
+	XMMATRIX worldMatrix;
+};
 class RenderSystem :
 	public System
 {
@@ -23,6 +27,7 @@ public:
 	void SetViewport(int width, int height);
 	Rectangle GetViewport();
 	void InitializeWorldRendering(WorldEntityManager * entityManager);
+	void RegisterHandlers();
 	~RenderSystem();
 private:
 	WorldEntityManager * EM;
@@ -79,11 +84,15 @@ private:
 	//----------------------------------------------------------------
 	// Components::Model using DirectX::Model
 	unsigned long m_ModelMask;
-	std::map<string, vector<shared_ptr<Components::Model>>> m_Models;
-	std::vector<EntityPtr> m_models;
+	std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_modelInstances;
+	std::set<EntityPtr> m_tracked;
+	std::set<unsigned long> m_forceRenderMasks;
+	void TrackEntity(std::map<shared_ptr<Model>, vector<RenderEntityJob>> & modelInstances, std::set<EntityPtr> & tracked,EntityPtr entity);
 	//----------------------------------------------------------------
 	// DX::Model
-	void RenderModel(shared_ptr<DirectX::Model> model, Vector3 & position , Vector3 & rotation);
+
+	// Render all opaque or alpha meshes within the model 
+	void RenderModel(shared_ptr<DirectX::Model> model, XMMATRIX world,bool opaque);
 	void RenderCompositeModel(shared_ptr<CompositeModel> model, Vector3 & position, Vector3 & rotation, bool backfaceCulling);
 	void RenderModelMesh(DirectX::ModelMesh * mesh, XMMATRIX world, bool backfaceCulling);
 	//----------------------------------------------------------------

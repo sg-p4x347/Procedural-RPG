@@ -679,6 +679,9 @@
     <None Include="config\WorldEntityManager.json">
       <Filter>Config</Filter>
     </None>
+    <None Include="config\world.json">
+      <Filter>Config</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shaders\Water.hlsl">
@@ -725,6 +728,9 @@
     <ImageContentTask Include="Assets\Textures\test.png">
       <Filter>Assets\Textures</Filter>
     </ImageContentTask>
+    <ImageContentTask Include="Assets\Textures\iron_ore.png">
+      <Filter>Assets</Filter>
+    </ImageContentTask>
   </ItemGroup>
   <ItemGroup>
     <MeshContentTask Include="Assets\Models\Tree.fbx">
@@ -749,6 +755,9 @@
       <Filter>Assets\Models</Filter>
     </MeshContentTask>
     <MeshContentTask Include="Assets\Models\Iron_Boulder_0.fbx">
+      <Filter>Assets\Models</Filter>
+    </MeshContentTask>
+    <MeshContentTask Include="Assets\Models\Grass_0.fbx">
       <Filter>Assets\Models</Filter>
     </MeshContentTask>
   </ItemGroup>

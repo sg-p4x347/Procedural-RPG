@@ -6,7 +6,7 @@
 #include "GuiSystem.h"
 PlayerSystem::PlayerSystem(
 	SystemManager * systemManager,
-	unique_ptr<WorldEntityManager> &  entityManager,
+	WorldEntityManager *  entityManager,
 	vector<string> & components, 
 	unsigned short updatePeriod
 ) : 
@@ -218,7 +218,6 @@ void PlayerSystem::SetInteractionState(Components::InteractionStates state)
 	switch (state) {
 	case Components::InteractionStates::World:
 		Mouse::Get().SetMode(Mouse::MODE_RELATIVE);
-
 		EM->Player()->GetComponent<Components::Player>("Player")->OpenContainer = 0;
 		//IEventManager::Invoke(EventTypes::Item_CloseInventory, EM->Player(),openContainer);
 		IEventManager::Invoke(EventTypes::GUI_OpenMenu, string("HUD"));

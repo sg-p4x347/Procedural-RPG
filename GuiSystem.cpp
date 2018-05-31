@@ -500,10 +500,6 @@ void GuiSystem::ShowHint(string hint)
 {
 	SetTextByID("HUD", hint);
 }
-void GuiSystem::HideHint()
-{
-	ShowHint("");
-}
 
 void GuiSystem::BindHandlers()
 {
@@ -511,7 +507,7 @@ void GuiSystem::BindHandlers()
 		ShowHint(text);
 	}));
 	IEventManager::RegisterHandler(GUI_HideHint, std::function<void(void)>([=]() {
-		HideHint();
+		ShowHint("");
 	}));
 
 	IEventManager::RegisterHandler(GUI_OpenMenu, std::function<void(string)>([this](string menu) {

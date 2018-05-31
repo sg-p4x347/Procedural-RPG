@@ -5,7 +5,7 @@ class CollisionSystem :
 	public WorldSystem
 {
 public:
-	CollisionSystem(SystemManager * systemManager, unique_ptr<WorldEntityManager> & entityManager, vector<string> & components, unsigned short updatePeriod);
+	CollisionSystem(SystemManager * systemManager, WorldEntityManager * entityManager, vector<string> & components, unsigned short updatePeriod);
 
 	// Inherited via WorldSystem
 	virtual string Name() override;

@@ -2,6 +2,7 @@
 #include "BaseEntityManager.h"
 #include "Entity.h"
 #include <bitset>
+#include "IEventManager.h"
 BaseEntityManager::BaseEntityManager()
 {
 	m_nextID = 1;
@@ -90,6 +91,7 @@ EntityPtr BaseEntityManager::Copy(Entity * source)
 
 void BaseEntityManager::DeleteEntity(EntityPtr & entity)
 {
+	IEventManager::Invoke(EventTypes::Entity_Deleted, entity);
 	m_removedIDs.push(entity->ID());
 	// Remove all components from the entity
 	entity->RemoveComponents();

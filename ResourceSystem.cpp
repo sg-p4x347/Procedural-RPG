@@ -2,7 +2,7 @@
 #include "ResourceSystem.h"
 #include "IEventManager.h"
 #include "Inventory.h"
-ResourceSystem::ResourceSystem(unique_ptr<WorldEntityManager>& entityManager, vector<string>& components, unsigned short updatePeriod)
+ResourceSystem::ResourceSystem(WorldEntityManager * entityManager, vector<string>& components, unsigned short updatePeriod)
 	:WorldSystem::WorldSystem(entityManager,components,updatePeriod)
 {
 	RegisterHandlers();

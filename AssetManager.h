@@ -38,19 +38,34 @@ public:
 	VboParser * ProVboParser();
 	//----------------------------------------------------------------
 	// Heightmaps
-	void CreateHeightMapModel(string path, shared_ptr<HeightMap> heightMap, shared_ptr<Map<Vector3>> normalMap, float scaleFactor, int regionWidth, string effect);
-	EntityPtr CreateHeightMap(string path, shared_ptr<HeightMap> heightMap, float scaleFactor, int regionWidth);
-	shared_ptr<Map<Vector3>> CreateNormalMap(shared_ptr<HeightMap> heightMap);
+	void CreateHeightMapModel(string path, HeightMap * heightMap, shared_ptr<Map<Vector3>> normalMap, float scaleFactor, int regionWidth, string effect);
+	EntityPtr CreateHeightMap(string path, HeightMap * heightMap, float scaleFactor, int regionWidth);
+	shared_ptr<Map<Vector3>> CreateNormalMap(HeightMap * heightMap);
+	shared_ptr<Map<Vector3>> CreateNormalMap(int width, int length, std::function<float(int x, int y)> && getHeight);
 	EntityPtr CreateNormalMap(string path, shared_ptr<Map<Vector3>> normalMap);
 	shared_ptr<HeightMap> GetHeightMap(string path, AssetType type, Rectangle sampleArea, int sampleSpacing = 1);
-	shared_ptr<Map<Vector3>> GetNormalMap(string path, AssetType type, Rectangle sampleArea, int sampleSpacing = 1);
+	shared_ptr<Map<Vector3>> GetNormalMap(int mapWidth,string path, AssetType type, Rectangle sampleArea, int sampleSpacing = 1);
 	int LOD(double distance, unsigned int regionWidth);
-	std::shared_ptr<Model> CreateModelFromHeightMap(shared_ptr<HeightMap> heightMap,shared_ptr<Map<Vector3>> normalMap, Rectangle sampleArea, int sampleSpacing,shared_ptr<IEffect> effect);
+	std::shared_ptr<Model> CreateModelFromHeightMap(
+		int regionWidth,
+		HeightMap * heightMap,
+		shared_ptr<Map<Vector3>> normalMap, 
+		Rectangle sampleArea, 
+		int sampleSpacing,
+		shared_ptr<IEffect> effect);
 	
-	
+	std::shared_ptr<Model> CreateTerrainModel(
+		int mapWidth,
+		int regionWidth,
+		HeightMap * heightMap,
+		shared_ptr<Map<Vector3>> normalMap,
+		Rectangle sampleArea,
+		int sampleSpacing,
+		shared_ptr<IEffect> effect);
+	float LowestNeighbor(HeightMap & water, HeightMap & terrain, int x, int z);
 	
 	// Query an asset entity by path
-	bool Find(string path, EntityPtr & entity);
+	bool Find(AssetEntityManager * assetManager,string path, EntityPtr & entity);
 	//----------------------------------------------------------------
 	// Asset Storage
 	void AddEffect(string name, shared_ptr<IEffect> effect);

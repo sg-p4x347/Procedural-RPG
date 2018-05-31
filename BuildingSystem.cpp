@@ -2,7 +2,7 @@
 #include "BuildingSystem.h"
 #include "BuildingGenerator.h"
 #include "AssetManager.h"
-BuildingSystem::BuildingSystem(unique_ptr<WorldEntityManager> &  entityManager, vector<string> components, unsigned short updatePeriod) : WorldSystem::WorldSystem(entityManager,components,updatePeriod)
+BuildingSystem::BuildingSystem(WorldEntityManager *  entityManager, vector<string> components, unsigned short updatePeriod) : WorldSystem::WorldSystem(entityManager,components,updatePeriod)
 {
 
 }

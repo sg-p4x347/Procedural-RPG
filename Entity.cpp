@@ -89,5 +89,6 @@ void Entity::RemoveComponents()
 
 void Entity::RemoveEntity()
 {
+	
 	m_removed = true;
 }

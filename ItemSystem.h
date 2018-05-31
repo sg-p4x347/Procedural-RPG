@@ -5,7 +5,7 @@ class ItemSystem :
 	public WorldSystem
 {
 public:
-	ItemSystem(unique_ptr<WorldEntityManager> & entityManager, vector<string> & components, unsigned short updatePeriod);
+	ItemSystem(WorldEntityManager * entityManager, vector<string> & components, unsigned short updatePeriod);
 	//----------------------------------------------------------------
 	// Queries
 	shared_ptr<Components::Inventory> GetPlayerInventory();

@@ -155,7 +155,7 @@ namespace GUI {
 
 	void GuiEntityManager::AddText(EntityPtr entity, string text)
 	{
-		if (entity && text != "") {
+		if (entity) {
 			shared_ptr<GUI::Text> textComp = entity->GetComponent<GUI::Text>("Text");
 			if (textComp) {
 				textComp->String = text;

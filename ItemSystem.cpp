@@ -4,7 +4,7 @@
 #include "Inventory.h"
 #include "Item.h"
 #include "AssetManager.h"
-ItemSystem::ItemSystem(unique_ptr<WorldEntityManager> & entityManager, vector<string> & components, unsigned short updatePeriod) :
+ItemSystem::ItemSystem(WorldEntityManager * entityManager, vector<string> & components, unsigned short updatePeriod) :
 	WorldSystem::WorldSystem(entityManager, components, updatePeriod)
 {
 	RegisterHandlers();

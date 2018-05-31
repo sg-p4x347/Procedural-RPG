@@ -18,7 +18,7 @@ class TerrainSystem :
 public:
 	TerrainSystem(
 		SystemManager * systemManager,
-		unique_ptr<WorldEntityManager> & entityManager,
+		WorldEntityManager * entityManager,
 		vector<string> & components, 
 		unsigned short updatePeriod, 
 		int worldWidth,
@@ -45,6 +45,7 @@ public:
 	float Height(HeightMap & map, int x, int z);
 	float Average(HeightMap & map, Rectangle area);
 	void Save(HeightMap & map);
+	void RegisterHandlers();
 	// terrain manipulation (TEMP currently only updates the VBO)
 	void SetVertex(const int & x, const int & z, const float value);
 public:

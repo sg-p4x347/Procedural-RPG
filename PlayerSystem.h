@@ -23,7 +23,7 @@ class PlayerSystem :
 	public WorldSystem
 {
 public:
-	PlayerSystem(SystemManager * systemManager, unique_ptr<WorldEntityManager> &  entityManager,
+	PlayerSystem(SystemManager * systemManager, WorldEntityManager *  entityManager,
 		vector<string> & components, 
 		unsigned short updatePeriod
 	);

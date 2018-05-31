@@ -13,7 +13,7 @@ class ActionSystem :
 	public WorldSystem
 {
 public:
-	ActionSystem(SystemManager *, unique_ptr<WorldEntityManager> & entityManager, vector<string> & components, unsigned short updatePeriod);
+	ActionSystem(SystemManager *, WorldEntityManager * entityManager, vector<string> & components, unsigned short updatePeriod);
 
 	// Inherited via WorldSystem
 	virtual string Name() override;

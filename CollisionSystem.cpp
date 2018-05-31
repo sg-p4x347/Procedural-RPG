@@ -4,7 +4,7 @@
 #include "SystemManager.h"
 #include "Game.h"
 #include "IEventManager.h"
-CollisionSystem::CollisionSystem(SystemManager * systemManager, unique_ptr<WorldEntityManager>& entityManager, vector<string>& components, unsigned short updatePeriod) :
+CollisionSystem::CollisionSystem(SystemManager * systemManager, WorldEntityManager * entityManager, vector<string>& components, unsigned short updatePeriod) :
 	WorldSystem::WorldSystem(entityManager, components, updatePeriod), SM(systemManager)
 {
 }

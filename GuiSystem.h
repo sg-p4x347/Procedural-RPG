@@ -32,7 +32,6 @@ public:
 	// HUD Control
 	void SetTextByID(string id, string text);
 	void ShowHint(string hint);
-	void HideHint();
 	//----------------------------------------------------------------
 	// Events
 	void BindHandlers();

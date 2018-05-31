@@ -600,16 +600,16 @@ using namespace Utility;
 		// building level assets
 		EntityPtr exteriorWallAsset;
 		EntityPtr exteriorCornerAsset;
-		AssetManager::Get()->Find((string)m_config["exteriorWallType"], exteriorWallAsset);
-		AssetManager::Get()->Find((string)m_config["exteriorCornerType"], exteriorCornerAsset);
+		AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(),(string)m_config["exteriorWallType"], exteriorWallAsset);
+		AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorCornerType"], exteriorCornerAsset);
 		// iterate & voxelize each room
 		for (RoomPtr & room : rooms) {
 			EntityPtr floorAsset;
 			EntityPtr wallAsset;
 			EntityPtr cornerAsset;
-			AssetManager::Get()->Find((string)room->config["floorType"], floorAsset);
-			AssetManager::Get()->Find((string)room->config["wallType"], wallAsset);
-			AssetManager::Get()->Find((string)room->config["cornerType"], cornerAsset);
+			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["floorType"], floorAsset);
+			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["wallType"], wallAsset);
+			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["cornerType"], cornerAsset);
 			//AssetManager::Get()->Find((string)room->config["cornerType"], cornerAsset);
 
 			for (int x = room->rect.x-1; x <= room->rect.x + room->rect.width+1; x++) {

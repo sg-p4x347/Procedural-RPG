@@ -218,6 +218,7 @@ bool PersistenceEntityManager::Find(const unsigned int & id, EntityPtr & entity)
 
 void PersistenceEntityManager::Save()
 {
+	Utility::OutputLine("Saving entity manager...");
 	//----------------------------------------------------------------
 	// Components
 	for (std::unordered_map<unsigned int, EntityPtr>::iterator it = m_entities.begin(); it != m_entities.end(); ++it) {
@@ -229,5 +230,6 @@ void PersistenceEntityManager::Save()
 	// Next Entity ID
 	ofstream nextEntityFile(m_directory / m_nextEntityFile);
 	nextEntityFile << GetNextID();
+	Utility::OutputLine("Finished");
 }
 

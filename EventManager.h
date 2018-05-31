@@ -3,6 +3,7 @@
 #include "EventHandler.h"
 enum EventTypes {
 	Entity_ComponentAdded,
+	Entity_Deleted,
 
 	Game_Suspend,
 	Game_Resume,
@@ -25,7 +26,9 @@ enum EventTypes {
 	Resource_Aquire,
 
 	Player_SetInteractionState,
-	Player_OpenInventory
+	Player_OpenInventory,
+
+	Movement_PlayerMoved
 };
 template <typename ... Signature>
 class EventManager

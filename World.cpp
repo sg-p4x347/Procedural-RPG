@@ -142,17 +142,17 @@ bool World::Load()
 	renderSystem->InitializeWorldRendering(m_entityManager.get());
 	//----------------------------------------------------------------
 	// Add world systems
-	m_systemManager.AddSystem(std::shared_ptr<System>(new PlayerSystem(&m_systemManager, m_entityManager, vector<string>{ "Player", "Position" }, 1)));
-	m_systemManager.AddSystem(std::shared_ptr<System>(new TerrainSystem(&m_systemManager, m_entityManager, vector<string>{ "Terrain", "Position", "VBO" }, 1, m_width,64, systemsDir)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new PlayerSystem(&m_systemManager, m_entityManager.get(), vector<string>{ "Player", "Position" }, 1)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new TerrainSystem(&m_systemManager, m_entityManager.get(), vector<string>{ "Terrain", "Position", "VBO" }, 1, m_width,64, systemsDir)));
 	
-	m_systemManager.AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager, vector<string>{"Movement"}, 1, renderSystem)));
-	m_systemManager.AddSystem(std::shared_ptr<System>(new CollisionSystem(&m_systemManager, m_entityManager, vector<string>{"Movement", "Position", "Collision"}, 1)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager.get(), vector<string>{"Movement"}, 1, renderSystem)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new CollisionSystem(&m_systemManager, m_entityManager.get(), vector<string>{"Movement", "Position", "Collision"}, 1)));
 
-	m_systemManager.AddSystem(std::shared_ptr<System>(new ActionSystem(&m_systemManager, m_entityManager, vector<string>{"Action", "Position"}, 10)));
-	m_systemManager.AddSystem(std::shared_ptr<System>(new PlantSystem(&m_systemManager, m_entityManager, vector<string>(), 0)));
-	m_systemManager.AddSystem(std::shared_ptr<System>(new ItemSystem(m_entityManager, vector<string>{"Inventory", "Item"}, 0)));
-	m_systemManager.AddSystem(std::shared_ptr<System>(new BuildingSystem(m_entityManager, vector<string>{"Building"}, 0)));
-	m_systemManager.AddSystem(std::shared_ptr<System>(new ResourceSystem(m_entityManager, vector<string>(), 0)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new ActionSystem(&m_systemManager, m_entityManager.get(), vector<string>{"Action", "Position"}, 10)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new PlantSystem(&m_systemManager, m_entityManager.get(), vector<string>(), 0)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new ItemSystem(m_entityManager.get(), vector<string>{"Inventory", "Item"}, 0)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new BuildingSystem(m_entityManager.get(), vector<string>{"Building"}, 0)));
+	m_systemManager.AddSystem(std::shared_ptr<System>(new ResourceSystem(m_entityManager.get(), vector<string>(), 0)));
 
 	m_systemManager.Initialize();
 	return true;

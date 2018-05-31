@@ -6,7 +6,7 @@
 #include "TerrainSystem.h"
 #include "Inventory.h"
 #include "ItemSystem.h"
-PlantSystem::PlantSystem(SystemManager * systemManager, unique_ptr<WorldEntityManager>& entityManager, vector<string>& components, unsigned short updatePeriod) : WorldSystem::WorldSystem(entityManager,components,updatePeriod),
+PlantSystem::PlantSystem(SystemManager * systemManager, WorldEntityManager * entityManager, vector<string>& components, unsigned short updatePeriod) : WorldSystem::WorldSystem(entityManager,components,updatePeriod),
 SM(systemManager)
 {
 	
@@ -26,6 +26,7 @@ void PlantSystem::Generate()
 	GenerateTreeModels();
 	auto terrainSystem = SM->GetSystem<TerrainSystem>("Terrain");
 	GenerateTreeEntities(*(terrainSystem->TerrainMap),*(terrainSystem->WaterMap));
+	//GenerateGrassEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
 }
 
 void PlantSystem::GenerateTreeModels()
@@ -62,7 +63,7 @@ void PlantSystem::GenerateTreeModels()
 
 void PlantSystem::GenerateTreeEntities(HeightMap & terrain, Map<WaterCell> & water)
 {
-	Utility::OutputLine("Generating Trees...");
+	Utility::OutputLine("\nGenerating Trees...");
 	static const float density = 0.01f;
 	/*for (int regionX = 0; regionX < m_width / m_regionWidth; regionX++) {
 	for (int regionZ = 0; regionZ < m_width / m_regionWidth; regionZ++) {*/
@@ -118,4 +119,36 @@ float PlantSystem::TreeElevationProbability(float elevation)
 {
 	static const float maxElevation = 512.f;
 	return Utility::SigmoidDecay(elevation, maxElevation, 0.1f);
+}
+
+void PlantSystem::GenerateGrassEntities(HeightMap & terrain, Map<WaterCell> & water)
+{
+	Utility::OutputLine("\nGenerating Grass...");
+	static const float density = 0.1f;
+	for (int x = 0; x <= terrain.width; x++) {
+		for (int z = 0; z <= terrain.length; z++) {
+			if (water.map[x][z].Water == 0.f) {
+
+				float probability = density * TreeElevationProbability(terrain.Height(x, z));
+				//probability = std::round(probability);
+				if (probability > 0.0001f && Utility::Chance(probability)) {
+					Vector3 pos(x, terrain.Height(x, z), z);
+					Vector3 rot(0.f, Utility::randWithin(0.f, XM_2PI), 0.f);
+					NewGrass(pos, rot);
+				}
+			}
+		}
+	}
+	Utility::OutputLine("Finished");
+}
+
+void PlantSystem::NewGrass(DirectX::SimpleMath::Vector3 & position, Vector3 & rotation)
+{
+	EntityPtr entity = EM->NewEntity();
+
+	entity->AddComponent(
+		new Components::Position(position, rotation));
+	entity->AddComponent(
+		new Components::Model("Grass", AssetType::Authored));
+
 }

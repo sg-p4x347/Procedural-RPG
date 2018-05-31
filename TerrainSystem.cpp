@@ -21,13 +21,12 @@
 #include "TaskManager.h"
 #include "Inventory.h"
 #include "ItemSystem.h"
-static const bool g_erosion = false;
 
 using namespace DirectX::SimpleMath;
 static EntityPtr waterEntity;
 TerrainSystem::TerrainSystem(
 	SystemManager * systemManager,
-	unique_ptr<WorldEntityManager> &  entityManager,
+	WorldEntityManager *  entityManager,
 	vector<string> & components, 
 	unsigned short updatePeriod, 
 	int worldWidth,
@@ -41,7 +40,7 @@ TerrainSystem::TerrainSystem(
 {
 	m_directory = directory / Name();
 	Filesystem::create_directory(m_directory);
-	
+	RegisterHandlers();
 	//m_workerThread = TaskThread()
 	//m_workers = Map<std::thread>(m_width / m_regionWidth,0,0,0);
 
@@ -184,18 +183,30 @@ void TerrainSystem::Generate()
 	}
 
 	// Erosion
-	if(g_erosion) UpdateDroplets(*TerrainMap,InitializeDroplets(), InitializeThermalErosionMap());
+	bool erosion = config["erosion"].To<bool>();
+	if(erosion) UpdateDroplets(*TerrainMap,InitializeDroplets(), InitializeThermalErosionMap());
 	// Terrain done yay!
 	CreateTerrainEntities();
-	SaveTerrain(*TerrainMap,biome);
+	AssetManager::Get()->CreateHeightMapModel("terrain", TerrainMap.get(),AssetManager::Get()->CreateNormalMap(TerrainMap.get()),10.f,m_regionWidth,"Terrain");
+	//SaveTerrain(*TerrainMap,biome);
 
 
 	// Rain simulation
 	InitializeErosionMap();
-	if (g_erosion) UpdateWater(*TerrainMap, *WaterMap);
+	if (erosion) UpdateWater(*TerrainMap, *WaterMap);
 	// Water done yay!
-	CreateWaterEntities();
-	SaveWater(*WaterMap);
+	//CreateWaterEntities();
+	shared_ptr<HeightMap> waterMap = std::make_shared<HeightMap>(WaterMap->width, WaterMap->length);
+	// copy water cell height values to the heightmap
+	for (int x = 0; x < WaterMap->width;x++) {
+		for (int z = 0; z < WaterMap->length;z++) {
+			waterMap->map[x][z] = WaterMap->map[x][z].Water;
+		}
+	}
+	AssetManager::Get()->CreateHeightMapModel("water", waterMap.get(), AssetManager::Get()->CreateNormalMap(waterMap->width, waterMap->length, [&](int x, int y) {
+		return waterMap->map[x][y] + TerrainMap->map[x][y];
+	}), 10.f, m_regionWidth, "Water");
+	//SaveWater(*WaterMap);
 
 	// Resources
 	CreateResourceEntities();
@@ -203,7 +214,7 @@ void TerrainSystem::Generate()
 	// TEMP
 	SM->GetSystem<ItemSystem>("Item")->NewContainer(Vector3(32, TerrainMap->Height(32, 32), 32), Vector3::Zero, "Crate");
 
-	Utility::OutputLine("Generating Buildings...");
+	/*Utility::OutputLine("Generating Buildings...");
 	Rectangle footprint = Rectangle(ProUtil::RandWithin(32, 200), ProUtil::RandWithin(32, 200), ProUtil::RandWithin(6,10), ProUtil::RandWithin(6, 10));
 	Rectangle flattenArea = Rectangle(footprint.x - 1, footprint.y - 1, footprint.width + 2, footprint.height + 2);
 	Rectangle cacheArea = Rectangle(flattenArea.x - 10, flattenArea.y - 10, flattenArea.width + 20, flattenArea.height + 20);
@@ -211,18 +222,18 @@ void TerrainSystem::Generate()
 	ImportMap(cache);
 	float height = Flatten(cache, flattenArea,10);
 	SM->GetSystem<BuildingSystem>("Building")->CreateBuilding(Vector3(footprint.x, height + 0.1f, footprint.y), Rectangle(0, 0, footprint.width, footprint.height), "residential");
-	Save(cache);
+	Save(cache);*/
 	
-	
+	AssetManager::Get()->GetProceduralEM()->Save();
 }
 
 void TerrainSystem::Update(double & elapsed)
 {
-	Vector3 velocity = EM->Player()->GetComponent<Components::Movement>("Movement")->Velocity;
+	/*Vector3 velocity = EM->Player()->GetComponent<Components::Movement>("Movement")->Velocity;
 	Vector3 position = EM->PlayerPos()->Pos;
 	if (velocity.Length() < 100) {
 		UpdateRegions(position);
-	}
+	}*/
 }
 
 string TerrainSystem::Name()
@@ -262,7 +273,7 @@ float TerrainSystem::Height(const int & x, const int & z)
 
 float TerrainSystem::Height(float & x, float & z)
 {
-	return m_cache->Height(x - m_cachePos.x, z - m_cachePos.y);
+	return m_cache->Height(x - m_cache->area.x, z - m_cache->area.y);
 }
 
 int TerrainSystem::Width()
@@ -484,9 +495,8 @@ void TerrainSystem::NewWater(DirectX::SimpleMath::Vector3 & position)
 		new Components::Position(position, SimpleMath::Vector3::Zero));
 	entity->AddComponent(
 		new Components::Tag("Water"));
-	auto vbo = new Components::PositionNormalTextureTangentColorVBO();
-	vbo->Effect = "Water";
-	entity->AddComponent(vbo);
+	entity->AddComponent(
+		new Components::Model("water",AssetType::Procedural));
 }
 
 
@@ -614,18 +624,18 @@ void TerrainSystem::UpdateWaterVBO(shared_ptr<Components::PositionNormalTextureT
 					vbo->Indices.push_back(vbo->Vertices.size());
 					vbo->Vertices.push_back(CreateVertex(quad[0],Vector3::UnitY,Vector2::Zero));
 					vbo->Indices.push_back(vbo->Vertices.size());
-					vbo->Vertices.push_back(CreateVertex(quad[3], Vector3::UnitY, Vector2(1.f,1.f)));
-					vbo->Indices.push_back(vbo->Vertices.size());
 					vbo->Vertices.push_back(CreateVertex(quad[2], Vector3::UnitY, Vector2(0.f,1.f)));
+					vbo->Indices.push_back(vbo->Vertices.size());
+					vbo->Vertices.push_back(CreateVertex(quad[3], Vector3::UnitY, Vector2(1.f, 1.f)));
 				}
 				// Right
 				if (hasWater[0] || hasWater[1] || hasWater[3]) {
 					vbo->Indices.push_back(vbo->Vertices.size());
 					vbo->Vertices.push_back(CreateVertex(quad[0], Vector3::UnitY, Vector2::Zero));
 					vbo->Indices.push_back(vbo->Vertices.size());
-					vbo->Vertices.push_back(CreateVertex(quad[1], Vector3::UnitY, Vector2(1.f, 0.f)));
-					vbo->Indices.push_back(vbo->Vertices.size());
 					vbo->Vertices.push_back(CreateVertex(quad[3], Vector3::UnitY, Vector2(1.f, 1.f)));
+					vbo->Indices.push_back(vbo->Vertices.size());
+					vbo->Vertices.push_back(CreateVertex(quad[1], Vector3::UnitY, Vector2(1.f, 0.f)));
 				}
 			}
 			//if (x != 0 && z != 0) {
@@ -805,19 +815,11 @@ int TerrainSystem::LOD(double distance, unsigned int modelWidth)
 
 void TerrainSystem::UpdateCache(Vector3 center)
 {
-	float dx = center.x - m_cachePos.x;
-	float dz = center.z - m_cachePos.y;
-	if (!m_cache || dx > m_cache->width || dx < 0.f || dz > m_cache->width || dz < 0.f) {
-		if (!m_cache) // initialize the local cache
-			m_cache.reset(new HeightMap(Rectangle(m_cachePos.x, m_cachePos.y, 32, 32)));
-		// Update the cache
-		m_cachePos.x = ((int)center.x / m_cache->width) * m_cache->width;
-		m_cachePos.y = ((int)center.z / m_cache->width) * m_cache->width;
-		
-		m_cache->area.x = m_cachePos.x;
-		m_cache->area.y = m_cachePos.y;
-		ImportMap(*m_cache);
-	}
+	
+	static const int gridSize = 32;
+	// sample area
+	Rectangle sampleArea = Rectangle(std::floor(center.x / gridSize) * gridSize,std::floor(center.z / gridSize) * gridSize, gridSize, gridSize);
+	m_cache = AssetManager::Get()->GetHeightMap("terrain", AssetType::Procedural, sampleArea);
 }
 
 void TerrainSystem::NewTerrain(DirectX::SimpleMath::Vector3 & position)
@@ -828,10 +830,12 @@ void TerrainSystem::NewTerrain(DirectX::SimpleMath::Vector3 & position)
 		new Components::Position(position, SimpleMath::Vector3::Zero));
 	entity->AddComponent(
 		new Components::Terrain());
-
-	Components::PositionNormalTextureTangentColorVBO * vbo = new Components::PositionNormalTextureTangentColorVBO();
-	vbo->Effect = "Terrain";
-	entity->AddComponent(vbo);
+	entity->AddComponent(
+		new Components::Model("terrain", AssetType::Procedural)
+	);
+	//Components::PositionNormalTextureTangentColorVBO * vbo = new Components::PositionNormalTextureTangentColorVBO();
+	//vbo->Effect = "Terrain";
+	//entity->AddComponent(vbo);
 }
 
 Vector3 TerrainSystem::Normal(std::ifstream & ifs, const int & index)
@@ -847,12 +851,13 @@ Vector3 TerrainSystem::Normal(std::ifstream & ifs, const int & index)
 
 void TerrainSystem::ImportMap(HeightMap & map)
 {
-	ifstream terrainStream(m_directory / "terrain.dat", ios::binary);
+
+	/*ifstream terrainStream(m_directory / "terrain.dat", ios::binary);
 	for (int i = 0; i <=  map.width; i++) {
 		for (int j = 0; j <= map.length; j++) {
 			map.map[i][j] = InternalHeight(terrainStream, Utility::posToIndex(map.area.x + i, map.area.y + j, m_width + 1), 10.f);
 		}
-	}
+	}*/
 }
 
 float TerrainSystem::Average(HeightMap & map, Rectangle area)
@@ -880,6 +885,13 @@ void TerrainSystem::Save(HeightMap & map)
 		}
 	}
 	terrainStream.close();
+}
+
+void TerrainSystem::RegisterHandlers()
+{
+	IEventManager::RegisterHandler(EventTypes::Movement_PlayerMoved, std::function<void(int)>([&](int gridSize) {
+		UpdateCache(EM->PlayerPos()->Pos);
+	}));
 }
 
 float TerrainSystem::Flatten(HeightMap & cache,Rectangle area, const int margin)
@@ -1036,6 +1048,14 @@ void TerrainSystem::UpdateWater(HeightMap & terrain, Map<WaterCell> & water) {
 			}
 		}
 		OutputDebugStringA(("\nWater Sim @ " + std::to_string((float)i / (float)(iterations * 2.f) * 100.f) + "%").c_str());
+	}
+	for (int i = 0; i < 0; i++) {
+		for (int z = 0; z <= m_width; z++) {
+			for (int x = 0; x <= m_width; x++) {
+				WaterCell & thisCell = water.map[x][z];
+				thisCell.Evaporate();
+			}
+		}
 	}
 }
 void TerrainSystem::UpdateDroplets(HeightMap & terrain, shared_ptr<vector<Droplet>> droplets, shared_ptr<Map<ThermalCell>> thermal)

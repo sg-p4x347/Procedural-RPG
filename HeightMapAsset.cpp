@@ -24,6 +24,17 @@ string HeightMapAsset::GetName()
 	return "HeightMapAsset";
 }
 
+void HeightMapAsset::Import(ifstream & ifs)
+{
+	JsonParser jp(ifs);
+	Import(jp);
+}
+
+void HeightMapAsset::Export(ofstream & ofs)
+{
+	Export().Export(ofs);
+}
+
 void HeightMapAsset::Import(JsonParser & jp)
 {
 	Xsize = (unsigned int)jp["Xsize"];

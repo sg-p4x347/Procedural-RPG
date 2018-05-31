@@ -9,8 +9,10 @@
 #include <thread>
 #include "SystemManager.h"
 #include "BuildingSystem.h"
+#include "IEventManager.h"
 using namespace DirectX::SimpleMath;
 using Microsoft::WRL::ComPtr;
+
 
 RenderSystem::RenderSystem(
 	SystemManager * systemManager,
@@ -42,6 +44,7 @@ SM(systemManager)
 	for (int i = 0; i < 20; i++) {
 		m_frameDeltas.push_back(0);
 	}
+	
 }
 
 RenderSystem::~RenderSystem()
@@ -117,13 +120,18 @@ void RenderSystem::Render()
 	//	//}
 	//	
 	//}
-	for (auto & entity : m_models) {
-		auto position = entity->GetComponent<Components::Position>("Position");
-		auto model = entity->GetComponent<Components::Model>("Model");
-		if (position && model) {
-			auto dxModel = AssetManager::Get()->GetModel(model->Path, Vector3::Distance(EM->PlayerPos()->Pos, position->Pos),position->Pos, model->Type);
-
-			RenderModel(dxModel, position->Pos, position->Rot);
+	for (auto & instances : m_modelInstances) {
+		shared_ptr<Model> dxModel = instances.first;
+		for (auto & job : instances.second) {
+			if (m_tracked.count(job.entity) != 0)
+				RenderModel(dxModel, job.worldMatrix, true);
+		}
+	}
+	for (auto & instances : m_modelInstances) {
+		shared_ptr<Model> dxModel = instances.first;
+		for (auto & job : instances.second) {
+			if (m_tracked.count(job.entity) != 0)
+				RenderModel(dxModel, job.worldMatrix, false);
 		}
 	}
 	// Render all buildings
@@ -181,16 +189,32 @@ void RenderSystem::SyncEntities()
 		m_mutex.lock();
 		m_VBOs = vbos;
 		m_mutex.unlock();*/
-		std::vector<EntityPtr> models;
-		for (auto & entity : EM->FindEntitiesInRange( m_ModelMask,EM->PlayerPos()->Pos,64)) {
-			models.push_back(entity);
+		
+		//std::map<shared_ptr<Model>, vector<XMMATRIX>> modelInstances;
+		//std::set<EntityPtr> tracked;
+		m_modelInstances.clear();
+		m_tracked.clear();
+		
+		for (auto & entity : EM->FindEntitiesInRange( m_ModelMask,EM->PlayerPos()->Pos,128.f)) {
+			TrackEntity(m_modelInstances,m_tracked,entity);
 		}
-		m_mutex.lock();
-		m_models = models;
-		m_mutex.unlock();
+		// add all entities that satisfy the forceRender masks
+		for (auto & mask : m_forceRenderMasks) {
+			for (auto & entity : EM->FindEntities(mask)) {
+				TrackEntity(m_modelInstances, m_tracked, entity);
+			}
+		}
+		//m_mutex.lock();
+		//m_modelInstances = modelInstances;
+		//m_tracked = tracked;
+		//m_mutex.unlock();
+		
+		//m_models = models;
+		
 
-		//}).detach();
+		
 	}
+	//}).detach();
 }
 void RenderSystem::SetViewport(int width, int height)
 {
@@ -212,7 +236,22 @@ void RenderSystem::InitializeWorldRendering(WorldEntityManager * entityManager)
 	if (EM) {
 		m_VBOmask = entityManager->ComponentMask( "PositionNormalTextureTangentColorVBO");
 		m_ModelMask = entityManager->ComponentMask("Model");
+		RegisterHandlers();
+		m_forceRenderMasks.insert(EM->ComponentMask("Terrain"));
+		m_forceRenderMasks.insert(EM->ComponentMask("Tag_Water"));
 	}
+}
+
+void RenderSystem::RegisterHandlers()
+{
+	IEventManager::RegisterHandler(EventTypes::Movement_PlayerMoved, std::function<void(int)>([&](int gridSize) {
+		SyncEntities();
+	}));
+	IEventManager::RegisterHandler(EventTypes::Entity_Deleted, std::function<void(EntityPtr)>([&](EntityPtr entity) {
+		if (entity->HasComponents(EM->ComponentMask("Model"))) {
+			m_tracked.erase(entity);
+		}
+	}));
 }
 
 
@@ -329,14 +368,54 @@ void RenderSystem::SpriteBatchEnd()
 	m_spriteBatch->End();
 }
 
-void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model,Vector3 & position, Vector3 & rotation)
+void RenderSystem::TrackEntity(std::map<shared_ptr<Model>, vector<RenderEntityJob>> & modelInstances, std::set<EntityPtr> & tracked,EntityPtr entity)
 {
-	XMMATRIX translation = XMMatrixTranslation(position.x, position.y, position.z);
-	XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(rotation);
-	XMMATRIX world = XMMatrixMultiply(rotMat, translation);
+	if (tracked.count(entity) == 0) {
+		auto position = entity->GetComponent<Components::Position>("Position");
+		auto modelComp = entity->GetComponent<Components::Model>("Model");
+		shared_ptr<Model> model = AssetManager::Get()->GetModel(modelComp->Path, Vector3::Distance(EM->PlayerPos()->Pos, position->Pos), position->Pos, modelComp->Type);
+		if (modelInstances.find(model) == modelInstances.end()) {
+			modelInstances.insert(std::make_pair(model, vector<RenderEntityJob>()));
+		}
+		XMMATRIX translation = XMMatrixTranslation(position->Pos.x, position->Pos.y, position->Pos.z);
+		XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position->Rot);
+		XMMATRIX world = XMMatrixMultiply(rotMat, translation);
+		modelInstances[model].push_back(RenderEntityJob { entity,world });
+		tracked.insert(entity);
+	}
+}
 
-	world = XMMatrixMultiply(world, m_worldMatrix);
-	model->Draw(m_d3dContext.Get(), *m_states, world, m_viewMatrix, m_projMatrix);
+void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model,XMMATRIX world, bool opaque)
+{
+	if (opaque) {
+		for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
+		{
+			auto mesh = it->get();
+			assert(mesh != 0);
+
+			mesh->PrepareForRendering(m_d3dContext.Get(), *m_states, false);
+
+			// Do model-level setCustomState work here
+
+			mesh->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix, false);
+		}
+	}
+	else {
+		for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
+		{
+			auto mesh = it->get();
+			assert(mesh != 0);
+
+			mesh->PrepareForRendering(m_d3dContext.Get(), *m_states, true);
+
+			// Do model-level setCustomState work here
+
+			mesh->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix, true);
+		}
+	}
+	//model->Draw(m_d3dContext.Get(), *m_states, world, m_viewMatrix, m_projMatrix);
+
+
 	// An example of using a single custom effect when drawing all the parts of a Model
 	//if (effect) {
 	//	// Creating input layouts is expensive, so it shouldn't be done every frame

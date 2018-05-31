@@ -4,13 +4,15 @@
 #include "Movement.h"
 #include "IEventManager.h"
 #include "TaskManager.h"
-const float MovementSystem::m_updateRange = 5.f;
-
 MovementSystem::MovementSystem(
-	unique_ptr<WorldEntityManager> &  entityManager,
+	WorldEntityManager *  entityManager,
 	vector<string>& components, 
 	unsigned short updatePeriod,
-	shared_ptr<RenderSystem> renderSys) : WorldSystem::WorldSystem(entityManager,components,updatePeriod), m_renderSystem(renderSys)
+	shared_ptr<RenderSystem> renderSys) : 
+
+	WorldSystem::WorldSystem(entityManager,components,updatePeriod), 
+	m_renderSystem(renderSys), 
+	m_moveTracker(32)
 {
 	/*IEventManager::RegisterHandler(Entity_ComponentAdded, std::function<void(unsigned int, unsigned long)>([=](unsigned int id, unsigned long mask) {
 		EntityPtr target;
@@ -54,13 +56,10 @@ void MovementSystem::Update(double & elapsed)
 	//}, m_componentMask, m_componentMask));
 	
 	// check to see if the player has moved enough for an entity resync
-	if (m_lastPos == Vector3::Zero && EM->Player()) {
-		m_lastPos = EM->PlayerPos()->Pos;
+	if (m_moveTracker.Update(EM->PlayerPos()->Pos)) {
+		IEventManager::Invoke(EventTypes::Movement_PlayerMoved, m_moveTracker.gridSize);
 	}
-	if (Vector3::Distance(EM->PlayerPos()->Pos, m_lastPos) > m_updateRange) {
-		m_renderSystem->SyncEntities();
-		m_lastPos = EM->PlayerPos()->Pos;
-	}
+	
 }
 
 void MovementSystem::SyncEntities()
@@ -72,4 +71,6 @@ void MovementSystem::Initialize()
 {
 	SyncEntities();
 }
+
+
 

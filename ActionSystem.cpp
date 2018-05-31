@@ -6,7 +6,7 @@
 #include "Box.h"
 ActionSystem::ActionSystem(
 	SystemManager * systemManager,
-	unique_ptr<WorldEntityManager>& entityManager, 
+	WorldEntityManager * entityManager,
 	vector<string>& components,
 	unsigned short updatePeriod) : 
 	WorldSystem::WorldSystem(entityManager,components,updatePeriod),

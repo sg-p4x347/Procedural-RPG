@@ -6,7 +6,7 @@ class BuildingSystem :
 	public WorldSystem
 {
 public:
-	BuildingSystem(unique_ptr<WorldEntityManager> &  entityManager,vector<string> components, unsigned short updatePeriod);
+	BuildingSystem(WorldEntityManager *  entityManager,vector<string> components, unsigned short updatePeriod);
 
 	// Inherited via WorldSystem
 	virtual string Name() override;
