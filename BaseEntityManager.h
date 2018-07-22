@@ -8,6 +8,9 @@ public:
 	~BaseEntityManager();
 	//----------------------------------------------------------------
 	// Component retrieval 
+	// Enumerates a vector of all registered component prototypes
+	vector<Components::Component*> EnumerateComponents();
+
 	// Gets the secified component for the entity
 	shared_ptr<Components::Component> GetComponent(unsigned long & mask, Entity * entity);
 	//----------------------------------------------------------------

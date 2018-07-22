@@ -8,7 +8,8 @@
 	 text-align:center;
 	 
 	 height:128px;
-	 width:128px;" >
+	 width:128px;" 
+	 Click="click">
 	<div
 		event-bubbling="true"
 		style="

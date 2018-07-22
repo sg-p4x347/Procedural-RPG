@@ -227,7 +227,7 @@ void PlayerSystem::SetInteractionState(Components::InteractionStates state)
 		Mouse::Get().SetMode(Mouse::MODE_ABSOLUTE);
 		//EM->Find(EM->Player()->GetComponent<Components::Player>("Player")->OpenContainer, openContainer);
 		//IEventManager::Invoke(EventTypes::Item_OpenInventory, EM->Player(),(openContainer ? openContainer : EM->Player()));
-		IEventManager::Invoke(EventTypes::GUI_OpenMenu, string("inventory"));
+		IEventManager::Invoke(EventTypes::GUI_OpenMenu, string("InventoryGui"));
 		
 		break;
 	case Components::InteractionStates::GamePausedUI:

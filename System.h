@@ -23,7 +23,6 @@ protected:
 	unsigned long m_componentMask;
 	//----------------------------------------------------------------
 	// Helper functions
-
 private:
 	unsigned short m_updatePeriod;	// number of update ticks between Update();
 	unsigned short m_ticksLeft;		// number of update ticks left until next Update();

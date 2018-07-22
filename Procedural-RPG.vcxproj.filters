@@ -383,6 +383,10 @@
     <ClInclude Include="NormalMapAsset.h">
       <Filter>Assets\Component</Filter>
     </ClInclude>
+    <ClInclude Include="GuiHandler.h">
+      <Filter>GUI\System</Filter>
+    </ClInclude>
+    <ClInclude Include="InventoryGuiHandler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -651,6 +655,10 @@
     <ClCompile Include="NormalMapAsset.cpp">
       <Filter>Assets\Component</Filter>
     </ClCompile>
+    <ClCompile Include="GuiHandler.cpp">
+      <Filter>GUI\System</Filter>
+    </ClCompile>
+    <ClCompile Include="InventoryGuiHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">

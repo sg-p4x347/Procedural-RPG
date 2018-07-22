@@ -208,9 +208,11 @@
     <ClInclude Include="EventHandler.h" />
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="Geometry.h" />
+    <ClInclude Include="GuiHandler.h" />
     <ClInclude Include="HeightMapAsset.h" />
     <ClInclude Include="IEventManager.h" />
     <ClInclude Include="Inventory.h" />
+    <ClInclude Include="InventoryGuiHandler.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="ItemSystem.h" />
     <ClInclude Include="Line.h" />
@@ -309,9 +311,11 @@
     <ClCompile Include="EntityQuadTree.cpp" />
     <ClCompile Include="EntityRegion.cpp" />
     <ClCompile Include="Geometry.cpp" />
+    <ClCompile Include="GuiHandler.cpp" />
     <ClCompile Include="HeightMapAsset.cpp" />
     <ClCompile Include="IEventManager.cpp" />
     <ClCompile Include="Inventory.cpp" />
+    <ClCompile Include="InventoryGuiHandler.cpp" />
     <ClCompile Include="Item.cpp" />
     <ClCompile Include="ItemSystem.cpp" />
     <ClCompile Include="Line.cpp" />

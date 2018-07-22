@@ -7,6 +7,7 @@
 #include "RenderSystem.h"
 #include "MovementSystem.h"
 #include "GuiSystem.h"
+#include "InventoryGuiHandler.h"
 #include "ActionSystem.h"
 #include "CollisionSystem.h"
 #include "IEventManager.h"
@@ -23,7 +24,9 @@ SystemManager::SystemManager(
 
 	
 	AddSystem(std::shared_ptr<System>(new GuiSystem(this, 1)), true);
-	AddSystem(std::shared_ptr<System>(new RenderSystem(this,1, window, width, height, dynamic_pointer_cast<GuiSystem>(m_systems["Gui"]))), true);
+	auto guiSystem = GetSystem<GuiSystem>("Gui");
+	guiSystem->RegisterSubsystems();
+	AddSystem(std::shared_ptr<System>(new RenderSystem(this,1, window, width, height, guiSystem)), true);
 	//AddSystem(std::shared_ptr<System>(new SoundSystem()));
 	//AddSystem(std::shared_ptr<System>(new InfrastructureSystem(m_entityManager, vector<string>{"Infrastructure"}, 0)));
 

@@ -3,6 +3,7 @@
 
 #include "GuiSystem.h"
 #include "ItemSystem.h"
+#include "GuiHandler.h"
 
 #include "GuiStyle.h"
 #include "GuiPanel.h"
@@ -15,6 +16,7 @@
 #include "World.h"
 #include "XmlParser.h"
 #include "CssParser.h"
+#include "InventoryGuiHandler.h"
 
 using namespace GUI;
 using namespace DirectX;
@@ -27,7 +29,6 @@ GuiSystem::GuiSystem(
 m_scrollTicks(1200),
 SM(systemManager)
 {
-	
 	//----------------------------------------------------------------
 	// Initialize spritesheets
 	AddSpriteSheet("widget.png", std::map<string, Rectangle>{
@@ -355,6 +356,15 @@ GuiSystem::~GuiSystem()
 {
 }
 
+void GuiSystem::RegisterSubsystems()
+{
+	//----------------------------------------------------------------
+	// Initialize sub-systems
+	auto inventory = new InventoryGuiHandler(SM, GetEM());
+	inventory->RegisterHandlers();
+	SM->AddSystem(std::shared_ptr<System>(inventory));
+}
+
 void GuiSystem::SyncEntities()
 {
 	
@@ -372,8 +382,9 @@ void GuiSystem::Update(double & elapsed)
 			Vector2 mousePos(Game::MouseState.x, Game::MouseState.y);
 			int scrollTicks = DirectX::Mouse::Get().GetState().scrollWheelValue;
 			char character = '\0';
-			Event evt = Event(mousePos, -scrollTicks, character, Keyboard::Keys::None);
+			
 			EntityPtr occupied = FindOccupiedRecursive(m_currentMenu, mousePos);
+			Event evt = Event(occupied, mousePos, -scrollTicks, character, Keyboard::Keys::None);
 			// hover out of all
 			for (auto & hoverElement : m_hoverElements) {
 				OnHoverOut(hoverElement, evt);
@@ -455,6 +466,11 @@ EntityPtr GuiSystem::GetHandMenu()
 	return m_handMenu;
 }
 
+void GuiSystem::SetHandMenu(EntityPtr element)
+{
+	m_handMenu = element;
+}
+
 void GuiSystem::CloseMenu()
 {
 	m_currentMenu = nullptr;
@@ -520,20 +536,20 @@ void GuiSystem::BindHandlers()
 
 void GuiSystem::CharTyped(char ch)
 {
-	OnKeydown(m_activeElement, Event(Vector2::Zero, 0, ch,Keyboard::Keys::None));
+	OnKeydown(m_activeElement, Event(m_activeElement,Vector2::Zero, 0, ch,Keyboard::Keys::None));
 }
 
 void GuiSystem::Backspace()
 {
-	OnKeydown(m_activeElement, Event(Vector2::Zero, 0, '\0', Keyboard::Keys::Back));
+	OnKeydown(m_activeElement, Event(m_activeElement, Vector2::Zero, 0, '\0', Keyboard::Keys::Back));
 }
 
-EntityPtr GuiSystem::ImportMarkup(string path)
+EntityPtr GuiSystem::ImportMarkup(string path, GUI::GuiHandler * handler)
 {
-	return CreateElementFromXml(AssetManager::Get()->GetXml(path));
+	return CreateElementFromXml(AssetManager::Get()->GetXml(path),handler);
 }
 
-EntityPtr GuiSystem::CreateElementFromXml(shared_ptr<XmlParser> xml)
+EntityPtr GuiSystem::CreateElementFromXml(shared_ptr<XmlParser> xml, GUI::GuiHandler * handler)
 {
 	auto attributes = xml->GetAttributes();
 	//----------------------------------------------------------------
@@ -580,6 +596,19 @@ EntityPtr GuiSystem::CreateElementFromXml(shared_ptr<XmlParser> xml)
 	}
 	if (attributes.find("active-style") != attributes.end()) {
 		element->AddComponent(ParseStyle("Active", attributes["active-style"]));
+	}
+	//----------------------------------------------------------------
+	// Event handlers
+	if (handler) {
+		for (auto & attribute : attributes) {
+			auto eventHandler = std::shared_ptr<Components::Component>(new GUI::EventHandler(attribute.first, [=](Event evt) {
+				handler->InvokeEvent(attribute.second, evt);
+			}));
+			auto mask = GuiEM.ComponentMask(eventHandler->GetName());
+			if (mask) {
+				element->AddComponent(eventHandler);
+			}
+		}
 	}
 
 	return element;
@@ -666,12 +695,18 @@ EntityPtr GuiSystem::GetMenu(string name)
 	if (m_menus.find(name) != m_menus.end()) {
 		return m_menus[name];
 	}
-	else if (m_dynamicMenus.find(name) != m_dynamicMenus.end()) {
-		auto menu = m_dynamicMenus[name]();
-		// Add scrollbars as necessary
-		AddScrollbarsRecursive(menu);
-		return menu;
+	else {
+		auto system = SM->GetSystem<GuiHandler>(name);
+		if (system) {
+			return system->GetElement();
+		}
 	}
+	//else if (m_dynamicMenus.find(name) != m_dynamicMenus.end()) {
+	//	auto menu = m_dynamicMenus[name]();
+	//	// Add scrollbars as necessary
+	//	AddScrollbarsRecursive(menu);
+	//	return menu;
+	//}
 	return nullptr;
 }
 
@@ -874,6 +909,7 @@ void GuiSystem::OnMouseUp(EntityPtr entity, Event evt)
 {
 	shared_ptr<GUI::EventHandler> handler = entity->GetComponent<GUI::EventHandler>("EventHandler_MouseUp");
 	if (handler) {
+		evt.Sender = entity;
 		handler->Callback(evt);
 	}
 	else {
@@ -890,6 +926,7 @@ void GuiSystem::OnClick(EntityPtr entity, Event evt)
 {
 	if (entity->HasComponents(GuiEM.ComponentMask("EventHandler_Click"))) {
 		shared_ptr<GUI::EventHandler> clickHandler = entity->GetComponent<GUI::EventHandler>("EventHandler_Click");
+		evt.Sender = entity;
 		if (clickHandler) clickHandler->Callback(evt);
 	}
 	shared_ptr<GUI::Panel> panel = entity->GetComponent<GUI::Panel>("Panel");
@@ -903,6 +940,7 @@ void GuiSystem::OnClick(EntityPtr entity, Event evt)
 void GuiSystem::OnDrag(EntityPtr entity, Event evt)
 {
 	if (entity->HasComponents(GuiEM.ComponentMask("EventHandler_Drag"))) {
+		evt.Sender = entity;
 		shared_ptr<GUI::EventHandler> handler = entity->GetComponent<GUI::EventHandler>("EventHandler_Drag");
 		if (handler) handler->Callback(evt);
 	}
@@ -911,6 +949,7 @@ void GuiSystem::OnDrag(EntityPtr entity, Event evt)
 void GuiSystem::OnScroll(EntityPtr entity, Event evt)
 {
 	if (entity->HasComponents(GuiEM.ComponentMask("EventHandler_Scroll"))) {
+		evt.Sender = entity;
 		shared_ptr<GUI::EventHandler> handler = entity->GetComponent<GUI::EventHandler>("EventHandler_Scroll");
 		if (handler) handler->Callback(evt);
 	}
@@ -919,6 +958,7 @@ void GuiSystem::OnScroll(EntityPtr entity, Event evt)
 void GuiSystem::OnKeydown(EntityPtr entity, Event evt)
 {
 	if (entity) {
+		evt.Sender = entity;
 		shared_ptr<GUI::EventHandler> handler = entity->GetComponent<GUI::EventHandler>("EventHandler_Keydown");
 		if (handler) handler->Callback(evt);
 	}

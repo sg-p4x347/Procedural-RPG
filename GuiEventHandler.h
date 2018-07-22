@@ -1,24 +1,28 @@
 #pragma once
 #include "Delegate.h"
 namespace GUI {
+	
 	struct Event {
-		Event(Vector2 mousePos,int scrollDelta,char character,Keyboard::Keys key) {
+		Event(EntityPtr sender, Vector2 mousePos,int scrollDelta,char character,Keyboard::Keys key) {
+			Sender = sender;
 			MousePosition = mousePos;
 			ScrollDelta = scrollDelta;
 			Character = character;
 			Key = key;
 		}
+		EntityPtr Sender;
 		Vector2 MousePosition;
 		int ScrollDelta;
 		char Character;
 		Keyboard::Keys Key;
 	};
+	typedef std::function<void(Event)> GuiEventHandlerSignature;
 	class EventHandler :
 		public Components::Delegate
 	{
 	public:
 		EventHandler(string type);
-		EventHandler(string type, std::function<void(Event evt)>&&callback);
+		EventHandler(string type, GuiEventHandlerSignature &&callback);
 		~EventHandler();
 		// Data
 		std::function<void(Event evt)> Callback;

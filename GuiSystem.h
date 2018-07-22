@@ -5,8 +5,12 @@
 #include "GuiText.h"
 #include "Inventory.h"
 #include "XmlParser.h"
-using namespace GUI;
+
 class SystemManager;
+namespace GUI {
+	class GuiHandler;
+}
+using namespace GUI;
 class GuiSystem :
 	public System
 {
@@ -14,7 +18,7 @@ public:
 	GuiSystem(SystemManager * systemManager,
 		unsigned short updatePeriod);
 	~GuiSystem();
-
+	void RegisterSubsystems();
 	// Inherited via System
 	virtual void SyncEntities() override;
 	virtual string Name() override;
@@ -25,6 +29,7 @@ public:
 	void OpenMenu(string name);
 	EntityPtr GetCurrentMenu();
 	EntityPtr GetHandMenu();
+	void SetHandMenu(EntityPtr element);
 	void CloseMenu();
 	GuiEntityManager & GetEM();
 	void DisplayException(std::exception e);
@@ -100,7 +105,9 @@ private:
 	EntityPtr FindFirstParent(EntityPtr child, std::function<bool(shared_ptr<Style>)> && validation = [](shared_ptr<Style> style) {return true;});
 	//----------------------------------------------------------------
 	// View engine
+public:
 	void UpdateFlowRecursive(EntityPtr entity, int zIndex);
+private:
 	void PositionChildren(EntityPtr parent);
 	void PositionRects(Rectangle & parent, vector<Rectangle> & children, FlowType flow, AlignmentType & justify, AlignmentType & alignment);
 
@@ -119,6 +126,7 @@ private:
 	EntityPtr NewVerticalScrollBar(EntityPtr target);
 	EntityPtr MainMenuBtn(int height = 100);
 	EntityPtr NewTextBox(string id,string placeholder = "");
+	public:
 	//----------------------------------------------------------------
 	// Misc helpers
 	void DeleteChildren(EntityPtr & parent);
@@ -132,8 +140,8 @@ private:
 	EntityPtr GetElementByID(string id);
 	EntityPtr FindElementByIdRecursive(EntityPtr entity, string id);
 	// Converts an XML object into a new entity hierarchy
-	EntityPtr ImportMarkup(string path);
-	EntityPtr CreateElementFromXml(shared_ptr<XmlParser> xml);
+	EntityPtr ImportMarkup(string path, GUI::GuiHandler * handler = nullptr);
+	EntityPtr CreateElementFromXml(shared_ptr<XmlParser> xml, GUI::GuiHandler * handler = nullptr);
 	Style * ParseStyle(string selector, string css);
 };
 

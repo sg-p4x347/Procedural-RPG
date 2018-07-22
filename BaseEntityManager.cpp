@@ -188,6 +188,15 @@ shared_ptr<Components::Component> BaseEntityManager::GetPrototype(unsigned long 
 	return shared_ptr<Components::Component>(m_prototypes[mask]());
 }
 
+vector<Components::Component*> BaseEntityManager::EnumerateComponents()
+{
+	vector<Components::Component*> components;
+	for (auto & pair : m_prototypes) {
+		components.push_back(pair.second());
+	}
+	return components;
+}
+
 shared_ptr<Components::Component> BaseEntityManager::GetComponent(unsigned long & mask, Entity * entity)
 {
 	//// search the cache
