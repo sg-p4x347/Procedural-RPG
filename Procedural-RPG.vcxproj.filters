@@ -291,9 +291,6 @@
     <ClInclude Include="EventHandler.h">
       <Filter>Events</Filter>
     </ClInclude>
-    <ClInclude Include="EntityRegion.h">
-      <Filter>World\Component</Filter>
-    </ClInclude>
     <ClInclude Include="Collision.h">
       <Filter>World\Component</Filter>
     </ClInclude>
@@ -387,6 +384,9 @@
       <Filter>GUI\System</Filter>
     </ClInclude>
     <ClInclude Include="InventoryGuiHandler.h" />
+    <ClInclude Include="EntityRegion.h">
+      <Filter>World</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -566,9 +566,6 @@
     <ClCompile Include="IEventManager.cpp">
       <Filter>Events</Filter>
     </ClCompile>
-    <ClCompile Include="EntityRegion.cpp">
-      <Filter>World\Component</Filter>
-    </ClCompile>
     <ClCompile Include="Collision.cpp">
       <Filter>World\Component</Filter>
     </ClCompile>
@@ -659,6 +656,9 @@
       <Filter>GUI\System</Filter>
     </ClCompile>
     <ClCompile Include="InventoryGuiHandler.cpp" />
+    <ClCompile Include="EntityRegion.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">

@@ -19,8 +19,8 @@ namespace Components {
 		virtual string GetName() override;
 	protected:
 		// override base serialization
-		virtual void Import(std::ifstream & ifs) override;
-		virtual void Export(std::ofstream & ofs) override;
+		virtual void Import(std::istream & ifs) override;
+		virtual void Export(std::ostream & ofs) override;
 	};
 }
 

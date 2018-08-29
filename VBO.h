@@ -29,11 +29,11 @@ namespace Components {
 		int LOD;
 		bool LODchanged;
 		// Inherited via Component
-		void Export(std::ofstream & ofs)
+		void Export(std::ostream & ofs)
 		{
 			Serialize(Effect, ofs);
 		}
-		void Import(std::ifstream & ifs)
+		void Import(std::istream & ifs)
 		{
 			DeSerialize(Effect, ifs);
 		}

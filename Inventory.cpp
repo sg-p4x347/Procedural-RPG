@@ -14,7 +14,7 @@ namespace Components {
 	{
 		return "Inventory";
 	}
-	void Inventory::Import(std::ifstream & ifs)
+	void Inventory::Import(std::istream & ifs)
 	{
 		int itemCount = 0;
 		DeSerialize(itemCount, ifs);
@@ -29,7 +29,7 @@ namespace Components {
 		DeSerialize(MaxWeight, ifs);
 		DeSerialize(Open, ifs);
 	}
-	void Inventory::Export(std::ofstream & ofs)
+	void Inventory::Export(std::ostream & ofs)
 	{
 		int itemCount = Items.size();
 		Serialize(itemCount, ofs);

@@ -36,6 +36,7 @@
 #include <DirectXColors.h>
 #include <stdio.h>
 #include <io.h>
+#include <streambuf>
 #include <algorithm>
 #include <exception>
 #include <memory>

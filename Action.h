@@ -15,7 +15,7 @@ namespace Components {
 		// Inherited via Component
 		virtual string GetName() override;
 
-		void Import(ifstream & ifs) override;
-		void Export(ofstream & ofs) override;
+		void Import(std::istream & ifs) override;
+		void Export(std::ostream & ofs) override;
 	};
 }

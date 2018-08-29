@@ -22,7 +22,7 @@ namespace Components {
 
 		// Inherited via Component
 		virtual string GetName() override;
-		virtual void Export(std::ofstream & ofs) override;
-		virtual void Import(std::ifstream & ifs) override;
+		virtual void Export(std::ostream & ofs) override;
+		virtual void Import(std::istream & ifs) override;
 	};
 }

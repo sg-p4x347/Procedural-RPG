@@ -22,18 +22,13 @@ PersistenceEntityManager::PersistenceEntityManager(Filesystem::path & directory)
 shared_ptr<Components::Component> PersistenceEntityManager::LoadComponent(unsigned long & mask, Entity * entity)
 {
 	shared_ptr<Components::Component> component = std::shared_ptr<Components::Component>(GetPrototype(mask));
-	//std::size_t underscorePos = m_names[mask].find('_');
-	//if (underscorePos == string::npos) {
-	//}
-	//else {
-	//	// Delegate types
-	//	string discreteType = m_names[mask].substr(0, underscorePos);	// before the '_'
-	//	string delegateType = m_names[mask].substr(underscorePos+1);	// after the '_'
-	//	component = std::shared_ptr<Components::Component>(m_delegatePrototypes[mask](delegateType));
-	//}
-
+	
 	if (component) {
-		component->Load(m_directory, entity->ID());
+		Filesystem::path componentDir = m_directory / component->GetName();
+		Filesystem::create_directory(componentDir);
+		std::ifstream ifs(componentDir / (std::to_string(entity->ID()) + ".dat"), ios::binary);
+		component->Import(ifs);
+		component->Entity = entity;
 		return component;
 	}
 	else {
@@ -223,7 +218,10 @@ void PersistenceEntityManager::Save()
 	// Components
 	for (std::unordered_map<unsigned int, EntityPtr>::iterator it = m_entities.begin(); it != m_entities.end(); ++it) {
 		for (auto & component : it->second->GetLoadedComponents()) {
-			component->Save(m_directory);
+			Filesystem::path componentDir = m_directory / component->GetName();
+			Filesystem::create_directory(componentDir);
+			std::ofstream ofs(componentDir / (std::to_string(it->first) + ".dat"), ios::binary);
+			component->Export(ofs);
 		}
 	}
 	//----------------------------------------------------------------

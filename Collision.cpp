@@ -14,7 +14,7 @@ namespace Components {
 	{
 		return "Collision";
 	}
-	void Collision::Import(ifstream & ifs)
+	void Collision::Import(std::istream & ifs)
 	{
 		DeSerialize(Enabled, ifs);
 
@@ -26,7 +26,7 @@ namespace Components {
 		DeSerialize(BoundingBox.Size.y, ifs);
 		DeSerialize(BoundingBox.Size.z, ifs);
 	}
-	void Collision::Export(ofstream & ofs)
+	void Collision::Export(std::ostream & ofs)
 	{
 		Serialize(Enabled, ofs);
 

@@ -17,7 +17,7 @@ public:
 
 	// Inherited via Component
 	virtual string GetName() override;
-	virtual void Export(ofstream & ofs) override;
-	virtual void Import(ifstream & ifs) override;
+	virtual void Export(std::ostream & ofs) override;
+	virtual void Import(std::istream & ifs) override;
 };
 }

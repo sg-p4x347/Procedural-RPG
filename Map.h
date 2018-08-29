@@ -36,14 +36,14 @@ struct Map :
 		map = vector<vector<DataType>>(width, vector<DataType>(length));
 	}
 	// Inherited via ISerialization
-	virtual void Import(std::ifstream & ifs) override
+	virtual void Import(std::istream & ifs) override
 	{
 		DeSerialize(width, ifs);
 		DeSerialize(length, ifs);
 		Resize(width + 1, length + 1);
 	}
 	
-	virtual void Export(std::ofstream & ofs) override
+	virtual void Export(std::ostream & ofs) override
 	{
 		Serialize(width, ofs);
 		Serialize(length, ofs);

@@ -54,6 +54,16 @@ string BaseEntityManager::NameOf(const unsigned long & mask)
 	return "";
 }
 
+std::map<string, unsigned long> BaseEntityManager::GetMasks()
+{
+	return m_masks;
+}
+
+std::map<unsigned long, string> BaseEntityManager::GetNames()
+{
+	return m_names;
+}
+
 EntityPtr BaseEntityManager::NewEntity()
 {
 	std::lock_guard<shared_mutex> lock(m_mutex);

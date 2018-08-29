@@ -2,6 +2,7 @@
 #include "pch.h"
 #include "ISerialization.h"
 #include "JSON.h"
+class Entity;
 namespace Components {
 	class Component :
 		public ISerialization
@@ -12,10 +13,6 @@ namespace Components {
 		Component(Component & other);
 		virtual ~Component();
 
-		// saves this component to file
-		void Save(Filesystem::path directory); 
-		// returns a concrete component from filestream
-		void Load(Filesystem::path directory, const unsigned int & id);
 		
 		// The ID of the entity this belongs to
 		unsigned int ID;
@@ -24,15 +21,10 @@ namespace Components {
 		// Copy
 		virtual shared_ptr<Components::Component> Copy(shared_ptr<Components::Component> source);
 		// Inherited via ISerialization
-		virtual void Import(std::ifstream & ifs) override;
-		virtual void Export(std::ofstream & ofs) override;
+		virtual void Import(std::istream & ifs) override;
+		virtual void Export(std::ostream & ofs) override;
 		
-	protected:
-		// File IO streams
-		std::ofstream GetOutputStream(Filesystem::path directory, const unsigned int & id);
-		std::ifstream GetInputStream(Filesystem::path directory, const unsigned int & id);
-	private:
-		static Filesystem::path m_directory;
+		Entity * Entity;
 	};
 }
 

@@ -28,8 +28,8 @@ namespace Components {
 		bool Open;
 		// Inherited via Component
 		virtual string GetName() override;
-		void Import(std::ifstream & ifs) override;
-		void Export(std::ofstream & ofs) override;
+		void Import(std::istream & ifs) override;
+		void Export(std::ostream & ofs) override;
 	};
 }
 

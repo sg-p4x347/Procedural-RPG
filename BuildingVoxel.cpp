@@ -86,7 +86,7 @@ void BuildingVoxel::Corner(int unitX, int unitZ, unsigned int type)
 	}
 }
 
-void BuildingVoxel::Import(std::ifstream & ifs)
+void BuildingVoxel::Import(std::istream & ifs)
 {
 	for (int i = 0; i < m_floorCount; i++) {
 		DeSerialize(m_floors[i],ifs);
@@ -99,7 +99,7 @@ void BuildingVoxel::Import(std::ifstream & ifs)
 	}
 }
 
-void BuildingVoxel::Export(std::ofstream & ofs)
+void BuildingVoxel::Export(std::ostream & ofs)
 {
 	for (int i = 0; i < m_floorCount; i++) {
 		Serialize(m_floors[i], ofs);

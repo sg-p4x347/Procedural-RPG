@@ -19,7 +19,7 @@ public:
 	JsonParser(JsonType type);
 	JsonParser(const string & json);
 	JsonParser(istream & filestream);
-	void Export(ostream & fileStream) const;
+	void Export(std::ostream & ofs) const;
 	string ToString() const;
 	// explicit conversions
 	explicit operator short() const { return To<short>(); }

@@ -1,6 +1,7 @@
 #pragma once
 #include "PersistenceEntityManager.h"
 #include "EntityQuadTree.h"
+#include "EntityRegion.h"
 //----------------------------------------------------------------
 // World Components
 #include "Position.h"
@@ -26,11 +27,6 @@ public:
 
 	vector<EntityPtr> FindEntitiesInRange(unsigned long componentMask, Vector3 center, float range);
 	//----------------------------------------------------------------
-	// Returns entities within the immediate entity regions
-	//vector<EntityPtr> EntitiesByRegion(Vector3 center, float range);
-	void AddEntityToRegion(EntityPtr entity);
-	void GenerateEntityRegions();
-	//----------------------------------------------------------------
 	// Filter a vector of entities with a mask
 	vector<EntityPtr> Filter(vector<EntityPtr> && entities, unsigned long componentMask);
 
@@ -44,11 +40,9 @@ private:
 	unsigned int m_entityRegionWidth;
 	unsigned int m_worldWidth;
 	
-	void AddEntityToRegion(unsigned int entity);
 	//----------------------------------------------------------------
 	// Caching
 	void SyncRegions(Vector3 center, float range);
-	Rectangle RegionArea(EntityPtr region);
 	set<EntityPtr> m_entityRegions;
 	set<EntityPtr> m_loadedEntityRegions;
 	EntityQuadTree m_quadTree;

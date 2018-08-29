@@ -14,7 +14,7 @@ namespace Components {
 	}
 
 
-	void Position::Import(std::ifstream & ifs)
+	void Position::Import(std::istream & ifs)
 	{
 		Component::Import(ifs);
 		float x, y, z;
@@ -30,7 +30,7 @@ namespace Components {
 		Rot = SimpleMath::Vector3(xRot, yRot, zRot);
 	}
 
-	void Position::Export(std::ofstream & ofs)
+	void Position::Export(std::ostream & ofs)
 	{
 		Component::Export(ofs);
 		Serialize(Pos.x, ofs);

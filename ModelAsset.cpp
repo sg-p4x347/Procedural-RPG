@@ -11,13 +11,13 @@ string ModelAsset::GetName()
 	return "ModelAsset";
 }
 
-void ModelAsset::Import(std::ifstream & ifs)
+void ModelAsset::Import(std::istream & ifs)
 {
 	JsonParser jp = JsonParser(ifs);
 	Import(jp);
 }
 
-void ModelAsset::Export(std::ofstream & ofs)
+void ModelAsset::Export(std::ostream & ofs)
 {
 	Export().Export(ofs);
 }

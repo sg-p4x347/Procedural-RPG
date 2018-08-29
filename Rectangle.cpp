@@ -94,12 +94,12 @@ namespace Architecture {
 	{
 		return !(*this == B);
 	}
-	void Rectangle::Import(JsonParser & rectangle)
+	void Rectangle::Import(JsonParser & jp)
 	{
-		x = rectangle["x"].To<short>();
-		y = rectangle["y"].To<short>();
-		width = rectangle["width"].To<short>();
-		height = rectangle["height"].To<short>();
+		x = jp["x"].To<short>();
+		y = jp["y"].To<short>();
+		width = jp["width"].To<short>();
+		height = jp["height"].To<short>();
 	}
 	JsonParser Rectangle::Export()
 	{

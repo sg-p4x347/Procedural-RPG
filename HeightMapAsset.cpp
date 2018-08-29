@@ -24,13 +24,13 @@ string HeightMapAsset::GetName()
 	return "HeightMapAsset";
 }
 
-void HeightMapAsset::Import(ifstream & ifs)
+void HeightMapAsset::Import(std::istream & ifs)
 {
 	JsonParser jp(ifs);
 	Import(jp);
 }
 
-void HeightMapAsset::Export(ofstream & ofs)
+void HeightMapAsset::Export(std::ostream & ofs)
 {
 	Export().Export(ofs);
 }

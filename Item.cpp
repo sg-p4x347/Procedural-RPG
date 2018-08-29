@@ -11,13 +11,13 @@ string Item::GetName()
 	return "Item";
 }
 
-void Item::Import(std::ifstream & ifs)
+void Item::Import(std::istream & ifs)
 {
 	JsonParser jp(ifs);
 	Import(jp);
 }
 
-void Item::Export(std::ofstream & ofs)
+void Item::Export(std::ostream & ofs)
 {
 	Export().Export(ofs);
 }

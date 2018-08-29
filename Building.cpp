@@ -23,7 +23,7 @@ string Components::Building::GetName()
 	return "Building";
 }
 
-void Components::Building::Export(ofstream & ofs)
+void Components::Building::Export(std::ostream & ofs)
 {
 	Voxels.Export(ofs);
 	for (int x = 0; x <= Voxels.width; x++) {
@@ -33,7 +33,7 @@ void Components::Building::Export(ofstream & ofs)
 	}
 }
 
-void Components::Building::Import(ifstream & ifs)
+void Components::Building::Import(std::istream & ifs)
 {
 	Voxels.Import(ifs);
 	for (int x = 0; x <= Voxels.width; x++) {

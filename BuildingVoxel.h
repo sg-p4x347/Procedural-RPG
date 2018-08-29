@@ -8,8 +8,8 @@ public:
 	void Floor( int unitX,  int unitZ, unsigned int floorType);
 	void Corner(int unitX, int unitZ, unsigned int type);
 	// Inherited via ISerialization
-	virtual void Import(std::ifstream & ifs) override;
-	virtual void Export(std::ofstream & ofs) override;
+	virtual void Import(std::istream & ifs) override;
+	virtual void Export(std::ostream & ofs) override;
 	// Getters
 	const UINT* GetFloors();
 	const UINT* GetWalls();
