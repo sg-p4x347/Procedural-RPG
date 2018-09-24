@@ -1,21 +1,21 @@
 #pragma once
-#include "Component.h"
-#include <DirectXMath.h>
-using namespace DirectX;
-namespace Components {
-	enum MovementStates {
-		Normal,
-		Spectator
-	};
-	enum InteractionStates {
-		World,
-		InventoryUI,
-		ContainerUI,
-		GamePausedUI
-	};
+#include "WorldComponent.h"
+
+namespace world {
+	
 	class Player :
-		public Component {
+		public WorldComponent {
 	public:
+		enum MovementStates {
+			Normal,
+			Spectator
+		};
+		enum InteractionStates {
+			World,
+			InventoryUI,
+			ContainerUI,
+			GamePausedUI
+		};
 		Player();
 		// Data
 		MovementStates MovementState;
@@ -24,7 +24,6 @@ namespace Components {
 		unsigned int OpenContainer;
 
 		// Inherited via Component
-		virtual string GetName() override;
 
 	};
 }

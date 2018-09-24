@@ -9,36 +9,32 @@
 #include "BuildingVoxel.h"
 
 using namespace Architecture;
+namespace world {
+	Building::Building()
+	{
+	}
 
-Components::Building::Building()
-{
-}
+	Building::Building(vector<Room>& rooms, Map<BuildingVoxel>& voxels) : Rooms(rooms), Voxels(voxels)
+	{
+	}
 
-Components::Building::Building(vector<Room>& rooms, Map<BuildingVoxel>& voxels) : Rooms(rooms), Voxels(voxels)
-{
-}
-
-string Components::Building::GetName()
-{
-	return "Building";
-}
-
-void Components::Building::Export(std::ostream & ofs)
-{
-	Voxels.Export(ofs);
-	for (int x = 0; x <= Voxels.width; x++) {
-		for (int z = 0; z <= Voxels.length; z++) {
-			Voxels.map[x][z].Export(ofs);
+	void Building::Export(std::ostream & ofs)
+	{
+		Voxels.Export(ofs);
+		for (int x = 0; x <= Voxels.width; x++) {
+			for (int z = 0; z <= Voxels.length; z++) {
+				Voxels.map[x][z].Export(ofs);
+			}
 		}
 	}
-}
 
-void Components::Building::Import(std::istream & ifs)
-{
-	Voxels.Import(ifs);
-	for (int x = 0; x <= Voxels.width; x++) {
-		for (int z = 0; z <= Voxels.length; z++) {
-			Voxels.map[x][z].Import(ifs);
+	void Building::Import(std::istream & ifs)
+	{
+		Voxels.Import(ifs);
+		for (int x = 0; x <= Voxels.width; x++) {
+			for (int z = 0; z <= Voxels.length; z++) {
+				Voxels.map[x][z].Import(ifs);
+			}
 		}
 	}
 }

@@ -16,7 +16,7 @@
 #include "World.h"
 #include "XmlParser.h"
 #include "CssParser.h"
-#include "InventoryGuiHandler.h"
+//#include "InventoryGuiHandler.h"
 
 using namespace GUI;
 using namespace DirectX;
@@ -25,7 +25,7 @@ using ButtonState = DirectX::Mouse::ButtonStateTracker::ButtonState;
 GuiSystem::GuiSystem(
 	SystemManager * systemManager,
 	unsigned short updatePeriod
-) : System::System(updatePeriod),
+) : System::System(updatePeriod,false),
 m_scrollTicks(1200),
 SM(systemManager)
 {
@@ -126,7 +126,7 @@ SM(systemManager)
 			return style;
 		}(), vector<EntityPtr>{
 			GuiEM.NewButton("Resume Game", [=](Event evt) {
-				World * world = nullptr;
+				world::World * world = nullptr;
 				if (Game::Get().TryGetWorld(world)) {
 					world->ResumeGame();
 				}
@@ -158,7 +158,7 @@ SM(systemManager)
 	//----------------------------------------------------------------
 	// Inventory
 #pragma region Inventory
-	AddDynamicMenu("inventory", [this] {return CreateInventory();});
+	//AddDynamicMenu("inventory", [this] {return CreateInventory();});
 #pragma endregion
 	//----------------------------------------------------------------
 	// Options
@@ -360,9 +360,9 @@ void GuiSystem::RegisterSubsystems()
 {
 	//----------------------------------------------------------------
 	// Initialize sub-systems
-	auto inventory = new InventoryGuiHandler(SM, GetEM());
+	/*auto inventory = new InventoryGuiHandler(SM, GetEM());
 	inventory->RegisterHandlers();
-	SM->AddSystem(std::shared_ptr<System>(inventory));
+	SM->AddSystem(std::shared_ptr<System>(inventory));*/
 }
 
 void GuiSystem::SyncEntities()
@@ -695,18 +695,19 @@ EntityPtr GuiSystem::GetMenu(string name)
 	if (m_menus.find(name) != m_menus.end()) {
 		return m_menus[name];
 	}
+	else if (m_dynamicMenus.find(name) != m_dynamicMenus.end()) {
+		auto menu = m_dynamicMenus[name]();
+		// Add scrollbars as necessary
+		AddScrollbarsRecursive(menu);
+		return menu;
+	}
 	else {
 		auto system = SM->GetSystem<GuiHandler>(name);
 		if (system) {
 			return system->GetElement();
 		}
 	}
-	//else if (m_dynamicMenus.find(name) != m_dynamicMenus.end()) {
-	//	auto menu = m_dynamicMenus[name]();
-	//	// Add scrollbars as necessary
-	//	AddScrollbarsRecursive(menu);
-	//	return menu;
-	//}
+	
 	return nullptr;
 }
 
@@ -724,100 +725,100 @@ bool GuiSystem::IsMenuOpen(string name)
 	return m_currentMenuName == name;
 }
 
-EntityPtr GuiSystem::CreateInventory()
-{
-	
-	EntityPtr inv = ImportMarkup("UI/inv.xml");
-	EntityPtr header = FindElementByIdRecursive(inv, "header");
-	EntityPtr body = FindElementByIdRecursive(inv, "body");
+//EntityPtr GuiSystem::CreateInventory()
+//{
+//	
+//	EntityPtr inv = ImportMarkup("UI/inv.xml");
+//	EntityPtr header = FindElementByIdRecursive(inv, "header");
+//	EntityPtr body = FindElementByIdRecursive(inv, "body");
+//
+//	vector<EntityPtr> tabs;
+//	EntityPtr tabTemplate = ImportMarkup("UI/inv_tab.xml");
+//
+//	
+//	static string currentCategory = "All";
+//	auto categories = SM->GetSystem<world::ItemSystem>("Item")->GetItemCatagories();
+//	categories.insert("craft");
+//	for (string category : categories) {
+//		tabs.push_back([=] {
+//			EntityPtr tab = GuiEM.Copy(tabTemplate);
+//			GuiEM.AddText(tab, category);
+//			GuiEM.AddEventHandler(tab,new GUI::EventHandler("Click", [=](GUI::Event evt) {
+//				currentCategory = category;
+//				SelectInventoryTab(body, category);
+//			}));
+//			return tab;
+//		}());
+//	}
+//	
+//	// Initialize the current tab
+//	SelectInventoryTab(body, currentCategory);
+//	// Add the tabs to the header
+//	GuiEM.AddChildren(header, tabs);
+//	return inv;
+//}
+//
+//EntityPtr GuiSystem::CreateInventoryGrid(string gridTemplate,vector<world::InventoryItem> items)
+//{
+//	auto invGrid = ImportMarkup(gridTemplate);
+//	auto cellTemplate = ImportMarkup("UI/inv_item.xml");
+//	vector<EntityPtr> rows;
+//	for (auto & item : items) {
+//		auto itemType = SM->GetSystem<world::ItemSystem>("Item")->TypeOf(item)->GetComponent<Item>("Item");
+//		// Add a grid cell
+//		auto cell = GuiEM.Copy(cellTemplate);
+//		GuiEM.AddEventHandler(cell, new GUI::EventHandler("Click", [=](Event evt) {
+//			m_handMenu = GuiEM.Copy(cell);
+//		}));
+//		// label
+//		auto label = FindElementByIdRecursive(cell, "label");
+//		if (label) GuiEM.AddText(label, itemType->Name);
+//
+//		GuiEM.AddText(cell, to_string(item.Quantity));
+//		GetStyle(cell)->Background = itemType->Sprite;
+//
+//		GuiEM.AddChild(invGrid, cell);
+//	}
+//	return invGrid;
+//}
 
-	vector<EntityPtr> tabs;
-	EntityPtr tabTemplate = ImportMarkup("UI/inv_tab.xml");
-
-	
-	static string currentCategory = "All";
-	auto categories = SM->GetSystem<ItemSystem>("Item")->GetItemCatagories();
-	categories.insert("craft");
-	for (string category : categories) {
-		tabs.push_back([=] {
-			EntityPtr tab = GuiEM.Copy(tabTemplate);
-			GuiEM.AddText(tab, category);
-			GuiEM.AddEventHandler(tab,new GUI::EventHandler("Click", [=](GUI::Event evt) {
-				currentCategory = category;
-				SelectInventoryTab(body, category);
-			}));
-			return tab;
-		}());
-	}
-	
-	// Initialize the current tab
-	SelectInventoryTab(body, currentCategory);
-	// Add the tabs to the header
-	GuiEM.AddChildren(header, tabs);
-	return inv;
-}
-
-EntityPtr GuiSystem::CreateInventoryGrid(string gridTemplate,vector<Components::InventoryItem> items)
-{
-	auto invGrid = ImportMarkup(gridTemplate);
-	auto cellTemplate = ImportMarkup("UI/inv_item.xml");
-	vector<EntityPtr> rows;
-	for (auto & item : items) {
-		auto itemType = SM->GetSystem<ItemSystem>("Item")->TypeOf(item)->GetComponent<Item>("Item");
-		// Add a grid cell
-		auto cell = GuiEM.Copy(cellTemplate);
-		GuiEM.AddEventHandler(cell, new GUI::EventHandler("Click", [=](Event evt) {
-			m_handMenu = GuiEM.Copy(cell);
-		}));
-		// label
-		auto label = FindElementByIdRecursive(cell, "label");
-		if (label) GuiEM.AddText(label, itemType->Name);
-
-		GuiEM.AddText(cell, to_string(item.Quantity));
-		GetStyle(cell)->Background = itemType->Sprite;
-
-		GuiEM.AddChild(invGrid, cell);
-	}
-	return invGrid;
-}
-
-void GuiSystem::SelectInventoryTab(EntityPtr gridContainer, string category)
-{
-	auto & itemSystem = SM->GetSystem<ItemSystem>("Item");
-	DeleteChildren(gridContainer);
-	EntityPtr openContainer = itemSystem->GetOpenContainer();
-	if (openContainer && openContainer != itemSystem->GetPlayer()) {
-		EntityPtr playerGrid = CreateInventoryGrid(
-			"UI/half_inv_grid.xml",
-			itemSystem->ItemsInCategory(
-				itemSystem->GetPlayerInventory(),
-				category
-			)
-		);
-		GuiEM.AddChild(gridContainer, playerGrid);
-		GuiEM.AddChild(gridContainer, ImportMarkup("UI/inv_divider.xml"));
-		EntityPtr containerGrid = CreateInventoryGrid(
-			"UI/half_inv_grid.xml",
-			itemSystem->ItemsInCategory(
-				itemSystem->GetInventoryOf(openContainer),
-				category
-			)
-		);
-		GuiEM.AddChild(gridContainer, containerGrid);
-	}
-	else {
-		EntityPtr grid = CreateInventoryGrid(
-			"UI/inv_grid.xml",
-			SM->GetSystem<ItemSystem>("Item")->ItemsInCategory(
-				SM->GetSystem<ItemSystem>("Item")->GetPlayerInventory(),
-				category
-			)
-		);
-		GuiEM.AddChild(gridContainer, grid);
-	}
-	
-	UpdateFlowRecursive(gridContainer, 1);
-}
+//void GuiSystem::SelectInventoryTab(EntityPtr gridContainer, string category)
+//{
+//	auto & itemSystem = SM->GetSystem<world::ItemSystem>("Item");
+//	DeleteChildren(gridContainer);
+//	EntityPtr openContainer = itemSystem->GetOpenContainer();
+//	if (openContainer && openContainer != itemSystem->GetPlayer()) {
+//		EntityPtr playerGrid = CreateInventoryGrid(
+//			"UI/half_inv_grid.xml",
+//			itemSystem->ItemsInCategory(
+//				itemSystem->GetPlayerInventory(),
+//				category
+//			)
+//		);
+//		GuiEM.AddChild(gridContainer, playerGrid);
+//		GuiEM.AddChild(gridContainer, ImportMarkup("UI/inv_divider.xml"));
+//		EntityPtr containerGrid = CreateInventoryGrid(
+//			"UI/half_inv_grid.xml",
+//			itemSystem->ItemsInCategory(
+//				itemSystem->GetInventoryOf(openContainer),
+//				category
+//			)
+//		);
+//		GuiEM.AddChild(gridContainer, containerGrid);
+//	}
+//	else {
+//		EntityPtr grid = CreateInventoryGrid(
+//			"UI/inv_grid.xml",
+//			SM->GetSystem<ItemSystem>("Item")->ItemsInCategory(
+//				SM->GetSystem<ItemSystem>("Item")->GetPlayerInventory(),
+//				category
+//			)
+//		);
+//		GuiEM.AddChild(gridContainer, grid);
+//	}
+//	
+//	UpdateFlowRecursive(gridContainer, 1);
+//}
 
 void GuiSystem::AddSpriteSheet(string path, map<string, Rectangle> mapping)
 {

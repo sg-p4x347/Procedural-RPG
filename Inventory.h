@@ -1,6 +1,7 @@
 #pragma once
-#include "Component.h"
-namespace Components {
+#include "ISerialization.h"
+#include "WorldComponent.h"
+namespace world {
 	struct InventoryItem {
 		InventoryItem() {}
 		InventoryItem(unsigned int typeEntity, bool procedural, unsigned int quantity) :
@@ -16,7 +17,8 @@ namespace Components {
 	};
 
 	class Inventory :
-		public Component
+		public WorldComponent,
+		public ISerialization
 	{
 	public:
 		Inventory();
@@ -27,7 +29,6 @@ namespace Components {
 		float MaxWeight;
 		bool Open;
 		// Inherited via Component
-		virtual string GetName() override;
 		void Import(std::istream & ifs) override;
 		void Export(std::ostream & ofs) override;
 	};

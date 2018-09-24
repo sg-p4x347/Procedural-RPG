@@ -186,7 +186,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Action.h" />
-    <ClInclude Include="ActionSystem.h" />
+    <ClInclude Include="ActionSystem.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="AssetEntityManager.h" />
     <ClInclude Include="AssetManager.h" />
     <ClInclude Include="BaseEntityManager.h" />
@@ -194,17 +199,28 @@
     <ClInclude Include="Box.h" />
     <ClInclude Include="Building.h" />
     <ClInclude Include="BuildingGenerator.h" />
-    <ClInclude Include="BuildingSystem.h" />
+    <ClInclude Include="BuildingSystem.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="BuildingVoxel.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="CollisionSystem.h" />
+    <ClInclude Include="Component.h" />
+    <ClInclude Include="ComponentCache.h" />
     <ClInclude Include="CompositeModel.h" />
     <ClInclude Include="CssParser.h" />
     <ClInclude Include="CubicSpline.h" />
     <ClInclude Include="CustomEffect.h" />
     <ClInclude Include="CustomModelLoadVBO.h" />
+    <ClInclude Include="Entity.h" />
+    <ClInclude Include="EntityCache.h" />
+    <ClInclude Include="EntityIndex.h" />
     <ClInclude Include="EntityQuadTree.h" />
     <ClInclude Include="EntityRegion.h" />
+    <ClInclude Include="EntityTypedefs.h" />
     <ClInclude Include="EventHandler.h" />
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="Geometry.h" />
@@ -212,26 +228,46 @@
     <ClInclude Include="HeightMapAsset.h" />
     <ClInclude Include="IEventManager.h" />
     <ClInclude Include="Inventory.h" />
-    <ClInclude Include="InventoryGuiHandler.h" />
+    <ClInclude Include="InventoryGuiHandler.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Item.h" />
-    <ClInclude Include="ItemSystem.h" />
+    <ClInclude Include="ItemSystem.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Line.h" />
     <ClInclude Include="AssetTypes.h" />
     <ClInclude Include="NormalMapAsset.h" />
     <ClInclude Include="PathID.h" />
-    <ClInclude Include="PlantSystem.h" />
+    <ClInclude Include="PlantSystem.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="PositionNormalTextureTangentColorVBO.h" />
     <ClInclude Include="QuadTree.h" />
     <ClInclude Include="Rectangle.h" />
+    <ClInclude Include="Region.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="ResourceSystem.h" />
+    <ClInclude Include="ResourceSystem.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Room.h" />
     <ClInclude Include="SoundAsset.h" />
     <ClInclude Include="SoundSystem.h" />
     <ClInclude Include="Task.h" />
     <ClInclude Include="TaskManager.h" />
     <ClInclude Include="TreeBranch.h" />
-    <ClInclude Include="Component.h" />
     <ClInclude Include="ConversionUtil.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="Droplet.h" />
@@ -248,7 +284,6 @@
     <ClInclude Include="HeightMap.h" />
     <ClInclude Include="JSON.h" />
     <ClInclude Include="JsonParser.h" />
-    <ClInclude Include="Entity.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="MathConstants.h" />
@@ -278,6 +313,7 @@
     <ClInclude Include="TopologyCruncher.h" />
     <ClInclude Include="TreeGenerator.h" />
     <ClInclude Include="VboParser.h" />
+    <ClInclude Include="Water.h" />
     <ClInclude Include="WaterCell.h" />
     <ClInclude Include="TerrainSystem.h" />
     <ClInclude Include="ThermalCell.h" />
@@ -285,13 +321,23 @@
     <ClInclude Include="VBO.h" />
     <ClInclude Include="WorkerThread.h" />
     <ClInclude Include="World.h" />
+    <ClInclude Include="WorldComponent.h" />
+    <ClInclude Include="WorldDomain.h" />
+    <ClInclude Include="WorldEntity.h" />
+    <ClInclude Include="WorldEntityCache.h" />
     <ClInclude Include="WorldEntityManager.h" />
+    <ClInclude Include="WorldEntityProxy.h" />
     <ClInclude Include="WorldSystem.h" />
     <ClInclude Include="XmlParser.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Action.cpp" />
-    <ClCompile Include="ActionSystem.cpp" />
+    <ClCompile Include="ActionSystem.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="AssetEntityManager.cpp" />
     <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="BaseEntityManager.cpp" />
@@ -299,15 +345,23 @@
     <ClCompile Include="Box.cpp" />
     <ClCompile Include="Building.cpp" />
     <ClCompile Include="BuildingGenerator.cpp" />
-    <ClCompile Include="BuildingSystem.cpp" />
+    <ClCompile Include="BuildingSystem.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="BuildingVoxel.cpp" />
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CollisionSystem.cpp" />
+    <ClCompile Include="Component.cpp" />
     <ClCompile Include="CompositeModel.cpp" />
     <ClCompile Include="CssParser.cpp" />
     <ClCompile Include="CubicSpline.cpp" />
     <ClCompile Include="CustomEffect.cpp" />
     <ClCompile Include="CustomModelLoadVBO.cpp" />
+    <ClCompile Include="Entity.cpp" />
+    <ClCompile Include="EntityIndex.cpp" />
     <ClCompile Include="EntityQuadTree.cpp" />
     <ClCompile Include="EntityRegion.cpp" />
     <ClCompile Include="Geometry.cpp" />
@@ -315,25 +369,44 @@
     <ClCompile Include="HeightMapAsset.cpp" />
     <ClCompile Include="IEventManager.cpp" />
     <ClCompile Include="Inventory.cpp" />
-    <ClCompile Include="InventoryGuiHandler.cpp" />
+    <ClCompile Include="InventoryGuiHandler.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Item.cpp" />
-    <ClCompile Include="ItemSystem.cpp" />
+    <ClCompile Include="ItemSystem.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Line.cpp" />
     <ClCompile Include="NormalMapAsset.cpp" />
     <ClCompile Include="PathID.cpp" />
-    <ClCompile Include="PlantSystem.cpp" />
+    <ClCompile Include="PlantSystem.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="PositionNormalTextureTangentColorVBO.cpp" />
     <ClCompile Include="QuadTree.cpp" />
     <ClCompile Include="Rectangle.cpp" />
     <ClCompile Include="Resource.cpp" />
-    <ClCompile Include="ResourceSystem.cpp" />
+    <ClCompile Include="ResourceSystem.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Room.cpp" />
     <ClCompile Include="SoundAsset.cpp" />
     <ClCompile Include="SoundSystem.cpp" />
     <ClCompile Include="Task.cpp" />
     <ClCompile Include="TaskManager.cpp" />
     <ClCompile Include="TreeBranch.cpp" />
-    <ClCompile Include="Component.cpp" />
     <ClCompile Include="ConversionUtil.cpp" />
     <ClCompile Include="Delegate.cpp" />
     <ClCompile Include="Droplet.cpp" />
@@ -350,7 +423,6 @@
     <ClCompile Include="HeightMap.cpp" />
     <ClCompile Include="JSON.cpp" />
     <ClCompile Include="JsonParser.cpp" />
-    <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Model.cpp" />
@@ -381,6 +453,7 @@
     <ClCompile Include="TopologyCruncher.cpp" />
     <ClCompile Include="TreeGenerator.cpp" />
     <ClCompile Include="VboParser.cpp" />
+    <ClCompile Include="Water.cpp" />
     <ClCompile Include="WaterCell.cpp" />
     <ClCompile Include="TerrainSystem.cpp" />
     <ClCompile Include="ThermalCell.cpp" />
@@ -388,7 +461,7 @@
     <ClCompile Include="VBO.cpp" />
     <ClCompile Include="WorkerThread.cpp" />
     <ClCompile Include="World.cpp" />
-    <ClCompile Include="WorldEntityManager.cpp" />
+    <ClCompile Include="WorldComponent.cpp" />
     <ClCompile Include="WorldSystem.cpp" />
     <ClCompile Include="XmlParser.cpp" />
   </ItemGroup>
@@ -420,7 +493,6 @@
     <None Include="config\continent.json" />
     <None Include="config\history.json" />
     <None Include="config\world.json" />
-    <None Include="config\WorldEntityManager.json" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

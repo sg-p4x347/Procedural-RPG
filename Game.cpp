@@ -95,7 +95,7 @@ Filesystem::path Game::GetSavesDirectory()
 	return Filesystem::path("Saves");
 }
 
-bool Game::TryGetWorld(World *& world)
+bool Game::TryGetWorld(world::World *& world)
 {
 	if (m_world) {
 		world = m_world.get();
@@ -113,7 +113,7 @@ void Game::GenerateWorld(string name, int seed)
 	catch (std::exception ex) {
 		Utility::OutputException(ex.what());
 	}
-	m_world = std::make_unique<World>(*m_systemManager, GetSavesDirectory(),name, seed);
+	m_world = std::make_unique<world::World>(*m_systemManager, GetSavesDirectory(),name, seed);
 }
 
 bool Game::LoadWorld(string name)
@@ -127,9 +127,11 @@ bool Game::LoadWorld(string name)
 		}
 		else {
 			m_config.Set("CurrentWorld", name);
-			m_world = std::make_unique<World>(*m_systemManager, GetSavesDirectory(), name);
+			m_world = std::make_unique<world::World>(*m_systemManager, GetSavesDirectory(), name);
 			//m_world->Load();
+
 			m_world->ResumeGame();
+			m_world->Render();
 			return true;
 		}
 	}

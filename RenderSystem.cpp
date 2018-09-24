@@ -10,6 +10,7 @@
 #include "SystemManager.h"
 #include "BuildingSystem.h"
 #include "IEventManager.h"
+#include "TaskManager.h"
 using namespace DirectX::SimpleMath;
 using Microsoft::WRL::ComPtr;
 
@@ -19,13 +20,11 @@ RenderSystem::RenderSystem(
 	unsigned short updatePeriod,
 	HWND window, int width, int height,
 	shared_ptr<GuiSystem> guiSystem
-) : System(updatePeriod),
+) : System(updatePeriod,false),
 m_guiSystem(guiSystem),
-m_VBOmask(0),
-m_ModelMask(0),
+EM(nullptr),
 SM(systemManager)
 {
-	InitializeWorldRendering(nullptr);
 	m_window = window;
 	m_worldMatrix = Matrix::Identity;
 
@@ -44,7 +43,6 @@ SM(systemManager)
 	for (int i = 0; i < 20; i++) {
 		m_frameDeltas.push_back(0);
 	}
-	
 }
 
 RenderSystem::~RenderSystem()
@@ -120,28 +118,40 @@ void RenderSystem::Render()
 	//	//}
 	//	
 	//}
-	for (auto & instances : m_modelInstances) {
-		shared_ptr<Model> dxModel = instances.first;
-		for (auto & job : instances.second) {
-			if (m_tracked.count(job.entity) != 0)
-				RenderModel(dxModel, job.worldMatrix, true);
+	if (m_mutex.try_lock()) {
+		for (auto & instances : m_modelInstances) {
+			shared_ptr<Model> dxModel = instances.first;
+			for (auto & job : instances.second) {
+				if (m_tracked.count(job.entity) != 0)
+					RenderModel(dxModel, job.worldMatrix, true);
+			}
+		}
+		m_mutex.unlock();
+	}
+	else {
+		for (auto & instances : m_modelInstancesTemp) {
+			shared_ptr<Model> dxModel = instances.first;
+			for (auto & job : instances.second) {
+				if (m_trackedTemp.count(job.entity) != 0)
+					RenderModel(dxModel, job.worldMatrix, true);
+			}
 		}
 	}
-	for (auto & instances : m_modelInstances) {
+	/*for (auto & instances : m_modelInstances) {
 		shared_ptr<Model> dxModel = instances.first;
 		for (auto & job : instances.second) {
 			if (m_tracked.count(job.entity) != 0)
 				RenderModel(dxModel, job.worldMatrix, false);
 		}
-	}
+	}*/
 	// Render all buildings
-	for (EntityPtr & building : EM->FindEntities("Building")) {
+	/*for (EntityPtr & building : EM->FindEntities("Building")) {
 			
 		auto position = building->GetComponent<Components::Position>("Position");
 		auto dxModel = SM->GetSystem<BuildingSystem>("Building")->GetModel(building, Vector3::Distance(EM->PlayerPos()->Pos, position->Pos));
 
 		RenderCompositeModel(dxModel, position->Pos, position->Rot, true);
-	}
+	}*/
 }
 //void RenderSystem::SyncEntities()
 //{
@@ -177,7 +187,7 @@ void RenderSystem::Render()
 void RenderSystem::SyncEntities()
 {
 	//std::thread([=] {
-	if (EM && EM->Player()) {
+	if (EM) {
 		/*std::map<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>> vbos;
 		for (auto & entity : EM->FindEntities(m_VBOmask)) {
 			shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo = entity->GetComponent<Components::PositionNormalTextureTangentColorVBO>("PositionNormalTextureTangentColorVBO");
@@ -192,18 +202,37 @@ void RenderSystem::SyncEntities()
 		
 		//std::map<shared_ptr<Model>, vector<XMMATRIX>> modelInstances;
 		//std::set<EntityPtr> tracked;
-		m_modelInstances.clear();
-		m_tracked.clear();
 		
-		for (auto & entity : EM->FindEntitiesInRange( m_ModelMask,EM->PlayerPos()->Pos,128.f)) {
-			TrackEntity(m_modelInstances,m_tracked,entity);
-		}
-		// add all entities that satisfy the forceRender masks
-		for (auto & mask : m_forceRenderMasks) {
-			for (auto & entity : EM->FindEntities(mask)) {
-				TrackEntity(m_modelInstances, m_tracked, entity);
+
+		/*auto modelEntities = EM->NewEntityCache<world::Model, world::Position>();
+		EM->UpdateCache(modelEntities);
+
+		for (auto & entity : modelEntities) {
+			TrackEntity(m_modelInstances,m_tracked,entity.GetProxy());
+		}*/
+		
+
+		// terrain
+		world::MaskType accessMask = EM->GetMask<world::Terrain, world::Model, world::Position>();
+		TaskManager::Get().Push(Task([&]() {
+			std::map<shared_ptr<Model>, vector<RenderEntityJob>> modelInstances;
+			std::set<world::EntityID> tracked;
+			auto terrainEntities = EM->NewEntityCache<world::Terrain, world::Model, world::Position>();
+			EM->UpdateGlobalCache(terrainEntities);
+
+			for (auto & entity : terrainEntities) {
+				auto modelEntity = EM->GetEntity<world::Model, world::Position>(entity.GetID());
+				TrackEntity(modelInstances, tracked, modelEntity);
 			}
-		}
+			m_modelInstancesTemp = modelInstances;
+			m_trackedTemp = tracked;
+			m_mutex.lock();
+			m_modelInstances = modelInstances;
+			m_tracked = tracked;
+			m_mutex.unlock();
+		}, accessMask));
+		
+		
 		//m_mutex.lock();
 		//m_modelInstances = modelInstances;
 		//m_tracked = tracked;
@@ -230,27 +259,26 @@ Rectangle RenderSystem::GetViewport()
 	return Rectangle(0,0, m_outputWidth,m_outputHeight);
 }
 
-void RenderSystem::InitializeWorldRendering(WorldEntityManager * entityManager)
+void RenderSystem::InitializeWorldRendering(world::WEM * entityManager)
 {
 	EM = entityManager;
 	if (EM) {
-		m_VBOmask = entityManager->ComponentMask( "PositionNormalTextureTangentColorVBO");
-		m_ModelMask = entityManager->ComponentMask("Model");
 		RegisterHandlers();
-		m_forceRenderMasks.insert(EM->ComponentMask("Terrain"));
-		m_forceRenderMasks.insert(EM->ComponentMask("Tag_Water"));
+		SyncEntities();
 	}
 }
 
 void RenderSystem::RegisterHandlers()
 {
-	IEventManager::RegisterHandler(EventTypes::Movement_PlayerMoved, std::function<void(int)>([&](int gridSize) {
-		SyncEntities();
+	IEventManager::RegisterHandler(EventTypes::WEM_Resync, std::function<void(void)>([=]() {
+		if (EM) {
+			SyncEntities();
+		}
 	}));
 	IEventManager::RegisterHandler(EventTypes::Entity_Deleted, std::function<void(EntityPtr)>([&](EntityPtr entity) {
-		if (entity->HasComponents(EM->ComponentMask("Model"))) {
+		/*if (entity->HasComponents(EM->ComponentMask("Model"))) {
 			m_tracked.erase(entity);
-		}
+		}*/
 	}));
 }
 
@@ -368,20 +396,21 @@ void RenderSystem::SpriteBatchEnd()
 	m_spriteBatch->End();
 }
 
-void RenderSystem::TrackEntity(std::map<shared_ptr<Model>, vector<RenderEntityJob>> & modelInstances, std::set<EntityPtr> & tracked,EntityPtr entity)
+void RenderSystem::TrackEntity(std::map<shared_ptr<Model>, vector<RenderEntityJob>> & modelInstances, std::set<world::EntityID> & tracked, world::WorldEntityProxy<world::Model, world::Position> & entity)
 {
-	if (tracked.count(entity) == 0) {
-		auto position = entity->GetComponent<Components::Position>("Position");
-		auto modelComp = entity->GetComponent<Components::Model>("Model");
-		shared_ptr<Model> model = AssetManager::Get()->GetModel(modelComp->Path, Vector3::Distance(EM->PlayerPos()->Pos, position->Pos), position->Pos, modelComp->Type);
+	world::EntityID id = entity.GetID();
+	if (tracked.count(id) == 0) {
+		auto & position = entity.Get<world::Position>();
+		auto & modelComp = entity.Get<world::Model>();
+		shared_ptr<Model> model = AssetManager::Get()->GetModel(modelComp.Asset, Vector3::Distance(EM->PlayerPos(), position.Pos), position.Pos, modelComp.Type);
 		if (modelInstances.find(model) == modelInstances.end()) {
 			modelInstances.insert(std::make_pair(model, vector<RenderEntityJob>()));
 		}
-		XMMATRIX translation = XMMatrixTranslation(position->Pos.x, position->Pos.y, position->Pos.z);
-		XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position->Rot);
+		XMMATRIX translation = XMMatrixTranslation(position.Pos.x, position.Pos.y, position.Pos.z);
+		XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
 		XMMATRIX world = XMMatrixMultiply(rotMat, translation);
-		modelInstances[model].push_back(RenderEntityJob { entity,world });
-		tracked.insert(entity);
+		modelInstances[model].push_back(RenderEntityJob { id,world });
+		tracked.insert(id);
 	}
 }
 
@@ -792,15 +821,15 @@ void RenderSystem::OnDeviceLost()
 
 DirectX::XMMATRIX RenderSystem::GetViewMatrix()
 {
-	shared_ptr<Components::Position> position = EM->PlayerPos();
-	float y = sinf(position->Rot.y);
-	float r = cosf(position->Rot.y);
-	float z = r*cosf(position->Rot.x);
-	float x = r*sinf(position->Rot.x);
+	world::Position & position = EM->GetEntity<world::Position>(EM->PlayerID()).Get<world::Position>();
+	float y = sinf(position.Rot.y);
+	float r = cosf(position.Rot.y);
+	float z = r*cosf(position.Rot.x);
+	float x = r*sinf(position.Rot.x);
 
-	XMVECTOR lookAt = position->Pos + SimpleMath::Vector3(x, y, z);
+	XMVECTOR lookAt = position.Pos + SimpleMath::Vector3(x, y, z);
 
-	XMMATRIX view = XMMatrixLookAtRH(position->Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
+	XMMATRIX view = XMMatrixLookAtRH(position.Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
 	m_viewMatrix = view;
 	
 	return view;

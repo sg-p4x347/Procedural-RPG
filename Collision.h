@@ -1,9 +1,9 @@
 #pragma once
-#include "Component.h"
+#include "WorldComponent.h"
 #include "Box.h"
-namespace Components {
+namespace world {
 	class Collision :
-		public Component
+		public WorldComponent
 	{
 	public:
 		Collision();
@@ -12,9 +12,8 @@ namespace Components {
 		Box BoundingBox;
 		bool Enabled;
 		// Inherited via Component
-		virtual string GetName() override;
-		virtual void Import(std::istream & ifs) override;
-		virtual void Export(std::ostream & ofs) override;
+		//virtual void Import(std::istream & ifs) override;
+		//virtual void Export(std::ostream & ofs) override;
 	};
 }
 

@@ -1,50 +1,52 @@
 #pragma once
 #include "WorldSystem.h"
 #include "Inventory.h"
-class ItemSystem :
-	public WorldSystem
-{
-public:
-	ItemSystem(WorldEntityManager * entityManager, vector<string> & components, unsigned short updatePeriod);
-	//----------------------------------------------------------------
-	// Queries
-	shared_ptr<Components::Inventory> GetPlayerInventory();
-	shared_ptr<Components::Inventory> GetInventoryOf(EntityPtr entity);
-	EntityPtr GetOpenContainer();
-	EntityPtr GetPlayer();
+#include "WorldDomain.h"
+namespace world {
+	class ItemSystem :
+		public WorldSystem
+	{
+	public:
+		ItemSystem(WEM * entityManager, vector<string> & components, unsigned short updatePeriod);
+		//----------------------------------------------------------------
+		// Queries
+		Inventory & GetPlayerInventory();
+		Inventory & GetInventoryOf(EntityID entity);
+		EntityPtr GetOpenContainer();
+		EntityPtr GetPlayer();
 
-	EntityPtr TypeOf(Components::InventoryItem & item);
-	//----------------------------------------------------------------
-	// Modifiers
-	void AddItem(shared_ptr<Components::Inventory> inventory, string itemType, int quantity);
-	void AddItem(shared_ptr<Components::Inventory> inventory, Components::InventoryItem item);
-	//----------------------------------------------------------------
-	// Categorization
-	std::unordered_set<string> GetItemCatagories();
-	vector<Components::InventoryItem> ItemsInCategory(shared_ptr<Components::Inventory> inventory, string category);
-	//----------------------------------------------------------------
-	// Entity Factories
-	EntityPtr NewContainer(Vector3 position, Vector3 rotation, string model);
-private:
-	//----------------------------------------------------------------
-	// Helpers
-	void RegisterHandlers();
-	
-	//----------------------------------------------------------------
-	// Modifiers
-	void OpenInventory(EntityPtr entity);
-	void CloseInventory(EntityPtr entity);
-	// Inherited via WorldSystem
-	virtual string Name() override;
-	virtual void Update(double & elapsed) override;
-	//----------------------------------------------------------------
-	// Item catagorization
-	void InitializeItemCatagories();
-	std::map<string, unordered_set<unsigned int>> m_itemCatagories;
-	//----------------------------------------------------------------
-	// Item queries
-	EntityPtr FindItem(string name);
-	bool TryFindItem(string name, EntityPtr & entity);
-	map<string, EntityPtr> m_items;
-};
+		EntityPtr TypeOf(InventoryItem & item);
+		//----------------------------------------------------------------
+		// Modifiers
+		void AddItem(Inventory & inventory, string itemType, int quantity);
+		void AddItem(Inventory & inventory, InventoryItem item);
+		//----------------------------------------------------------------
+		// Categorization
+		std::unordered_set<string> GetItemCatagories();
+		vector<InventoryItem> ItemsInCategory(Inventory & inventory, string category);
+		//----------------------------------------------------------------
+		// Entity Factories
+		EntityPtr NewContainer(Vector3 position, Vector3 rotation, string model);
+	private:
+		//----------------------------------------------------------------
+		// Helpers
+		void RegisterHandlers();
 
+		//----------------------------------------------------------------
+		// Modifiers
+		void OpenInventory(EntityPtr entity);
+		void CloseInventory(EntityPtr entity);
+		// Inherited via WorldSystem
+		virtual string Name() override;
+		virtual void Update(double & elapsed) override;
+		//----------------------------------------------------------------
+		// Item catagorization
+		void InitializeItemCatagories();
+		std::map<string, unordered_set<unsigned int>> m_itemCatagories;
+		//----------------------------------------------------------------
+		// Item queries
+		EntityPtr FindItem(string name);
+		bool TryFindItem(string name, EntityPtr & entity);
+		map<string, EntityPtr> m_items;
+	};
+}

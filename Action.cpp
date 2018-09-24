@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Action.h"
 
-namespace Components {
+namespace world {
 	Action::Action()
 	{
 
@@ -12,11 +12,7 @@ namespace Components {
 	{
 	}
 
-	string Components::Action::GetName()
-	{
-		return "Action";
-	}
-	void Action::Import(std::istream & ifs)
+	/*void Action::Import(std::istream & ifs)
 	{
 		DeSerialize(Size, ifs);
 		DeSerialize(Event, ifs);
@@ -27,5 +23,5 @@ namespace Components {
 		Serialize(Size, ofs);
 		Serialize(Event, ofs);
 		Serialize(TargetEntity, ofs);
-	}
+	}*/
 }

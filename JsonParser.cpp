@@ -268,9 +268,9 @@ JsonParser JsonParser::operator[](const string & key) const
 void JsonParser::Export(std::ostream & ofs) const
 {
 	switch (m_type) {
-		case JsonType::object : ExportObject(fileStream); break;
-		case JsonType::array: ExportArray(fileStream); break;
-		case JsonType::primitive: ExportPrimitive(fileStream); break;
+		case JsonType::object : ExportObject(ofs); break;
+		case JsonType::array: ExportArray(ofs); break;
+		case JsonType::primitive: ExportPrimitive(ofs); break;
 	}
 }
 

@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Collision.h"
 
-namespace Components {
+namespace world {
 	Collision::Collision() : Enabled(true)
 	{
 	}
@@ -10,11 +10,7 @@ namespace Components {
 	{
 	}
 
-	string Collision::GetName()
-	{
-		return "Collision";
-	}
-	void Collision::Import(std::istream & ifs)
+	/*void Collision::Import(std::istream & ifs)
 	{
 		DeSerialize(Enabled, ifs);
 
@@ -38,5 +34,5 @@ namespace Components {
 		Serialize(BoundingBox.Size.y, ofs);
 		Serialize(BoundingBox.Size.z, ofs);
 
-	}
+	}*/
 }

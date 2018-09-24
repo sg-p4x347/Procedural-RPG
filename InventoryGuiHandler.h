@@ -11,7 +11,7 @@ public:
 	virtual EntityPtr GetElement() override;
 
 private:
-	EntityPtr CreateInventoryGrid(string gridTemplate, vector<Components::InventoryItem> items);
+	EntityPtr CreateInventoryGrid(string gridTemplate, vector<world::InventoryItem> items);
 	void SelectInventoryTab(EntityPtr gridContainer, string category);
 
 };

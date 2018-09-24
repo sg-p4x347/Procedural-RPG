@@ -14,7 +14,7 @@ public:
 	Filesystem::path GetSavesDirectory();
 	//----------------------------------------------------------------
 	// World
-	bool TryGetWorld(World *& world);
+	bool TryGetWorld(world::World *& world);
 	void GenerateWorld(string name, int seed);
 	bool LoadWorld(string name = "");
 	void CloseWorld();
@@ -50,7 +50,7 @@ private:
 
 	//----------------------------------------------------------------
 	// World
-	unique_ptr<World> m_world;
+	unique_ptr<world::World> m_world;
     void Update(DX::StepTimer const& timer);
 
 	//----------------------------------------------------------------

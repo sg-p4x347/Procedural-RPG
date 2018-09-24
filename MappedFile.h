@@ -5,18 +5,24 @@ template<typename KeyType>
 class MappedFile
 {
 	struct Block {
+		Block() : position(0), size(0), buffer(0) {
+
+		}
 		uint32_t position;
-		size_t size;
-		size_t buffer;
+		uint32_t size;
+		uint32_t buffer;
 		size_t GetAllocationSize() {
 			return size + buffer;
 		}
 	};
 public:
-	MappedFile(std::string indexFile,std::string dataFile) : m_indexFile(indexFile), m_dataFile(dataFile) {
-		
+	MappedFile() {
+
+	}
+	MappedFile(Filesystem::path indexFile, Filesystem::path dataFile) : m_indexFile(indexFile), m_dataFile(dataFile) {
 		std::ifstream ifs(m_indexFile, std::ios::binary | std::ios::ate);
 		size_t fileSize = ifs.tellg();
+		
 		
 		if (ifs.is_open()) {
 			// Initialize from index file
@@ -38,12 +44,12 @@ public:
 				size_t blockCount = 0;
 				ifs.seekg(offset);
 				ifs.read((char *)&blockCount, sizeof(size_t));
-				offset += sizeof(KeyType);
+				offset += sizeof(size_t);
 				if (blockCount > 0) {
 					// read all blocks
 					std::vector<Block> blocks(blockCount);
 					ifs.seekg(offset);
-					ifs.read((char *)&blocks[0], sizeof(Block) * blockCount);
+					ifs.read((char *)&(blocks[0]), sizeof(Block) * blockCount);
 					offset += sizeof(Block) * blockCount;
 					// map
 					m_index.insert(std::make_pair(key, blocks));
@@ -59,37 +65,47 @@ public:
 		Save();
 	}
 	inline void Insert(KeyType key, std::vector<uint8_t> & data,float bufferSpace = 1.f) {
-		uint8_t * ptr = data.size() > 0 ? &data[0] : 0;
+		const char * ptr = data.size() > 0 ? &data[0] : nullptr;
 		Insert(key, ptr, data.size(),bufferSpace);
 	}
-	// Overwrites all data associated with key
 	inline void Insert(KeyType key, std::string data, float bufferSpace = 1.f) {
-		std::ofstream ofs(m_dataFile, std::ios::binary | std::ios::out | std::ios::in);
+		Insert(key, data.c_str(), data.length(), bufferSpace);
+	}
+	// Overwrites all data associated with key
+	inline void Insert(KeyType key, const char * data, size_t size, float bufferSpace = 1.f) {
+		
 		std::vector<Block> & blocks = FindBlocks(key);
 		size_t offset = 0;
-		for (Block & block : blocks) {
-			size_t blockAllocation = block.GetAllocationSize();
-			size_t transferSize = std::min(blockAllocation, data.length() - offset);
-			ofs.seekp(block.position);
-			ofs.write((const char *)(data.c_str() + offset), transferSize);
-			block.size = transferSize;
-			block.buffer = blockAllocation - transferSize;
-			offset += transferSize;
+		if (blocks.size()) {
+			std::fstream ofs(m_dataFile, std::ios::binary | std::ios::out | std::ios::in);
+
+			for (Block & block : blocks) {
+				size_t blockAllocation = block.GetAllocationSize();
+				size_t transferSize = std::min(blockAllocation, size - offset);
+				if (transferSize > 0) {
+					ofs.seekp(block.position);
+					ofs.write((const char *)(data + offset), transferSize);
+				}
+				block.size = transferSize;
+				block.buffer = blockAllocation - transferSize;
+				offset += transferSize;
+			}
+			ofs.close();
 		}
 		// create new block for extra
 		if (offset < size) {
-			blocks.push_back(Allocate(data.c_str() + offset, size - offset,ofs,bufferSpace));
+			blocks.push_back(Allocate(data + offset, size - offset, bufferSpace));
 		}
-		ofs.close();
 	}
+	
 	// Returns all data associated with key
 	inline std::string Search(KeyType key) {
 		// get total size needed to contain all data
-		size_t dataSize = 0;
-		for (Block & block : FindBlocks(key)) {
-			dataSize += block.size;
-		}
-		std::string data(dataSize);
+		size_t dataSize = GetSize(key);
+		if (dataSize > 500000000)
+			assert("dataSize is in excess of 500 MB");
+		std::string data(dataSize,' ');
+		
 		if (dataSize > 0) {
 			// read all data into the vector
 			std::ifstream ifs(m_dataFile, std::ios::binary);
@@ -97,7 +113,7 @@ public:
 			for (Block & block : FindBlocks(key)) {
 				if (block.size == 0) break;
 				ifs.seekg(block.position);
-				ifs.read(data.c_str() + offset, block.size);
+				ifs.read((char *)(data.c_str() + offset), block.size);
 				offset += block.size;
 			}
 		}
@@ -123,17 +139,27 @@ public:
 			Insert(index.first, index.second,bufferSpace);
 		}
 	}
-	// Retuns all keys
-	inline std::vector<KeyType> GetKeys() {
+	// Returns the size of data associated with the given key
+	inline size_t GetSize(KeyType key) {
+		size_t dataSize = 0;
+		if (m_index.find(key) != m_index.end()) {
+			for (Block & block : m_index[key]) {
+				dataSize += block.size;
+			}
+		}
+		return dataSize;
+	}
+	// Returns keys that have data
+	inline std::vector<KeyType> IndexedKeys() {
 		std::vector<KeyType> keys;
-		for (auto & mapping : m_index) {
-			keys.push_back(mapping.first);
+		for (auto & index : m_index) {
+			if (GetSize(index.first) > 0) keys.push_back(index.first);
 		}
 		return keys;
 	}
 private:
-	std::string m_indexFile;
-	std::string m_dataFile;
+	Filesystem::path m_indexFile;
+	Filesystem::path m_dataFile;
 	std::map<KeyType, std::vector<Block>> m_index;
 	size_t m_size;
 
@@ -150,20 +176,20 @@ private:
 		}
 	}
 	// Allocates and writes new block space for the given data
-	inline Block Allocate(uint8_t * data, size_t size,std::ofstream & ofs,float bufferSpace) {
+	inline Block Allocate(const char * data, size_t size,float bufferSpace) {
+		std::ofstream ofs(m_dataFile, std::ofstream::binary | std::ofstream::app);
 		Block block;
 		block.position = m_size;
 		block.size = size;
 		block.buffer = size * bufferSpace;
 		m_size += block.GetAllocationSize();
-		ofs.seekp(block.position);
-		ofs.write((char *)data, size);
+		ofs.write((const char *)data, block.GetAllocationSize());
 		return block;
 	}
 	// Serialize the index to file
 	inline void Save() {
 		std::ofstream ofs(m_indexFile, std::ios::binary);
-
+		
 		size_t offset = 0;
 
 		ofs.write((const char*)&m_size, sizeof(size_t));
@@ -184,8 +210,8 @@ private:
 
 				// write all blocks
 				ofs.seekp(offset);
-				ofs.write((const char *)&index.second[0], sizeof(Block) * index.second.size());
-				offset += sizeof(Block) * index.second.size();
+				ofs.write((const char *)&(index.second[0]), sizeof(Block) * count);
+				offset += sizeof(Block) * count;
 			}
 		}
 	}

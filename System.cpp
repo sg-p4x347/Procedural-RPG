@@ -2,8 +2,9 @@
 #include "System.h"
 
 System::System(
-	unsigned short updatePeriod
-) : m_updatePeriod(updatePeriod), m_ticksLeft(updatePeriod), m_elapsed(0.0), m_halted(false)
+	unsigned short updatePeriod,
+	bool halted
+) : m_updatePeriod(updatePeriod), m_ticksLeft(updatePeriod), m_elapsed(0.0), m_halted(halted)
 {
 }
 

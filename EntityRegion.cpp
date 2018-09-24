@@ -29,7 +29,7 @@ vector<CompCache> EntityRegion::LoadCaches( unsigned long componentMask, unsigne
 		// iterate signatures that contain the required 'entitySignature'
 		auto & fileIndex = m_fileIndexes[mask];
 
-		for (unsigned long signature : fileIndex.GetKeys()) {
+		for (unsigned long signature : fileIndex.IndexedKeys()) {
 			if ((signature & entitySignature) == entitySignature) {
 				// try to find the cache in the master component cache
 				auto & masterCache = m_componentCache[mask];

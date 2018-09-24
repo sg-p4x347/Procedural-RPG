@@ -1,17 +1,14 @@
 #include "pch.h"
 #include "Resource.h"
 
+namespace world {
+	Resource::Resource()
+	{
+	}
 
-Resource::Resource()
-{
-}
+	Resource::Resource(vector<InventoryItem> drops) : Drops(drops)
+	{
 
-Resource::Resource(vector<Components::InventoryItem> drops) : Drops(drops)
-{
+	}
 
-}
-
-string Resource::GetName()
-{
-	return "Resource";
 }

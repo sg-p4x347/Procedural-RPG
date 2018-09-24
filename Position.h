@@ -1,14 +1,13 @@
 #pragma once
 #include "Position.h"
-#include "Component.h"
+#include "WorldComponent.h"
 
-using namespace DirectX;
 
-namespace Components {
-	class Position : public Component
+
+namespace world {
+	class Position : public WorldComponent
 	{
 	public:
-		Position(const Position & other);
 		Position(SimpleMath::Vector3 pos = SimpleMath::Vector3::Zero, SimpleMath::Vector3 rot = SimpleMath::Vector3::Zero);
 		// Position (x,y,z)
 		SimpleMath::Vector3 Pos;
@@ -16,11 +15,6 @@ namespace Components {
 		SimpleMath::Vector3 Rot;
 		
 		// Inherited via Component
-		virtual string GetName() override;
-	protected:
-		// override base serialization
-		virtual void Import(std::istream & ifs) override;
-		virtual void Export(std::ostream & ofs) override;
 	};
 }
 

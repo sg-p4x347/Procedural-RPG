@@ -3,18 +3,14 @@
 
 using namespace DirectX::SimpleMath;
 
-namespace Components {
-	Components::Player::Player() : 
+namespace world {
+	Player::Player() : 
 		MovementState(MovementStates::Spectator), 
 		InteractionState(InteractionStates::World),
 		OpenContainer(0)
 	{
 	}
 
-	string Components::Player::GetName()
-	{
-		return "Player";
-	}
 	//void Player::update(float elapsed, DirectX::Mouse::State mouse, DirectX::Keyboard::State keyboard) {
 	//	// mouse
 	//	if (mouse.positionMode == Mouse::MODE_RELATIVE) {

@@ -62,9 +62,9 @@ private:
 	bool IsMenuOpen(string name);
 	//----------------------------------------------------------------
 	// Inventory
-	EntityPtr CreateInventory();
-	EntityPtr CreateInventoryGrid(string gridTemplate, vector<Components::InventoryItem> inventory);
-	void SelectInventoryTab(EntityPtr gridContainer, string category);
+	//EntityPtr CreateInventory();
+	//EntityPtr CreateInventoryGrid(string gridTemplate, vector<world::InventoryItem> inventory);
+	//void SelectInventoryTab(EntityPtr gridContainer, string category);
 
 	//----------------------------------------------------------------
 	// HUD

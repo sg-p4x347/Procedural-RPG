@@ -4,7 +4,6 @@
 #include "IEventManager.h"
 #include "PositionNormalTextureTangentColorVBO.h"
 #include "Inventory.h"
-
 WorldEntityManager::WorldEntityManager(Filesystem::path directory, int worldWidth, int minQuadWidth) : PersistenceEntityManager::PersistenceEntityManager(directory), m_player(nullptr), m_quadTree(Rectangle(0,0,worldWidth,worldWidth),minQuadWidth)
 {
 	//----------------------------------------------------------------
@@ -39,7 +38,7 @@ WorldEntityManager::WorldEntityManager(Filesystem::path directory, int worldWidt
 	// Event Handlers
 	IEventManager::RegisterHandler(Entity_ComponentAdded, std::function<void(unsigned int, unsigned long)>([=](unsigned int target, unsigned long mask) {
 		if (mask == ComponentMask("Position")) {
-			//AddEntityToRegion(target);
+			AddEntityToRegion(target);
 		}
 	}));
 	//----------------------------------------------------------------

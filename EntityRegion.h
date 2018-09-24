@@ -5,7 +5,7 @@
 
 typedef shared_ptr<vector<shared_ptr<Components::Component>>> CompCache;
 class BaseEntityManager;
-class EntityRegion:
+class EntityRegion
 {
 public:
 	EntityRegion(Filesystem::path path, unsigned int x, unsigned int z,BaseEntityManager * entityManager);

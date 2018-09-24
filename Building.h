@@ -1,11 +1,13 @@
 #pragma once
 #include "Room.h"
 #include "BuildingVoxel.h"
-#include "Component.h"
+#include "WorldComponent.h"
+#include "ISerialization.h"
 #include "Map.h"
-	namespace Components {
+namespace world {
 class Building : 
-	public Component
+	public WorldComponent,
+	public ISerialization
 {
 public:
 	Building();
@@ -16,7 +18,6 @@ public:
 
 
 	// Inherited via Component
-	virtual string GetName() override;
 	virtual void Export(std::ostream & ofs) override;
 	virtual void Import(std::istream & ifs) override;
 };

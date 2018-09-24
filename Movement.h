@@ -1,10 +1,9 @@
 #pragma once
-#include "Component.h"
-#include "Movement.h"
+#include "WorldComponent.h"
 
-namespace Components {
+namespace world {
 	class Movement :
-		public Component
+		public WorldComponent
 	{
 	public:
 		Movement();
@@ -13,13 +12,13 @@ namespace Components {
 			DirectX::SimpleMath::Vector3 acceleration,
 			DirectX::SimpleMath::Vector3 angularVelocity,
 			DirectX::SimpleMath::Vector3 angularAcceleration);
+
 		DirectX::SimpleMath::Vector3 Velocity;
 		DirectX::SimpleMath::Vector3 Acceleration;
 		DirectX::SimpleMath::Vector3 AngularVelocity;
 		DirectX::SimpleMath::Vector3 AngularAcceleration;
 
 		// Inherited via Component
-		virtual string GetName() override;
 
 	};
 }

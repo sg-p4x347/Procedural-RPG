@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "Inventory.h"
-namespace Components {
+namespace world {
 
 	Inventory::Inventory() : Inventory::Inventory(0.f, 0.f)
 	{
@@ -10,10 +10,6 @@ namespace Components {
 	{
 	}
 
-	string Inventory::GetName()
-	{
-		return "Inventory";
-	}
 	void Inventory::Import(std::istream & ifs)
 	{
 		int itemCount = 0;

@@ -630,8 +630,8 @@ std::shared_ptr<Model> AssetManager::GetModel(unsigned int id, float distance, V
 {
 	EntityPtr entity;
 	switch (type) {
-	case Procedural: m_proceduralEM->BaseEntityManager::Find(id, entity);break;
-	case Authored: m_authoredEM->BaseEntityManager::Find(id, entity); break;
+	case Procedural: m_proceduralEM->Find(id, entity);break;
+	case Authored: m_authoredEM->Find(id, entity); break;
 	}
 	return GetModel(entity, distance,position, type);
 }

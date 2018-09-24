@@ -15,6 +15,7 @@ public:
 	//----------------------------------------------------------------
 	// Entity manager
 	AssetEntityManager * GetStaticEM();
+	AssetEntityManager * GetProceduralEM();
 	//----------------------------------------------------------------
 	// Asset Retrieval
 	
@@ -78,7 +79,7 @@ public:
 	void CreateInputLayouts();
 	
 	VertexPositionNormalTangentColorTexture CreateVertex(Vector3 position, Vector3 normal, Vector2 texture);
-	AssetEntityManager * GetProceduralEM();
+	
 private:
 	static AssetManager * m_instance;
 	AssetManager();

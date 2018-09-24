@@ -2,6 +2,8 @@
 #include "pch.h"
 #include "EventHandler.h"
 enum EventTypes {
+	WEM_Resync,
+
 	Entity_ComponentAdded,
 	Entity_Deleted,
 

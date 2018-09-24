@@ -8,7 +8,7 @@
 #include "AssetManager.h"
 class SystemManager;
 struct RenderEntityJob {
-	EntityPtr entity;
+	world::EntityID entity;
 	XMMATRIX worldMatrix;
 };
 class RenderSystem :
@@ -26,11 +26,11 @@ public:
 	virtual void SyncEntities() override;
 	void SetViewport(int width, int height);
 	Rectangle GetViewport();
-	void InitializeWorldRendering(WorldEntityManager * entityManager);
+	void InitializeWorldRendering(world::WEM * entityManager);
 	void RegisterHandlers();
 	~RenderSystem();
 private:
-	WorldEntityManager * EM;
+	world::WEM * EM;
 	shared_ptr<GuiSystem> m_guiSystem;
 	SystemManager * SM;
 	EntityPtr m_player;
@@ -77,17 +77,16 @@ private:
 	DirectX::XMMATRIX GetViewMatrix();
 	//----------------------------------------------------------------
 	// Components::VBO
-	unsigned long m_VBOmask;
 	std::map<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>> m_VBOs;
 	
 	void RenderVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo);
 	//----------------------------------------------------------------
 	// Components::Model using DirectX::Model
-	unsigned long m_ModelMask;
 	std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_modelInstances;
-	std::set<EntityPtr> m_tracked;
-	std::set<unsigned long> m_forceRenderMasks;
-	void TrackEntity(std::map<shared_ptr<Model>, vector<RenderEntityJob>> & modelInstances, std::set<EntityPtr> & tracked,EntityPtr entity);
+	std::set<world::EntityID> m_tracked;
+	std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_modelInstancesTemp;
+	std::set<world::EntityID> m_trackedTemp;
+	void TrackEntity(std::map<shared_ptr<Model>, vector<RenderEntityJob>> & modelInstances, std::set<world::EntityID> & tracked,world::WorldEntityProxy<world::Model,world::Position> & entity);
 	//----------------------------------------------------------------
 	// DX::Model
 

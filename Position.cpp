@@ -1,12 +1,7 @@
 #include "pch.h"
 #include "Position.h"
 
-namespace Components {
-	Position::Position(const Position & other) : Position::Position(other.Pos,other.Rot)
-	{
-	}
-
-
+namespace world {
 	Position::Position(SimpleMath::Vector3 pos, SimpleMath::Vector3 rot)
 	{
 		Pos = pos;
@@ -14,7 +9,7 @@ namespace Components {
 	}
 
 
-	void Position::Import(std::istream & ifs)
+	/*void Position::Import(std::istream & ifs)
 	{
 		Component::Import(ifs);
 		float x, y, z;
@@ -40,9 +35,5 @@ namespace Components {
 		Serialize(Rot.x, ofs);
 		Serialize(Rot.y, ofs);
 		Serialize(Rot.z, ofs);
-	}
-	string Position::GetName()
-	{
-		return "Position";
-	}
+	}*/
 }
