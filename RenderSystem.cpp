@@ -118,25 +118,15 @@ void RenderSystem::Render()
 	//	//}
 	//	
 	//}
-	if (m_mutex.try_lock()) {
-		for (auto & instances : m_modelInstances) {
-			shared_ptr<Model> dxModel = instances.first;
-			for (auto & job : instances.second) {
-				if (m_tracked.count(job.entity) != 0)
-					RenderModel(dxModel, job.worldMatrix, true);
-			}
-		}
-		m_mutex.unlock();
-	}
-	else {
-		for (auto & instances : m_modelInstancesTemp) {
-			shared_ptr<Model> dxModel = instances.first;
-			for (auto & job : instances.second) {
-				if (m_trackedTemp.count(job.entity) != 0)
-					RenderModel(dxModel, job.worldMatrix, true);
-			}
+	m_mutex.lock();
+	for (auto & instances : m_modelInstances) {
+		shared_ptr<Model> dxModel = instances.first;
+		for (auto & job : instances.second) {
+			if (m_tracked.count(job.entity) != 0)
+				RenderModel(dxModel, job.worldMatrix, true);
 		}
 	}
+	m_mutex.unlock();
 	/*for (auto & instances : m_modelInstances) {
 		shared_ptr<Model> dxModel = instances.first;
 		for (auto & job : instances.second) {
@@ -215,22 +205,24 @@ void RenderSystem::SyncEntities()
 		// terrain
 		world::MaskType accessMask = EM->GetMask<world::Terrain, world::Model, world::Position>();
 		TaskManager::Get().Push(Task([&]() {
-			std::map<shared_ptr<Model>, vector<RenderEntityJob>> modelInstances;
-			std::set<world::EntityID> tracked;
-			auto terrainEntities = EM->NewEntityCache<world::Terrain, world::Model, world::Position>();
-			EM->UpdateGlobalCache(terrainEntities);
+			m_syncMutex.lock();
+			m_modelInstancesTemp.clear();
+			m_trackedTemp.clear();
+				auto terrainEntities = EM->NewEntityCache<world::Terrain, world::Model, world::Position>();
+				EM->UpdateGlobalCache(terrainEntities);
 
-			for (auto & entity : terrainEntities) {
-				auto modelEntity = EM->GetEntity<world::Model, world::Position>(entity.GetID());
-				TrackEntity(modelInstances, tracked, modelEntity);
-			}
-			m_modelInstancesTemp = modelInstances;
-			m_trackedTemp = tracked;
-			m_mutex.lock();
-			m_modelInstances = modelInstances;
-			m_tracked = tracked;
-			m_mutex.unlock();
-		}, accessMask));
+				for (auto & entity : terrainEntities) {
+					auto modelEntity = EM->GetEntity<world::Model, world::Position>(entity.GetID());
+					TrackEntity(m_modelInstancesTemp, m_trackedTemp, modelEntity,true);
+				}
+				m_mutex.lock();
+				std::swap(m_modelInstancesTemp, m_modelInstances);
+				std::swap(m_trackedTemp, m_tracked);
+				m_mutex.unlock();
+				m_syncMutex.unlock();
+		}, 
+			accessMask,
+			accessMask));
 		
 		
 		//m_mutex.lock();
@@ -396,13 +388,21 @@ void RenderSystem::SpriteBatchEnd()
 	m_spriteBatch->End();
 }
 
-void RenderSystem::TrackEntity(std::map<shared_ptr<Model>, vector<RenderEntityJob>> & modelInstances, std::set<world::EntityID> & tracked, world::WorldEntityProxy<world::Model, world::Position> & entity)
+void RenderSystem::TrackEntity(std::map<shared_ptr<Model>, vector<RenderEntityJob>> & modelInstances, std::set<world::EntityID> & tracked, world::WorldEntityProxy<world::Model, world::Position> & entity,bool ignoreVerticalDistance)
 {
 	world::EntityID id = entity.GetID();
 	if (tracked.count(id) == 0) {
 		auto & position = entity.Get<world::Position>();
 		auto & modelComp = entity.Get<world::Model>();
-		shared_ptr<Model> model = AssetManager::Get()->GetModel(modelComp.Asset, Vector3::Distance(EM->PlayerPos(), position.Pos), position.Pos, modelComp.Type);
+		float distance = 0.f;
+		if (ignoreVerticalDistance) {
+			auto pos = EM->PlayerPos();
+			distance = Vector2::Distance(Vector2(pos.x, pos.z), Vector2(position.Pos.x, position.Pos.z));
+		}
+		else {
+			distance = Vector3::Distance(EM->PlayerPos(), position.Pos);
+		}
+		shared_ptr<Model> model = AssetManager::Get()->GetModel(modelComp.Asset, distance, position.Pos, modelComp.Type);
 		if (modelInstances.find(model) == modelInstances.end()) {
 			modelInstances.insert(std::make_pair(model, vector<RenderEntityJob>()));
 		}

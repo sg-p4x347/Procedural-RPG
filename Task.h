@@ -1,13 +1,13 @@
 #pragma once
-#include "Component.h"
-
+#include "EntityTypedefs.h"
 class Task
 {
 public:
-	Task(function<void(void)> callback, unsigned long read = 0, unsigned long write = 0);
+	Task(function<void(void)> callback, world::MaskType queryMask = 0, world::MaskType readDependencies = 0, world::MaskType writeDependencies = 0);
 	~Task();
 	function<void(void)> Callback;
-	unsigned long ReadDependencies;
-	unsigned long WriteDependencies;
+	world::MaskType QueryMask;
+	world::MaskType ReadDependencies;
+	world::MaskType WriteDependencies;
 };
 

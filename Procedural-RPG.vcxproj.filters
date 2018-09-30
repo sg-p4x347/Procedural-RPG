@@ -243,9 +243,6 @@
     <ClInclude Include="ReadData.h">
       <Filter>DirectXTK</Filter>
     </ClInclude>
-    <ClInclude Include="TaskThread.h">
-      <Filter>Misc</Filter>
-    </ClInclude>
     <ClInclude Include="ModelManager.h">
       <Filter>Misc</Filter>
     </ClInclude>
@@ -421,6 +418,9 @@
     <ClInclude Include="WorldEntityProxy.h">
       <Filter>World\Database</Filter>
     </ClInclude>
+    <ClInclude Include="TaskThread.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -554,9 +554,6 @@
     </ClCompile>
     <ClCompile Include="VboParser.cpp">
       <Filter>Utility\Serialization</Filter>
-    </ClCompile>
-    <ClCompile Include="TaskThread.cpp">
-      <Filter>Misc</Filter>
     </ClCompile>
     <ClCompile Include="ModelManager.cpp">
       <Filter>Misc</Filter>
@@ -696,6 +693,9 @@
     <ClCompile Include="Water.cpp" />
     <ClCompile Include="Entity.cpp">
       <Filter>ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskThread.cpp">
+      <Filter>Misc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

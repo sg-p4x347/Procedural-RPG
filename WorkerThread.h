@@ -3,13 +3,22 @@
 #include "Task.h"
 #include <queue>
 #include <atomic>
+class TaskManager;
 class WorkerThread
 {
 public:
-	WorkerThread();
-	void Run(Task & task,std::function<void()> && taskFinished);
+	WorkerThread(TaskManager * taskManager);
+	~WorkerThread();
+	void Stop();
+	void Run(Task & task);
 	std::atomic_ulong ReadDependencies;
 	std::atomic_ulong WriteDependencies;
+	std::atomic_ulong QueryDependencies;
+
 	std::atomic_bool Active;
+private:
+	TaskManager * m_taskManager;
+	std::thread m_thread;
+	std::atomic_bool m_run;
 };
 

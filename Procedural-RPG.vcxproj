@@ -219,7 +219,12 @@
     <ClInclude Include="EntityCache.h" />
     <ClInclude Include="EntityIndex.h" />
     <ClInclude Include="EntityQuadTree.h" />
-    <ClInclude Include="EntityRegion.h" />
+    <ClInclude Include="EntityRegion.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="EntityTypedefs.h" />
     <ClInclude Include="EventHandler.h" />
     <ClInclude Include="EventManager.h" />
@@ -363,7 +368,12 @@
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="EntityIndex.cpp" />
     <ClCompile Include="EntityQuadTree.cpp" />
-    <ClCompile Include="EntityRegion.cpp" />
+    <ClCompile Include="EntityRegion.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="GuiHandler.cpp" />
     <ClCompile Include="HeightMapAsset.cpp" />

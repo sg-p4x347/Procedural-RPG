@@ -2,7 +2,7 @@
 #include "Task.h"
 
 
-Task::Task(function<void(void)> callback, unsigned long read, unsigned long write) : Callback(callback),ReadDependencies(read), WriteDependencies(write)
+Task::Task(function<void(void)> callback,world::MaskType queryMask, world::MaskType read, world::MaskType write) : Callback(callback),QueryMask(queryMask), ReadDependencies(read), WriteDependencies(write)
 {
 }
 

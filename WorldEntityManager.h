@@ -133,6 +133,7 @@ namespace world {
 						return entity.GetProxy();
 				}
 			}
+			assert("Entity not found");
 		}
 
 		template<typename HeadType, typename ... MaskTypes>

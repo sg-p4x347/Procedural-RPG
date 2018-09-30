@@ -99,25 +99,24 @@ public:
 	}
 	
 	// Returns all data associated with key
-	inline std::string Search(KeyType key) {
+	inline void Search(KeyType key,char *& data, size_t & size) {
 		// get total size needed to contain all data
-		size_t dataSize = GetSize(key);
-		if (dataSize > 500000000)
+		size = GetSize(key);
+		if (size > 500000000)
 			assert("dataSize is in excess of 500 MB");
-		std::string data(dataSize,' ');
+		data = new char[size];
 		
-		if (dataSize > 0) {
+		if (size > 0) {
 			// read all data into the vector
 			std::ifstream ifs(m_dataFile, std::ios::binary);
 			size_t offset = 0;
 			for (Block & block : FindBlocks(key)) {
 				if (block.size == 0) break;
 				ifs.seekg(block.position);
-				ifs.read((char *)(data.c_str() + offset), block.size);
+				ifs.read((char *)(data + offset), block.size);
 				offset += block.size;
 			}
 		}
-		return data;
 	}
 	// De-stripes all entries and cleans up empty or orphaned blocks
 	inline void Defragment(float bufferSpace = 0.f) {

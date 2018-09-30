@@ -37,12 +37,16 @@ namespace world {
 			m_file.Insert(m_signature, dataPtr, size);
 		}
 		void Import() {
-			auto data = m_file.Search(m_signature);
-			if (data.size() > 0) {
-				unsigned int count = data.size() / sizeof(CompType);
-				auto compPtr = (CompType*)&data[0];
+			size_t size = 0;
+			char * data = nullptr;
+			m_file.Search(m_signature, data, size);
+			if (size > 0) {
+				unsigned int count = size / sizeof(CompType);
+				if (count == 0) count = 1;
+				auto compPtr = (CompType*)data;
 				m_cache = vector<CompType>(compPtr, compPtr + count);
 			}
+			delete[] data;
 		}
 		MaskType GetSignature() {
 			return m_signature;

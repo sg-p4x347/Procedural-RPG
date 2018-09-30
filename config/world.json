@@ -1,8 +1,8 @@
 {
     // In meters (must be power Of two)
-    "width": 256,
+    "width": 2048,
     // In meters (must be power Of two)
-    "regionWidth": 32,
+    "regionWidth": 64,
     // In meters
     "loadRange":  128.0
 

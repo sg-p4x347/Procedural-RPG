@@ -809,7 +809,7 @@ namespace world {
 	void TerrainSystem::UpdateCache(Vector3 center)
 	{
 
-		static const int gridSize = 32;
+		static const int gridSize = 64;
 		// sample area
 		Rectangle sampleArea = Rectangle(std::floor(center.x / gridSize) * gridSize, std::floor(center.z / gridSize) * gridSize, gridSize, gridSize);
 		m_cache = AssetManager::Get()->GetHeightMap("terrain", AssetType::Procedural, sampleArea);

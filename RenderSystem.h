@@ -35,6 +35,7 @@ private:
 	SystemManager * SM;
 	EntityPtr m_player;
 	std::mutex m_mutex;
+	std::mutex m_syncMutex;
 	std::deque<int> m_frameDeltas;
 	// DirectX
 	
@@ -86,7 +87,7 @@ private:
 	std::set<world::EntityID> m_tracked;
 	std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_modelInstancesTemp;
 	std::set<world::EntityID> m_trackedTemp;
-	void TrackEntity(std::map<shared_ptr<Model>, vector<RenderEntityJob>> & modelInstances, std::set<world::EntityID> & tracked,world::WorldEntityProxy<world::Model,world::Position> & entity);
+	void TrackEntity(std::map<shared_ptr<Model>, vector<RenderEntityJob>> & modelInstances, std::set<world::EntityID> & tracked,world::WorldEntityProxy<world::Model,world::Position> & entity,bool ignoreVerticalDistance = false);
 	//----------------------------------------------------------------
 	// DX::Model
 
