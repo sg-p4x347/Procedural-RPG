@@ -201,28 +201,49 @@ void RenderSystem::SyncEntities()
 			TrackEntity(m_modelInstances,m_tracked,entity.GetProxy());
 		}*/
 		
-
-		// terrain
-		world::MaskType accessMask = EM->GetMask<world::Terrain, world::Model, world::Position>();
-		TaskManager::Get().Push(Task([&]() {
+		// models
+		world::MaskType accessMask = EM->GetMask<world::Model, world::Position>();
+		TaskManager::Get().Push(Task([=]() {
 			m_syncMutex.lock();
-			m_modelInstancesTemp.clear();
-			m_trackedTemp.clear();
+ 			std::map<shared_ptr<Model>, vector<RenderEntityJob>> modelInstancesTemp;
+			std::set<world::EntityID> trackedTemp;
+			auto entities = EM->NewEntityCache<world::Model, world::Position>();
+			EM->UpdateGlobalCache(entities);
+
+			for (auto & entity : entities) {
+				auto modelEntity = EM->GetEntity<world::Model, world::Position>(entity.GetID());
+				TrackEntity(modelInstancesTemp, trackedTemp, modelEntity, true);
+			}
+			m_mutex.lock();
+			std::swap(modelInstancesTemp, m_modelInstances);
+			std::swap(trackedTemp, m_tracked);
+			m_mutex.unlock();
+			m_syncMutex.unlock();
+		},
+			accessMask,
+			accessMask));
+		
+		// terrain
+		/*accessMask = EM->GetMask<world::Terrain, world::Model, world::Position>();
+		TaskManager::Get().Push(Task([=]() {
+			m_syncMutex.lock();
+			std::map<shared_ptr<Model>, vector<RenderEntityJob>> modelInstancesTemp;
+			std::set<world::EntityID> trackedTemp;
 				auto terrainEntities = EM->NewEntityCache<world::Terrain, world::Model, world::Position>();
 				EM->UpdateGlobalCache(terrainEntities);
 
 				for (auto & entity : terrainEntities) {
 					auto modelEntity = EM->GetEntity<world::Model, world::Position>(entity.GetID());
-					TrackEntity(m_modelInstancesTemp, m_trackedTemp, modelEntity,true);
+					TrackEntity(modelInstancesTemp, trackedTemp, modelEntity,true);
 				}
 				m_mutex.lock();
-				std::swap(m_modelInstancesTemp, m_modelInstances);
-				std::swap(m_trackedTemp, m_tracked);
+				std::swap(modelInstancesTemp, m_modelInstances);
+				std::swap(trackedTemp, m_tracked);
 				m_mutex.unlock();
 				m_syncMutex.unlock();
 		}, 
 			accessMask,
-			accessMask));
+			accessMask));*/
 		
 		
 		//m_mutex.lock();

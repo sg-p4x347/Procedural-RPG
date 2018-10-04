@@ -513,7 +513,7 @@ shared_ptr<Map<Vector3>> AssetManager::GetNormalMap(int mapWidth,string path, As
 		// reads the exact bytes from the file into memory
 
 
-		for (int vertY = 0; vertY <= ySize; vertY++) {
+		/*for (int vertY = 0; vertY <= ySize; vertY++) {
 			for (int vertX = 0; vertX <= xSize; vertX++) {
 				int globalX = vertX * sampleSpacing + sampleArea.x;
 				int globalY = vertY * sampleSpacing + sampleArea.y;
@@ -526,8 +526,33 @@ shared_ptr<Map<Vector3>> AssetManager::GetNormalMap(int mapWidth,string path, As
 				normal.Normalize();
 				normalMap->map[vertX][vertY] = normal;
 			}
-		}
+		}*/
+		char * normalBuffer = new char[3 * sizeof(char) * (xSize+1) * sampleSpacing * (ySize + 1)];
+		for (int vertY = 0; vertY <= ySize; vertY++) {
+			int globalX = sampleArea.x;
+			int globalY = vertY * sampleSpacing + sampleArea.y;
+			int index = vertY * (xSize + 1) * sizeof(char) * 3;
+			int worldIndex = Utility::posToIndex(globalX, globalY, mapWidth + 1);
 
+			stream.seekg(worldIndex * 3 * sizeof(char));
+			stream.read(normalBuffer + index, 3 * sizeof(char) * (xSize + 1) * sampleSpacing);
+			
+		}
+		for (int vertY = 0; vertY <= ySize; vertY++) {
+			for (int vertX = 0; vertX <= xSize; vertX++) {
+				int globalX = vertX * sampleSpacing + sampleArea.x;
+				int globalY = vertY * sampleSpacing + sampleArea.y;
+				int index = (vertY * (xSize + 1) * sampleSpacing + vertX) * sizeof(char) * 3;
+				Vector3 normal = Vector3(
+					float(normalBuffer[index + 0]),
+					float(normalBuffer[index + 1]),
+					float(normalBuffer[index + 2])
+				);
+				normal.Normalize();
+				normalMap->map[vertX][vertY] = normal;
+			}
+		}
+		delete[] normalBuffer;
 		stream.close();
 		return normalMap;
 	}

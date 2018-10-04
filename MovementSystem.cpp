@@ -32,7 +32,7 @@ namespace world {
 
 	void MovementSystem::Update(double & elapsed)
 	{
-		TaskManager::Get().Push(Task([=] {
+		//TaskManager::Get().Push(Task([=] {
 			for (auto & entity : m_entities) {
 				auto & position = entity.Get<Position>();
 				auto & movement = entity.Get<Movement>();
@@ -54,11 +54,11 @@ namespace world {
 					position.Rot.x += XM_PI * 2.0f;
 				}
 			}
-		},
+		/*},
 			m_entities.GetComponentMask(),
 			m_entities.GetComponentMask(),
 			m_entities.GetComponentMask())
-		);
+		);*/
 
 		// check to see if the player has moved enough for an entity resync
 		// alternate case passes if no regions have been loaded
