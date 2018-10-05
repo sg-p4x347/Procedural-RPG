@@ -126,6 +126,12 @@ void RenderSystem::Render()
 				RenderModel(dxModel, job.worldMatrix, true);
 		}
 	}
+	for (auto & instances : m_waterInstances) {
+		shared_ptr<Model> dxModel = instances.first;
+		for (auto & job : instances.second) {
+			RenderModel(dxModel, job.worldMatrix, false);
+		}
+	}
 	m_mutex.unlock();
 	/*for (auto & instances : m_modelInstances) {
 		shared_ptr<Model> dxModel = instances.first;
@@ -201,13 +207,13 @@ void RenderSystem::SyncEntities()
 			TrackEntity(m_modelInstances,m_tracked,entity.GetProxy());
 		}*/
 		
-		// models
+		// terrain
 		world::MaskType accessMask = EM->GetMask<world::Model, world::Position>();
 		TaskManager::Get().Push(Task([=]() {
 			m_syncMutex.lock();
  			std::map<shared_ptr<Model>, vector<RenderEntityJob>> modelInstancesTemp;
 			std::set<world::EntityID> trackedTemp;
-			auto entities = EM->NewEntityCache<world::Model, world::Position>();
+			auto entities = EM->NewEntityCache<world::Terrain, world::Model, world::Position>();
 			EM->UpdateGlobalCache(entities);
 
 			for (auto & entity : entities) {
@@ -222,7 +228,25 @@ void RenderSystem::SyncEntities()
 		},
 			accessMask,
 			accessMask));
-		
+		accessMask = EM->GetMask<world::Model, world::Position>();
+		TaskManager::Get().Push(Task([=]() {
+			m_syncMutex.lock();
+			std::map<shared_ptr<Model>, vector<RenderEntityJob>> modelInstancesTemp;
+			std::set<world::EntityID> trackedTemp;
+			auto entities = EM->NewEntityCache<world::Water, world::Model, world::Position>();
+			EM->UpdateGlobalCache(entities);
+
+			for (auto & entity : entities) {
+				auto modelEntity = EM->GetEntity<world::Model, world::Position>(entity.GetID());
+				TrackEntity(modelInstancesTemp, trackedTemp, modelEntity, true);
+			}
+			m_mutex.lock();
+			std::swap(modelInstancesTemp, m_waterInstances);
+			m_mutex.unlock();
+			m_syncMutex.unlock();
+		},
+			accessMask,
+			accessMask));
 		// terrain
 		/*accessMask = EM->GetMask<world::Terrain, world::Model, world::Position>();
 		TaskManager::Get().Push(Task([=]() {
