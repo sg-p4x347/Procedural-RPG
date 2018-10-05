@@ -273,7 +273,7 @@ namespace world {
 
 	float TerrainSystem::Height(float & x, float & z)
 	{
-		return m_cache->Height(x - m_cache->area.x, z - m_cache->area.y);
+		return m_cache ? m_cache->Height(x - m_cache->area.x, z - m_cache->area.y) : 0.f;
 	}
 
 	int TerrainSystem::Width()

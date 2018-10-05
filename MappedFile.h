@@ -62,7 +62,7 @@ public:
 		}
 	}
 	~MappedFile() {
-		Save();
+		//Save();
 	}
 	inline void Insert(KeyType key, std::vector<uint8_t> & data,float bufferSpace = 1.f) {
 		const char * ptr = data.size() > 0 ? &data[0] : nullptr;
@@ -156,6 +156,37 @@ public:
 		}
 		return keys;
 	}
+	// Serialize the index to file
+	inline void Save() {
+		if (m_index.size() > 0) {
+			std::ofstream ofs(m_indexFile, std::ios::binary);
+
+			size_t offset = 0;
+
+			ofs.write((const char*)&m_size, sizeof(size_t));
+			offset += sizeof(size_t);
+			for (auto & index : m_index) {
+				// must have at least one block to write an index
+				if (index.second.size() > 0) {
+					// write the key
+					ofs.seekp(offset);
+					ofs.write((const char *)&index.first, sizeof(KeyType));
+					offset += sizeof(KeyType);
+
+					// write the block count
+					size_t count = index.second.size();
+					ofs.seekp(offset);
+					ofs.write((const char *)&count, sizeof(size_t));
+					offset += sizeof(size_t);
+
+					// write all blocks
+					ofs.seekp(offset);
+					ofs.write((const char *)&(index.second[0]), sizeof(Block) * count);
+					offset += sizeof(Block) * count;
+				}
+			}
+		}
+	}
 private:
 	Filesystem::path m_indexFile;
 	Filesystem::path m_dataFile;
@@ -185,34 +216,6 @@ private:
 		ofs.write((const char *)data, block.GetAllocationSize());
 		return block;
 	}
-	// Serialize the index to file
-	inline void Save() {
-		std::ofstream ofs(m_indexFile, std::ios::binary);
-		
-		size_t offset = 0;
-
-		ofs.write((const char*)&m_size, sizeof(size_t));
-		offset += sizeof(size_t);
-		for (auto & index : m_index) {
-			// must have at least one block to write an index
-			if (index.second.size() > 0) {
-				// write the key
-				ofs.seekp(offset);
-				ofs.write((const char *)&index.first, sizeof(KeyType));
-				offset += sizeof(KeyType);
-
-				// write the block count
-				size_t count = index.second.size();
-				ofs.seekp(offset);
-				ofs.write((const char *)&count, sizeof(size_t));
-				offset += sizeof(size_t);
-
-				// write all blocks
-				ofs.seekp(offset);
-				ofs.write((const char *)&(index.second[0]), sizeof(Block) * count);
-				offset += sizeof(Block) * count;
-			}
-		}
-	}
+	
 };
 

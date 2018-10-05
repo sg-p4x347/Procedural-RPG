@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "World.h"
-
+#include "TaskManager.h"
 // Systems
 #include "WorldSystem.h"
 #include "TerrainSystem.h"
@@ -43,10 +43,18 @@ namespace world {
 
 	World::~World()
 	{
-		IEventManager::Invoke(EventTypes::Sound_StopMusic);
-		AssetManager::Get()->CleanupProceduralAssets();
+		//----------------------------------------------------------------
+		// Wait for all tasks to complete
+		TaskManager::Get().WaitForAll();
+		//----------------------------------------------------------------
+		// Halt world systems
+		m_systemManager.Halt<WorldSystem>();
+		//----------------------------------------------------------------
+		// Update render targets
+		m_systemManager.GetSystem<RenderSystem>("Render")->InitializeWorldRendering(nullptr);
 
-
+		
+		
 		//----------------------------------------------------------------
 		// Save all systems
 		m_systemManager.Save();
@@ -54,11 +62,14 @@ namespace world {
 		// Deconstruct the entity manager
 		m_entityManager.reset();
 		//----------------------------------------------------------------
-		// Update render targets
-		m_systemManager.GetSystem<RenderSystem>("Render")->InitializeWorldRendering(nullptr);
-		//----------------------------------------------------------------
 		// Remove world systems
 		m_systemManager.Remove<WorldSystem>();
+		//----------------------------------------------------------------
+		// Clean up asset manager
+		AssetManager::Get()->CleanupProceduralAssets();
+		//----------------------------------------------------------------
+		// Stop the music
+		IEventManager::Invoke(EventTypes::Sound_StopMusic);
 	}
 
 	int World::GetWidth()

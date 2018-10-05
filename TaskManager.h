@@ -9,9 +9,11 @@ public:
 	void Push(Task && task);
 	// tries to run a task on the given thread
 	void Peek(WorkerThread & thread);
+	void WaitForAll();
 	std::condition_variable m_peekCondition;
 	std::mutex m_peekMutex;
 	std::atomic_bool m_canPeek;
+	std::atomic_int m_active;
 	bool QueueEmpty();
 private:
 	TaskManager();

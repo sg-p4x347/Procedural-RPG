@@ -30,6 +30,7 @@ void WorkerThread::Stop()
 void WorkerThread::Run(Task & task)
 {
 	// Declare this thread as active
+	m_taskManager->m_active++;
 	Active = true;
 	// Register dependencies
 	ReadDependencies = task.ReadDependencies;
@@ -45,4 +46,5 @@ void WorkerThread::Run(Task & task)
 	QueryDependencies = 0;
 	// Declare this thread as inactive
 	Active = false;
+	m_taskManager->m_active--;
 }

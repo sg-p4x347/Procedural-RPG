@@ -68,13 +68,18 @@ void TaskManager::Peek(WorkerThread & thread)
 	m_mutex.unlock();
 }
 
+void TaskManager::WaitForAll()
+{
+	while (m_active);
+}
+
 bool TaskManager::QueueEmpty()
 {
 	//lock_guard<std::recursive_mutex> guard(m_mutex);
 	return m_queue.empty();
 }
 
-TaskManager::TaskManager()
+TaskManager::TaskManager() : m_active(0)
 {
 	m_threadCount = std::thread::hardware_concurrency() * 32;
 	// Initialize the threads

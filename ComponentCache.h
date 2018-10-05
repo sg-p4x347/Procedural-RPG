@@ -35,6 +35,7 @@ namespace world {
 			const char * dataPtr = (m_cache.size() > 0) ? (const char*)&m_cache[0] : nullptr;
 			size_t size = sizeof(CompType) * m_cache.size();
 			m_file.Insert(m_signature, dataPtr, size);
+			m_file.Save();
 		}
 		void Import() {
 			size_t size = 0;
