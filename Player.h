@@ -20,7 +20,7 @@ namespace world {
 		// Data
 		MovementStates MovementState;
 		InteractionStates InteractionState;
-		string InventoryCategory;
+		//string InventoryCategory;
 		unsigned int OpenContainer;
 
 		// Inherited via Component

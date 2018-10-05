@@ -84,6 +84,7 @@ private:
 	//----------------------------------------------------------------
 	// Components::Model using DirectX::Model
 	std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_modelInstances;
+	std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_waterInstances;
 	std::set<world::EntityID> m_tracked;
 	//std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_modelInstancesTemp;
 	//std::set<world::EntityID> m_trackedTemp;

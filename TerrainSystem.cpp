@@ -199,7 +199,7 @@ namespace world {
 		InitializeErosionMap();
 		if (erosion) UpdateWater(*TerrainMap, *WaterMap);
 		// Water done yay!
-		//CreateWaterEntities();
+		
 		shared_ptr<HeightMap> waterMap = std::make_shared<HeightMap>(WaterMap->width, WaterMap->length);
 		// copy water cell height values to the heightmap
 		for (int x = 0; x < WaterMap->width;x++) {
@@ -210,6 +210,7 @@ namespace world {
 		AssetManager::Get()->CreateHeightMapModel("water", waterMap.get(), AssetManager::Get()->CreateNormalMap(waterMap->width, waterMap->length, [&](int x, int y) {
 			return waterMap->map[x][y] + TerrainMap->map[x][y];
 		}), 10.f, m_regionWidth, "Water");
+		CreateWaterEntities();
 		//SaveWater(*WaterMap);
 
 		// Resources
@@ -485,11 +486,19 @@ namespace world {
 	}
 	void TerrainSystem::NewWater(DirectX::SimpleMath::Vector3 & position)
 	{
-		EM->CreateEntity<Water, Model>(
+		/*EM->CreateEntity<Water, Model>(
 			Position(position, SimpleMath::Vector3::Zero),
 			Water(),
 			Model(0, AssetType::Procedural)
-			);
+			);*/
+		EntityPtr terrainAsset;
+		if (AssetManager::Get()->Find(AssetManager::Get()->GetProceduralEM(), "water", terrainAsset)) {
+			EM->CreateEntity<Water, Model>(
+				Position(position, SimpleMath::Vector3::Zero),
+				Water(),
+				Model(terrainAsset->ID(), AssetType::Procedural)
+				);
+		}
 	}
 
 
