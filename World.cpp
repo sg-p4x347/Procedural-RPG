@@ -14,7 +14,7 @@
 #include "SoundSystem.h"
 //#include "BuildingSystem.h"
 //#include "ItemSystem.h"
-//#include "PlantSystem.h"
+#include "PlantSystem.h"
 //#include "ResourceSystem.h"
 // Resources
 #include "WorldDomain.h"
@@ -121,7 +121,7 @@ namespace world {
 		srand(seed);
 		m_systemManager.GetSystem<PlayerSystem>("Player")->CreatePlayer();
 		m_systemManager.GetSystem<TerrainSystem>("Terrain")->Generate();
-		//m_systemManager.GetSystem<PlantSystem>("Plant")->Generate();
+		m_systemManager.GetSystem<PlantSystem>("Plant")->Generate();
 		
 
 	}
@@ -163,7 +163,7 @@ namespace world {
 		m_systemManager.AddSystem(std::shared_ptr<System>(new CollisionSystem(&m_systemManager, m_entityManager.get(), 1)));
 
 		//m_systemManager.AddSystem(std::shared_ptr<System>(new ActionSystem(&m_systemManager, m_entityManager.get(), 10)));
-		//m_systemManager.AddSystem(std::shared_ptr<System>(new PlantSystem(&m_systemManager, m_entityManager.get(), 0)));
+		m_systemManager.AddSystem(std::shared_ptr<System>(new PlantSystem(&m_systemManager, m_entityManager.get(), 0)));
 		//m_systemManager.AddSystem(std::shared_ptr<System>(new ItemSystem(m_entityManager.get(), 0)));
 		//m_systemManager.AddSystem(std::shared_ptr<System>(new BuildingSystem(m_entityManager.get(), 0)));
 		//m_systemManager.AddSystem(std::shared_ptr<System>(new ResourceSystem(m_entityManager.get(), 0)));

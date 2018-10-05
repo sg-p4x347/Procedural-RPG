@@ -126,7 +126,7 @@ void RenderSystem::Render()
 				RenderModel(dxModel, job.worldMatrix, true);
 		}
 	}
-	for (auto & instances : m_waterInstances) {
+	for (auto & instances : m_modelInstances) {
 		shared_ptr<Model> dxModel = instances.first;
 		for (auto & job : instances.second) {
 			RenderModel(dxModel, job.worldMatrix, false);
@@ -207,41 +207,28 @@ void RenderSystem::SyncEntities()
 			TrackEntity(m_modelInstances,m_tracked,entity.GetProxy());
 		}*/
 		
-		// terrain
+		
 		world::MaskType accessMask = EM->GetMask<world::Model, world::Position>();
 		TaskManager::Get().Push(Task([=]() {
 			m_syncMutex.lock();
  			std::map<shared_ptr<Model>, vector<RenderEntityJob>> modelInstancesTemp;
 			std::set<world::EntityID> trackedTemp;
-			auto entities = EM->NewEntityCache<world::Terrain, world::Model, world::Position>();
-			EM->UpdateGlobalCache(entities);
-
-			for (auto & entity : entities) {
-				auto modelEntity = EM->GetEntity<world::Model, world::Position>(entity.GetID());
+			// terrain
+			auto terrainEntities = EM->NewEntityCache<world::Terrain, world::Model, world::Position>();
+			EM->UpdateGlobalCache(terrainEntities);
+			for (auto & terrainEntity : terrainEntities) {
+				auto modelEntity = EM->GetEntity<world::Model, world::Position>(terrainEntity.GetID());
 				TrackEntity(modelInstancesTemp, trackedTemp, modelEntity, true);
+			}
+			// models
+			auto modelEntities = EM->NewEntityCache<world::Model, world::Position>();
+			EM->UpdateCache(modelEntities);
+			for (auto & modelEntity : modelEntities) {
+				TrackEntity(modelInstancesTemp, trackedTemp, modelEntity.GetProxy(), true);
 			}
 			m_mutex.lock();
 			std::swap(modelInstancesTemp, m_modelInstances);
 			std::swap(trackedTemp, m_tracked);
-			m_mutex.unlock();
-			m_syncMutex.unlock();
-		},
-			accessMask,
-			accessMask));
-		accessMask = EM->GetMask<world::Model, world::Position>();
-		TaskManager::Get().Push(Task([=]() {
-			m_syncMutex.lock();
-			std::map<shared_ptr<Model>, vector<RenderEntityJob>> modelInstancesTemp;
-			std::set<world::EntityID> trackedTemp;
-			auto entities = EM->NewEntityCache<world::Water, world::Model, world::Position>();
-			EM->UpdateGlobalCache(entities);
-
-			for (auto & entity : entities) {
-				auto modelEntity = EM->GetEntity<world::Model, world::Position>(entity.GetID());
-				TrackEntity(modelInstancesTemp, trackedTemp, modelEntity, true);
-			}
-			m_mutex.lock();
-			std::swap(modelInstancesTemp, m_waterInstances);
 			m_mutex.unlock();
 			m_syncMutex.unlock();
 		},
