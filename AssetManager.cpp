@@ -440,6 +440,11 @@ void AssetManager::SetDevice(Microsoft::WRL::ComPtr<ID3D11Device> device)
 	m_fxFactory->SetDirectory(L".\\Assets\\");
 }
 
+void AssetManager::CollectGarbage()
+{
+	m_proceduralEM->CollectGarbage();
+}
+
 AssetEntityManager * AssetManager::GetStaticEM()
 {
 	return m_authoredEM.get();

@@ -30,7 +30,5 @@ private:
 	//----------------------------------------------------------------
 	// Tasks
 	std::list<Task> m_queue;
-	// Tries to run as many tasks as possible with the current dependency graph
-	void Peek();
 };
 

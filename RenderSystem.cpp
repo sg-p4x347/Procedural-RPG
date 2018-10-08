@@ -23,8 +23,12 @@ RenderSystem::RenderSystem(
 ) : System(updatePeriod,false),
 m_guiSystem(guiSystem),
 EM(nullptr),
-SM(systemManager)
+SM(systemManager),
+m_fov(XMConvertToRadians(70.f)),
+m_clipNear(0.01f),
+m_clipFar(8000.f)
 {
+	
 	m_window = window;
 	m_worldMatrix = Matrix::Identity;
 
@@ -118,18 +122,36 @@ void RenderSystem::Render()
 	//	//}
 	//	
 	//}
+
+	world::Position & position = EM->GetEntity<world::Position>(EM->PlayerID()).Get<world::Position>();
 	m_mutex.lock();
-	for (auto & instances : m_modelInstances) {
-		shared_ptr<Model> dxModel = instances.first;
-		for (auto & job : instances.second) {
-			if (m_tracked.count(job.entity) != 0)
-				RenderModel(dxModel, job.worldMatrix, true);
+	int culledRegionCount = 0;
+	// Draw opaque model mesh parts
+	for (auto & regionCache : m_modelInstances) {
+		if (IsRegionVisible(regionCache.first, position.Pos, position.Rot, m_frustum)) {
+			for (auto & instanceCache : regionCache.second) {
+				shared_ptr<Model> dxModel = instanceCache.first;
+				for (auto & job : instanceCache.second) {
+					if (m_tracked.count(job.entity) != 0)
+						RenderModel(dxModel, job.worldMatrix, true);
+				}
+			}
+		}
+		else {
+			culledRegionCount++;
 		}
 	}
-	for (auto & instances : m_modelInstances) {
-		shared_ptr<Model> dxModel = instances.first;
-		for (auto & job : instances.second) {
-			RenderModel(dxModel, job.worldMatrix, false);
+	m_guiSystem->SetTextByID("CullCount", "Culled Regions: " + to_string(culledRegionCount));
+	// Draw alpha model mesh parts
+	for (auto & regionCache : m_modelInstances) {
+		if (IsRegionVisible(regionCache.first, position.Pos, position.Rot,m_frustum)) {
+			for (auto & instanceCache : regionCache.second) {
+				shared_ptr<Model> dxModel = instanceCache.first;
+				for (auto & job : instanceCache.second) {
+					if (m_tracked.count(job.entity) != 0)
+						RenderModel(dxModel, job.worldMatrix, false);
+				}
+			}
 		}
 	}
 	m_mutex.unlock();
@@ -209,22 +231,32 @@ void RenderSystem::SyncEntities()
 		
 		
 		world::MaskType accessMask = EM->GetMask<world::Model, world::Position>();
+		world::MaskType terrainMask = EM->GetMask<world::Terrain>();
 		TaskManager::Get().Push(Task([=]() {
 			m_syncMutex.lock();
- 			std::map<shared_ptr<Model>, vector<RenderEntityJob>> modelInstancesTemp;
+ 			ModelInstanceCache modelInstancesTemp;
 			std::set<world::EntityID> trackedTemp;
 			// terrain
 			auto terrainEntities = EM->NewEntityCache<world::Terrain, world::Model, world::Position>();
+			Utility::OutputLine("Render Entity Sync begin");
 			EM->UpdateGlobalCache(terrainEntities);
-			for (auto & terrainEntity : terrainEntities) {
-				auto modelEntity = EM->GetEntity<world::Model, world::Position>(terrainEntity.GetID());
-				TrackEntity(modelInstancesTemp, trackedTemp, modelEntity, true);
+			Utility::OutputLine("Render Entity Sync end");
+			for (auto & regionCache : terrainEntities.GetCaches()) {
+			
+				for (auto & terrainEntity : regionCache.second) {
+					auto modelEntity = EM->GetEntity<world::Model, world::Position>(terrainEntity.GetID());
+					TrackEntity(modelInstancesTemp,regionCache.first, trackedTemp, modelEntity, true);
+				}
 			}
 			// models
 			auto modelEntities = EM->NewEntityCache<world::Model, world::Position>();
-			EM->UpdateCache(modelEntities);
-			for (auto & modelEntity : modelEntities) {
-				TrackEntity(modelInstancesTemp, trackedTemp, modelEntity.GetProxy(), true);
+			EM->UpdateCache(modelEntities, [=] (world::MaskType & signature) {
+				return (signature & accessMask) == accessMask && !(signature & terrainMask);
+			});
+			for (auto & regionCache : modelEntities.GetCaches()) {
+				for (auto & modelEntity : regionCache.second) {
+					TrackEntity(modelInstancesTemp, regionCache.first,trackedTemp, modelEntity.GetProxy(), true);
+				}
 			}
 			m_mutex.lock();
 			std::swap(modelInstancesTemp, m_modelInstances);
@@ -271,10 +303,10 @@ void RenderSystem::SyncEntities()
 }
 void RenderSystem::SetViewport(int width, int height)
 {
+	m_aspectRatio = float(width) / float(height);
 	m_outputWidth = std::max(width, 1);
 	m_outputHeight = std::max(height, 1);
-	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f),
-		float(width) / float(height), 0.1f, 8000.f);
+	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(m_fov,m_aspectRatio, m_clipNear, m_clipFar);
 	CreateResources();
 }
 
@@ -288,7 +320,6 @@ void RenderSystem::InitializeWorldRendering(world::WEM * entityManager)
 	EM = entityManager;
 	if (EM) {
 		RegisterHandlers();
-		SyncEntities();
 	}
 }
 
@@ -420,10 +451,15 @@ void RenderSystem::SpriteBatchEnd()
 	m_spriteBatch->End();
 }
 
-void RenderSystem::TrackEntity(std::map<shared_ptr<Model>, vector<RenderEntityJob>> & modelInstances, std::set<world::EntityID> & tracked, world::WorldEntityProxy<world::Model, world::Position> & entity,bool ignoreVerticalDistance)
+void RenderSystem::TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<world::WEM::RegionType> region, std::set<world::EntityID> & tracked, world::WorldEntityProxy<world::Model, world::Position> & entity,bool ignoreVerticalDistance)
 {
 	world::EntityID id = entity.GetID();
 	if (tracked.count(id) == 0) {
+		auto it = modelInstances.find(region);
+		if (it == modelInstances.end()) {
+			it = modelInstances.insert(it, std::make_pair(region, std::map<shared_ptr<DirectX::Model>, vector<RenderEntityJob>>()));
+		}
+		auto & map = it->second;
 		auto & position = entity.Get<world::Position>();
 		auto & modelComp = entity.Get<world::Model>();
 		float distance = 0.f;
@@ -435,14 +471,48 @@ void RenderSystem::TrackEntity(std::map<shared_ptr<Model>, vector<RenderEntityJo
 			distance = Vector3::Distance(EM->PlayerPos(), position.Pos);
 		}
 		shared_ptr<Model> model = AssetManager::Get()->GetModel(modelComp.Asset, distance, position.Pos, modelComp.Type);
-		if (modelInstances.find(model) == modelInstances.end()) {
-			modelInstances.insert(std::make_pair(model, vector<RenderEntityJob>()));
+		if (map.find(model) == map.end()) {
+			map.insert(std::make_pair(model, vector<RenderEntityJob>()));
 		}
 		XMMATRIX translation = XMMatrixTranslation(position.Pos.x, position.Pos.y, position.Pos.z);
 		XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
 		XMMATRIX world = XMMatrixMultiply(rotMat, translation);
-		modelInstances[model].push_back(RenderEntityJob { id,world });
+		map[model].push_back(RenderEntityJob { id,world });
 		tracked.insert(id);
+	}
+}
+
+bool RenderSystem::IsRectVisible(Rectangle & area, Vector2 & observerPos, Vector2 & fovNorm1, Vector2 & fovNorm2)
+{
+	if (area.Contains(observerPos)) return true;
+	// for each corner in the area
+	for (long x = area.x; x <= area.x + area.width; x += area.width) {
+		for (long y = area.y; y <= area.y + area.height; y += area.height) {
+			Vector2 direction((float)x - observerPos.x, (float)y - observerPos.y);
+			if (direction.Dot(fovNorm1) > 0 && direction.Dot(fovNorm2) > 0) {
+				// If any one of the corners is in the field of view of the observer, this area is visible
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool RenderSystem::IsRegionVisible(shared_ptr<world::WEM::RegionType> region, Vector3 & position, Vector3 & rotation, BoundingFrustum & frustum)
+{
+	if (std::abs(rotation.y) <= 0.2f) {
+		// 2D optimization when observer is mostly looking horizontally
+		float halfFOV = m_fov * 0.5f;
+		Vector2 fovNorm1(sinf(rotation.x + halfFOV), cosf(rotation.x + halfFOV));
+		Vector2 fovNorm2(sinf(rotation.x - halfFOV), cosf(rotation.x - halfFOV));
+		Vector2 observerPos(position.x, position.z);
+		return IsRectVisible(region->GetArea(), observerPos, fovNorm1, fovNorm2);
+	}
+	else {
+		// 3D frusum intersection test with region bounding box
+		Vector2 areaCenter = region->GetArea().Center();
+		BoundingBox box(Vector3(areaCenter.x, 0.f, areaCenter.y), Vector3(region->GetArea().width, 1000.f, region->GetArea().height));
+		return frustum.Intersects(box);
 	}
 }
 
@@ -614,8 +684,10 @@ void RenderSystem::Present()
 
 void RenderSystem::UpdateEffectMatricies(std::shared_ptr<IEffectMatrices> effect, int backBufferWidth, int backBufferHeight)
 {
-	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f),
-		float(backBufferWidth) / float(backBufferHeight), 0.1f, 8000.f);
+	m_aspectRatio = float(backBufferWidth) / float(backBufferHeight);
+	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(m_fov,
+		m_aspectRatio, m_clipNear,m_clipFar);
+	
 		/*DGSLEffectFactory::DGSLEffectInfo info;
 	    wchar_t* wide = nullptr;
 		Utility::StringToWchar(effectKey, wide);
@@ -627,6 +699,53 @@ void RenderSystem::UpdateEffectMatricies(std::shared_ptr<IEffectMatrices> effect
 		effect->SetProjection(m_projMatrix);
 		effect->SetWorld(m_worldMatrix);
 		effect->SetView(m_viewMatrix);
+}
+void RenderSystem::CreateFromMatrixRH(BoundingFrustum& Out, CXMMATRIX Projection)
+{
+	// Corners of the projection frustum in homogenous space.
+	static XMVECTORF32 HomogenousPoints[6] =
+	{
+	  { 1.0f,  0.0f, -1.0f, 1.0f },   // right (at far plane)
+	  { -1.0f,  0.0f, -1.0f, 1.0f },   // left
+	  { 0.0f,  1.0f, -1.0f, 1.0f },   // top
+	  { 0.0f, -1.0f, -1.0f, 1.0f },   // bottom
+
+	  { 0.0f, 0.0f, 1.0f, 1.0f },    // near
+	  { 0.0f, 0.0f, 0.0f, 1.0f }     // far
+	};
+
+	XMVECTOR Determinant;
+	XMMATRIX matInverse = XMMatrixInverse(&Determinant, Projection);
+
+	// Compute the frustum corners in world space.
+	XMVECTOR Points[6];
+
+	for (size_t i = 0; i < 6; ++i)
+	{
+		// Transform point.
+		Points[i] = XMVector4Transform(HomogenousPoints[i], matInverse);
+	}
+
+	Out.Origin = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	Out.Orientation = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+
+	// Compute the slopes.
+	Points[0] = Points[0] * XMVectorReciprocal(XMVectorSplatZ(Points[0]));
+	Points[1] = Points[1] * XMVectorReciprocal(XMVectorSplatZ(Points[1]));
+	Points[2] = Points[2] * XMVectorReciprocal(XMVectorSplatZ(Points[2]));
+	Points[3] = Points[3] * XMVectorReciprocal(XMVectorSplatZ(Points[3]));
+
+	Out.RightSlope = XMVectorGetX(Points[0]);
+	Out.LeftSlope = XMVectorGetX(Points[1]);
+	Out.TopSlope = XMVectorGetY(Points[2]);
+	Out.BottomSlope = XMVectorGetY(Points[3]);
+
+	// Compute near and far.
+	Points[4] = Points[4] * XMVectorReciprocal(XMVectorSplatW(Points[4]));
+	Points[5] = Points[5] * XMVectorReciprocal(XMVectorSplatW(Points[5]));
+
+	Out.Near = XMVectorGetZ(Points[4]);
+	Out.Far = XMVectorGetZ(Points[5]);
 }
 
 void RenderSystem::CreateResources()
@@ -863,7 +982,14 @@ DirectX::XMMATRIX RenderSystem::GetViewMatrix()
 
 	XMMATRIX view = XMMatrixLookAtRH(position.Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
 	m_viewMatrix = view;
-	
+	XMMATRIX ProjectionMatrixLH = XMMatrixPerspectiveFovLH(m_fov,  m_aspectRatio, m_clipNear, m_clipFar);
+	XMMATRIX ViewMatrixLH = XMMatrixLookAtLH(position.Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
+	XMVECTOR Determinant;
+	XMMATRIX InvViewMatrixLH = XMMatrixInverse(&Determinant, ViewMatrixLH);
+	m_frustum = BoundingFrustum();
+	m_frustum.CreateFromMatrix(m_frustum, ProjectionMatrixLH);
+	m_frustum.Transform(m_frustum, InvViewMatrixLH);
+	//CreateFromMatrixRH(m_frustum,  m_viewMatrix);
 	return view;
 }
 

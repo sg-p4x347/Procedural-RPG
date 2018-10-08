@@ -61,7 +61,7 @@ namespace world {
 
 			// limit pitch to straight up or straight down
 			// with a little fudge-factor to avoid gimbal lock
-
+			position.Rot.y = std::min(XM_PIDIV2 - 0.01f, std::max(-XM_PIDIV2 + 0.01f, position.Rot.y));
 		}
 		//----------------------------------------------------------------
 		// Directional input

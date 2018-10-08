@@ -25,5 +25,6 @@ namespace world {
 		}
 		iterator m_mapIterator;
 		int m_index;
+		
 	};
 }

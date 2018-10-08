@@ -130,8 +130,9 @@ bool Game::LoadWorld(string name)
 			m_world = std::make_unique<world::World>(*m_systemManager, GetSavesDirectory(), name);
 			//m_world->Load();
 
-			m_world->ResumeGame();
+			
 			m_world->Render();
+			m_world->ResumeGame();
 			return true;
 		}
 	}

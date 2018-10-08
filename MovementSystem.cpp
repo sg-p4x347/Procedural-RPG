@@ -62,8 +62,9 @@ namespace world {
 
 		// check to see if the player has moved enough for an entity resync
 		// alternate case passes if no regions have been loaded
-		if (m_moveTracker.Update(EM->PlayerPos()) || !EM->RegionsLoaded()) {
-			IEventManager::Invoke(EventTypes::Movement_PlayerMoved, m_moveTracker.lastX,m_moveTracker.lastZ);
+			auto playerPos = EM->PlayerPos();
+		if (m_moveTracker.Update(playerPos) || !EM->RegionsLoaded()) {
+			IEventManager::Invoke(EventTypes::Movement_PlayerMoved, playerPos.x , playerPos.z);
 			SyncEntities();
 		}
 
@@ -71,7 +72,7 @@ namespace world {
 
 	void MovementSystem::SyncEntities()
 	{
-		EM->UpdateCache(m_entities);
+		EM->UpdateGlobalCache(m_entities);
 	}
 
 	void MovementSystem::Initialize()

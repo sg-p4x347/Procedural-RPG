@@ -63,6 +63,6 @@ namespace world {
 
 	void CollisionSystem::SyncEntities()
 	{
-		EM->UpdateCache(m_entities);
+		EM->UpdateGlobalCache(m_entities);
 	}
 }

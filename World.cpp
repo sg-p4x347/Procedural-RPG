@@ -122,7 +122,6 @@ namespace world {
 		m_systemManager.GetSystem<PlayerSystem>("Player")->CreatePlayer();
 		m_systemManager.GetSystem<TerrainSystem>("Terrain")->Generate();
 		m_systemManager.GetSystem<PlantSystem>("Plant")->Generate();
-		
 
 	}
 
@@ -169,6 +168,12 @@ namespace world {
 		//m_systemManager.AddSystem(std::shared_ptr<System>(new ResourceSystem(m_entityManager.get(), 0)));
 
 		m_systemManager.Initialize();
+
+		//----------------------------------------------------------------
+		// Assets
+		IEventManager::RegisterHandler(EventTypes::WEM_Resync, std::function<void(void)>([]() {
+			AssetManager::Get()->CollectGarbage();
+		}));
 		return true;
 	}
 

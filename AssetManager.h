@@ -12,6 +12,7 @@ public:
 	void SetProceduralAssetDir(Filesystem::path procedural);
 	void CleanupProceduralAssets();
 	void SetDevice(Microsoft::WRL::ComPtr<ID3D11Device> device);
+	void CollectGarbage();
 	//----------------------------------------------------------------
 	// Entity manager
 	AssetEntityManager * GetStaticEM();

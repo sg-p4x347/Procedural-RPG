@@ -34,6 +34,10 @@ private:
 	shared_ptr<GuiSystem> m_guiSystem;
 	SystemManager * SM;
 	EntityPtr m_player;
+	const float m_fov;
+	const float m_clipNear;
+	const float m_clipFar;
+	float m_aspectRatio;
 	std::mutex m_mutex;
 	std::mutex m_syncMutex;
 	std::deque<int> m_frameDeltas;
@@ -67,6 +71,7 @@ private:
 	SimpleMath::Matrix	m_worldMatrix;
 	SimpleMath::Matrix 	m_viewMatrix;
 	SimpleMath::Matrix  m_projMatrix;
+	BoundingFrustum m_frustum;
 	void UpdateEffectMatricies(std::shared_ptr<IEffectMatrices> effect, int backBufferWidth, int backBufferHeight);
 	// Initializes window-dependent resources
 	void CreateResources();
@@ -83,12 +88,15 @@ private:
 	void RenderVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo);
 	//----------------------------------------------------------------
 	// Components::Model using DirectX::Model
-	std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_modelInstances;
-	std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_waterInstances;
+	typedef std::map<shared_ptr<world::WEM::RegionType>, std::map<shared_ptr<Model>, vector<RenderEntityJob>>> ModelInstanceCache;
+	ModelInstanceCache m_modelInstances;
 	std::set<world::EntityID> m_tracked;
 	//std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_modelInstancesTemp;
 	//std::set<world::EntityID> m_trackedTemp;
-	void TrackEntity(std::map<shared_ptr<Model>, vector<RenderEntityJob>> & modelInstances, std::set<world::EntityID> & tracked,world::WorldEntityProxy<world::Model,world::Position> & entity,bool ignoreVerticalDistance = false);
+	void TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<world::WEM::RegionType> region, std::set<world::EntityID> & tracked,world::WorldEntityProxy<world::Model,world::Position> & entity,bool ignoreVerticalDistance = false);
+	bool IsRectVisible(Rectangle & area,Vector2 & observerPos,Vector2 & fovNorm1, Vector2 & fovNorm2);
+	bool IsRegionVisible(shared_ptr<world::WEM::RegionType> region, Vector3 & position, Vector3 & rotation, BoundingFrustum & frustum);
+	void CreateFromMatrixRH(BoundingFrustum& Out, CXMMATRIX Projection);
 	//----------------------------------------------------------------
 	// DX::Model
 

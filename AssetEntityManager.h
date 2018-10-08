@@ -30,6 +30,7 @@ public:
 		}
 		return entity;
 	}
+	virtual void CollectGarbage() override;
 private:
 	
 	// Asset lookup

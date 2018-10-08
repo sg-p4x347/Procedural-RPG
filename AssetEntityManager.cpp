@@ -49,3 +49,9 @@ bool AssetEntityManager::TryFindByPathID(string path, EntityPtr & entity)
 	}
 	return false;
 }
+
+void AssetEntityManager::CollectGarbage()
+{
+	m_assets.clear();
+	BaseEntityManager::CollectGarbage();
+}

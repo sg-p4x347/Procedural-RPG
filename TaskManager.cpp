@@ -79,9 +79,9 @@ bool TaskManager::QueueEmpty()
 	return m_queue.empty();
 }
 
-TaskManager::TaskManager() : m_active(0)
+TaskManager::TaskManager() : m_active(0), m_canPeek(true)
 {
-	m_threadCount = std::thread::hardware_concurrency() * 32;
+	m_threadCount = std::thread::hardware_concurrency() * 8;
 	// Initialize the threads
 	for (int i = 0; i < m_threadCount; i++) {
 		m_threads.push_back(std::make_shared<WorkerThread>(this));

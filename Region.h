@@ -7,9 +7,12 @@ namespace world {
 	class Region
 	{
 	public:
-		Region(Filesystem::path directory, tuple<pair<MaskType, CompTypes>...> & maskIndex) : m_directory(directory), m_maskIndex(maskIndex) {
+		Region(Filesystem::path directory, tuple<pair<MaskType, CompTypes>...> & maskIndex,DirectX::SimpleMath::Rectangle area) : m_directory(directory), m_maskIndex(maskIndex), m_area(area) {
 			Filesystem::create_directory(directory);
 			LoadFile<CompTypes...>();
+		}
+		DirectX::SimpleMath::Rectangle & GetArea() {
+			return m_area;
 		}
 		template<typename CompType>
 		inline vector<std::shared_ptr<ComponentCache<CompType>>> LoadComponents(MaskType signature) {
@@ -22,11 +25,12 @@ namespace world {
 			return caches;
 		}
 		template<typename CacheType, typename HeadType>
-		inline void LoadEntitiesRecursive(CacheType & entityCache, MaskType componentMask, bool exclusive = false) {
+		inline void LoadEntitiesRecursive(CacheType & entityCache, std::function<bool(world::MaskType &)> && predicate) {
 			// Iterate the cached entity signatures
 			auto & componentMap = std::get<std::map<MaskType, shared_ptr<ComponentCache<HeadType>>>>(m_componentCache);
 			for (auto & cacheMapping : componentMap) {
-				if (!exclusive && (cacheMapping.first & componentMask) == componentMask || exclusive && cacheMapping.first == componentMask) {
+				world::MaskType signature = cacheMapping.first;
+				if (predicate(signature)) {
 					// Proceed to load each component cache for this signature
 					LoadComponents<CacheType, HeadType>(cacheMapping.first, entityCache);
 				}
@@ -35,21 +39,20 @@ namespace world {
 			MaskType headMask = std::get<pair<MaskType, HeadType>>(m_maskIndex).first;
 			auto end = componentMap.end();
 			for (auto & signature : m_files[headMask].IndexedKeys()) {
-				if ((!exclusive && (signature & componentMask) == componentMask || exclusive && signature == componentMask) && componentMap.find(signature) == end) {
+				if (predicate(signature) && componentMap.find(signature) == end) {
 					// Proceed to load and cache each component cache for this signature from the database
 					ImportComponents<CacheType, HeadType>(signature, headMask, entityCache);
 				}
 			}
-			
 		}
 		template<typename HeadType, typename ... MaskTypes>
-		inline void LoadEntities(EntityCache<HeadType, MaskTypes...> & entityCache, MaskType componentMask, bool exclusive = false) {
-			LoadEntitiesRecursive<EntityCache<HeadType, MaskTypes...>, HeadType, MaskTypes...>(entityCache, componentMask, exclusive);
+		inline void LoadEntities(EntityCache<HeadType, MaskTypes...> & entityCache, std::function<bool(world::MaskType &)> && predicate) {
+			LoadEntitiesRecursive<EntityCache<HeadType, MaskTypes...>, HeadType, MaskTypes...>(entityCache, std::move(predicate));
 		}
 		template<typename CacheType, typename HeadType, typename NextType, typename ... MaskTypes>
-		inline void LoadEntitiesRecursive(CacheType & entityCache, MaskType componentMask, bool exclusive = false) {
-			LoadEntitiesRecursive<CacheType, HeadType>(entityCache, componentMask, exclusive);
-			LoadEntitiesRecursive<CacheType, NextType, MaskTypes...>(entityCache, componentMask, exclusive);
+		inline void LoadEntitiesRecursive(CacheType & entityCache, std::function<bool(world::MaskType &)> && predicate) {
+			LoadEntitiesRecursive<CacheType, HeadType>(entityCache, std::move(predicate));
+			LoadEntitiesRecursive<CacheType, NextType, MaskTypes...>(entityCache, std::move(predicate));
 		}
 		//----------------------------------------------------------------
 		// Change Signature
@@ -87,7 +90,9 @@ namespace world {
 		template<typename CompType>
 		inline void InsertComponent(CompType & component, MaskType signature) {
 			EntityCache<CompType> entityCache;
-			LoadEntities(entityCache, signature, true);
+			LoadEntities(entityCache, [&](world::MaskType & sig) {
+				return sig == signature;
+			});
 			if (entityCache.HasCache(signature)) {
 
 				std::get<shared_ptr<ComponentCache<CompType>>>(entityCache.CachesFor(signature))->Insert(component);
@@ -117,6 +122,7 @@ namespace world {
 			EmptyCache<CompTypes...>();
 		}
 	private:
+		DirectX::SimpleMath::Rectangle m_area;
 		Filesystem::path m_directory;
 		std::map<MaskType, MappedFile<MaskType>> m_files;
 		tuple<pair<MaskType, CompTypes>...> & m_maskIndex;
@@ -152,7 +158,24 @@ namespace world {
 
 		template <typename HeadType>
 		void EmptyCache() {
-			std::get<std::map<MaskType, shared_ptr<ComponentCache<HeadType>>>>(m_componentCache).clear();
+			/*
+			This only erases the component caches that have exactly 1 shared_ptr reference in use.
+			This ensures that there are no client Entity caches holding references to the components.
+			If a cache with more than 1 reference were to be erased, this would create a split between
+			what the entity manager believes is in memory, and what is actually in memory, causing
+			future queries to stream from the database, thereby orphaning the orginal reference, and creating
+			a duplicate set of imposters!
+			*/
+			auto & map = std::get<std::map<MaskType, shared_ptr<ComponentCache<HeadType>>>>(m_componentCache);
+			for (auto it = map.cbegin(); it != map.cend();) {
+				if (it->second.use_count() == 1) {
+					map.erase(it++);
+					Utility::OutputLine("Cache erased");
+				}
+				else {
+					++it;
+				}
+			}
 		}
 		template <typename HeadType, typename Next, typename ... MaskTypes>
 		void EmptyCache() {

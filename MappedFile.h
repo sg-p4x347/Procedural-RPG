@@ -208,12 +208,14 @@ private:
 	// Allocates and writes new block space for the given data
 	inline Block Allocate(const char * data, size_t size,float bufferSpace) {
 		std::ofstream ofs(m_dataFile, std::ofstream::binary | std::ofstream::app);
+		
 		Block block;
 		block.position = m_size;
 		block.size = size;
 		block.buffer = size * bufferSpace;
 		m_size += block.GetAllocationSize();
-		ofs.write((const char *)data, block.GetAllocationSize());
+		ofs.write((const char *)data, block.size);
+		ofs.write((const char *)data, block.buffer);
 		return block;
 	}
 	

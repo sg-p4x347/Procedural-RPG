@@ -210,7 +210,7 @@ namespace world {
 		AssetManager::Get()->CreateHeightMapModel("water", waterMap.get(), AssetManager::Get()->CreateNormalMap(waterMap->width, waterMap->length, [&](int x, int y) {
 			return waterMap->map[x][y] + TerrainMap->map[x][y];
 		}), 10.f, m_regionWidth, "Water");
-		CreateWaterEntities();
+		//CreateWaterEntities();
 		//SaveWater(*WaterMap);
 
 		// Resources
@@ -890,8 +890,8 @@ namespace world {
 
 	void TerrainSystem::RegisterHandlers()
 	{
-		IEventManager::RegisterHandler(EventTypes::Movement_PlayerMoved, std::function<void(int,int)>([&](int x,int z) {
-			UpdateCache(EM->PlayerPos());
+		IEventManager::RegisterHandler(EventTypes::Movement_PlayerMoved, std::function<void(float, float)>([&](float x, float z) {
+			UpdateCache(Vector3(x,0.f,z));
 		}));
 	}
 

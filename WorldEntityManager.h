@@ -26,13 +26,13 @@ namespace world {
 
 			for (int x = 0; x < m_regionDimension; x++) {
 				for (int z = 0; z < m_regionDimension; z++) {
-					m_regions[x][z] = make_shared<Region<CompTypes...>>(directory / (std::to_string(x) + ',' + std::to_string(z)), m_maskIndex);
+					m_regions[x][z] = make_shared<Region<CompTypes...>>(directory / (std::to_string(x) + ',' + std::to_string(z)), m_maskIndex,DirectX::SimpleMath::Rectangle(x * m_regionWidth,z * m_regionWidth,m_regionWidth,m_regionWidth));
 					//m_loadedRegions.insert(m_regions[x][z]);
 				}
 			}
 
 			// Re-center the loaded regions on the player position
-			IEventManager::RegisterHandler(EventTypes::Movement_PlayerMoved, std::function<void(int,int)>([=](int x, int z) {
+			IEventManager::RegisterHandler(EventTypes::Movement_PlayerMoved, std::function<void(float, float)>([=](float x, float z) {
 				ReCenter(x, z, loadRange);
 			}));
 
@@ -127,7 +127,9 @@ namespace world {
 			if (m_entityIndex.Find(id, info)) {
 				auto & region = *m_regions[info->regionX][info->regionZ];
 				EntityCache<HeadType, MaskTypes...> entityCache;
-				region.LoadEntities(entityCache, info->signature,true);
+				region.LoadEntities(entityCache, [&](world::MaskType & signature) {
+					return signature == info->signature;
+				});
 				for (auto & entity : entityCache) {
 					if (entity.GetID() == id)
 						return entity.GetProxy();
@@ -135,16 +137,23 @@ namespace world {
 			}
 			assert("Entity not found");
 		}
-
+		
 		template<typename HeadType, typename ... MaskTypes>
-		void UpdateCache(WorldEntityCache<Region<CompTypes...>, HeadType, MaskTypes...> & cache) {
+		void UpdateCache(WorldEntityCache<Region<CompTypes...>, HeadType, MaskTypes...> & cache, world::MaskType componentMask = 0, bool exclusive = false) {
+			componentMask |= cache.GetComponentMask();
+			UpdateCache(cache, [&](world::MaskType & signature) {
+				return !exclusive && (signature & componentMask) == componentMask || exclusive && signature == componentMask;
+			});
+		}
+		template<typename HeadType, typename ... MaskTypes>
+		void UpdateCache(WorldEntityCache<Region<CompTypes...>, HeadType, MaskTypes...> & cache, std::function<bool(world::MaskType &)> && predicate) {
 			std::lock_guard<std::mutex> lock(m_mutex);
-			world::MaskType componentMask = cache.GetComponentMask();
 			// iterate over the cached regions
 			unordered_set<shared_ptr<Region<CompTypes...>>> staleRegions;
 			for (auto & regionCache : cache.GetCaches()) {
-				if (!m_loadedRegions.count(regionCache.first))
+				if (m_loadedRegions.count(regionCache.first) == 0) {
 					staleRegions.insert(regionCache.first);
+				}
 			}
 			// remove stale region caches
 			for (auto & staleRegion : staleRegions) {
@@ -154,7 +163,7 @@ namespace world {
 			for (auto & loadedRegion : m_loadedRegions) {
 				if (!cache.GetCaches().count(loadedRegion)) {
 					EntityCache<HeadType, MaskTypes...> entityCache;
-					loadedRegion->LoadEntities<HeadType, MaskTypes...>(entityCache, componentMask);
+					loadedRegion->LoadEntities<HeadType, MaskTypes...>(entityCache, std::move(predicate));
 					cache.GetCaches().insert(make_pair(loadedRegion, entityCache));
 					//cache.GetCaches().insert(make_pair(loadedRegion, LoadEntities<HeadType, MaskTypes...>(cache.GetComponentMask())));
 				}
@@ -163,14 +172,21 @@ namespace world {
 
 		// Not restricted by the loaded region subset
 		template<typename HeadType, typename ... MaskTypes>
-		void UpdateGlobalCache(WorldEntityCache<Region<CompTypes...>, HeadType, MaskTypes...> & cache) {
+		void UpdateGlobalCache(WorldEntityCache<Region<CompTypes...>, HeadType, MaskTypes...> & cache, world::MaskType componentMask = 0, bool exclusive = false) {
+			componentMask |= cache.GetComponentMask();
+			UpdateGlobalCache(cache, [&](world::MaskType & signature) {
+				return !exclusive && (signature & componentMask) == componentMask || exclusive && signature == componentMask;
+			});
+		}
+		// Not restricted by the loaded region subset
+		template<typename HeadType, typename ... MaskTypes>
+		void UpdateGlobalCache(WorldEntityCache<Region<CompTypes...>, HeadType, MaskTypes...> & cache,std::function<bool(world::MaskType &)> && predicate) {
 			std::lock_guard<std::mutex> lock(m_mutex);
-			world::MaskType componentMask = cache.GetComponentMask();
 			for (auto & regionRow : m_regions) {
 				for (auto & region : regionRow) {
 					if (!cache.GetCaches().count(region)) {
 						EntityCache<HeadType, MaskTypes...> entityCache;
-						region->LoadEntities<HeadType, MaskTypes...>(entityCache, componentMask);
+						region->LoadEntities<HeadType, MaskTypes...>(entityCache, std::move(predicate));
 						cache.GetCaches().insert(make_pair(region, entityCache));
 					}
 				}
@@ -182,8 +198,10 @@ namespace world {
 		}
 
 		void Save() {
-			for (auto & region : m_loadedRegions) {
-				region->Save();
+			for (auto & regionVec : m_regions) {
+				for (auto & region : regionVec) {
+					region->Save();
+				}
 			}
 			m_entityIndex.Save();
 		}
@@ -193,33 +211,51 @@ namespace world {
 			int minZ = ClampRegion((int)floor((z - range) / m_regionWidth));
 			int maxZ = ClampRegion((int)ceil((z + range) / m_regionWidth));
 
-			auto oldSet = m_loadedRegions;
 			m_loadedRegions.clear();
 			for (x = minX; x < maxX; x++) {
 				for (z = minZ; z < maxZ; z++) {
 					m_loadedRegions.insert(m_regions[x][z]);
 				}
 			}
-			// Empty caches for regions that are no longer loaded
-			for (auto & old : oldSet) {
-				if (!m_loadedRegions.count(old)) {
-					old->EmptyCache();
-				}
-			}
+			
 			// Fire an event for systems to listen to
 			IEventManager::Invoke(EventTypes::WEM_Resync);
+			CollectGarbage();
+		}
+		void CollectGarbage() {
+			
+
+			for (auto & regionVector : m_regions) {
+				for (auto & region : regionVector) {
+					if (!m_loadedRegions.count(region)) {
+						// Empty single-reference caches for regions that are no longer loaded
+						TaskManager::Get().Push(Task([=] {
+							region->EmptyCache();
+						}));
+					}
+				}
+			}
 		}
 		bool RegionsLoaded() {
 			return m_loadedRegions.size() != 0;
 		}
 	private:
+		//----------------------------------------------------------------
+		// Regions
 		vector<vector<shared_ptr<Region<CompTypes...>>>> m_regions;
 		unordered_set<shared_ptr<Region<CompTypes...>>> m_loadedRegions;
-		tuple<pair<MaskType, CompTypes>...> m_maskIndex;
+
+		
+		//----------------------------------------------------------------
+		// Meta
 		const unsigned int m_worldWidth;
 		const unsigned int m_regionWidth;
 		const unsigned int m_regionDimension;
 		std::mutex m_mutex;
+		tuple<pair<MaskType, CompTypes>...> m_maskIndex;
+
+		//----------------------------------------------------------------
+		// Player
 		EntityID m_player;
 		WorldEntityCache<RegionType, Position, Player> m_playerCache;
 	private:
