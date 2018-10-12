@@ -171,9 +171,9 @@ namespace world {
 
 		//----------------------------------------------------------------
 		// Assets
-		IEventManager::RegisterHandler(EventTypes::WEM_Resync, std::function<void(void)>([]() {
+		/*IEventManager::RegisterHandler(EventTypes::WEM_Resync, std::function<void(void)>([]() {
 			AssetManager::Get()->CollectGarbage();
-		}));
+		}));*/
 		return true;
 	}
 

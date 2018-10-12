@@ -421,6 +421,9 @@
     <ClInclude Include="TaskThread.h">
       <Filter>Misc</Filter>
     </ClInclude>
+    <ClInclude Include="CollisionUtil.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />

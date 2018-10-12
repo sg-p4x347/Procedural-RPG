@@ -208,6 +208,7 @@
     <ClInclude Include="BuildingVoxel.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="CollisionSystem.h" />
+    <ClInclude Include="CollisionUtil.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="ComponentCache.h" />
     <ClInclude Include="CompositeModel.h" />
