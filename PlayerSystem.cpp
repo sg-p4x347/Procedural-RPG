@@ -4,7 +4,7 @@
 #include "IEventManager.h"
 #include "Inventory.h"
 #include "GuiSystem.h"
-
+#include "AssetManager.h"
 namespace world {
 	PlayerSystem::PlayerSystem(
 		SystemManager * systemManager,
@@ -54,14 +54,14 @@ namespace world {
 			if (length != 0.f)
 				SM->GetSystem<GuiSystem>("Gui")->SetTextByID("Output1", to_string(length));
 
-			position.Rot.y -= AccumulatedMousePos.y * elapsed * MOUSE_GAIN;
-			position.Rot.x -= AccumulatedMousePos.x * elapsed * MOUSE_GAIN;
+			playerComp.CameraPitch -= AccumulatedMousePos.y * elapsed * MOUSE_GAIN;
+			position.Rot.y -= AccumulatedMousePos.x * elapsed * MOUSE_GAIN;
 			AccumulatedMousePos = Vector2::Zero;
 			//Game::Get().MousePos = Vector2::Zero;
 
 			// limit pitch to straight up or straight down
 			// with a little fudge-factor to avoid gimbal lock
-			position.Rot.y = std::min(XM_PIDIV2 - 0.01f, std::max(-XM_PIDIV2 + 0.01f, position.Rot.y));
+			playerComp.CameraPitch = std::min(XM_PIDIV2 - 0.01f, std::max(-XM_PIDIV2 + 0.01f, playerComp.CameraPitch));
 		}
 		//----------------------------------------------------------------
 		// Directional input
@@ -92,7 +92,7 @@ namespace world {
 		case Player::MovementStates::Normal:
 			m_direction.y = 0.f;
 			m_direction.Normalize();
-			velocity = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(true)) * (keyboardState.LeftShift ? 8.f : 5.f);
+			velocity = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(playerComp,position,true)) * (keyboardState.LeftShift ? 8.f : 5.f);
 			velocity.y = movement.Velocity.y;
 
 			movement.Velocity = velocity;
@@ -104,7 +104,7 @@ namespace world {
 			if (keyboardState.PageDown || keyboardState.LeftShift)
 				input.y -= 1.f;*/
 			m_direction.Normalize();
-			movement.Velocity = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion()) * (keyboardState.LeftControl ? 1000 : 100);
+			movement.Velocity = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(playerComp, position)) * (keyboardState.LeftControl ? 1000 : 100);
 			break;
 		}
 
@@ -158,20 +158,26 @@ namespace world {
 
 	void PlayerSystem::CreatePlayer()
 	{
+		Model model = Model();
+		EntityPtr asset;
+		if (AssetManager::Get()->GetStaticEM()->TryFindByPathID("Biped_Placeholder", asset)) {
+			model.Asset = asset->ID();
+			model.Type = AssetType::Authored;
+		}
 		EM->CreatePlayer(
 			Position(), 
 			Player(),
 			Movement(), 
-			Collision(Box(Vector3(-0.25f, -1.7f, -0.25f), Vector3(0.5f, 1.7f, 0.5f))), 
-			Inventory(50.f,50.f)
+			Collision(Box(Vector3(0.f, 0.85f, 0.f), Vector3(0.5f, 1.7f, 0.25f))), 
+			Inventory(50.f,50.f),
+			std::move(model)
 		);
 		SetMovementToSpectator();
 	}
 
-	Quaternion PlayerSystem::GetPlayerQuaternion(bool ignorePitch)
+	Quaternion PlayerSystem::GetPlayerQuaternion(world::Player & player, world::Position & position, bool ignorePitch)
 	{
-		Vector3 rotation = EM->GetEntity<Position>(EM->PlayerID()).Get<Position>().Rot;
-		return SimpleMath::Quaternion::CreateFromYawPitchRoll(rotation.x, ignorePitch ? 0.f : -rotation.y, 0.f);
+		return SimpleMath::Quaternion::CreateFromYawPitchRoll(position.Rot.y, ignorePitch ? 0.f : - player.CameraPitch, 0.f);
 	}
 
 	void PlayerSystem::Run()

@@ -527,6 +527,7 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <MeshContentTask Include="Assets\Models\Biped_Placeholder_0.fbx" />
     <MeshContentTask Include="Assets\Models\Boulder_0.fbx" />
     <MeshContentTask Include="Assets\Models\Building\models-building-corner0_0.fbx" />
     <MeshContentTask Include="Assets\Models\Building\models-building-floor0_0.fbx" />

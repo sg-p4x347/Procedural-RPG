@@ -25,6 +25,12 @@ namespace world {
 		}
 		iterator m_mapIterator;
 		int m_index;
-		
+
+		bool operator==(Entity & b) {
+			return GetID() == b.GetID();
+		}
+		bool operator!=( Entity & b) {
+			return GetID() != b.GetID();
+		}
 	};
 }

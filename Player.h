@@ -20,10 +20,9 @@ namespace world {
 		// Data
 		MovementStates MovementState;
 		InteractionStates InteractionState;
+		float CameraPitch;
 		//string InventoryCategory;
 		unsigned int OpenContainer;
-
-		// Inherited via Component
 
 	};
 }

@@ -21,6 +21,7 @@
 #include "TaskManager.h"
 #include "Inventory.h"
 #include "IEventManager.h"
+#include "Movement.h"
 //#include "ItemSystem.h"
 
 using namespace DirectX::SimpleMath;
@@ -217,6 +218,14 @@ namespace world {
 		//CreateResourceEntities();
 
 		// TEMP
+		EntityPtr asset;
+		if (AssetManager::Get()->GetStaticEM()->TryFindByPathID("Crate",asset)) {
+			EM->CreateEntity(Position(Vector3(32.f, TerrainMap->Height(32, 32) + 2.f, 32.f)),
+				Model(asset->ID(), AssetType::Authored),
+				Collision(Box(Vector3::Zero, Vector3(1.f, 1.f, 1.f))),
+				Movement()
+			);
+		}
 		//SM->GetSystem<ItemSystem>("Item")->NewContainer(Vector3(32, TerrainMap->Height(32, 32), 32), Vector3::Zero, "Crate");
 
 		/*Utility::OutputLine("Generating Buildings...");

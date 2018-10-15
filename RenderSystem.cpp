@@ -123,37 +123,24 @@ void RenderSystem::Render()
 	//	
 	//}
 
-	world::Position & position = EM->GetEntity<world::Position>(EM->PlayerID()).Get<world::Position>();
+	UpdateVisibleRegions();
 	m_mutex.lock();
-	int culledRegionCount = 0;
+	
 	// Draw opaque model mesh parts
-	for (auto & regionCache : m_modelInstances) {
-		if (IsRegionVisible(regionCache.first, position.Pos, position.Rot, m_frustum)) {
-			for (auto & instanceCache : regionCache.second) {
-				shared_ptr<Model> dxModel = instanceCache.first;
-				for (auto & job : instanceCache.second) {
-					if (m_tracked.count(job.entity) != 0)
-						RenderModel(dxModel, job.worldMatrix, true);
-				}
-			}
-		}
-		else {
-			culledRegionCount++;
-		}
-	}
-	m_guiSystem->SetTextByID("CullCount", "Culled Regions: " + to_string(culledRegionCount));
+	RenderModels(true);
 	// Draw alpha model mesh parts
-	for (auto & regionCache : m_modelInstances) {
-		if (IsRegionVisible(regionCache.first, position.Pos, position.Rot,m_frustum)) {
-			for (auto & instanceCache : regionCache.second) {
-				shared_ptr<Model> dxModel = instanceCache.first;
-				for (auto & job : instanceCache.second) {
-					if (m_tracked.count(job.entity) != 0)
-						RenderModel(dxModel, job.worldMatrix, false);
-				}
-			}
-		}
-	}
+	RenderModels(false);
+	//for (auto & regionCache : m_modelInstances) {
+	//	if (IsRegionVisible(regionCache.first, position.Pos, position.Rot,m_frustum)) {
+	//		for (auto & instanceCache : regionCache.second) {
+	//			shared_ptr<Model> dxModel = instanceCache.first;
+	//			for (auto & job : instanceCache.second) {
+	//				if (m_tracked.count(job.entity) != 0)
+	//					RenderModel(dxModel, job.worldMatrix, false);
+	//			}
+	//		}
+	//	}
+	//}
 	m_mutex.unlock();
 	/*for (auto & instances : m_modelInstances) {
 		shared_ptr<Model> dxModel = instances.first;
@@ -482,6 +469,22 @@ void RenderSystem::TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<w
 	}
 }
 
+void RenderSystem::UpdateVisibleRegions()
+{
+	m_visibleRegions.clear();
+	int culledRegionCount = 0;
+	world::Position & position = EM->GetEntity<world::Position>(EM->PlayerID()).Get<world::Position>();
+	for (auto & regionCache : m_modelInstances) {
+		if (IsRegionVisible(regionCache.first, position.Pos, position.Rot, m_frustum)) {
+			m_visibleRegions.insert(regionCache.first);
+		}
+		else {
+			culledRegionCount++;
+		}
+	}
+	m_guiSystem->SetTextByID("CullCount", "Culled Regions: " + to_string(culledRegionCount));
+}
+
 bool RenderSystem::IsRectVisible(Rectangle & area, Vector2 & observerPos, Vector2 & fovNorm1, Vector2 & fovNorm2)
 {
 	if (area.Contains(observerPos)) return true;
@@ -513,6 +516,48 @@ bool RenderSystem::IsRegionVisible(shared_ptr<world::WEM::RegionType> region, Ve
 		Vector2 areaCenter = region->GetArea().Center();
 		BoundingBox box(Vector3(areaCenter.x, 0.f, areaCenter.y), Vector3(region->GetArea().width, 1000.f, region->GetArea().height));
 		return frustum.Intersects(box);
+	}
+}
+
+void RenderSystem::RenderModels(bool opaque)
+{
+	for (auto & visibleRegion : m_visibleRegions) {
+		auto & regionCache = m_modelInstances[visibleRegion];
+		for (auto & instanceCache : regionCache) {
+			shared_ptr<Model> dxModel = instanceCache.first;
+			for (auto & job : instanceCache.second) {
+				if (m_tracked.count(job.entity) != 0) {
+					XMMATRIX & world = job.worldMatrix;
+					world::MaskType signature = EM->GetSignature(job.entity);
+					if ((signature & EM->GetMask<world::Movement>()) == EM->GetMask<world::Movement>()) {
+						auto & position = EM->GetEntity<world::Position>(job.entity).Get<world::Position>();
+						world::EntityInfo * info;
+
+
+						XMMATRIX translation = XMMatrixTranslation(position.Pos.x, position.Pos.y, position.Pos.z);
+						XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
+						world = XMMatrixMultiply(rotMat, translation);
+					}
+
+					RenderModel(dxModel, world, true);
+					// collision box
+					if ((signature & EM->GetMask<world::Collision>()) == EM->GetMask<world::Collision>()) {
+						auto entity = EM->GetEntity<world::Position,world::Collision>(job.entity);
+						auto & position = entity.Get<world::Position>();
+						auto & collision = entity.Get<world::Collision>();
+						auto box = DirectX::GeometricPrimitive::CreateBox(m_d3dContext.Get(), collision.BoundingBox.Size);
+						XMMATRIX translation = XMMatrixTranslation(
+							position.Pos.x + collision.BoundingBox.Position.x, 
+							position.Pos.y + collision.BoundingBox.Position.y, 
+							position.Pos.z + collision.BoundingBox.Position.z
+						);
+						XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
+						world = XMMatrixMultiply(rotMat, translation);
+						box->Draw(world, m_viewMatrix, m_projMatrix,Colors::White,nullptr, true);
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -972,18 +1017,24 @@ void RenderSystem::OnDeviceLost()
 
 DirectX::XMMATRIX RenderSystem::GetViewMatrix()
 {
-	world::Position & position = EM->GetEntity<world::Position>(EM->PlayerID()).Get<world::Position>();
-	float y = sinf(position.Rot.y);
-	float r = cosf(position.Rot.y);
-	float z = r*cosf(position.Rot.x);
-	float x = r*sinf(position.Rot.x);
+	auto player = EM->GetEntity<world::Position, world::Player>(EM->PlayerID());
+	world::Position & position = player.Get<world::Position>();
+	world::Player & playerComp = player.Get<world::Player>();
+	float y = sinf(playerComp.CameraPitch);
+	float r = cosf(playerComp.CameraPitch);
+	float z = r * cosf(position.Rot.y);
+	float x = r * sinf(position.Rot.y);
+	Vector3 planarDir = Vector3(x, 0.f, z);
+	planarDir.Normalize();
+	// XMVECTOR lookAt = position.Pos + SimpleMath::Vector3(x, y, z); // first person
+	XMVECTOR lookAt = position.Pos + planarDir * 5.f; // third person
+	// XMMATRIX view = XMMatrixLookAtRH(position.Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f)); // first person
+	XMVECTOR cameraPos = position.Pos - Vector3(x, y, z) * 3.f + Vector3::Up * 3.f;
 
-	XMVECTOR lookAt = position.Pos + SimpleMath::Vector3(x, y, z);
-
-	XMMATRIX view = XMMatrixLookAtRH(position.Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
+	XMMATRIX view = XMMatrixLookAtRH(cameraPos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f)); // third person
 	m_viewMatrix = view;
 	XMMATRIX ProjectionMatrixLH = XMMatrixPerspectiveFovLH(m_fov,  m_aspectRatio, m_clipNear, m_clipFar);
-	XMMATRIX ViewMatrixLH = XMMatrixLookAtLH(position.Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
+	XMMATRIX ViewMatrixLH = XMMatrixLookAtLH(cameraPos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
 	XMVECTOR Determinant;
 	XMMATRIX InvViewMatrixLH = XMMatrixInverse(&Determinant, ViewMatrixLH);
 	m_frustum = BoundingFrustum();

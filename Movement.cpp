@@ -2,15 +2,6 @@
 #include "Movement.h"
 
 namespace world {
-	Movement::Movement() :
-		Movement::Movement(
-			DirectX::SimpleMath::Vector3::Zero,
-			DirectX::SimpleMath::Vector3::Zero,
-			DirectX::SimpleMath::Vector3::Zero,
-			DirectX::SimpleMath::Vector3::Zero
-		)
-	{
-	}
 
 	Movement::Movement(
 		DirectX::SimpleMath::Vector3 velocity,

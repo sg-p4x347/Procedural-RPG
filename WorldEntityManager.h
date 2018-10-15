@@ -48,7 +48,14 @@ namespace world {
 		Vector3 PlayerPos() {
 			return GetEntity<Position>(m_player).Get<Position>().Pos;
 		}
-
+		MaskType PlayerSignature() {
+			return GetSignature(m_player);
+		}
+		MaskType GetSignature(EntityID & id) {
+			EntityInfo * info;
+			m_entityIndex.Find(id, info);
+			return info->signature;
+		}
 		template <typename HeadType>
 		MaskType GetMask() {
 			return std::get<pair<MaskType, HeadType>>(m_maskIndex).first;

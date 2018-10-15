@@ -44,7 +44,7 @@ namespace world {
 
 		//----------------------------------------------------------------
 		// Utility
-		Quaternion GetPlayerQuaternion(bool ignorePitch = false);
+		Quaternion GetPlayerQuaternion(world::Player & player, world::Position & position, bool ignorePitch = false);
 		void Run() override;
 		//----------------------------------------------------------------
 		// Interaction state

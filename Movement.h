@@ -6,12 +6,11 @@ namespace world {
 		public WorldComponent
 	{
 	public:
-		Movement();
 		Movement(
-			DirectX::SimpleMath::Vector3 velocity,
-			DirectX::SimpleMath::Vector3 acceleration,
-			DirectX::SimpleMath::Vector3 angularVelocity,
-			DirectX::SimpleMath::Vector3 angularAcceleration);
+			DirectX::SimpleMath::Vector3 velocity = Vector3::Zero,
+			DirectX::SimpleMath::Vector3 acceleration = Vector3(0,-9.8,0),
+			DirectX::SimpleMath::Vector3 angularVelocity = Vector3::Zero,
+			DirectX::SimpleMath::Vector3 angularAcceleration = Vector3::Zero);
 
 		DirectX::SimpleMath::Vector3 Velocity;
 		DirectX::SimpleMath::Vector3 Acceleration;

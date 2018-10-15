@@ -33,27 +33,17 @@ namespace world {
 	void MovementSystem::Update(double & elapsed)
 	{
 		//TaskManager::Get().Push(Task([=] {
-			for (auto & entity : m_entities) {
-				auto & position = entity.Get<Position>();
-				auto & movement = entity.Get<Movement>();
-				movement.Velocity += movement.Acceleration * elapsed;
-				position.Pos += movement.Velocity * elapsed;
+		for (auto & entity : m_entities) {
+			auto & position = entity.Get<Position>();
+			auto & movement = entity.Get<Movement>();
+			movement.Velocity += movement.Acceleration * elapsed;
+			position.Pos += movement.Velocity * elapsed;
 
-				position.Rot += movement.AngularVelocity * elapsed;
-				float limit = XM_PI / 2.0f - 0.01f;
-				position.Rot.y = std::max(-limit, position.Rot.y);
-				position.Rot.y = std::min(limit, position.Rot.y);
-
-				// keep longitude in sane range by wrapping
-				if (position.Rot.x > XM_PI)
-				{
-					position.Rot.x -= XM_PI * 2.0f;
-				}
-				else if (position.Rot.x < -XM_PI)
-				{
-					position.Rot.x += XM_PI * 2.0f;
-				}
-			}
+			position.Rot += movement.AngularVelocity * elapsed;
+			position.Rot.x = std::fmod(position.Rot.x, XM_2PI);
+			position.Rot.y = std::fmod(position.Rot.y, XM_2PI);
+			position.Rot.z = std::fmod(position.Rot.z, XM_2PI);
+		}
 		/*},
 			m_entities.GetComponentMask(),
 			m_entities.GetComponentMask(),

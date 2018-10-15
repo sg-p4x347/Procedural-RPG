@@ -806,6 +806,9 @@
     <MeshContentTask Include="Assets\Models\Grass_0.fbx">
       <Filter>Assets\Models</Filter>
     </MeshContentTask>
+    <MeshContentTask Include="Assets\Models\Biped_Placeholder_0.fbx">
+      <Filter>Assets\Models</Filter>
+    </MeshContentTask>
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico">
