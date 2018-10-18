@@ -121,8 +121,21 @@ namespace world {
 				RegionCoords(position, regionX, regionZ);
 				if (regionX != info->regionX || regionZ != info->regionZ) {
 					// entity has changed regions
-					auto & region = m_regions[info->regionX][info->regionZ];
-					region->Remove(id, info->signature);
+					auto & oldRegion = m_regions[info->regionX][info->regionZ];
+					auto & newRegion = m_regions[regionX][regionZ];
+					EntityCache<CompTypes...> oldCache;
+					oldRegion->LoadEntities<CompTypes...>(oldCache, [=](MaskType & sig) {
+						return sig == info->signature;
+					});
+					// move components into the new region
+					newRegion->ChangeSignature<tuple<shared_ptr<ComponentCache<CompTypes>>...>,CompTypes...>(oldCache.CachesFor(info->signature), id, info->signature, info->signature);
+					// update the index
+					info->regionX = regionX;
+					info->regionZ = regionZ;
+					// sync regions if this is the player
+					if (id == m_player) {
+						IEventManager::Invoke(EventTypes::Movement_PlayerMoved, position.x, position.z);
+					}
 				}
 				
 			}
@@ -188,6 +201,10 @@ namespace world {
 					loadedRegion->LoadEntities<HeadType, MaskTypes...>(entityCache, std::move(predicate));
 					cache.GetCaches().insert(make_pair(loadedRegion, entityCache));
 					//cache.GetCaches().insert(make_pair(loadedRegion, LoadEntities<HeadType, MaskTypes...>(cache.GetComponentMask())));
+				}
+				else {
+					// update existing caches
+					loadedRegion->LoadEntities<HeadType,MaskTypes...>(cache.GetCaches()[loadedRegion], std::move(predicate));
 				}
 			}
 		}

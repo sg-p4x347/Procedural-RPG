@@ -114,6 +114,8 @@ namespace world {
 	void World::RunWorldSystems()
 	{
 		m_systemManager.Run<WorldSystem>();
+		auto position = m_entityManager->PlayerPos();
+		IEventManager::Invoke(EventTypes::Movement_PlayerMoved, position.x, position.z);
 	}
 	void World::Generate(int seed)
 	{

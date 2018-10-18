@@ -61,11 +61,16 @@ namespace world {
 			LoadEntities<CompTypes...>(oldCache, [=](MaskType & sig) {
 				return sig == oldSig;
 			});
-			EntityCache<CompTypes...> newCache;
+			/*EntityCache<CompTypes...> newCache;
 			LoadEntities<CompTypes...>(newCache, [=](MaskType & sig) {
 				return sig == newSig;
-			});
-			ChangeSignature<tuple<shared_ptr<ComponentCache<CompTypes>>...>, CompTypes...>(oldCache.CachesFor(oldSig), newCache.CachesFor(newSig), id, oldSig, newSig);
+			});*/
+			ChangeSignature<tuple<shared_ptr<ComponentCache<CompTypes>>...>, CompTypes...>(oldCache.CachesFor(oldSig), id, oldSig, newSig);
+		}
+		template<typename EntityCacheType, typename HeadType, typename Next, typename ... MaskTypes>
+		void ChangeSignature(EntityCacheType & oldCache, EntityID & id, MaskType & oldSig, MaskType & newSig) {
+			ChangeSignature<EntityCacheType, HeadType>(oldCache, id, oldSig, newSig);
+			ChangeSignature<EntityCacheType, Next, MaskTypes...>(oldCache, id, oldSig, newSig);
 		}
 		inline void Remove(EntityID & id, MaskType & signature) {
 
@@ -192,7 +197,7 @@ namespace world {
 		//----------------------------------------------------------------
 		// Signature change
 		template <typename EntityCacheType, typename HeadType>
-		void ChangeSignature(EntityCacheType & oldCache, EntityCacheType & newCache, EntityID & id, MaskType & oldSig, MaskType & newSig) {
+		void ChangeSignature(EntityCacheType & oldCache, EntityID & id, MaskType & oldSig, MaskType & newSig) {
 			auto compCache = std::get<shared_ptr<ComponentCache<HeadType>>>(oldCache);
 			if (compCache) {
 				// find the index within the cache
@@ -212,11 +217,7 @@ namespace world {
 			}
 
 		}
-		template<typename EntityCacheType, typename HeadType, typename Next, typename ... MaskTypes>
-		void ChangeSignature(EntityCacheType & oldCache, EntityCacheType & newCache, EntityID & id, MaskType & oldSig, MaskType & newSig) {
-			ChangeSignature<EntityCacheType, HeadType>(oldCache, newCache, id, oldSig, newSig);
-			ChangeSignature<EntityCacheType, Next, MaskTypes...>(oldCache, newCache, id, oldSig, newSig);
-		}
+		
 	};
 
 }

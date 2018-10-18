@@ -15,6 +15,9 @@ namespace world {
 		m_moveTracker(entityManager->GetRegionWidth()),
 		m_entities(entityManager->NewEntityCache<Position,Movement>())
 	{
+		IEventManager::RegisterHandler(EventTypes::WEM_Resync, std::function<void(void)>([=]() {
+			SyncEntities();
+		}));
 		/*IEventManager::RegisterHandler(Entity_ComponentAdded, std::function<void(unsigned int, unsigned long)>([=](unsigned int id, unsigned long mask) {
 			EntityPtr target;
 			if (EM->Find(id, target)) {
@@ -64,16 +67,16 @@ namespace world {
 		// check to see if the player has moved enough for an entity resync
 		// alternate case passes if no regions have been loaded
 			
-		if (m_moveTracker.Update(playerPos) || !EM->RegionsLoaded()) {
+		/*if (m_moveTracker.Update(playerPos) || !EM->RegionsLoaded()) {
 			IEventManager::Invoke(EventTypes::Movement_PlayerMoved, playerPos.x , playerPos.z);
-			SyncEntities();
-		}
+			
+		}*/
 
 	}
 
 	void MovementSystem::SyncEntities()
 	{
-		EM->UpdateGlobalCache(m_entities);
+		EM->UpdateCache(m_entities);
 	}
 
 	void MovementSystem::Initialize()
