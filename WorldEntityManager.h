@@ -112,6 +112,21 @@ namespace world {
 				}
 			}
 		}
+		void UpdatePosition(EntityID id, Vector3 position) {
+			// get info
+			EntityInfo * info;
+			if (m_entityIndex.Find(id, info)) {
+				int regionX;
+				int regionZ;
+				RegionCoords(position, regionX, regionZ);
+				if (regionX != info->regionX || regionZ != info->regionZ) {
+					// entity has changed regions
+					auto & region = m_regions[info->regionX][info->regionZ];
+					region->Remove(id, info->signature);
+				}
+				
+			}
+		}
 		/*template<typename CompType>
 		vector<shared_ptr<ComponentCache<CompType>>> LoadComponents(MaskType signature) {
 			vector<shared_ptr<ComponentCache<CompType>>> caches;

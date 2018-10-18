@@ -80,16 +80,18 @@ namespace world {
 
 				}
 				
-				Matrix world = Matrix::CreateFromYawPitchRoll(position.Rot.x, 0.f, position.Rot.z) * Matrix::CreateTranslation(position.Pos);
+				Matrix world = Matrix::CreateFromYawPitchRoll(position.Rot.y,position.Rot.x,position.Rot.z) * Matrix::CreateTranslation(position.Pos);
 				auto hullA = BoxVertices(entity.Get<Collision>().BoundingBox, world);
 				// Check collision with other entities
+				collision.Colliding = false;
 				for (auto & other : m_entities) {
 					if (other != entity) {
 						auto & otherPos = other.Get<Position>();
-						auto hullB = BoxVertices(other.Get<Collision>().BoundingBox, Matrix::CreateFromYawPitchRoll(otherPos.Rot.x, 0.f, otherPos.Rot.z) * Matrix::CreateTranslation(otherPos.Pos));
+						auto hullB = BoxVertices(other.Get<Collision>().BoundingBox, Matrix::CreateFromYawPitchRoll(otherPos.Rot.y, otherPos.Rot.x, otherPos.Rot.z) * Matrix::CreateTranslation(otherPos.Pos));
 						CollisionUtil::GjkIntersection intersection;
 						if (CollisionUtil::GJK(hullA, hullB, intersection)) {
-							movement.Velocity = Vector3::Up * 10;
+							collision.Colliding = true;
+							break;
 						}
 					}
 				}

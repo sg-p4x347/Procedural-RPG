@@ -92,7 +92,7 @@ namespace world {
 		case Player::MovementStates::Normal:
 			m_direction.y = 0.f;
 			m_direction.Normalize();
-			velocity = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(playerComp,position,true)) * (keyboardState.LeftShift ? 8.f : 5.f);
+			velocity = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(playerComp,position,true)) * (keyboardState.LeftControl ? 0.1 : keyboardState.LeftShift ? 8.f : 5.f);
 			velocity.y = movement.Velocity.y;
 
 			movement.Velocity = velocity;
@@ -104,7 +104,7 @@ namespace world {
 			if (keyboardState.PageDown || keyboardState.LeftShift)
 				input.y -= 1.f;*/
 			m_direction.Normalize();
-			movement.Velocity = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(playerComp, position)) * (keyboardState.LeftControl ? 1000 : 100);
+			movement.Velocity = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(playerComp, position)) * (keyboardState.LeftControl ? 0.1f : keyboardState.LeftShift ? 1000 : 100);
 			break;
 		}
 
@@ -332,7 +332,7 @@ namespace world {
 		MapKey(Keyboard::Keys::D, "Right");
 		MapKey(Keyboard::Keys::A, "Left");
 		MapKey(Keyboard::Keys::Space, "Up");
-		MapKey(Keyboard::Keys::LeftShift, "Down");
+		//MapKey(Keyboard::Keys::LeftShift, "Down");
 		//----------------------------------------------------------------
 		// Inventory
 		MapKey(Keyboard::Keys::Tab, "ToggleInventory");

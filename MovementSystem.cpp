@@ -32,13 +32,24 @@ namespace world {
 
 	void MovementSystem::Update(double & elapsed)
 	{
+		auto playerPos = EM->PlayerPos();
 		//TaskManager::Get().Push(Task([=] {
 		for (auto & entity : m_entities) {
 			auto & position = entity.Get<Position>();
 			auto & movement = entity.Get<Movement>();
 			movement.Velocity += movement.Acceleration * elapsed;
-			position.Pos += movement.Velocity * elapsed;
 
+			MovementTracker tracker(EM->GetRegionWidth());
+			tracker.Update(position.Pos);
+			position.Pos += movement.Velocity * elapsed;
+			
+			if (tracker.Update(position.Pos)) {
+				// region boundary crossed
+				EM->UpdatePosition(entity.GetID(), position.Pos);
+			}
+
+
+			// Rotations
 			position.Rot += movement.AngularVelocity * elapsed;
 			position.Rot.x = std::fmod(position.Rot.x, XM_2PI);
 			position.Rot.y = std::fmod(position.Rot.y, XM_2PI);
@@ -52,7 +63,7 @@ namespace world {
 
 		// check to see if the player has moved enough for an entity resync
 		// alternate case passes if no regions have been loaded
-			auto playerPos = EM->PlayerPos();
+			
 		if (m_moveTracker.Update(playerPos) || !EM->RegionsLoaded()) {
 			IEventManager::Invoke(EventTypes::Movement_PlayerMoved, playerPos.x , playerPos.z);
 			SyncEntities();

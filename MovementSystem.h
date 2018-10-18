@@ -11,7 +11,7 @@ namespace world {
 		const unsigned int gridSize;
 		int lastX;
 		int lastZ;
-		bool Update(Vector3 position) {
+		bool Update(Vector3 & position) {
 			int newX = std::floor(position.x / (float)gridSize);
 			int newZ = std::floor(position.z / (float)gridSize);
 			if (newX != lastX || newZ != lastZ) {

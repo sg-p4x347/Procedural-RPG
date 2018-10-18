@@ -553,7 +553,8 @@ void RenderSystem::RenderModels(bool opaque)
 						);
 						XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
 						world = XMMatrixMultiply(rotMat, translation);
-						box->Draw(world, m_viewMatrix, m_projMatrix,Colors::White,nullptr, true);
+						auto color = collision.Colliding ? Colors::Red : Colors::White;
+						box->Draw(world, m_viewMatrix, m_projMatrix, color,nullptr, true);
 					}
 				}
 			}
@@ -1024,12 +1025,10 @@ DirectX::XMMATRIX RenderSystem::GetViewMatrix()
 	float r = cosf(playerComp.CameraPitch);
 	float z = r * cosf(position.Rot.y);
 	float x = r * sinf(position.Rot.y);
-	Vector3 planarDir = Vector3(x, 0.f, z);
-	planarDir.Normalize();
 	// XMVECTOR lookAt = position.Pos + SimpleMath::Vector3(x, y, z); // first person
-	XMVECTOR lookAt = position.Pos + planarDir * 5.f; // third person
+	Vector3 lookAt = position.Pos + Vector3(0.f,1.7f,0.f); // third person
 	// XMMATRIX view = XMMatrixLookAtRH(position.Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f)); // first person
-	XMVECTOR cameraPos = position.Pos - Vector3(x, y, z) * 3.f + Vector3::Up * 3.f;
+	XMVECTOR cameraPos = lookAt - Vector3(x, y, z) * 3.f;
 
 	XMMATRIX view = XMMatrixLookAtRH(cameraPos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f)); // third person
 	m_viewMatrix = view;

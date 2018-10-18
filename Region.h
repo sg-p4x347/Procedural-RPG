@@ -56,14 +56,21 @@ namespace world {
 		}
 		//----------------------------------------------------------------
 		// Change Signature
-		inline void ChangeSignature(EntityID & id, MaskType & oldSig, MaskType & newSig) {
+		inline void ChangeSignature(EntityID & id, MaskType & oldSig, MaskType && newSig) {
 			EntityCache<CompTypes...> oldCache;
-			LoadEntities<CompTypes...>(oldCache, oldSig, true);
+			LoadEntities<CompTypes...>(oldCache, [=](MaskType & sig) {
+				return sig == oldSig;
+			});
 			EntityCache<CompTypes...> newCache;
-			LoadEntities<CompTypes...>(newCache, newSig, true);
+			LoadEntities<CompTypes...>(newCache, [=](MaskType & sig) {
+				return sig == newSig;
+			});
 			ChangeSignature<tuple<shared_ptr<ComponentCache<CompTypes>>...>, CompTypes...>(oldCache.CachesFor(oldSig), newCache.CachesFor(newSig), id, oldSig, newSig);
 		}
+		inline void Remove(EntityID & id, MaskType & signature) {
 
+			ChangeSignature(id, signature, 0);
+		}
 		//----------------------------------------------------------------
 		// Load Components
 		template<typename EntityCacheType, typename HeadType, typename ... MaskTypes>
