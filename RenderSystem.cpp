@@ -219,7 +219,9 @@ void RenderSystem::SyncEntities()
 		
 		world::MaskType accessMask = EM->GetMask<world::Model, world::Position>();
 		world::MaskType terrainMask = EM->GetMask<world::Terrain>();
+		Vector3 camera = EM->PlayerPos();
 		TaskManager::Get().Push(Task([=]() {
+
 			m_syncMutex.lock();
  			ModelInstanceCache modelInstancesTemp;
 			std::set<world::EntityID> trackedTemp;
@@ -232,7 +234,7 @@ void RenderSystem::SyncEntities()
 			
 				for (auto & terrainEntity : regionCache.second) {
 					auto modelEntity = EM->GetEntity<world::Model, world::Position>(terrainEntity.GetID());
-					TrackEntity(modelInstancesTemp,regionCache.first, trackedTemp, modelEntity, true);
+					TrackEntity(modelInstancesTemp,regionCache.first, trackedTemp, modelEntity, camera, true);
 				}
 			}
 			// models
@@ -242,7 +244,7 @@ void RenderSystem::SyncEntities()
 			});
 			for (auto & regionCache : modelEntities.GetCaches()) {
 				for (auto & modelEntity : regionCache.second) {
-					TrackEntity(modelInstancesTemp, regionCache.first,trackedTemp, modelEntity.GetProxy(), true);
+					TrackEntity(modelInstancesTemp, regionCache.first,trackedTemp, modelEntity.GetProxy(), camera, true);
 				}
 			}
 			m_mutex.lock();
@@ -438,7 +440,7 @@ void RenderSystem::SpriteBatchEnd()
 	m_spriteBatch->End();
 }
 
-void RenderSystem::TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<world::WEM::RegionType> region, std::set<world::EntityID> & tracked, world::WorldEntityProxy<world::Model, world::Position> & entity,bool ignoreVerticalDistance)
+void RenderSystem::TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<world::WEM::RegionType> region, std::set<world::EntityID> & tracked, world::WorldEntityProxy<world::Model, world::Position> & entity, Vector3 camera,bool ignoreVerticalDistance)
 {
 	world::EntityID id = entity.GetID();
 	if (tracked.count(id) == 0) {
@@ -451,11 +453,10 @@ void RenderSystem::TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<w
 		auto & modelComp = entity.Get<world::Model>();
 		float distance = 0.f;
 		if (ignoreVerticalDistance) {
-			auto pos = EM->PlayerPos();
-			distance = Vector2::Distance(Vector2(pos.x, pos.z), Vector2(position.Pos.x, position.Pos.z));
+			distance = Vector2::Distance(Vector2(camera.x, camera.z), Vector2(position.Pos.x, position.Pos.z));
 		}
 		else {
-			distance = Vector3::Distance(EM->PlayerPos(), position.Pos);
+			distance = Vector3::Distance(camera, position.Pos);
 		}
 		shared_ptr<Model> model = AssetManager::Get()->GetModel(modelComp.Asset, distance, position.Pos, modelComp.Type);
 		if (map.find(model) == map.end()) {
@@ -539,7 +540,7 @@ void RenderSystem::RenderModels(bool opaque)
 						world = XMMatrixMultiply(rotMat, translation);
 					}
 
-					RenderModel(dxModel, world, true);
+					RenderModel(dxModel, world, opaque);
 					// collision box
 					if ((signature & EM->GetMask<world::Collision>()) == EM->GetMask<world::Collision>()) {
 						auto entity = EM->GetEntity<world::Position,world::Collision>(job.entity);

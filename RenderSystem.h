@@ -94,7 +94,7 @@ private:
 	std::set<world::EntityID> m_tracked;
 	//std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_modelInstancesTemp;
 	//std::set<world::EntityID> m_trackedTemp;
-	void TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<world::WEM::RegionType> region, std::set<world::EntityID> & tracked,world::WorldEntityProxy<world::Model,world::Position> & entity,bool ignoreVerticalDistance = false);
+	void TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<world::WEM::RegionType> region, std::set<world::EntityID> & tracked,world::WorldEntityProxy<world::Model,world::Position> & entity,Vector3 camera, bool ignoreVerticalDistance = false);
 	void UpdateVisibleRegions();
 	bool IsRectVisible(Rectangle & area,Vector2 & observerPos,Vector2 & fovNorm1, Vector2 & fovNorm2);
 	bool IsRegionVisible(shared_ptr<world::WEM::RegionType> region, Vector3 & position, Vector3 & rotation, BoundingFrustum & frustum);

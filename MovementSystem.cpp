@@ -37,6 +37,7 @@ namespace world {
 	{
 		auto playerPos = EM->PlayerPos();
 		//TaskManager::Get().Push(Task([=] {
+		std::vector<std::pair<EntityID, Vector3>> regionChanges;
 		for (auto & entity : m_entities) {
 			auto & position = entity.Get<Position>();
 			auto & movement = entity.Get<Movement>();
@@ -48,7 +49,7 @@ namespace world {
 			
 			if (tracker.Update(position.Pos)) {
 				// region boundary crossed
-				EM->UpdatePosition(entity.GetID(), position.Pos);
+				regionChanges.push_back(std::make_pair(entity.GetID(), position.Pos));
 			}
 
 
@@ -58,6 +59,11 @@ namespace world {
 			position.Rot.y = std::fmod(position.Rot.y, XM_2PI);
 			position.Rot.z = std::fmod(position.Rot.z, XM_2PI);
 		}
+		// update the entities region
+		for (auto & regionChangeEntity : regionChanges) {
+			EM->UpdatePosition(regionChangeEntity.first, regionChangeEntity.second);
+		}
+
 		/*},
 			m_entities.GetComponentMask(),
 			m_entities.GetComponentMask(),

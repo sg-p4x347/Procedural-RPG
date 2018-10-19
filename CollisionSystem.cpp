@@ -112,7 +112,7 @@ namespace world {
 
 	void CollisionSystem::SyncEntities()
 	{
-		EM->UpdateGlobalCache(m_entities);
+		EM->UpdateCache(m_entities);
 	}
 	std::vector<Vector3> CollisionSystem::BoxVertices(Box & box, Matrix & transform)
 	{
