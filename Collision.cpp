@@ -6,7 +6,7 @@ namespace world {
 	{
 	}
 
-	Collision::Collision(Box box) : BoundingBox(box), Enabled(true)
+	Collision::Collision(Box box) : BoundingBox(box), Enabled(true), Colliding(0)
 	{
 	}
 

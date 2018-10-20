@@ -220,11 +220,15 @@ namespace world {
 		// TEMP
 		EntityPtr asset;
 		if (AssetManager::Get()->GetStaticEM()->TryFindByPathID("Crate",asset)) {
-			EM->CreateEntity(Position(Vector3(32.f, TerrainMap->Height(32, 32) + 2.f, 32.f)),
-				Model(asset->ID(), AssetType::Authored),
-				Collision(Box(Vector3::Zero, Vector3(1.f, 1.f, 1.f))),
-				Movement()
-			);
+			for (int x = 10; x < 100; x += 10) {
+				for (int z = 10; z < 100; z += 10) {
+					EM->CreateEntity(Position(Vector3(x, TerrainMap->Height(x, z), z)),
+						Model(asset->ID(), AssetType::Authored),
+						Collision(Box(Vector3(0.f,0.5f,0.f), Vector3(1.f, 1.f, 1.f)))
+					);
+				}
+			}
+			
 		}
 		//SM->GetSystem<ItemSystem>("Item")->NewContainer(Vector3(32, TerrainMap->Height(32, 32), 32), Vector3::Zero, "Crate");
 
