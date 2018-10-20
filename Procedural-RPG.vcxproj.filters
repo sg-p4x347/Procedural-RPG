@@ -728,6 +728,9 @@
     <None Include="config\world.json">
       <Filter>Config</Filter>
     </None>
+    <None Include="Config\game.json">
+      <Filter>Config</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shaders\Water.hlsl">
