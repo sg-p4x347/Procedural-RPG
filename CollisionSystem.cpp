@@ -9,7 +9,8 @@ namespace world {
 	CollisionSystem::CollisionSystem(SystemManager * systemManager, WEM * entityManager, unsigned short updatePeriod) :
 		WorldSystem::WorldSystem(entityManager, updatePeriod), 
 		SM(systemManager), 
-		m_entities(entityManager->NewEntityCache<Position,Collision,Movement>())
+		m_dynamic(entityManager->NewEntityCache<Position,Collision,Movement>()),
+		m_static(entityManager->NewEntityCache<Position, Collision>())
 	{
 		IEventManager::RegisterHandler(EventTypes::WEM_Resync, std::function<void(void)> ([=]() {
 			SyncEntities();
@@ -51,11 +52,11 @@ namespace world {
 	void CollisionSystem::Update(double & elapsed)
 	{
 		auto terrainSystem = SM->GetSystem<TerrainSystem>("Terrain");
-		for (auto & entity : m_entities) {
+		for (auto & entity : m_dynamic) {
 			auto & collision = entity.Get<Collision>();
+			collision.Colliding = 0;
 			if (collision.Enabled) {
 				auto & position = entity.Get<Position>();
-
 				// Bound X and Z to the world area
 				position.Pos.x = std::max(0.f, std::min((float)terrainSystem->Width(), position.Pos.x));
 				position.Pos.z = std::max(0.f, std::min((float)terrainSystem->Width(), position.Pos.z));
@@ -80,19 +81,38 @@ namespace world {
 
 				}
 				
-				Matrix world = Matrix::CreateFromYawPitchRoll(position.Rot.y,position.Rot.x,position.Rot.z) * Matrix::CreateTranslation(position.Pos);
-				auto hullA = BoxVertices(entity.Get<Collision>().BoundingBox, world);
-				// Check collision with other entities
-				collision.Colliding = false;
-				for (auto & other : m_entities) {
-					if (other != entity) {
-						auto & otherPos = other.Get<Position>();
-						auto hullB = BoxVertices(other.Get<Collision>().BoundingBox, Matrix::CreateFromYawPitchRoll(otherPos.Rot.y, otherPos.Rot.x, otherPos.Rot.z) * Matrix::CreateTranslation(otherPos.Pos));
+				
+				//----------------------------------------------------------------
+				// Dynamic vs Static
+
+				Matrix world = Matrix::CreateFromYawPitchRoll(position.Rot.y, position.Rot.x, position.Rot.z) * Matrix::CreateTranslation(position.Pos);
+				auto hullA = BoxVertices(collision.BoundingBox, world);
+				float radius = collision.BoundingBox.Size.Length() * 0.5f;
+				
+				for (auto & other : m_static) {
+					auto & otherPos = other.Get<Position>();
+					auto & otherCollision = other.Get<Collision>();
+					otherCollision.Colliding = 0;
+					float otherRadius = otherCollision.BoundingBox.Size.Length() * 0.5f;
+					// Radial broad phase check
+					if (((position.Pos + collision.BoundingBox.Position) - (otherPos.Pos + otherCollision.BoundingBox.Position)).Length() <= radius + otherRadius) {
+						auto hullB = BoxVertices(otherCollision.BoundingBox, Matrix::CreateFromYawPitchRoll(otherPos.Rot.y, otherPos.Rot.x, otherPos.Rot.z) * Matrix::CreateTranslation(otherPos.Pos));
 						CollisionUtil::GjkIntersection intersection;
 						if (CollisionUtil::GJK(hullA, hullB, intersection)) {
-							collision.Colliding = true;
+							collision.Colliding = 1;
+							otherCollision.Colliding = 1;
 							break;
 						}
+						else {
+							// culled by gjk
+							collision.Colliding = std::min(2, collision.Colliding);
+							otherCollision.Colliding = 2;
+						}
+					}
+					else {
+						// culled by broad phase
+						collision.Colliding = std::min(3, collision.Colliding);
+						otherCollision.Colliding = 3;
 					}
 				}
 
@@ -112,7 +132,12 @@ namespace world {
 
 	void CollisionSystem::SyncEntities()
 	{
-		EM->UpdateCache(m_entities);
+		EM->UpdateCache(m_dynamic);
+		MaskType staticMask = EM->GetMask<Position, Collision>();
+		MaskType movementMask = EM->GetMask<Movement>();
+		EM->UpdateCache(m_static, [=](world::MaskType & sig) {
+			return ((sig & staticMask) == staticMask) && !(sig & movementMask);
+		});
 	}
 	std::vector<Vector3> CollisionSystem::BoxVertices(Box & box, Matrix & transform)
 	{

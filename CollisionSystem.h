@@ -16,7 +16,8 @@ namespace world {
 		virtual void SyncEntities() override;
 	private:
 		SystemManager * SM;
-		WorldEntityCache<WEM::RegionType, Position, Collision,Movement> m_entities;
+		WorldEntityCache<WEM::RegionType, Position, Collision,Movement> m_dynamic;
+		WorldEntityCache<WEM::RegionType, Position, Collision> m_static;
 	private:
 		std::vector<Vector3> BoxVertices(Box & box,Matrix & transform);
 	};

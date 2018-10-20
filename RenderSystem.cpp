@@ -553,9 +553,14 @@ void RenderSystem::RenderModels(bool opaque)
 							position.Pos.z + collision.BoundingBox.Position.z
 						);
 						XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
-						world = XMMatrixMultiply(rotMat, translation);
-						auto color = collision.Colliding ? Colors::Red : Colors::White;
-						box->Draw(world, m_viewMatrix, m_projMatrix, color,nullptr, true);
+						XMMATRIX collisionWorld = XMMatrixMultiply(rotMat, translation);
+						auto color = Colors::White;
+						switch (collision.Colliding) {
+						case 1: color = Colors::Red; break;
+						case 2: color = Colors::Orange; break;
+						case 3: color = Colors::Green; break;
+						}
+						box->Draw(collisionWorld, m_viewMatrix, m_projMatrix, color,nullptr, true);
 					}
 				}
 			}

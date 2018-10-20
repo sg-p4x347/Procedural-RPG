@@ -92,9 +92,9 @@ namespace world {
 		if (AssetManager::Get()->GetProceduralEM()->TryFindByPathID("tree", treeAsset)) {
 			EM->CreateEntity(
 				Position(position),
-				Model(treeAsset->ID(), AssetType::Procedural)
-
-				);
+				Model(treeAsset->ID(), AssetType::Procedural),
+				Collision(Box(Vector3(0.f,2.5f,0.f),Vector3(0.25f,5.f,0.25f)))
+			);
 		}
 		
 		//entity->AddComponent(

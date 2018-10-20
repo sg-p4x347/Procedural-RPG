@@ -194,5 +194,5 @@ namespace CollisionUtil {
 		}
 		return false;
 	}
-	
+
 }

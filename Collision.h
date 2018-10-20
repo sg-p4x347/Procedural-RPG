@@ -11,7 +11,7 @@ namespace world {
 		// Data
 		Box BoundingBox;
 		bool Enabled;
-		bool Colliding;
+		int Colliding;
 		// Inherited via Component
 		//virtual void Import(std::istream & ifs) override;
 		//virtual void Export(std::ostream & ofs) override;
