@@ -84,23 +84,34 @@ namespace world {
 				
 				//----------------------------------------------------------------
 				// Dynamic vs Static
-
-				Matrix world = Matrix::CreateFromYawPitchRoll(position.Rot.y, position.Rot.x, position.Rot.z) * Matrix::CreateTranslation(position.Pos);
+				Vector3 futurePos = position.Pos + movement.Velocity * elapsed;
+				Matrix world = Matrix::CreateFromYawPitchRoll(position.Rot.y, position.Rot.x, position.Rot.z) * Matrix::CreateTranslation(futurePos);
 				auto hullA = BoxVertices(collision.BoundingBox, world);
 				float radius = collision.BoundingBox.Size.Length() * 0.5f;
 				
 				for (auto & other : m_static) {
 					auto & otherPos = other.Get<Position>();
 					auto & otherCollision = other.Get<Collision>();
+					auto otherWorld = Matrix::CreateFromYawPitchRoll(otherPos.Rot.y, otherPos.Rot.x, otherPos.Rot.z) * Matrix::CreateTranslation(otherPos.Pos);
 					otherCollision.Colliding = 0;
 					float otherRadius = otherCollision.BoundingBox.Size.Length() * 0.5f;
 					// Radial broad phase check
 					if (((position.Pos + collision.BoundingBox.Position) - (otherPos.Pos + otherCollision.BoundingBox.Position)).Length() <= radius + otherRadius) {
-						auto hullB = BoxVertices(otherCollision.BoundingBox, Matrix::CreateFromYawPitchRoll(otherPos.Rot.y, otherPos.Rot.x, otherPos.Rot.z) * Matrix::CreateTranslation(otherPos.Pos));
+						auto hullB = BoxVertices(otherCollision.BoundingBox, otherWorld);
 						CollisionUtil::GjkIntersection intersection;
 						if (CollisionUtil::GJK(hullA, hullB, intersection)) {
 							collision.Colliding = 1;
 							otherCollision.Colliding = 1;
+
+							// determine the seperating axis from the current position
+							world = Matrix::CreateFromYawPitchRoll(position.Rot.y, position.Rot.x, position.Rot.z) * Matrix::CreateTranslation(position.Pos);
+							hullA = BoxVertices(collision.BoundingBox, world);							
+							CollisionUtil::SatResult satResult;
+							vector<Vector3> axes = CollisionUtil::GenerateSatAxes(world, otherWorld);
+							
+							if (!CollisionUtil::SatIntersection(hullA, hullB, axes, satResult)) {
+								movement.Velocity = satResult.Axis;
+							}
 							break;
 						}
 						else {

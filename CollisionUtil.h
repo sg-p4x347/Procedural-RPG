@@ -194,5 +194,64 @@ namespace CollisionUtil {
 		}
 		return false;
 	}
+	struct SatResult {
+		SatResult() {}
+		Vector3 Axis;
 
+	};
+	struct SatProjection {
+		SatProjection() : SatProjection(INFINITY,-INFINITY) {}
+		SatProjection(float min, float max) : Min(min), Max(max) {
+
+		}
+		bool Overlaps(SatProjection & projection) {
+			return projection.Max > Min || Max > projection.Min;
+		}
+		float Min;
+		float Max;
+	};
+	
+	SatProjection Project(Vector3 & axis, std::vector<Vector3> & hull) {
+		axis.Normalize();
+		SatProjection projection;
+		for (auto & vertex : hull) {
+			float dot = vertex.Dot(axis);
+			if (dot < projection.Min) {
+				projection.Min = dot;
+			}
+			if (dot > projection.Max) {
+				projection.Max = dot;
+			}
+		}
+		return projection;
+	}
+	// generate axes from boxes
+	std::vector<Vector3> GenerateSatAxes(SimpleMath::Matrix transformA, SimpleMath::Matrix transformB) {
+		std::vector<Vector3> axes;
+		axes.push_back(Vector3::Transform(Vector3::Up, transformA));
+		axes.push_back(Vector3::Transform(Vector3::Forward, transformA));
+		axes.push_back(Vector3::Transform(Vector3::Right, transformA));
+
+		axes.push_back(Vector3::Transform(Vector3::Up, transformB));
+		axes.push_back(Vector3::Transform(Vector3::Forward, transformB));
+		axes.push_back(Vector3::Transform(Vector3::Right, transformB));
+
+		for (int a = 0; a < 3; a) {
+			for (int b = 3; b < 6; b++) {
+				axes.push_back(axes[a].Cross(axes[b]));
+			}
+		}
+		return axes;
+	}
+	bool SatIntersection(std::vector<Vector3> & hullA, std::vector<Vector3> & hullB, std::vector<Vector3> axes, SatResult & result) {
+		for (auto & axis : axes) {
+			SatProjection projectionA = Project(axis, hullA);
+			SatProjection projectionB = Project(axis, hullB);
+			if (!projectionA.Overlaps(projectionB)) {
+				result.Axis = axis;
+				return false;
+			}
+		}
+		return true;
+	}
 }
