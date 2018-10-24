@@ -160,8 +160,10 @@ namespace world {
 		m_systemManager.AddSystem(std::shared_ptr<System>(new PlayerSystem(&m_systemManager, m_entityManager.get(), 1)));
 		m_systemManager.AddSystem(std::shared_ptr<System>(new TerrainSystem(&m_systemManager, m_entityManager.get(), 1, m_width, m_regionWidth, systemsDir)));
 
-		m_systemManager.AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager.get(), 1, renderSystem)));
+
 		m_systemManager.AddSystem(std::shared_ptr<System>(new CollisionSystem(&m_systemManager, m_entityManager.get(), 1)));
+		m_systemManager.AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager.get(), 1, renderSystem)));
+		
 
 		//m_systemManager.AddSystem(std::shared_ptr<System>(new ActionSystem(&m_systemManager, m_entityManager.get(), 10)));
 		m_systemManager.AddSystem(std::shared_ptr<System>(new PlantSystem(&m_systemManager, m_entityManager.get(), 0)));

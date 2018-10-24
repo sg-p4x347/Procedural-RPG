@@ -95,14 +95,14 @@ private:
 	//std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_modelInstancesTemp;
 	//std::set<world::EntityID> m_trackedTemp;
 	void TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<world::WEM::RegionType> region, std::set<world::EntityID> & tracked,world::WorldEntityProxy<world::Model,world::Position> & entity,Vector3 camera, bool ignoreVerticalDistance = false);
-	void UpdateVisibleRegions();
+	void UpdateVisibleRegions(world::Position & cameraPos);
 	bool IsRectVisible(Rectangle & area,Vector2 & observerPos,Vector2 & fovNorm1, Vector2 & fovNorm2);
 	bool IsRegionVisible(shared_ptr<world::WEM::RegionType> region, Vector3 & position, Vector3 & rotation, BoundingFrustum & frustum);
 	void CreateFromMatrixRH(BoundingFrustum& Out, CXMMATRIX Projection);
 	//----------------------------------------------------------------
 	// DX::Model
 
-	void RenderModels(bool opaque);
+	void RenderModels(Vector3 & cameraPos,bool opaque);
 	// Render all opaque or alpha meshes within the model 
 	void RenderModel(shared_ptr<DirectX::Model> model, XMMATRIX world,bool opaque);
 	void RenderCompositeModel(shared_ptr<CompositeModel> model, Vector3 & position, Vector3 & rotation, bool backfaceCulling);

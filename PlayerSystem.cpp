@@ -41,7 +41,8 @@ namespace world {
 
 
 			//SimpleMath::Vector2 delta = SimpleMath::Vector2(float(mouseState.x), float(mouseState.y));
-			static const float MOUSE_GAIN = 0.1f;
+			static const float X_MOUSE_GAIN = 10.f;
+			static const float Y_MOUSE_GAIN = 0.1f;
 			/*if (movement->AngularVelocity.y > 0) {
 				movement->AngularVelocity.y -= 0.5;
 			}*/
@@ -54,8 +55,9 @@ namespace world {
 			if (length != 0.f)
 				SM->GetSystem<GuiSystem>("Gui")->SetTextByID("Output1", to_string(length));
 
-			playerComp.CameraPitch -= AccumulatedMousePos.y * elapsed * MOUSE_GAIN;
-			position.Rot.y -= AccumulatedMousePos.x * elapsed * MOUSE_GAIN;
+			playerComp.CameraPitch -= AccumulatedMousePos.y * elapsed * Y_MOUSE_GAIN;
+			movement.AngularVelocity.y = (movement.AngularVelocity.y - AccumulatedMousePos.x * elapsed * X_MOUSE_GAIN) / 2.f;
+			//if (std::abs(movement.AngularVelocity.y) < 0.1f) movement.AngularVelocity.y = 0.f;
 			AccumulatedMousePos = Vector2::Zero;
 			//Game::Get().MousePos = Vector2::Zero;
 

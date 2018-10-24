@@ -12,6 +12,7 @@ namespace world {
 		Box BoundingBox;
 		bool Enabled;
 		int Colliding;
+		std::vector<Vector3> CollisionNormals;
 		// Inherited via Component
 		//virtual void Import(std::istream & ifs) override;
 		//virtual void Export(std::ostream & ofs) override;

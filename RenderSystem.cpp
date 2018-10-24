@@ -122,14 +122,14 @@ void RenderSystem::Render()
 	//	//}
 	//	
 	//}
-
-	UpdateVisibleRegions();
+	world::Position & position = EM->GetEntity<world::Position>(EM->PlayerID()).Get<world::Position>();
+	UpdateVisibleRegions(position);
 	m_mutex.lock();
 	
 	// Draw opaque model mesh parts
-	RenderModels(true);
+	RenderModels(position.Pos,true);
 	// Draw alpha model mesh parts
-	RenderModels(false);
+	RenderModels(position.Pos,false);
 	//for (auto & regionCache : m_modelInstances) {
 	//	if (IsRegionVisible(regionCache.first, position.Pos, position.Rot,m_frustum)) {
 	//		for (auto & instanceCache : regionCache.second) {
@@ -470,13 +470,12 @@ void RenderSystem::TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<w
 	}
 }
 
-void RenderSystem::UpdateVisibleRegions()
+void RenderSystem::UpdateVisibleRegions(world::Position & cameraPos)
 {
 	m_visibleRegions.clear();
 	int culledRegionCount = 0;
-	world::Position & position = EM->GetEntity<world::Position>(EM->PlayerID()).Get<world::Position>();
 	for (auto & regionCache : m_modelInstances) {
-		if (IsRegionVisible(regionCache.first, position.Pos, position.Rot, m_frustum)) {
+		if (IsRegionVisible(regionCache.first, cameraPos.Pos, cameraPos.Rot, m_frustum)) {
 			m_visibleRegions.insert(regionCache.first);
 		}
 		else {
@@ -520,7 +519,7 @@ bool RenderSystem::IsRegionVisible(shared_ptr<world::WEM::RegionType> region, Ve
 	}
 }
 
-void RenderSystem::RenderModels(bool opaque)
+void RenderSystem::RenderModels(Vector3 & cameraPos,bool opaque)
 {
 	for (auto & visibleRegion : m_visibleRegions) {
 		auto & regionCache = m_modelInstances[visibleRegion];
@@ -535,7 +534,7 @@ void RenderSystem::RenderModels(bool opaque)
 						world::EntityInfo * info;
 
 
-						XMMATRIX translation = XMMatrixTranslation(position.Pos.x, position.Pos.y, position.Pos.z);
+						XMMATRIX translation = XMMatrixTranslationFromVector(position.Pos);
 						XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
 						world = XMMatrixMultiply(rotMat, translation);
 					}
@@ -545,22 +544,25 @@ void RenderSystem::RenderModels(bool opaque)
 					if ((signature & EM->GetMask<world::Collision>()) == EM->GetMask<world::Collision>()) {
 						auto entity = EM->GetEntity<world::Position,world::Collision>(job.entity);
 						auto & position = entity.Get<world::Position>();
-						auto & collision = entity.Get<world::Collision>();
-						auto box = DirectX::GeometricPrimitive::CreateBox(m_d3dContext.Get(), collision.BoundingBox.Size);
-						XMMATRIX translation = XMMatrixTranslation(
-							position.Pos.x + collision.BoundingBox.Position.x, 
-							position.Pos.y + collision.BoundingBox.Position.y, 
-							position.Pos.z + collision.BoundingBox.Position.z
-						);
-						XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
-						XMMATRIX collisionWorld = XMMatrixMultiply(rotMat, translation);
-						auto color = Colors::White;
-						switch (collision.Colliding) {
-						case 1: color = Colors::Red; break;
-						case 2: color = Colors::Orange; break;
-						case 3: color = Colors::Green; break;
+						if (Vector3::DistanceSquared(position.Pos, cameraPos) < 100) {
+							auto & collision = entity.Get<world::Collision>();
+							auto box = DirectX::GeometricPrimitive::CreateBox(m_d3dContext.Get(), collision.BoundingBox.Size);
+							XMMATRIX translation = XMMatrixTranslation(
+								position.Pos.x,
+								position.Pos.y,
+								position.Pos.z
+							);
+							XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
+							XMMATRIX collisionWorld = XMMatrixMultiply(rotMat, translation);
+							collisionWorld = XMMatrixMultiply(XMMatrixTranslationFromVector(collision.BoundingBox.Position), collisionWorld);
+							auto color = Colors::White;
+							switch (collision.Colliding) {
+							case 1: color = Colors::Red; break;
+							case 2: color = Colors::Orange; break;
+							case 3: color = Colors::Green; break;
+							}
+							box->Draw(collisionWorld, m_viewMatrix, m_projMatrix, color, nullptr, true);
 						}
-						box->Draw(collisionWorld, m_viewMatrix, m_projMatrix, color,nullptr, true);
 					}
 				}
 			}

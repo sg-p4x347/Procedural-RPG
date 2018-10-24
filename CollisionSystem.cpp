@@ -55,6 +55,7 @@ namespace world {
 		for (auto & entity : m_dynamic) {
 			auto & collision = entity.Get<Collision>();
 			collision.Colliding = 0;
+			
 			if (collision.Enabled) {
 				auto & position = entity.Get<Position>();
 				// Bound X and Z to the world area
@@ -69,72 +70,94 @@ namespace world {
 
 				float terrainHeight = terrainSystem->Height(bottomCenter.x, bottomCenter.z);
 
-				// Pop the y back to the terrain
+				
 				auto & movement = entity.Get<Movement>();
-				if (terrainHeight > bottomCenter.y) {
-					if (std::abs(movement.Velocity.y) > 5.f) {
-						IEventManager::Invoke(EventTypes::Sound_PlayEffect, string("Hit0"));
+				if (movement.Velocity.LengthSquared() > 0.f) {
+					collision.CollisionNormals.clear();
+					// Pop the y back to the terrain
+					if (terrainHeight > bottomCenter.y) {
+						if (std::abs(movement.Velocity.y) > 5.f) {
+							IEventManager::Invoke(EventTypes::Sound_PlayEffect, string("Hit0"));
+						}
+						// small fudge factor to keep in contact with the ground
+						position.Pos.y = -0.01f + terrainHeight + (collision.BoundingBox.Size.y * 0.5f - collision.BoundingBox.Position.y);
+
+						movement.Velocity.y = 0.f;
+						collision.CollisionNormals.push_back(Vector3::Up);
 					}
-					position.Pos.y = terrainHeight + (collision.BoundingBox.Size.y * 0.5f - collision.BoundingBox.Position.y);
-
-					movement.Velocity.y = 0.f;
-
-				}
 				
 				
-				//----------------------------------------------------------------
-				// Dynamic vs Static
-				Vector3 futurePos = position.Pos + movement.Velocity * elapsed;
-				Matrix world = Matrix::CreateFromYawPitchRoll(position.Rot.y, position.Rot.x, position.Rot.z) * Matrix::CreateTranslation(futurePos);
-				auto hullA = BoxVertices(collision.BoundingBox, world);
-				float radius = collision.BoundingBox.Size.Length() * 0.5f;
+					//----------------------------------------------------------------
+					// Dynamic vs Static
 				
-				for (auto & other : m_static) {
-					auto & otherPos = other.Get<Position>();
-					auto & otherCollision = other.Get<Collision>();
-					auto otherWorld = Matrix::CreateFromYawPitchRoll(otherPos.Rot.y, otherPos.Rot.x, otherPos.Rot.z) * Matrix::CreateTranslation(otherPos.Pos);
-					otherCollision.Colliding = 0;
-					float otherRadius = otherCollision.BoundingBox.Size.Length() * 0.5f;
-					// Radial broad phase check
-					if (((position.Pos + collision.BoundingBox.Position) - (otherPos.Pos + otherCollision.BoundingBox.Position)).Length() <= radius + otherRadius) {
-						auto hullB = BoxVertices(otherCollision.BoundingBox, otherWorld);
-						CollisionUtil::GjkIntersection intersection;
-						if (CollisionUtil::GJK(hullA, hullB, intersection)) {
-							collision.Colliding = 1;
-							otherCollision.Colliding = 1;
+					
+					Vector3 futurePos = position.Pos + movement.Velocity * elapsed;
+					Matrix rotationMatrix = Matrix::CreateFromYawPitchRoll(position.Rot.y, position.Rot.x, position.Rot.z);
+					Matrix boxTranslation = Matrix::CreateTranslation(collision.BoundingBox.Position);
+					Matrix world = boxTranslation * (rotationMatrix * Matrix::CreateTranslation(futurePos));
+					auto hullA = BoxVertices(collision.BoundingBox, world);
+					float radius = collision.BoundingBox.Size.Length() * 0.5f;
 
-							// determine the seperating axis from the current position
-							world = Matrix::CreateFromYawPitchRoll(position.Rot.y, position.Rot.x, position.Rot.z) * Matrix::CreateTranslation(position.Pos);
-							hullA = BoxVertices(collision.BoundingBox, world);							
+					for (auto & other : m_static) {
+						auto & otherPos = other.Get<Position>();
+						auto & otherCollision = other.Get<Collision>();
+						auto otherRotationMatrix = Matrix::CreateFromYawPitchRoll(otherPos.Rot.y, otherPos.Rot.x, otherPos.Rot.z);
+						auto otherWorld = Matrix::CreateTranslation(otherCollision.BoundingBox.Position) * (otherRotationMatrix * Matrix::CreateTranslation(otherPos.Pos));
+						otherCollision.Colliding = 0;
+						float otherRadius = otherCollision.BoundingBox.Size.Length() * 0.5f;
+						// Radial broad phase check
+						if (((position.Pos + collision.BoundingBox.Position) - (otherPos.Pos + otherCollision.BoundingBox.Position)).Length() <= radius + otherRadius) {
+							auto hullB = BoxVertices(otherCollision.BoundingBox, otherWorld);
+							CollisionUtil::GjkIntersection intersection;
 							CollisionUtil::SatResult satResult;
-							vector<Vector3> axes = CollisionUtil::GenerateSatAxes(world, otherWorld);
-							
-							if (!CollisionUtil::SatIntersection(hullA, hullB, axes, satResult)) {
-								movement.Velocity = satResult.Axis;
+
+							/*if (CollisionUtil::SatIntersection(hullA, hullB, axes, satResult)) {
+								collision.Colliding = 1;
+								otherCollision.Colliding = 1;
+							}*/
+							vector<Vector3> axes = CollisionUtil::GenerateSatAxes(rotationMatrix, otherRotationMatrix);
+							if (CollisionUtil::SatIntersection(hullA, hullB, axes, satResult)) {
+								//if (CollisionUtil::GJK(hullA, hullB, intersection)) {
+								collision.Colliding = 1;
+								otherCollision.Colliding = 1;
+
+								// determine the seperating axis from the current position
+								rotationMatrix = Matrix::CreateFromYawPitchRoll(position.Rot.y, position.Rot.x, position.Rot.z);
+								world = boxTranslation * (rotationMatrix * Matrix::CreateTranslation(position.Pos));
+
+								hullA = BoxVertices(collision.BoundingBox, world);
+								CollisionUtil::SatResult satResult;
+
+
+								if (!CollisionUtil::SatIntersection(hullA, hullB, axes, satResult)) {
+									collision.CollisionNormals.push_back(satResult.Axis);
+									movement.Velocity -= satResult.Axis * satResult.Axis.Dot(movement.Velocity);
+								}
+								break;
 							}
-							break;
+							else {
+								// culled by gjk
+								collision.Colliding = std::min(2, collision.Colliding);
+								otherCollision.Colliding = 2;
+							}
 						}
 						else {
-							// culled by gjk
-							collision.Colliding = std::min(2, collision.Colliding);
-							otherCollision.Colliding = 2;
+							// culled by broad phase
+							collision.Colliding = std::min(3, collision.Colliding);
+							otherCollision.Colliding = 3;
 						}
 					}
-					else {
-						// culled by broad phase
-						collision.Colliding = std::min(3, collision.Colliding);
-						otherCollision.Colliding = 3;
-					}
 				}
-
 				if (entity.GetSignature() == EM->PlayerSignature()) {
-					// Jump if close to the ground
-					bottomCenter =
-						position.Pos +
-						collision.BoundingBox.Position;
-					bottomCenter.y -= collision.BoundingBox.Size.y * 0.5;
-					if (std::abs(terrainHeight - bottomCenter.y) <= 0.1f && Game::Get().KeyboardTracker.IsKeyPressed(DirectX::Keyboard::Keys::Space)) {
-						movement.Velocity.y += 5.f;
+					// Jump if there is a collision normal facing up-ish to push off of
+					
+					if (Game::Get().KeyboardTracker.IsKeyPressed(DirectX::Keyboard::Keys::Space)) {
+						for (auto & normal : collision.CollisionNormals) {
+							if (std::abs(normal.Dot(Vector3::Up)) >= 0.5f) {
+								movement.Velocity.y += 5.f;
+								break;
+							}
+						}
 					}
 				}
 			}
@@ -158,9 +181,9 @@ namespace world {
 			for (float y = 0.f; y <= box.Size.y; y += box.Size.y) {
 				for (float z = 0.f; z <= box.Size.z; z += box.Size.z) {
 					Vector3 & vertex = vertices[vertexIndex];
-					vertex.x = box.Position.x - box.Size.x * 0.5 + x;
-					vertex.y = box.Position.y - box.Size.y * 0.5 + y;
-					vertex.z = box.Position.z - box.Size.z * 0.5 + z;
+					vertex.x = -box.Size.x * 0.5 + x;
+					vertex.y = -box.Size.y * 0.5 + y;
+					vertex.z = -box.Size.z * 0.5 + z;
 
 					vertex = Vector3::Transform(vertex,transform);
 

@@ -77,8 +77,8 @@ namespace world {
 					probability *= TreeElevationProbability(terrain.Height(x, z));
 					//probability = std::round(probability);
 					if (probability > 0.0001f && Utility::Chance(probability)) {
-						Vector3 pos(x, terrain.Height(x, z), z);
-						Vector3 rot(0.f, Utility::randWithin(0.f, XM_2PI), 0.f);
+						Vector3 pos(x, terrain.Height(x, z)- 0.2f, z);
+						Vector3 rot(Utility::randWithin(-0.05f, 0.05f), Utility::randWithin(0.f, XM_2PI), Utility::randWithin(-0.05f, 0.05f));
 						NewTree(pos, rot);
 					}
 				}
@@ -91,7 +91,7 @@ namespace world {
 		EntityPtr treeAsset;
 		if (AssetManager::Get()->GetProceduralEM()->TryFindByPathID("tree", treeAsset)) {
 			EM->CreateEntity(
-				Position(position),
+				Position(position,rotation),
 				Model(treeAsset->ID(), AssetType::Procedural),
 				Collision(Box(Vector3(0.f,2.5f,0.f),Vector3(0.25f,5.f,0.25f)))
 			);

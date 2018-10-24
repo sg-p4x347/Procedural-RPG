@@ -41,12 +41,12 @@ namespace world {
 		for (auto & entity : m_entities) {
 			auto & position = entity.Get<Position>();
 			auto & movement = entity.Get<Movement>();
-			movement.Velocity += movement.Acceleration * elapsed;
+			
 
 			MovementTracker tracker(EM->GetRegionWidth());
 			tracker.Update(position.Pos);
 			position.Pos += movement.Velocity * elapsed;
-			
+			movement.Velocity += movement.Acceleration * elapsed;
 			if (tracker.Update(position.Pos)) {
 				// region boundary crossed
 				regionChanges.push_back(std::make_pair(entity.GetID(), position.Pos));

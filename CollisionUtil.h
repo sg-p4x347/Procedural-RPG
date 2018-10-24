@@ -50,8 +50,8 @@ namespace CollisionUtil {
 	}
 	bool NearestSimplex(GjkIntersection & result) {
 		if (result.Simplex.Size == 2) {
-			Vector3 & a = result.Simplex.B;
-			Vector3 & b = result.Simplex.A;
+			Vector3 & a = result.Simplex.A;
+			Vector3 & b = result.Simplex.B;
 			Vector3 ab = b - a;
 			result.Direction = ab.Cross(-a).Cross(ab);
 			
@@ -65,20 +65,26 @@ namespace CollisionUtil {
 			Vector3 ac = c - a;
 			Vector3 abc = ab.Cross(ac);
 
-			Vector3 acNorm = abc.Cross(ac);
-			Vector3 abNorm = ab.Cross(abc);
-
-			if (acNorm.Dot(ao) > 0) {
-				result.Simplex.Set(a,c);
+			if (abc.Cross(ac).Dot(ao) > 0) {
+				result.Simplex.Set(c,a);
 				result.Direction = ac.Cross(ao).Cross(ac);
-			} else if (abNorm.Dot(ao) > 0) {
-				result.Simplex.Set(a,b);
+			} else if (ab.Cross(abc).Dot(ao) > 0) {
+				result.Simplex.Set(b,a);
 				result.Direction = ab.Cross(ao).Cross(ab);
-			} else if (abc.Dot(ao) > 0) {
-				result.Direction = abc;
-			} else {
-				result.Simplex.Set(a,c,b);
-				result.Direction = -abc;
+			}
+			else {
+				float v = abc.Dot(ao);
+				
+				if(v > 0.f) {
+					result.Direction = abc;
+				}
+				else if (v < 0.f) {
+					result.Simplex.Set(c,a, b);
+					result.Direction = -abc;
+				}
+				else {
+					return true;
+				}
 			}
 		}
 		else  {
@@ -120,18 +126,17 @@ namespace CollisionUtil {
 			const Vector3 abc = ab.Cross(ac);
 
 			if (ab.Cross(abc).Dot(ao) > 0) {
-				result.Simplex.Set(a, b);
+				result.Simplex.Set(b,a);
 				result.Direction = ab.Cross(ao).Cross(ab);
 				return false;
 			}
 
 			if (abc.Cross(ac).Dot(ao) > 0) {
-				result.Simplex.Set(a, c);
+				result.Simplex.Set(c,a);
 				result.Direction = ac.Cross(ao).Cross(ac);
 				return false;
 			}
-
-			result.Simplex.Set(a, b, c);
+			result.Simplex.Set(c,a,b);
 			result.Direction = abc;
 			return false;
 			//if (abc.Dot(ao) > 0) {
@@ -182,7 +187,7 @@ namespace CollisionUtil {
 		result.Simplex.Set(a);
 		result.Direction = -a;
 		
-		for (int i = 0; i < 100;i++) {
+		for (int i = 0; i < 20;i++) {
 			a = HullSupport(hullA, result.Direction) - HullSupport(hullB, -result.Direction);
 			if (a.Dot(result.Direction) < 0) {
 				return false;
@@ -205,14 +210,13 @@ namespace CollisionUtil {
 
 		}
 		bool Overlaps(SatProjection & projection) {
-			return projection.Max > Min || Max > projection.Min;
+			return projection.Max > Min && Max > projection.Min;
 		}
 		float Min;
 		float Max;
 	};
 	
 	SatProjection Project(Vector3 & axis, std::vector<Vector3> & hull) {
-		axis.Normalize();
 		SatProjection projection;
 		for (auto & vertex : hull) {
 			float dot = vertex.Dot(axis);
@@ -236,10 +240,15 @@ namespace CollisionUtil {
 		axes.push_back(Vector3::Transform(Vector3::Forward, transformB));
 		axes.push_back(Vector3::Transform(Vector3::Right, transformB));
 
-		for (int a = 0; a < 3; a) {
+		for (int a = 0; a < 3; a++) {
 			for (int b = 3; b < 6; b++) {
-				axes.push_back(axes[a].Cross(axes[b]));
+				Vector3 cross = axes[a].Cross(axes[b]);
+				if (cross.LengthSquared() > 0)
+					axes.push_back(cross);
 			}
+		}
+		for (auto & axis : axes) {
+			axis.Normalize();
 		}
 		return axes;
 	}
