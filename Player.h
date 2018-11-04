@@ -11,7 +11,8 @@ namespace world {
 			Spectator
 		};
 		enum InteractionStates {
-			World,
+			FirstPerson,
+			ThirdPerson,
 			InventoryUI,
 			ContainerUI,
 			GamePausedUI

@@ -1,6 +1,6 @@
 {
     // In meters (must be power Of two)
-    "width": 256,
+    "width": 2048,
     // In meters (must be power Of two)
     "regionWidth": 64,
     // In meters

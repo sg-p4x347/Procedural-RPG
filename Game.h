@@ -51,7 +51,7 @@ private:
 	//----------------------------------------------------------------
 	// World
 	unique_ptr<world::World> m_world;
-    void Update(DX::StepTimer const& timer);
+    void Update(double elapsed);
 
 	//----------------------------------------------------------------
 	// Input

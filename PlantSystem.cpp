@@ -27,7 +27,7 @@ namespace world {
 		GenerateTreeModels();
 		auto terrainSystem = SM->GetSystem<TerrainSystem>("Terrain");
 		GenerateTreeEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
-		//GenerateGrassEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
+		GenerateGrassEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
 	}
 
 	void PlantSystem::GenerateTreeModels()
@@ -132,15 +132,17 @@ namespace world {
 	void PlantSystem::GenerateGrassEntities(HeightMap & terrain, Map<WaterCell> & water)
 	{
 		Utility::OutputLine("\nGenerating Grass...");
-		static const float density = 0.1f;
+		static const float density = 0.5f;
 		for (int x = 0; x <= terrain.width; x++) {
 			for (int z = 0; z <= terrain.length; z++) {
 				if (water.map[x][z].Water == 0.f) {
-
-					float probability = density * TreeElevationProbability(terrain.Height(x, z));
+					float height = terrain.Height(x, z);
+					float probability = density;
+					probability *= TreeGradientProbability(terrain.GradientAngle(x, z));
+					probability *= TreeElevationProbability(height);
 					//probability = std::round(probability);
 					if (probability > 0.0001f && Utility::Chance(probability)) {
-						Vector3 pos(x, terrain.Height(x, z), z);
+						Vector3 pos(x + Utility::randWithin(-0.5f,0.5f), height - Utility::randWithin(0.f, 0.5f), z + Utility::randWithin(-0.5f, 0.5f));
 						Vector3 rot(0.f, Utility::randWithin(0.f, XM_2PI), 0.f);
 						NewGrass(pos, rot);
 					}
@@ -152,12 +154,12 @@ namespace world {
 
 	void PlantSystem::NewGrass(DirectX::SimpleMath::Vector3 & position, Vector3 & rotation)
 	{
-		/*EntityPtr entity = EM->NewEntity();
-
-		entity->AddComponent(
-			new Components::Position(position, rotation));
-		entity->AddComponent(
-			new Components::Model("Grass", AssetType::Authored));*/
-
+		EntityPtr grassAsset;
+		if (AssetManager::Get()->GetStaticEM()->TryFindByPathID("Grass", grassAsset)) {
+			EM->CreateEntity(
+				Position(position, rotation),
+				Model(grassAsset->ID(), AssetType::Authored)
+			);
+		}
 	}
 }

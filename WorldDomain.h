@@ -11,8 +11,8 @@
 #include "Position.h"
 #include "Terrain.h"
 #include "Water.h"
-
+#include "Global.h"
 #include "WorldEntityManager.h"
 namespace world {
-	typedef WorldEntityManager<Position, Movement, Player, Action, Building, Collision, Inventory, Model, Terrain,Water> WEM;
+	typedef WorldEntityManager<Position, Movement, Player, Action, Building, Collision, Model, Terrain,Water,Global> WEM;
 }

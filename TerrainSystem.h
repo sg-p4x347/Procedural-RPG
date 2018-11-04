@@ -33,7 +33,7 @@ namespace world {
 		virtual void SyncEntities() override;
 		//----------------------------------------------------------------
 		// Public interface
-		void Generate();
+		void Generate(std::function<void(float,std::string)> && progressCallback);
 		string GetBiomeName(float sample);
 		float Height(const int & x, const int & z);
 		float Height(float & x, float & z);
@@ -99,8 +99,8 @@ namespace world {
 		shared_ptr<Map<ThermalCell>> InitializeThermalErosionMap();
 		shared_ptr<vector<Droplet>> InitializeDroplets();
 
-		void UpdateDroplets(HeightMap & terrain, shared_ptr<vector<Droplet>> droplets, shared_ptr<Map<ThermalCell>> thermal);
-		void UpdateWater(HeightMap & terrain, Map<WaterCell> & water);
+		void UpdateDroplets(HeightMap & terrain, shared_ptr<vector<Droplet>> droplets, shared_ptr<Map<ThermalCell>> thermal, std::function<void(float)> && progressCallback);
+		void UpdateWater(HeightMap & terrain, Map<WaterCell> & water, std::function<void(float)> && progressCallback);
 		//----------------------------------------------------------------
 		// Updating meshes
 		//void UpdateRegions(DirectX::SimpleMath::Vector3 center);

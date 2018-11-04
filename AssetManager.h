@@ -99,6 +99,7 @@ private:
 	// Textures
 	map<string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> m_textures;
 	map<string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> m_WicTextures;
+	
 	//----------------------------------------------------------------
 	// Models
 	std::shared_ptr<Model> GetModel(EntityPtr entity, float distance, Vector3 position, AssetType type);

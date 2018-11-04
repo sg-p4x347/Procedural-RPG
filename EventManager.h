@@ -30,7 +30,9 @@ enum EventTypes {
 	Player_SetInteractionState,
 	Player_OpenInventory,
 
-	Movement_PlayerMoved
+	Movement_PlayerMoved,
+
+	Render_Synced
 };
 template <typename KeyType, typename ... Signature>
 class EventManager

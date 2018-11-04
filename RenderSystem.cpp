@@ -26,12 +26,15 @@ EM(nullptr),
 SM(systemManager),
 m_fov(XMConvertToRadians(70.f)),
 m_clipNear(0.01f),
-m_clipFar(8000.f)
+m_clipFar(8000.f),
+m_ready(false)
+
 {
 	
 	m_window = window;
 	m_worldMatrix = Matrix::Identity;
 
+	
 	CreateDevice();
 	
 	SetViewport(width, height);
@@ -55,12 +58,9 @@ RenderSystem::~RenderSystem()
 
 void RenderSystem::Update(double & elapsed)
 {
-	//https://stackoverflow.com/questions/17655442/how-can-i-repeat-my-texture-in-dx
-
-	if (EM) GetViewMatrix();
 	// Clear the screen
 	Clear();
-	// Render all Vertex Buffer Objects
+
 	SetStates();
 	if (EM) Render();
 	
@@ -122,14 +122,66 @@ void RenderSystem::Render()
 	//	//}
 	//	
 	//}
-	world::Position & position = EM->GetEntity<world::Position>(EM->PlayerID()).Get<world::Position>();
-	UpdateVisibleRegions(position);
-	m_mutex.lock();
 	
-	// Draw opaque model mesh parts
-	RenderModels(position.Pos,true);
-	// Draw alpha model mesh parts
-	RenderModels(position.Pos,false);
+	world::MaskType mask = EM->GetMask<world::Position, world::Player>();
+	TaskManager::Get().RunSynchronous(Task([=] {
+		auto player = EM->GetEntity<world::Position, world::Player>(EM->PlayerID());
+		world::Position & position = player->Get<world::Position>();
+		world::Player & playerComp = player->Get<world::Player>();
+		float y = sinf(playerComp.CameraPitch);
+		float r = cosf(playerComp.CameraPitch);
+		float z = r * cosf(position.Rot.y);
+		float x = r * sinf(position.Rot.y);
+
+		Vector3 cameraPos;
+		Vector3 cameraRot = Vector3(position.Rot.y, 0.f, playerComp.CameraPitch);
+		Vector3 lookAt;
+
+		switch (playerComp.InteractionState) {
+		case world::Player::InteractionStates::FirstPerson:
+			cameraPos = position.Pos + Vector3(0.f, 1.7f, 0.f);
+			lookAt = cameraPos + SimpleMath::Vector3(x, y, z);
+			break;
+		case world::Player::InteractionStates::ThirdPerson:
+			lookAt = position.Pos + Vector3(0.f, 1.7f, 0.f);
+			cameraPos = lookAt - Vector3(x, y, z) * 3.f;
+			break;
+		}
+		//Vector3 lookAt = position.Pos + Vector3(0.f,1.7f,0.f); // third person
+		// XMMATRIX view = XMMatrixLookAtRH(position.Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f)); // first person
+		//XMVECTOR cameraPos = lookAt - Vector3(x, y, z) * 3.f; // third person
+
+		XMMATRIX view = XMMatrixLookAtRH(cameraPos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
+		m_viewMatrix = view;
+		XMMATRIX ProjectionMatrixLH = XMMatrixPerspectiveFovLH(m_fov, m_aspectRatio, m_clipNear, m_clipFar);
+		XMMATRIX ViewMatrixLH = XMMatrixLookAtLH(cameraPos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
+		XMVECTOR Determinant;
+		XMMATRIX InvViewMatrixLH = XMMatrixInverse(&Determinant, ViewMatrixLH);
+		m_frustum = BoundingFrustum();
+		m_frustum.CreateFromMatrix(m_frustum, ProjectionMatrixLH);
+		m_frustum.Transform(m_frustum, InvViewMatrixLH);
+	
+		UpdateVisibleRegions(cameraPos, cameraRot);
+		m_mutex.lock();
+	
+		
+		// Draw opaque terrain mesh parts
+		RenderModels(position.Pos,m_terrainEntities->GetComponentMask(), true);
+		// Draw alpha terrain mesh parts
+		RenderModels(position.Pos, m_terrainEntities->GetComponentMask(), false);
+		//----------------------------------------------------------------
+		// Render the ocean
+		RenderModel(m_oceanModel, XMMatrixMultiply(XMMatrixTranslationFromVector(Vector3(0.f, 0.05f, 0.f)), m_worldMatrix), false);
+		// Draw opaque mesh parts
+		RenderModels(position.Pos, EM->GetMask<world::Position,world::Model>(), true);
+		// Draw alpha mesh parts
+		RenderModels(position.Pos, EM->GetMask<world::Position, world::Model>(), false);
+
+
+		m_mutex.unlock();
+
+		
+	}, mask, mask));
 	//for (auto & regionCache : m_modelInstances) {
 	//	if (IsRegionVisible(regionCache.first, position.Pos, position.Rot,m_frustum)) {
 	//		for (auto & instanceCache : regionCache.second) {
@@ -141,7 +193,7 @@ void RenderSystem::Render()
 	//		}
 	//	}
 	//}
-	m_mutex.unlock();
+	
 	/*for (auto & instances : m_modelInstances) {
 		shared_ptr<Model> dxModel = instances.first;
 		for (auto & job : instances.second) {
@@ -226,15 +278,11 @@ void RenderSystem::SyncEntities()
  			ModelInstanceCache modelInstancesTemp;
 			std::set<world::EntityID> trackedTemp;
 			// terrain
-			auto terrainEntities = EM->NewEntityCache<world::Terrain, world::Model, world::Position>();
-			Utility::OutputLine("Render Entity Sync begin");
-			EM->UpdateGlobalCache(terrainEntities);
-			Utility::OutputLine("Render Entity Sync end");
-			for (auto & regionCache : terrainEntities.GetCaches()) {
+			for (auto & regionCache : m_terrainEntities->GetCaches()) {
 			
 				for (auto & terrainEntity : regionCache.second) {
 					auto modelEntity = EM->GetEntity<world::Model, world::Position>(terrainEntity.GetID());
-					TrackEntity(modelInstancesTemp,regionCache.first, trackedTemp, modelEntity, camera, true);
+					TrackEntity(modelInstancesTemp,regionCache.first, trackedTemp, m_terrainEntities->GetComponentMask(), *modelEntity, camera, true);
 				}
 			}
 			// models
@@ -244,7 +292,7 @@ void RenderSystem::SyncEntities()
 			});
 			for (auto & regionCache : modelEntities.GetCaches()) {
 				for (auto & modelEntity : regionCache.second) {
-					TrackEntity(modelInstancesTemp, regionCache.first,trackedTemp, modelEntity.GetProxy(), camera, true);
+					TrackEntity(modelInstancesTemp, regionCache.first,trackedTemp, modelEntities.GetComponentMask(),modelEntity.GetProxy(), camera);
 				}
 			}
 			m_mutex.lock();
@@ -252,6 +300,8 @@ void RenderSystem::SyncEntities()
 			std::swap(trackedTemp, m_tracked);
 			m_mutex.unlock();
 			m_syncMutex.unlock();
+			if (!m_ready) IEventManager::Invoke(EventTypes::Render_Synced);
+			m_ready = true;
 		},
 			accessMask,
 			accessMask));
@@ -306,9 +356,17 @@ Rectangle RenderSystem::GetViewport()
 
 void RenderSystem::InitializeWorldRendering(world::WEM * entityManager)
 {
-	EM = entityManager;
-	if (EM) {
+	
+	if (entityManager) {
+		m_oceanModel = AssetManager::Get()->GetModel("ocean");
 		RegisterHandlers();
+		m_terrainEntities = std::unique_ptr<world::WorldEntityCache<world::WEM::RegionType, world::Terrain, world::Model, world::Position>>(
+			new world::WorldEntityCache<world::WEM::RegionType, world::Terrain, world::Model, world::Position>(entityManager->NewEntityCache<world::Terrain, world::Model, world::Position>()));
+		entityManager->UpdateGlobalCache(*m_terrainEntities);
+		EM = entityManager;
+	}
+	else {
+		m_ready = false;
 	}
 }
 
@@ -429,7 +487,7 @@ shared_ptr<SpriteFont> RenderSystem::GetFont(string path,int size)
 
 void RenderSystem::DrawText(string text,string font, Vector2 position,int size, SimpleMath::Color color,float layer)
 {
-	auto spriteFont = GetFont(font, size);
+	auto spriteFont = GetFont(font != "" ? font : "Impact", size != 0 ? size : 16);
 	if (spriteFont) {
 		spriteFont->DrawString(m_spriteBatch.get(), ansi2unicode(text).c_str(), position, color,0.f,Vector2::Zero,Vector2::One,DirectX::SpriteEffects::SpriteEffects_None,layer);
 	}
@@ -440,13 +498,13 @@ void RenderSystem::SpriteBatchEnd()
 	m_spriteBatch->End();
 }
 
-void RenderSystem::TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<world::WEM::RegionType> region, std::set<world::EntityID> & tracked, world::WorldEntityProxy<world::Model, world::Position> & entity, Vector3 camera,bool ignoreVerticalDistance)
+void RenderSystem::TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<world::WEM::RegionType> region, std::set<world::EntityID> & tracked, world::MaskType signature, world::WorldEntityProxy<world::Model, world::Position> & entity, Vector3 camera,bool ignoreVerticalDistance)
 {
 	world::EntityID id = entity.GetID();
 	if (tracked.count(id) == 0) {
 		auto it = modelInstances.find(region);
 		if (it == modelInstances.end()) {
-			it = modelInstances.insert(it, std::make_pair(region, std::map<shared_ptr<DirectX::Model>, vector<RenderEntityJob>>()));
+			it = modelInstances.insert(it, std::make_pair(region, std::map<world::MaskType, vector<RenderEntityJob>>()));
 		}
 		auto & map = it->second;
 		auto & position = entity.Get<world::Position>();
@@ -459,23 +517,23 @@ void RenderSystem::TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<w
 			distance = Vector3::Distance(camera, position.Pos);
 		}
 		shared_ptr<Model> model = AssetManager::Get()->GetModel(modelComp.Asset, distance, position.Pos, modelComp.Type);
-		if (map.find(model) == map.end()) {
-			map.insert(std::make_pair(model, vector<RenderEntityJob>()));
+		if (map.find(signature) == map.end()) {
+			map.insert(std::make_pair(signature, vector<RenderEntityJob>()));
 		}
 		XMMATRIX translation = XMMatrixTranslation(position.Pos.x, position.Pos.y, position.Pos.z);
 		XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
 		XMMATRIX world = XMMatrixMultiply(rotMat, translation);
-		map[model].push_back(RenderEntityJob { id,world });
+		map[signature].push_back(RenderEntityJob { id,model,position.Pos,world });
 		tracked.insert(id);
 	}
 }
 
-void RenderSystem::UpdateVisibleRegions(world::Position & cameraPos)
+void RenderSystem::UpdateVisibleRegions(Vector3 & cameraPosition, Vector3 & cameraRotation)
 {
 	m_visibleRegions.clear();
 	int culledRegionCount = 0;
 	for (auto & regionCache : m_modelInstances) {
-		if (IsRegionVisible(regionCache.first, cameraPos.Pos, cameraPos.Rot, m_frustum)) {
+		if (IsRegionVisible(regionCache.first, cameraPosition, cameraRotation, m_frustum)) {
 			m_visibleRegions.insert(regionCache.first);
 		}
 		else {
@@ -503,7 +561,7 @@ bool RenderSystem::IsRectVisible(Rectangle & area, Vector2 & observerPos, Vector
 
 bool RenderSystem::IsRegionVisible(shared_ptr<world::WEM::RegionType> region, Vector3 & position, Vector3 & rotation, BoundingFrustum & frustum)
 {
-	if (std::abs(rotation.y) <= 0.2f) {
+	if (std::abs(rotation.z) <= 0.2f) {
 		// 2D optimization when observer is mostly looking horizontally
 		float halfFOV = m_fov * 0.5f;
 		Vector2 fovNorm1(sinf(rotation.x + halfFOV), cosf(rotation.x + halfFOV));
@@ -519,50 +577,53 @@ bool RenderSystem::IsRegionVisible(shared_ptr<world::WEM::RegionType> region, Ve
 	}
 }
 
-void RenderSystem::RenderModels(Vector3 & cameraPos,bool opaque)
+void RenderSystem::RenderModels(Vector3 & cameraPos, world::MaskType signatureMask,bool opaque)
 {
+	auto movementMask = EM->GetMask<world::Movement>();
 	for (auto & visibleRegion : m_visibleRegions) {
 		auto & regionCache = m_modelInstances[visibleRegion];
-		for (auto & instanceCache : regionCache) {
-			shared_ptr<Model> dxModel = instanceCache.first;
-			for (auto & job : instanceCache.second) {
-				if (m_tracked.count(job.entity) != 0) {
-					XMMATRIX & world = job.worldMatrix;
-					world::MaskType signature = EM->GetSignature(job.entity);
-					if ((signature & EM->GetMask<world::Movement>()) == EM->GetMask<world::Movement>()) {
-						auto & position = EM->GetEntity<world::Position>(job.entity).Get<world::Position>();
-						world::EntityInfo * info;
+		for (auto & sigCache : regionCache) {
+			world::MaskType signature = sigCache.first;
+			if (signature == signatureMask) {
+				for (auto & job : sigCache.second) {
+					shared_ptr<Model> dxModel = job.model;
+					if (m_tracked.count(job.entity) != 0) {
+						XMMATRIX & world = job.worldMatrix;
+						if ((EM->GetSignature(job.entity) & movementMask) == movementMask) {
+							auto & position = EM->GetEntity<world::Position>(job.entity)->Get<world::Position>();
+							world::EntityInfo * info;
 
 
-						XMMATRIX translation = XMMatrixTranslationFromVector(position.Pos);
-						XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
-						world = XMMatrixMultiply(rotMat, translation);
-					}
-
-					RenderModel(dxModel, world, opaque);
-					// collision box
-					if ((signature & EM->GetMask<world::Collision>()) == EM->GetMask<world::Collision>()) {
-						auto entity = EM->GetEntity<world::Position,world::Collision>(job.entity);
-						auto & position = entity.Get<world::Position>();
-						if (Vector3::DistanceSquared(position.Pos, cameraPos) < 100) {
-							auto & collision = entity.Get<world::Collision>();
-							auto box = DirectX::GeometricPrimitive::CreateBox(m_d3dContext.Get(), collision.BoundingBox.Size);
-							XMMATRIX translation = XMMatrixTranslation(
-								position.Pos.x,
-								position.Pos.y,
-								position.Pos.z
-							);
+							XMMATRIX translation = XMMatrixTranslationFromVector(position.Pos);
 							XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
-							XMMATRIX collisionWorld = XMMatrixMultiply(rotMat, translation);
-							collisionWorld = XMMatrixMultiply(XMMatrixTranslationFromVector(collision.BoundingBox.Position), collisionWorld);
-							auto color = Colors::White;
-							switch (collision.Colliding) {
-							case 1: color = Colors::Red; break;
-							case 2: color = Colors::Orange; break;
-							case 3: color = Colors::Green; break;
-							}
-							box->Draw(collisionWorld, m_viewMatrix, m_projMatrix, color, nullptr, true);
+							world = XMMatrixMultiply(rotMat, translation);
 						}
+
+						RenderModel(dxModel, world, opaque);
+						// collision box
+						/*if ((signature & EM->GetMask<world::Collision>()) == EM->GetMask<world::Collision>()) {
+							auto entity = EM->GetEntity<world::Position,world::Collision>(job.entity);
+							auto & position = entity.Get<world::Position>();
+							if (Vector3::DistanceSquared(position.Pos, cameraPos) < 100) {
+								auto & collision = entity.Get<world::Collision>();
+								auto box = DirectX::GeometricPrimitive::CreateBox(m_d3dContext.Get(), collision.BoundingBox.Size);
+								XMMATRIX translation = XMMatrixTranslation(
+									position.Pos.x,
+									position.Pos.y,
+									position.Pos.z
+								);
+								XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
+								XMMATRIX collisionWorld = XMMatrixMultiply(rotMat, translation);
+								collisionWorld = XMMatrixMultiply(XMMatrixTranslationFromVector(collision.BoundingBox.Position), collisionWorld);
+								auto color = Colors::White;
+								switch (collision.Colliding) {
+								case 1: color = Colors::Red; break;
+								case 2: color = Colors::Orange; break;
+								case 3: color = Colors::Green; break;
+								}
+								box->Draw(collisionWorld, m_viewMatrix, m_projMatrix, color, nullptr, true);
+							}
+						}*/
 					}
 				}
 			}
@@ -572,32 +633,36 @@ void RenderSystem::RenderModels(Vector3 & cameraPos,bool opaque)
 
 void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model,XMMATRIX world, bool opaque)
 {
-	if (opaque) {
+	//if (opaque) {
 		for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
 		{
 			auto mesh = it->get();
 			assert(mesh != 0);
 
-			mesh->PrepareForRendering(m_d3dContext.Get(), *m_states, false);
+			mesh->PrepareForRendering(m_d3dContext.Get(), *m_states, !opaque);
 
 			// Do model-level setCustomState work here
 
-			mesh->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix, false);
+			mesh->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix, !opaque, [=] {
+				if (!opaque) {
+					m_d3dContext->RSSetState(m_states->CullNone());
+				}
+			});
 		}
-	}
-	else {
-		for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
-		{
-			auto mesh = it->get();
-			assert(mesh != 0);
+	//}
+	//else {
+	//	for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
+	//	{
+	//		auto mesh = it->get();
+	//		assert(mesh != 0);
 
-			mesh->PrepareForRendering(m_d3dContext.Get(), *m_states, true);
+	//		mesh->PrepareForRendering(m_d3dContext.Get(), *m_states, true);
 
-			// Do model-level setCustomState work here
+	//		// Do model-level setCustomState work here
 
-			mesh->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix, true);
-		}
-	}
+	//		mesh->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix, true);
+	//	}
+	//}
 	//model->Draw(m_d3dContext.Get(), *m_states, world, m_viewMatrix, m_projMatrix);
 
 
@@ -1027,18 +1092,31 @@ void RenderSystem::OnDeviceLost()
 DirectX::XMMATRIX RenderSystem::GetViewMatrix()
 {
 	auto player = EM->GetEntity<world::Position, world::Player>(EM->PlayerID());
-	world::Position & position = player.Get<world::Position>();
-	world::Player & playerComp = player.Get<world::Player>();
+	world::Position & position = player->Get<world::Position>();
+	world::Player & playerComp = player->Get<world::Player>();
 	float y = sinf(playerComp.CameraPitch);
 	float r = cosf(playerComp.CameraPitch);
 	float z = r * cosf(position.Rot.y);
 	float x = r * sinf(position.Rot.y);
-	// XMVECTOR lookAt = position.Pos + SimpleMath::Vector3(x, y, z); // first person
-	Vector3 lookAt = position.Pos + Vector3(0.f,1.7f,0.f); // third person
-	// XMMATRIX view = XMMatrixLookAtRH(position.Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f)); // first person
-	XMVECTOR cameraPos = lookAt - Vector3(x, y, z) * 3.f;
+	
+	Vector3 cameraPos; 
+	Vector3 lookAt; 
 
-	XMMATRIX view = XMMatrixLookAtRH(cameraPos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f)); // third person
+	switch (playerComp.InteractionState) {
+	case world::Player::InteractionStates::FirstPerson:
+		cameraPos = position.Pos + Vector3(0.f, 1.7f, 0.f);
+		lookAt = cameraPos + SimpleMath::Vector3(x, y, z);
+		break;
+	case world::Player::InteractionStates::ThirdPerson:
+		lookAt = position.Pos + Vector3(0.f, 1.7f, 0.f);
+		cameraPos = lookAt - Vector3(x, y, z) * 3.f;
+		break;
+	}
+	//Vector3 lookAt = position.Pos + Vector3(0.f,1.7f,0.f); // third person
+	// XMMATRIX view = XMMatrixLookAtRH(position.Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f)); // first person
+	//XMVECTOR cameraPos = lookAt - Vector3(x, y, z) * 3.f; // third person
+
+	XMMATRIX view = XMMatrixLookAtRH(cameraPos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
 	m_viewMatrix = view;
 	XMMATRIX ProjectionMatrixLH = XMMatrixPerspectiveFovLH(m_fov,  m_aspectRatio, m_clipNear, m_clipFar);
 	XMMATRIX ViewMatrixLH = XMMatrixLookAtLH(cameraPos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));

@@ -30,8 +30,7 @@ namespace world {
 	public:
 		MovementSystem(
 			WEM *  entityManager, 
-			unsigned short updatePeriod, 
-			shared_ptr<RenderSystem> renderSys);
+			unsigned short updatePeriod);
 
 		// Inherited via System
 		virtual string Name() override;
@@ -41,7 +40,6 @@ namespace world {
 	private:
 		WorldEntityCache<WEM::RegionType,Position,Movement> m_entities;
 		MovementTracker m_moveTracker;
-		shared_ptr<RenderSystem> m_renderSystem;
 	};
 
 }

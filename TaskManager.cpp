@@ -18,54 +18,47 @@ void TaskManager::Push(Task && task)
 	m_peekCondition.notify_one();
 }
 
+void TaskManager::RunSynchronous(Task && task)
+{
+	m_waitingSync = true;
+	// block until there are no dependencies 
+	std::mutex lock;
+	std::unique_lock<std::mutex> mlock(lock);
+	m_syncPeek.wait(mlock, [&] {
+		return !HasDependendency(task);
+	});
+	task.Callback();
+	m_waitingSync = false;
+	m_peekCondition.notify_one();
+}
+
 void TaskManager::Peek(WorkerThread & thread)
 {
-	m_mutex.lock();
-	if (!m_queue.empty()) {
-		if (m_queue.size() > 1) {
-			auto test = 0;
-		}
-		for (auto it = m_queue.begin(); it != m_queue.end(); it++) {
-			Task next = *it;
-			// Find any dependencies with this task
-			for (auto & worker : m_threads) {
-				if (worker->Active) {
-					world::MaskType intersect = worker->QueryDependencies & next.QueryMask;
-					if (
-						(
-							(intersect == worker->QueryDependencies)
-							||
-							(intersect == next.QueryMask)
-						)
-						&&
-						(
-							worker->ReadDependencies & next.WriteDependencies
-							||
-							worker->WriteDependencies & next.ReadDependencies
-							||
-							worker->WriteDependencies & next.WriteDependencies
-						)
-					) {
-						// Cannot run this task due to one or more dependencies
-						goto tryNext;
-					}
+	if (!m_waitingSync) {
+		m_mutex.lock();
+		if (!m_queue.empty()) {
+			for (auto it = m_queue.begin(); it != m_queue.end(); it++) {
+				Task next = *it;
+				// Find any dependencies with this task
+				if (!HasDependendency(next)) {
+					// no dependencies found
+					m_queue.erase(it);
+					m_mutex.unlock();
+					thread.Run(next);
+					m_canPeek = true;
+					// try to run another async task
+					m_peekCondition.notify_one();
+					return;
 				}
 			}
-			// no dependencies found
-			m_queue.erase(it);
-			m_mutex.unlock();
-			thread.Run(next);
-			m_canPeek = true;
-			m_peekCondition.notify_one();
-			return;
-			tryNext :;
 		}
 		m_canPeek = false;
+		m_mutex.unlock();
 	}
 	else {
-		m_canPeek = false;
+		// try to run the waiting synchronous task
+		m_syncPeek.notify_one();
 	}
-	m_mutex.unlock();
 }
 
 void TaskManager::WaitForAll()
@@ -79,7 +72,7 @@ bool TaskManager::QueueEmpty()
 	return m_queue.empty();
 }
 
-TaskManager::TaskManager() : m_active(0), m_canPeek(true)
+TaskManager::TaskManager() : m_active(0), m_canPeek(true), m_waitingSync(false)
 {
 	m_threadCount = std::thread::hardware_concurrency() * 8;
 	// Initialize the threads
@@ -96,6 +89,33 @@ TaskManager::~TaskManager()
 		m_threads[i]->Stop();
 	}
 	m_peekCondition.notify_all();
+}
+bool TaskManager::HasDependendency(Task & task)
+{
+	for (auto & worker : m_threads) {
+		if (worker->Active) {
+			world::MaskType intersect = worker->QueryDependencies & task.QueryMask;
+			if (
+				(
+				(intersect == worker->QueryDependencies)
+					||
+					(intersect == task.QueryMask)
+					)
+				&&
+				(
+					worker->ReadDependencies & task.WriteDependencies
+					||
+					worker->WriteDependencies & task.ReadDependencies
+					||
+					worker->WriteDependencies & task.WriteDependencies
+					)
+				) {
+				// Cannot run this task due to one or more dependencies
+				return true;
+			}
+		}
+	}
+	return false;
 }
 // Tries to run every item in the queue
 //void TaskManager::Peek()

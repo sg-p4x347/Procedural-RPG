@@ -424,6 +424,10 @@
     <ClInclude Include="CollisionUtil.h">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="Global.h" />
+    <ClInclude Include="CustomModelLoadCMO.h">
+      <Filter>Utility\Serialization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -700,6 +704,10 @@
     <ClCompile Include="TaskThread.cpp">
       <Filter>Misc</Filter>
     </ClCompile>
+    <ClCompile Include="Global.cpp" />
+    <ClCompile Include="CustomModelLoadCMO.cpp">
+      <Filter>Utility\Serialization</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
@@ -812,12 +820,18 @@
     <MeshContentTask Include="Assets\Models\Biped_Placeholder_0.fbx">
       <Filter>Assets\Models</Filter>
     </MeshContentTask>
+    <MeshContentTask Include="Assets\Models\ocean_0.fbx">
+      <Filter>Assets\Models</Filter>
+    </MeshContentTask>
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico">
       <Filter>Assets\Textures</Filter>
     </Image>
     <Image Include="Assets\Textures\Item\logs.png">
+      <Filter>Assets\Textures</Filter>
+    </Image>
+    <Image Include="Assets\Textures\grass_billboard_0.png">
       <Filter>Assets\Textures</Filter>
     </Image>
   </ItemGroup>
@@ -846,6 +860,9 @@
       <Filter>Assets\UI</Filter>
     </Xml>
     <Xml Include="Assets\UI\hud.xml">
+      <Filter>Assets\UI</Filter>
+    </Xml>
+    <Xml Include="Assets\UI\loading.xml">
       <Filter>Assets\UI</Filter>
     </Xml>
   </ItemGroup>

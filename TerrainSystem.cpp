@@ -22,6 +22,7 @@
 #include "Inventory.h"
 #include "IEventManager.h"
 #include "Movement.h"
+#include "Global.h"
 //#include "ItemSystem.h"
 
 using namespace DirectX::SimpleMath;
@@ -54,7 +55,7 @@ namespace world {
 	{
 	}
 
-	void TerrainSystem::Generate()
+	void TerrainSystem::Generate(std::function<void(float,std::string)> && progressCallback)
 	{
 		JsonParser config(std::ifstream("config/continent.json"));
 		// Mountain settings
@@ -188,7 +189,9 @@ namespace world {
 
 		// Erosion
 		bool erosion = config["erosion"].To<bool>();
-		if (erosion) UpdateDroplets(*TerrainMap, InitializeDroplets(), InitializeThermalErosionMap());
+		if (erosion) UpdateDroplets(*TerrainMap, InitializeDroplets(), InitializeThermalErosionMap(), [=](float percent) {
+			progressCallback(percent * 0.5, "Erosion Simulation ...");
+		});
 		// Terrain done yay!
 		
 		AssetManager::Get()->CreateHeightMapModel("terrain", TerrainMap.get(), AssetManager::Get()->CreateNormalMap(TerrainMap.get()), 10.f, m_regionWidth, "Terrain");
@@ -198,7 +201,9 @@ namespace world {
 
 		// Rain simulation
 		InitializeErosionMap();
-		if (erosion) UpdateWater(*TerrainMap, *WaterMap);
+		if (erosion) UpdateWater(*TerrainMap, *WaterMap, [=](float percent) {
+			progressCallback(0.5 + percent * 0.5, "Water Simulation ...");
+		});
 		// Water done yay!
 		
 		shared_ptr<HeightMap> waterMap = std::make_shared<HeightMap>(WaterMap->width, WaterMap->length);
@@ -218,7 +223,7 @@ namespace world {
 		//CreateResourceEntities();
 
 		// TEMP
-		EntityPtr asset;
+		/*EntityPtr asset;
 		if (AssetManager::Get()->GetStaticEM()->TryFindByPathID("Crate",asset)) {
 			int offset = 32;
 			int max = 10;
@@ -233,7 +238,7 @@ namespace world {
 				}
 			}
 			
-		}
+		}*/
 		//SM->GetSystem<ItemSystem>("Item")->NewContainer(Vector3(32, TerrainMap->Height(32, 32), 32), Vector3::Zero, "Crate");
 
 		/*Utility::OutputLine("Generating Buildings...");
@@ -245,7 +250,6 @@ namespace world {
 		float height = Flatten(cache, flattenArea,10);
 		SM->GetSystem<BuildingSystem>("Building")->CreateBuilding(Vector3(footprint.x, height + 0.1f, footprint.y), Rectangle(0, 0, footprint.width, footprint.height), "residential");
 		Save(cache);*/
-
 		AssetManager::Get()->GetProceduralEM()->Save();
 	}
 
@@ -1036,7 +1040,7 @@ namespace world {
 		return std::make_shared<Map<ThermalCell>>(m_width, 0.f, 0.f, 0);
 	}
 
-	void TerrainSystem::UpdateWater(HeightMap & terrain, Map<WaterCell> & water) {
+	void TerrainSystem::UpdateWater(HeightMap & terrain, Map<WaterCell> & water, std::function<void(float)> && progressCallback) {
 
 		const int iterations = 150;
 		const float rainPortion = 0.3f;
@@ -1059,12 +1063,13 @@ namespace world {
 						thisCell.Water = -terrain.map[x][z];
 
 					}
-					// bandaide
+					// bandaid
 					if (std::abs(thisCell.Water) > 1000) {
 						thisCell.Water = 0;
 					}
 				}
 			}
+			progressCallback((float)i / (float)(iterations * 2.f));
 			OutputDebugStringA(("\nWater Sim @ " + std::to_string((float)i / (float)(iterations * 2.f) * 100.f) + "%").c_str());
 		}
 		for (int i = 0; i < 0; i++) {
@@ -1076,7 +1081,7 @@ namespace world {
 			}
 		}
 	}
-	void TerrainSystem::UpdateDroplets(HeightMap & terrain, shared_ptr<vector<Droplet>> droplets, shared_ptr<Map<ThermalCell>> thermal)
+	void TerrainSystem::UpdateDroplets(HeightMap & terrain, shared_ptr<vector<Droplet>> droplets, shared_ptr<Map<ThermalCell>> thermal, std::function<void(float)> && progressCallback)
 	{
 		static const int iterations = 300;
 		static const int thermalPeriod = iterations / 20;
@@ -1105,6 +1110,7 @@ namespace world {
 					}
 				}
 			}
+			progressCallback((float)i / (float)iterations);
 			OutputDebugStringA(("\nErosion Sim @ " + std::to_string(((float)i / (float)iterations)* 100.f) + "%").c_str());
 		}
 	}

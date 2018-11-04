@@ -10,6 +10,22 @@ namespace world {
 	{
 	}
 
+	void Collision::Import(std::istream & ifs)
+	{
+		DeSerialize(ID, ifs);
+		DeSerialize(BoundingBox, ifs);
+		DeSerialize(Enabled, ifs);
+		DeSerialize(Colliding, ifs);
+	}
+
+	void Collision::Export(std::ostream & ofs)
+	{
+		Serialize(ID, ofs);
+		Serialize(BoundingBox, ofs);
+		Serialize(Enabled, ofs);
+		Serialize(Colliding, ofs);
+	}
+
 	/*void Collision::Import(std::istream & ifs)
 	{
 		DeSerialize(Enabled, ifs);

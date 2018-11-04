@@ -3,7 +3,7 @@
 {
     // General
     "erosion": true, // Whether to erode or not
-    "landAmplitude": 0.1, // scale factor For the continent map above ocean level
+    "landAmplitude": 0.15, // scale factor For the continent map above ocean level
     "oceanAmplitude": 0.6, // scale factor For the continent map below ocean level
     "biomeDeviationConst": 0.09, // scales the ammount Of deviation that mountain ranges have
     "sampleSpacing": 32, // grid spacing Of component map samples (must be power Of two)
@@ -30,7 +30,7 @@
     "mountains": {
         "biomeAmplitude": 100.0, // how high the mountains are raised above the continental shelf
         "biomeShift": 0.0, // shifts the range that Is selected from the biome map
-        "biomeWidth": 0.04, // the range that Is selected from the biome map
+        "biomeWidth": 0.05, // the range that Is selected from the biome map
         "continentShift": 0.0, // shifts the elevation that ocean To land transition takes place
         "continentWidth": 0.5 // the range Of ocean To land transition For mountain ranges
     },

@@ -46,7 +46,7 @@ namespace world {
 			return m_player;
 		}
 		Vector3 PlayerPos() {
-			return GetEntity<Position>(m_player).Get<Position>().Pos;
+			return GetEntity<Position>(m_player)->Get<Position>().Pos;
 		}
 		MaskType PlayerSignature() {
 			return GetSignature(m_player);
@@ -83,7 +83,7 @@ namespace world {
 		}
 		template<typename ... SigTypes>
 		EntityID CreatePlayer(Position && position, SigTypes && ... components) {
-			m_player = CreateEntity<SigTypes...>(std::move(position), std::move(components)...);
+			m_player = CreateEntity(std::move(position), std::move(components)...);
 			return m_player;
 		}
 
@@ -103,7 +103,7 @@ namespace world {
 			if (m_entityIndex.Find(id, info)) {
 				auto region = m_regions[info->regionX][info->regionZ];
 				if (region) {
-					region->ChangeSignature(id, info->signature, signature);
+					region->ChangeSignature(id, info->signature, std::move(signature));
 					info->signature = signature;
 					if (!signature) {
 						// entity is deleted
@@ -156,7 +156,7 @@ namespace world {
 		}
 		// Cherry pick a set of components by entity ID
 		template<typename HeadType, typename ... MaskTypes>
-		WorldEntityProxy<HeadType, MaskTypes...> GetEntity(EntityID id) {
+		shared_ptr<WorldEntityProxy<HeadType, MaskTypes...>> GetEntity(EntityID id) {
 			std::lock_guard<std::mutex> lock(m_mutex);
 			EntityInfo * info;
 			if (m_entityIndex.Find(id, info)) {
@@ -167,10 +167,10 @@ namespace world {
 				});
 				for (auto & entity : entityCache) {
 					if (entity.GetID() == id)
-						return entity.GetProxy();
+						return std::make_shared<WorldEntityProxy<HeadType, MaskTypes...>>(entity.GetProxy());
 				}
 			}
-			assert("Entity not found");
+			return nullptr;
 		}
 		
 		template<typename HeadType, typename ... MaskTypes>
@@ -259,7 +259,7 @@ namespace world {
 			
 			// Fire an event for systems to listen to
 			IEventManager::Invoke(EventTypes::WEM_Resync);
-			CollectGarbage();
+			//CollectGarbage();
 		}
 		void CollectGarbage() {
 			
@@ -268,9 +268,9 @@ namespace world {
 				for (auto & region : regionVector) {
 					if (!m_loadedRegions.count(region)) {
 						// Empty single-reference caches for regions that are no longer loaded
-						TaskManager::Get().Push(Task([=] {
+						//TaskManager::Get().Push(Task([=] {
 							region->EmptyCache();
-						}));
+						//}));
 					}
 				}
 			}
@@ -324,8 +324,8 @@ namespace world {
 			return nullptr;
 		}
 		void RegionCoords(Vector3 & position, int & x, int & z) {
-			x = std::max(0, std::min((int)m_regionDimension - 1, int(position.x / m_regionWidth)));
-			z = std::max(0, std::min((int)m_regionDimension - 1, int(position.z / m_regionWidth)));
+			x = std::max(0, std::min((int)m_regionDimension - 1, (int)position.x / (int)m_regionWidth));
+			z = std::max(0, std::min((int)m_regionDimension - 1, (int)position.z / (int)m_regionWidth));
 		}
 		//----------------------------------------------------------------
 		// Loading  entities

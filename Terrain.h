@@ -7,8 +7,6 @@ namespace world {
 	{
 	public:
 		Terrain();
-		
-		// Inherited via Component
 	};
 }
 

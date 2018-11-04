@@ -80,9 +80,7 @@ SM(systemManager)
 			return style;
 		}(), vector<EntityPtr>{
 			GuiEM.NewButton("Continue", [=](Event evt) {
-				if (!Game::Get().LoadWorld()) {
-					OpenMenu("load_world");
-				}
+				Game::Get().LoadWorld();
 			}),
 			GuiEM.NewButton("New World", [=](Event evt) {
 				OpenMenu("new_world");
@@ -131,10 +129,7 @@ SM(systemManager)
 					world->ResumeGame();
 				}
 			}),
-			GuiEM.NewButton("Main Menu", [=](Event evt) {
-				Game::Get().CloseWorld();
-				OpenMenu("main");
-			})
+			MainMenuBtn()
 		})
 	}));
 #pragma endregion
@@ -251,10 +246,9 @@ SM(systemManager)
 							// parse seed
 							string seedText = seedTextbox->GetComponent<Text>("Text")->String;
 							// valid
+
 							Game::Get().GenerateWorld(name->String,ProUtil::ToRandom(seedText));
-							Game::Get().CloseWorld();
-							// load up the new world
-							Game::Get().LoadWorld(name->String);
+							
 						}
 						else {
 							// invalid name
@@ -349,6 +343,9 @@ SM(systemManager)
 		})
 	}));
 #pragma endregion
+#pragma region loading
+	AddMenu("loading", ImportMarkup("UI/loading.xml"));
+#pragma endregion
 }
 
 
@@ -442,11 +439,16 @@ void GuiSystem::Update(double & elapsed)
 void GuiSystem::UpdateUI(int outputWidth, int outputHeight)
 {
 	m_outputRect = Rectangle(0, 0, outputWidth, outputHeight);
+	UpdateUI();
+}
+
+void GuiSystem::UpdateUI()
+{
 	if (m_currentMenu) {
 		// Set the menu to full-screen
-		GetSprite(m_currentMenu)->Rect = Rectangle(0, 0, outputWidth, outputHeight);
+		GetSprite(m_currentMenu)->Rect = m_outputRect;
 		// Update the flow
-		UpdateFlowRecursive(m_currentMenu,1);
+		UpdateFlowRecursive(m_currentMenu, 1);
 	}
 }
 
@@ -483,7 +485,7 @@ GuiEntityManager & GuiSystem::GetEM()
 	return GuiEM;
 }
 
-void GuiSystem::DisplayException(std::exception e)
+void GuiSystem::DisplayException(string message)
 {
 	OpenMenu(GuiEM.NewPanel([] {
 		Style * style = new Style();
@@ -500,7 +502,7 @@ void GuiSystem::DisplayException(std::exception e)
 				style->Height = "20%";
 				return style;
 			}());
-			GuiEM.AddText(panel, "An exception occured");
+			GuiEM.AddText(panel, message);
 			return panel;
 		}(),
 			MainMenuBtn(48)
@@ -515,6 +517,11 @@ void GuiSystem::SetTextByID(string id, string text)
 void GuiSystem::ShowHint(string hint)
 {
 	SetTextByID("HUD", hint);
+}
+
+shared_ptr<Style> GuiSystem::GetStyle(string id)
+{
+	return GetStyle(GetElementByID(id));
 }
 
 void GuiSystem::BindHandlers()

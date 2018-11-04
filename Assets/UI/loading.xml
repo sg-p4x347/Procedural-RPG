@@ -1,0 +1,12 @@
+<div id="loading" style="
+     flow-direction:column;
+     width:100%;
+     height:100%;
+	 justify:center;
+	 align-items:center;
+	 background:rgb(0.1,0.1,0.1);">
+	<div style="width:50%;height:32px;background:rgb(0,0,0);">
+		<div id="Bar" style="height:100%;width:0%;background:rgb(1,1,1);"></div>
+	</div>
+	<div id="Message" style="font-color:rgb(1,1,1);font-size:16px;height:32px;width:100%;text-align:center;" text="..."></div>
+</div>

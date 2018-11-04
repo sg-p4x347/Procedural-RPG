@@ -9,6 +9,8 @@
 class SystemManager;
 struct RenderEntityJob {
 	world::EntityID entity;
+	std::shared_ptr<Model> model;
+	Vector3 position;
 	XMMATRIX worldMatrix;
 };
 class RenderSystem :
@@ -34,10 +36,13 @@ private:
 	shared_ptr<GuiSystem> m_guiSystem;
 	SystemManager * SM;
 	EntityPtr m_player;
+	std::shared_ptr<Model> m_oceanModel;
+	std::unique_ptr<world::WorldEntityCache<world::WEM::RegionType, world::Terrain, world::Model, world::Position>> m_terrainEntities;
 	const float m_fov;
 	const float m_clipNear;
 	const float m_clipFar;
 	float m_aspectRatio;
+	bool m_ready;
 	std::mutex m_mutex;
 	std::mutex m_syncMutex;
 	std::deque<int> m_frameDeltas;
@@ -88,21 +93,21 @@ private:
 	void RenderVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo);
 	//----------------------------------------------------------------
 	// Components::Model using DirectX::Model
-	typedef std::map<shared_ptr<world::WEM::RegionType>, std::map<shared_ptr<Model>, vector<RenderEntityJob>>> ModelInstanceCache;
+	typedef std::map<shared_ptr<world::WEM::RegionType>, std::map<world::MaskType,vector<RenderEntityJob>>> ModelInstanceCache;
 	ModelInstanceCache m_modelInstances;
-	std::set< shared_ptr<world::WEM::RegionType>> m_visibleRegions;
+	std::set<shared_ptr<world::WEM::RegionType>> m_visibleRegions;
 	std::set<world::EntityID> m_tracked;
 	//std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_modelInstancesTemp;
 	//std::set<world::EntityID> m_trackedTemp;
-	void TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<world::WEM::RegionType> region, std::set<world::EntityID> & tracked,world::WorldEntityProxy<world::Model,world::Position> & entity,Vector3 camera, bool ignoreVerticalDistance = false);
-	void UpdateVisibleRegions(world::Position & cameraPos);
+	void TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<world::WEM::RegionType> region, std::set<world::EntityID> & tracked,world::MaskType signature, world::WorldEntityProxy<world::Model,world::Position> & entity,Vector3 camera, bool ignoreVerticalDistance = false);
+	void UpdateVisibleRegions(Vector3 & cameraPosition, Vector3 & cameraRotation);
 	bool IsRectVisible(Rectangle & area,Vector2 & observerPos,Vector2 & fovNorm1, Vector2 & fovNorm2);
 	bool IsRegionVisible(shared_ptr<world::WEM::RegionType> region, Vector3 & position, Vector3 & rotation, BoundingFrustum & frustum);
 	void CreateFromMatrixRH(BoundingFrustum& Out, CXMMATRIX Projection);
 	//----------------------------------------------------------------
 	// DX::Model
 
-	void RenderModels(Vector3 & cameraPos,bool opaque);
+	void RenderModels(Vector3 & cameraPos,world::MaskType signatureMask, bool opaque);
 	// Render all opaque or alpha meshes within the model 
 	void RenderModel(shared_ptr<DirectX::Model> model, XMMATRIX world,bool opaque);
 	void RenderCompositeModel(shared_ptr<CompositeModel> model, Vector3 & position, Vector3 & rotation, bool backfaceCulling);

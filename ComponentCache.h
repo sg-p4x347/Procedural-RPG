@@ -32,20 +32,48 @@ namespace world {
 			return false;
 		}
 		void Save() {
-			const char * dataPtr = (m_cache.size() > 0) ? (const char*)&m_cache[0] : nullptr;
-			size_t size = sizeof(CompType) * m_cache.size();
-			m_file.Insert(m_signature, dataPtr, size);
-			m_file.Save();
+
+			if (m_cache.size() > 0) {
+				
+				if (is_base_of<ISerialization, CompType>()) {
+					ostringstream ss;
+					for (auto & component : m_cache) {
+						((ISerialization *)&component)->Export(ss);
+					}
+					m_file.Insert(m_signature, ss.str());
+					m_file.Save();
+				}
+				else {
+					const char * dataPtr = (const char*)&m_cache[0];
+					size_t size = sizeof(CompType) * m_cache.size();
+					m_file.Insert(m_signature, dataPtr, size);
+					
+				}
+				
+				m_file.Save();
+			}
 		}
 		void Import() {
 			size_t size = 0;
 			char * data = nullptr;
 			m_file.Search(m_signature, data, size);
 			if (size > 0) {
-				unsigned int count = size / sizeof(CompType);
-				if (count == 0) count = 1;
-				auto compPtr = (CompType*)data;
-				m_cache = vector<CompType>(compPtr, compPtr + count);
+				if (is_base_of<ISerialization,CompType>()) {
+					// CompType is variable size, so stream each one in sequentially
+					istringstream ss(std::string((const char *)data, size));
+					while (!ss.eof()) {
+						CompType component{};
+						((ISerialization *)&component)->Import(ss);
+						m_cache.push_back(component);
+					}
+				}
+				else {
+					// CompType is a fixed size, so just do an in-place vector initialization
+					unsigned int count = size / sizeof(CompType);
+					if (count == 0) count = 1;
+					auto compPtr = (CompType*)data;
+					m_cache = vector<CompType>(compPtr, compPtr + count);
+				}
 			}
 			delete[] data;
 		}

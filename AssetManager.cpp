@@ -3,6 +3,7 @@
 #include "ModelAsset.h"
 #include "CustomEffect.h"
 #include "CustomModelLoadVBO.h"
+#include "CustomModelLoadCMO.h"
 #include "XmlParser.h"
 
 AssetManager * AssetManager::m_instance = nullptr;
@@ -341,9 +342,10 @@ std::shared_ptr<Model> AssetManager::GetModel(EntityPtr entity, float distance, 
 						shared_ptr<IEffect> effect;
 						GetEffect(modelAsset->Effect, effect);
 						model.reset(CustomModelLoadVBO::CreateFromVBO(m_d3dDevice.Get(), fullPath.string(), effect).release());
+						
 					}
 					else {
-						model.reset(Model::CreateFromCMO(m_d3dDevice.Get(), fullPath.c_str(), *m_fxFactory).release());
+						model.reset(CustomModelLoadCMO::CreateFromCMO(m_d3dDevice.Get(), fullPath.c_str(), *m_fxFactory).release());
 					}
 					if (modelAsset->LODs.size() <= lod) {
 						modelAsset->LODs.resize(lod + 1);

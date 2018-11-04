@@ -5,6 +5,7 @@
 #include "Inventory.h"
 #include "GuiSystem.h"
 #include "AssetManager.h"
+#include "TaskManager.h"
 namespace world {
 	PlayerSystem::PlayerSystem(
 		SystemManager * systemManager,
@@ -14,6 +15,9 @@ namespace world {
 		WorldSystem::WorldSystem(entityManager, updatePeriod),
 		SM(systemManager)
 	{
+		//if(EM->GetEntity<world::Player>(EM->PlayerID()) == nullptr) {
+		//	CreatePlayer();
+		//}
 		RegisterInputActions();
 		MapKeys();
 		RegisterHandlers();
@@ -28,109 +32,117 @@ namespace world {
 
 	void PlayerSystem::Update(double & elapsed)
 	{
-		auto player = EM->GetEntity<Position, Movement, Player>(EM->PlayerID());
-		Position & position = player.Get<Position>();
-		Movement & movement = player.Get<Movement>();
-		Player & playerComp = player.Get<Player>();
-		// mouse
-		auto mouseState = Game::MouseState;
-		auto keyboardState = Game::KeyboardState;
-		static int sampleCounter = 0;
-		if (mouseState.positionMode == Mouse::MODE_RELATIVE) {
-			Vector2 delta = Vector2(mouseState.x, mouseState.y);
+		MaskType queryMask = EM->PlayerSignature();
+		MaskType readMask = EM->GetMask<Position, Movement, Collision, Player>();
+		MaskType writeMask = EM->GetMask<Movement, Collision, Player>();
+		TaskManager::Get().RunSynchronous(Task([=] {
+			auto player = EM->GetEntity<Position, Movement, Player>(EM->PlayerID());
+			Position & position = player->Get<Position>();
+			Movement & movement = player->Get<Movement>();
+			Player & playerComp = player->Get<Player>();
+			// mouse
+			auto mouseState = Game::MouseState;
+			auto keyboardState = Game::KeyboardState;
+			static int sampleCounter = 0;
+			if (mouseState.positionMode == Mouse::MODE_RELATIVE) {
+				Vector2 delta = Vector2(mouseState.x, mouseState.y);
 
 
-			//SimpleMath::Vector2 delta = SimpleMath::Vector2(float(mouseState.x), float(mouseState.y));
-			static const float X_MOUSE_GAIN = 10.f;
-			static const float Y_MOUSE_GAIN = 0.1f;
-			/*if (movement->AngularVelocity.y > 0) {
-				movement->AngularVelocity.y -= 0.5;
-			}*/
-			/*if (delta.x != 0.f || delta.y != 0.f || sampleCounter++ > 3) {
-				movement->AngularVelocity.x = -delta.x * elapsed * MOUSE_GAIN;
-				movement->AngularVelocity.y = -delta.y * elapsed * MOUSE_GAIN;
-				sampleCounter = 0;
-			}*/
-			float length = AccumulatedMousePos.Length();
-			if (length != 0.f)
-				SM->GetSystem<GuiSystem>("Gui")->SetTextByID("Output1", to_string(length));
+				//SimpleMath::Vector2 delta = SimpleMath::Vector2(float(mouseState.x), float(mouseState.y));
+				static const float X_MOUSE_GAIN = 10.f;
+				static const float Y_MOUSE_GAIN = 0.1f;
+				/*if (movement->AngularVelocity.y > 0) {
+					movement->AngularVelocity.y -= 0.5;
+				}*/
+				/*if (delta.x != 0.f || delta.y != 0.f || sampleCounter++ > 3) {
+					movement->AngularVelocity.x = -delta.x * elapsed * MOUSE_GAIN;
+					movement->AngularVelocity.y = -delta.y * elapsed * MOUSE_GAIN;
+					sampleCounter = 0;
+				}*/
+				float length = AccumulatedMousePos.Length();
+				if (length != 0.f)
+					SM->GetSystem<GuiSystem>("Gui")->SetTextByID("Output1", to_string(length));
 
-			playerComp.CameraPitch -= AccumulatedMousePos.y * elapsed * Y_MOUSE_GAIN;
-			movement.AngularVelocity.y = (movement.AngularVelocity.y - AccumulatedMousePos.x * elapsed * X_MOUSE_GAIN) / 2.f;
-			//if (std::abs(movement.AngularVelocity.y) < 0.1f) movement.AngularVelocity.y = 0.f;
-			AccumulatedMousePos = Vector2::Zero;
-			//Game::Get().MousePos = Vector2::Zero;
+				playerComp.CameraPitch -= AccumulatedMousePos.y * elapsed * Y_MOUSE_GAIN;
+				movement.AngularVelocity.y = (movement.AngularVelocity.y - AccumulatedMousePos.x * elapsed * X_MOUSE_GAIN) / 2.f;
+				//if (std::abs(movement.AngularVelocity.y) < 0.1f) movement.AngularVelocity.y = 0.f;
+				AccumulatedMousePos = Vector2::Zero;
+				//Game::Get().MousePos = Vector2::Zero;
 
-			// limit pitch to straight up or straight down
-			// with a little fudge-factor to avoid gimbal lock
-			playerComp.CameraPitch = std::min(XM_PIDIV2 - 0.01f, std::max(-XM_PIDIV2 + 0.01f, playerComp.CameraPitch));
-		}
-		//----------------------------------------------------------------
-		// Directional input
-		m_direction = Vector3::Zero;
-
-
-		UpdateActions();
-
-		/*SimpleMath::Vector3 input = SimpleMath::Vector3::Zero;
-		if (keyboardState.Up || keyboardState.W)
-			input.z += 1.f;
-
-		if (keyboardState.Down || keyboardState.S)
-			input.z -= 1.f;
-
-		if (keyboardState.Left || keyboardState.A)
-			input.x += 1.f;
-
-		if (keyboardState.Right || keyboardState.D)
-			input.x -= 1.f;*/
+				// limit pitch to straight up or straight down
+				// with a little fudge-factor to avoid gimbal lock
+				playerComp.CameraPitch = std::min(XM_PIDIV2 - 0.01f, std::max(-XM_PIDIV2 + 0.01f, playerComp.CameraPitch));
+			}
+			//----------------------------------------------------------------
+			// Directional input
+			m_direction = Vector3::Zero;
 
 
+			UpdateActions();
+
+			/*SimpleMath::Vector3 input = SimpleMath::Vector3::Zero;
+			if (keyboardState.Up || keyboardState.W)
+				input.z += 1.f;
+
+			if (keyboardState.Down || keyboardState.S)
+				input.z -= 1.f;
+
+			if (keyboardState.Left || keyboardState.A)
+				input.x += 1.f;
+
+			if (keyboardState.Right || keyboardState.D)
+				input.x -= 1.f;*/
 
 
-			// adjust the velocity according to orientation
-		Vector3 velocity;
-		switch (playerComp.MovementState) {
-		case Player::MovementStates::Normal:
-			m_direction.y = 0.f;
-			m_direction.Normalize();
-			velocity = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(playerComp,position,true)) * (keyboardState.LeftControl ? 0.1 : keyboardState.LeftShift ? 8.f : 5.f);
-			velocity.y = movement.Velocity.y;
-
-			movement.Velocity = velocity;
-			break;
-		case Player::MovementStates::Spectator:
-			/*if (keyboardState.PageUp || keyboardState.Space)
-				input.y += 1.f;
-
-			if (keyboardState.PageDown || keyboardState.LeftShift)
-				input.y -= 1.f;*/
-			m_direction.Normalize();
-			movement.Velocity = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(playerComp, position)) * (keyboardState.LeftControl ? 0.1f : keyboardState.LeftShift ? 1000 : 100);
-			break;
-		}
-
-		//----------------------------------------------------------------
-		// Keyboard events
 
 
-		if (Game::Get().KeyboardTracker.IsKeyPressed(DirectX::Keyboard::Keys::E)) {
-			//SM->GetSystem<ActionSystem>("Action")->Check();
-			//SM->GetEventManager().Invoke("InvokeAction");
-			IEventManager::Invoke(EventTypes::Action_Check);
-		}
-
-		// Toggle movement state
-		if (Game::Get().KeyboardTracker.IsKeyPressed(DirectX::Keyboard::Keys::R)) {
+				// adjust the velocity according to orientation
+			Vector3 velocity;
 			switch (playerComp.MovementState) {
 			case Player::MovementStates::Normal:
-				SetMovementToSpectator();
+				m_direction.y = 0.f;
+				m_direction.Normalize();
+				velocity = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(playerComp, position, true)) * (keyboardState.LeftControl ? 0.1 : keyboardState.LeftShift ? 8.f : 5.f);
+				velocity.y = movement.Velocity.y;
+
+				movement.Velocity = velocity;
 				break;
 			case Player::MovementStates::Spectator:
-				SetMovementToNormal();
+				/*if (keyboardState.PageUp || keyboardState.Space)
+					input.y += 1.f;
+
+				if (keyboardState.PageDown || keyboardState.LeftShift)
+					input.y -= 1.f;*/
+				m_direction.Normalize();
+				movement.Velocity = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(playerComp, position)) * (keyboardState.LeftControl ? 0.1f : keyboardState.LeftShift ? 1000 : 100);
 				break;
 			}
-		}
+
+			//----------------------------------------------------------------
+			// Keyboard events
+
+
+			if (Game::Get().KeyboardTracker.IsKeyPressed(DirectX::Keyboard::Keys::E)) {
+				//SM->GetSystem<ActionSystem>("Action")->Check();
+				//SM->GetEventManager().Invoke("InvokeAction");
+				IEventManager::Invoke(EventTypes::Action_Check);
+			}
+
+			// Toggle movement state
+			if (Game::Get().KeyboardTracker.IsKeyPressed(DirectX::Keyboard::Keys::R)) {
+				switch (playerComp.MovementState) {
+				case Player::MovementStates::Normal:
+					SetMovementToSpectator();
+					break;
+				case Player::MovementStates::Spectator:
+					SetMovementToNormal();
+					break;
+				}
+			}
+		},
+		queryMask,
+		readMask,
+		writeMask));
 	}
 
 	void PlayerSystem::SetMousePos(Vector2 pos)
@@ -169,9 +181,9 @@ namespace world {
 		EM->CreatePlayer(
 			Position(), 
 			Player(),
-			Movement(), 
-			Collision(Box(Vector3(0.f, 0.85f, 0.f), Vector3(0.5f, 1.7f, 0.25f))), 
-			Inventory(50.f,50.f),
+			Movement(),
+			Model(asset->ID(),AssetType::Authored),
+			Collision(Box(Vector3(0.f, 0.85f, 0.f), Vector3(0.5f, 1.7f, 0.25f))),
 			std::move(model)
 		);
 		SetMovementToSpectator();
@@ -185,7 +197,9 @@ namespace world {
 	void PlayerSystem::Run()
 	{
 		System::Run();
-		SetInteractionState(EM->GetEntity<Player>(EM->PlayerID()).Get<Player>().InteractionState);
+		auto player = EM->GetEntity<Player>(EM->PlayerID());
+		if (!player) throw exception("Player was null");
+		SetInteractionState(player->Get<Player>().InteractionState);
 	}
 
 	void PlayerSystem::RegisterHandlers()
@@ -194,40 +208,41 @@ namespace world {
 			SetInteractionState(state);
 		}));
 		IEventManager::RegisterHandler(EventTypes::Item_OpenInventory, std::function<void(EntityID, EntityID)>([this](EntityID actor, EntityID target) {
-			EM->GetEntity<Player>(actor).Get<Player>().OpenContainer = target;
+			EM->GetEntity<Player>(actor)->Get<Player>().OpenContainer = target;
 			SetInteractionState(Player::InteractionStates::InventoryUI);
 		}));
 	}
 
 	Player & PlayerSystem::GetPlayerComp()
 	{
-		return EM->GetEntity<Player>(EM->PlayerID()).Get<Player>();
+		return EM->GetEntity<Player>(EM->PlayerID())->Get<Player>();
 	}
 
 	void PlayerSystem::SetMovementToNormal()
 	{
 		auto player = EM->GetEntity<Collision, Movement, Player>(EM->PlayerID());
-		player.Get<Collision>().Enabled = true;
-		player.Get<Movement>().Acceleration.y = -9.8f;
-		player.Get<Player>().MovementState = Player::MovementStates::Normal;
+		player->Get<Collision>().Enabled = true;
+		player->Get<Movement>().Acceleration.y = -9.8f;
+		player->Get<Player>().MovementState = Player::MovementStates::Normal;
 	}
 
 	void PlayerSystem::SetMovementToSpectator()
 	{
 		auto player = EM->GetEntity<Collision, Movement, Player>(EM->PlayerID());
-		player.Get<Collision>().Enabled = false;
-		player.Get<Movement>().Acceleration.y = 0.f;
-		player.Get<Player>().MovementState = Player::MovementStates::Spectator;
+		player->Get<Collision>().Enabled = false;
+		player->Get<Movement>().Acceleration.y = 0.f;
+		player->Get<Player>().MovementState = Player::MovementStates::Spectator;
 	}
 
 	void PlayerSystem::SetInteractionState(Player::InteractionStates state)
 	{
-		Player & playerComp = EM->GetEntity<Player>(EM->PlayerID()).Get<Player>();
+		Player & playerComp = EM->GetEntity<Player>(EM->PlayerID())->Get<Player>();
 		playerComp.InteractionState = state;
 
 		//EntityPtr openContainer;
 		switch (state) {
-		case Player::InteractionStates::World:
+		case Player::InteractionStates::ThirdPerson:
+		case Player::InteractionStates::FirstPerson:
 			Mouse::Get().SetMode(Mouse::MODE_RELATIVE);
 			playerComp.OpenContainer = 0;
 			//IEventManager::Invoke(EventTypes::Item_CloseInventory, EM->Player(),openContainer);
@@ -250,7 +265,7 @@ namespace world {
 
 	void PlayerSystem::UpdateActions()
 	{
-		Player & playerComp = EM->GetEntity<Player>(EM->PlayerID()).Get<Player>();
+		Player & playerComp = EM->GetEntity<Player>(EM->PlayerID())->Get<Player>();
 		for (auto & keyMapping : m_keyMappings) {
 			if (Game::Get().KeyboardState.IsKeyDown(keyMapping.first)) {
 				// Key pressed
@@ -258,7 +273,7 @@ namespace world {
 					// Only invoke the action on an edge
 					if (!keyMapping.second.Registered) {
 						// Key just now pressed
-						if (!keyMapping.second.WorldOnly || playerComp.InteractionState == Player::InteractionStates::World)
+						if (!keyMapping.second.WorldOnly || (playerComp.InteractionState == Player::InteractionStates::FirstPerson || playerComp.InteractionState == Player::InteractionStates::ThirdPerson))
 							keyMapping.second.Action();
 						// register the press
 						keyMapping.second.Registered = true;
@@ -266,7 +281,7 @@ namespace world {
 				}
 				else {
 					// Invoke the action continuously
-					if (!keyMapping.second.WorldOnly || playerComp.InteractionState == Player::InteractionStates::World)
+					if (!keyMapping.second.WorldOnly || (playerComp.InteractionState == Player::InteractionStates::FirstPerson || playerComp.InteractionState == Player::InteractionStates::ThirdPerson))
 						keyMapping.second.Action();
 				}
 			}
@@ -309,14 +324,23 @@ namespace world {
 		//----------------------------------------------------------------
 		// Inventory
 		RegisterInputAction(InputAction("ToggleInventory", "Toggle inventory", [this] {
-			Player & playerComp = EM->GetEntity<Player>(EM->PlayerID()).Get<Player>();
+			Player & playerComp = EM->GetEntity<Player>(EM->PlayerID())->Get<Player>();
 			if (playerComp.InteractionState == Player::InteractionStates::InventoryUI) {
-				SetInteractionState(Player::InteractionStates::World);
+				SetInteractionState(Player::InteractionStates::FirstPerson);
 			}
 			else {
 				SetInteractionState(Player::InteractionStates::InventoryUI);
 			}
 		}, true, false));
+		//----------------------------------------------------------------
+		// Camera
+		RegisterInputAction(InputAction("ToggleFirstPerson", "Toggle between first and third person mode", [this] {
+			Player & playerComp = EM->GetEntity<Player>(EM->PlayerID())->Get<Player>();
+			SetInteractionState(playerComp.InteractionState == Player::InteractionStates::FirstPerson ? 
+				Player::InteractionStates::ThirdPerson : 
+				Player::InteractionStates::FirstPerson);
+
+		}, true, true));
 
 	}
 
@@ -338,6 +362,9 @@ namespace world {
 		//----------------------------------------------------------------
 		// Inventory
 		MapKey(Keyboard::Keys::Tab, "ToggleInventory");
+		//----------------------------------------------------------------
+		// Camera
+		MapKey(Keyboard::Keys::F1, "ToggleFirstPerson");
 	}
 
 	void PlayerSystem::MapKey(Keyboard::Keys key, string action)

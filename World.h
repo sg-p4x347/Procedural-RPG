@@ -32,6 +32,7 @@ namespace world {
 		void SetMousePos(Vector2 pos);
 
 	private:
+		void InitializeResources();
 		//----------------------------------------------------------------
 		// Systems
 		SystemManager & m_systemManager;
