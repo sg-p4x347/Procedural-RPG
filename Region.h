@@ -47,6 +47,7 @@ namespace world {
 		}
 		template<typename HeadType, typename ... MaskTypes>
 		inline void LoadEntities(EntityCache<HeadType, MaskTypes...> & entityCache, std::function<bool(world::MaskType &)> && predicate) {
+			entityCache.Clear();
 			LoadEntitiesRecursive<EntityCache<HeadType, MaskTypes...>, HeadType, MaskTypes...>(entityCache, std::move(predicate));
 		}
 		template<typename CacheType, typename HeadType, typename NextType, typename ... MaskTypes>
@@ -200,20 +201,25 @@ namespace world {
 		void ChangeSignature(EntityCacheType & oldCache, EntityID & id, MaskType & oldSig, MaskType & newSig) {
 			auto compCache = std::get<shared_ptr<ComponentCache<HeadType>>>(oldCache);
 			if (compCache) {
-				// find the index within the cache
-				auto & vec = compCache->Get();
-				for (int i = 0; i < vec.size(); i++) {
-					if (vec[i].ID == id) {
-						// add to the new cache
-						MaskType mask = GetMask<HeadType>();
-						if ((mask & newSig) == mask)
-							InsertComponent<HeadType>(vec[i], newSig);
-						// remove from the old cache
-						vec.erase(vec.begin() + i);
-						break;
+				MaskType compMask = GetMask<HeadType>();
+				bool remove = (oldSig & compMask);
+				bool insert = (newSig & compMask);
+				if (remove || insert) {
+					// find the index within the cache
+					auto & vec = compCache->Get();
+					for (int i = 0; i < vec.size(); i++) {
+						if (vec[i].ID == id) {
+							// add to the new cache
+							if (insert)
+								InsertComponent<HeadType>(vec[i], newSig);
+							// remove from the old cache
+							vec.erase(vec.begin() + i);
+							break;
+						}
 					}
+					// save the updated cache to disk
+					compCache->Save();
 				}
-
 			}
 
 		}

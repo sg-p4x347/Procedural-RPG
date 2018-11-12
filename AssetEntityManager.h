@@ -1,6 +1,7 @@
 #pragma once
 #include "PersistenceEntityManager.h"
 #include "ModelAsset.h"
+#include "CollisionAsset.h"
 #include "PathID.h"
 #include "VboParser.h"
 #include "VBO.h"

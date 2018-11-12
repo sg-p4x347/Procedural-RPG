@@ -21,14 +21,26 @@ void TaskManager::Push(Task && task)
 void TaskManager::RunSynchronous(Task && task)
 {
 	m_waitingSync = true;
+	m_active++;
 	// block until there are no dependencies 
-	std::mutex lock;
-	std::unique_lock<std::mutex> mlock(lock);
+	std::unique_lock<std::mutex> mlock(m_syncLock);
 	m_syncPeek.wait(mlock, [&] {
 		return !HasDependendency(task);
 	});
+	
+	
+	// Register dependencies
+	m_readDependencies = task.ReadDependencies;
+	m_writeDependencies = task.WriteDependencies;
+	m_queryDependencies = task.QueryMask;
 	task.Callback();
+	// Unregister dependencies
+	m_readDependencies = 0;
+	m_writeDependencies = 0;
+	m_queryDependencies = 0;
 	m_waitingSync = false;
+	m_active--;
+	
 	m_peekCondition.notify_one();
 }
 
@@ -114,6 +126,26 @@ bool TaskManager::HasDependendency(Task & task)
 				return true;
 			}
 		}
+	}
+	// check synchronous task
+	world::MaskType intersect = m_queryDependencies & task.QueryMask;
+	if (
+		(
+		(intersect == m_queryDependencies)
+			||
+			(intersect == task.QueryMask)
+			)
+		&&
+		(
+			m_readDependencies & task.WriteDependencies
+			||
+			m_writeDependencies & task.ReadDependencies
+			||
+			m_writeDependencies & task.WriteDependencies
+			)
+		) {
+		// Cannot run this task due to one or more dependencies
+		return true;
 	}
 	return false;
 }

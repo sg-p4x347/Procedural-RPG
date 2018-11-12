@@ -66,6 +66,8 @@ public:
 		shared_ptr<IEffect> effect);
 	float LowestNeighbor(HeightMap & water, HeightMap & terrain, int x, int z);
 	
+	// Query an asset entity by id
+	bool Find(const unsigned int & id, AssetType & type, EntityPtr & entity);
 	// Query an asset entity by path
 	bool Find(AssetEntityManager * assetManager,string path, EntityPtr & entity);
 	//----------------------------------------------------------------

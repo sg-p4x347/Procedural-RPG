@@ -13,7 +13,7 @@
 #include "CollisionSystem.h"
 #include "IEventManager.h"
 #include "SoundSystem.h"
-//#include "BuildingSystem.h"
+#include "BuildingSystem.h"
 //#include "ItemSystem.h"
 #include "PlantSystem.h"
 //#include "ResourceSystem.h"
@@ -43,6 +43,7 @@ namespace world {
 		m_systemManager.AddSystem(std::shared_ptr<System>(new PlayerSystem(&m_systemManager, m_entityManager.get(), 1)));
 		m_systemManager.AddSystem(std::shared_ptr<System>(new TerrainSystem(&m_systemManager, m_entityManager.get(), 1, m_width, m_regionWidth, m_directory / "System")));
 		m_systemManager.AddSystem(std::shared_ptr<System>(new PlantSystem(&m_systemManager, m_entityManager.get(), 0)));
+		m_systemManager.AddSystem(std::shared_ptr<System>(new BuildingSystem(m_entityManager.get(), 0)));
 		Generate(seed);
 	}
 
@@ -50,15 +51,15 @@ namespace world {
 	{
 		auto gui = m_systemManager.GetSystem<GuiSystem>("Gui");
 		gui->OpenMenu("loading");
-		
-		//----------------------------------------------------------------
-		// Wait for all tasks to complete
-		gui->SetTextByID("Message", "Waiting for tasks ...");
-		TaskManager::Get().WaitForAll();
 		//----------------------------------------------------------------
 		// Halt world systems
 		gui->SetTextByID("Message", "Stopping systems ...");
 		m_systemManager.Halt<WorldSystem>();
+		//----------------------------------------------------------------
+		// Wait for all tasks to complete
+		gui->SetTextByID("Message", "Waiting for tasks ...");
+		TaskManager::Get().WaitForAll();
+		
 		//----------------------------------------------------------------
 		// Update render targets
 		m_systemManager.GetSystem<RenderSystem>("Render")->InitializeWorldRendering(nullptr);
@@ -160,7 +161,7 @@ namespace world {
 		// Add world systems
 		m_systemManager.AddSystem(std::shared_ptr<System>(new PlayerSystem(&m_systemManager, m_entityManager.get(), 1)));
 		m_systemManager.AddSystem(std::shared_ptr<System>(new TerrainSystem(&m_systemManager, m_entityManager.get(), 1, m_width, m_regionWidth, m_directory / "System")));
-
+		m_systemManager.AddSystem(std::shared_ptr<System>(new BuildingSystem(m_entityManager.get(), 0)));
 
 		m_systemManager.AddSystem(std::shared_ptr<System>(new CollisionSystem(&m_systemManager, m_entityManager.get(), 1)));
 		m_systemManager.AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager.get(), 1)));
@@ -197,13 +198,13 @@ namespace world {
 		renderSystem->InitializeWorldRendering(m_entityManager.get());
 	}
 
-	void World::SetMousePos(Vector2 pos)
+	/*void World::SetMousePos(Vector2 pos)
 	{
 		auto playerSystem = m_systemManager.GetSystem<PlayerSystem>("Player");
 		if (playerSystem && !m_paused) {
 			playerSystem->SetMousePos(pos);
 		}
-	}
+	}*/
 	void World::InitializeResources()
 	{
 		//----------------------------------------------------------------

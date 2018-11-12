@@ -52,6 +52,9 @@ namespace world {
 			}
 			return size;
 		}
+		void Clear() {
+			m_cache.clear();
+		}
 	private:
 		SignatureMap m_cache;
 	};

@@ -1,7 +1,7 @@
 #pragma once
 #include "WorldComponent.h"
 #include "ISerialization.h"
-#include "Box.h"
+#include "AssetTypes.h"
 namespace world {
 	class Collision :
 		public WorldComponent,
@@ -9,11 +9,14 @@ namespace world {
 	{
 	public:
 		Collision();
-		Collision(Box box);
-		// Data
-		Box BoundingBox;
+		Collision(EntityID asset, AssetType type);
+		// Persisted Data
+		EntityID Asset;
+		AssetType Type;
 		bool Enabled;
 		int Colliding;
+
+		// Runtime Data
 		std::vector<Vector3> CollisionNormals;
 
 		// Inherited via ISerialization

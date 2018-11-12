@@ -276,7 +276,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		Mouse::ProcessMessage(message, wParam, lParam);
 		auto mouse = Mouse::Get().GetState();
 		Game::Get().MouseState = mouse;
-		Game::Get().SetMousePos(Vector2(mouse.x, mouse.y));
+		Game::Get().MousePos.x += mouse.x;
+		Game::Get().MousePos.y += mouse.y;
+		//Game::Get().SetMousePos(Vector2(mouse.x, mouse.y));
 		
 		break;
 

@@ -6,14 +6,15 @@ namespace world {
 	{
 	}
 
-	Collision::Collision(Box box) : BoundingBox(box), Enabled(true), Colliding(0)
+	Collision::Collision(EntityID asset, AssetType type): Asset(asset), Type(type), Enabled(true), Colliding(0)
 	{
 	}
 
 	void Collision::Import(std::istream & ifs)
 	{
 		DeSerialize(ID, ifs);
-		DeSerialize(BoundingBox, ifs);
+		DeSerialize(Asset, ifs);
+		DeSerialize(Type, ifs);
 		DeSerialize(Enabled, ifs);
 		DeSerialize(Colliding, ifs);
 	}
@@ -21,7 +22,8 @@ namespace world {
 	void Collision::Export(std::ostream & ofs)
 	{
 		Serialize(ID, ofs);
-		Serialize(BoundingBox, ofs);
+		Serialize(Asset, ofs);
+		Serialize(Type, ofs);
 		Serialize(Enabled, ofs);
 		Serialize(Colliding, ofs);
 	}

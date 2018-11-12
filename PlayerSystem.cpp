@@ -59,14 +59,16 @@ namespace world {
 					movement->AngularVelocity.y = -delta.y * elapsed * MOUSE_GAIN;
 					sampleCounter = 0;
 				}*/
-				float length = AccumulatedMousePos.Length();
+				Vector2 mousePos = Game::Get().MousePos;
+				float length = mousePos.Length();
 				if (length != 0.f)
 					SM->GetSystem<GuiSystem>("Gui")->SetTextByID("Output1", to_string(length));
 
-				playerComp.CameraPitch -= AccumulatedMousePos.y * elapsed * Y_MOUSE_GAIN;
-				movement.AngularVelocity.y = (movement.AngularVelocity.y - AccumulatedMousePos.x * elapsed * X_MOUSE_GAIN) / 2.f;
+				playerComp.CameraPitch -= mousePos.y * elapsed * Y_MOUSE_GAIN;
+				movement.AngularVelocity.y = (movement.AngularVelocity.y - mousePos.x * elapsed * X_MOUSE_GAIN) / 2.f;
 				//if (std::abs(movement.AngularVelocity.y) < 0.1f) movement.AngularVelocity.y = 0.f;
-				AccumulatedMousePos = Vector2::Zero;
+				Game::Get().MousePos = Vector2::Zero;
+				//AccumulatedMousePos = Vector2::Zero;
 				//Game::Get().MousePos = Vector2::Zero;
 
 				// limit pitch to straight up or straight down
@@ -145,47 +147,44 @@ namespace world {
 		writeMask));
 	}
 
-	void PlayerSystem::SetMousePos(Vector2 pos)
-	{
+	//void PlayerSystem::SetMousePos(Vector2 pos)
+	//{
 
-		//Movement movement = EM->Player()->GetComponent < Components::Movement>("Movement");
-		//shared_ptr<Components::Position> position = EM->Player()->GetComponent < Components::Position>("Position");
-		//if (std::abs(pos.y) != 0)
-		//position->Rot.y -= pos.y * 0.0016;
-		//movement->AngularVelocity.y = -pos.y * 0.16;
-		//movement->AngularVelocity.x = -pos.x * 0.16;
-		//if (std::abs(pos.x) != 0)
-		//position->Rot.x -= std::min(pos.x,1.f) * 0.0016;
-		//position->Rot.y -= std::min(pos.y, 1.f) * 0.0016;
-		AccumulatedMousePos += pos;
-		/*static std::chrono::milliseconds last;
-		auto now = std::chrono::duration_cast< std::chrono::milliseconds >(
-			std::chrono::system_clock::now().time_since_epoch()
-			);
-		SM->GetSystem<GuiSystem>("Gui")->SetTextByID("Output1", to_string((now - last).count()));
-		last = now;*/
-		/*if (std::abs(pos.x) == 0 && std::abs(pos.y) == 0) {
-			auto test = 0;
-		}*/
+	//	//Movement movement = EM->Player()->GetComponent < Components::Movement>("Movement");
+	//	//shared_ptr<Components::Position> position = EM->Player()->GetComponent < Components::Position>("Position");
+	//	//if (std::abs(pos.y) != 0)
+	//	//position->Rot.y -= pos.y * 0.0016;
+	//	//movement->AngularVelocity.y = -pos.y * 0.16;
+	//	//movement->AngularVelocity.x = -pos.x * 0.16;
+	//	//if (std::abs(pos.x) != 0)
+	//	//position->Rot.x -= std::min(pos.x,1.f) * 0.0016;
+	//	//position->Rot.y -= std::min(pos.y, 1.f) * 0.0016;
+	//	//AccumulatedMousePos += pos;
+	//	/*static std::chrono::milliseconds last;
+	//	auto now = std::chrono::duration_cast< std::chrono::milliseconds >(
+	//		std::chrono::system_clock::now().time_since_epoch()
+	//		);
+	//	SM->GetSystem<GuiSystem>("Gui")->SetTextByID("Output1", to_string((now - last).count()));
+	//	last = now;*/
+	//	/*if (std::abs(pos.x) == 0 && std::abs(pos.y) == 0) {
+	//		auto test = 0;
+	//	}*/
 
-	}
+	//}
 
 	void PlayerSystem::CreatePlayer()
 	{
-		Model model = Model();
 		EntityPtr asset;
 		if (AssetManager::Get()->GetStaticEM()->TryFindByPathID("Biped_Placeholder", asset)) {
-			model.Asset = asset->ID();
-			model.Type = AssetType::Authored;
+			EM->CreatePlayer(
+				Position(),
+				Player(),
+				Movement(),
+				Model(asset->ID(), AssetType::Authored),
+				Collision(asset->ID(), AssetType::Authored)
+			);
 		}
-		EM->CreatePlayer(
-			Position(), 
-			Player(),
-			Movement(),
-			Model(asset->ID(),AssetType::Authored),
-			Collision(Box(Vector3(0.f, 0.85f, 0.f), Vector3(0.5f, 1.7f, 0.25f))),
-			std::move(model)
-		);
+		
 		SetMovementToSpectator();
 	}
 
@@ -200,6 +199,7 @@ namespace world {
 		auto player = EM->GetEntity<Player>(EM->PlayerID());
 		if (!player) throw exception("Player was null");
 		SetInteractionState(player->Get<Player>().InteractionState);
+		Game::Get().MousePos = Vector2::Zero;
 	}
 
 	void PlayerSystem::RegisterHandlers()

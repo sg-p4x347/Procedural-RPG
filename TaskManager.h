@@ -28,11 +28,16 @@ private:
 	uint32_t m_threadCount;
 	std::vector<std::shared_ptr<WorkerThread>> m_threads;
 	std::mutex m_mutex;
-	
+	std::mutex m_syncLock;
 	
 	//----------------------------------------------------------------
 	// Tasks
 	std::list<Task> m_queue;
 	bool HasDependendency(Task & task);
+	//----------------------------------------------------------------
+	// Synchronous task
+	std::atomic_ulong m_readDependencies;
+	std::atomic_ulong m_writeDependencies;
+	std::atomic_ulong m_queryDependencies;
 };
 

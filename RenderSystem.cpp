@@ -174,9 +174,21 @@ void RenderSystem::Render()
 		RenderModel(m_oceanModel, XMMatrixMultiply(XMMatrixTranslationFromVector(Vector3(0.f, 0.05f, 0.f)), m_worldMatrix), false);
 		// Draw opaque mesh parts
 		RenderModels(position.Pos, EM->GetMask<world::Position,world::Model>(), true);
+		// Draw grids
+		for (auto & visibleRegion : m_visibleRegions) {
+			for (auto & gridJobs : m_gridInstances[visibleRegion]) {
+				for (auto & gridJob : gridJobs.second) {
+					for (auto & pair : gridJob.model->meshes) {
+						RenderModelMesh(pair.first.get(), XMMatrixMultiply(pair.second, gridJob.worldMatrix), true);
+					}
+				}
+			}
+		}
+		
 		// Draw alpha mesh parts
+		m_d3dContext->RSSetState(m_states->CullNone());
 		RenderModels(position.Pos, EM->GetMask<world::Position, world::Model>(), false);
-
+		m_d3dContext->RSSetState(m_states->CullCounterClockwise());
 
 		m_mutex.unlock();
 
@@ -270,12 +282,14 @@ void RenderSystem::SyncEntities()
 		
 		
 		world::MaskType accessMask = EM->GetMask<world::Model, world::Position>();
+		world::MaskType buildingMask = EM->GetMask<world::Building, world::Position>();
 		world::MaskType terrainMask = EM->GetMask<world::Terrain>();
 		Vector3 camera = EM->PlayerPos();
 		TaskManager::Get().Push(Task([=]() {
 
 			m_syncMutex.lock();
  			ModelInstanceCache modelInstancesTemp;
+			GridInstanceCache gridInstancesTemp;
 			std::set<world::EntityID> trackedTemp;
 			// terrain
 			for (auto & regionCache : m_terrainEntities->GetCaches()) {
@@ -295,8 +309,21 @@ void RenderSystem::SyncEntities()
 					TrackEntity(modelInstancesTemp, regionCache.first,trackedTemp, modelEntities.GetComponentMask(),modelEntity.GetProxy(), camera);
 				}
 			}
+			// buildings
+			auto buildingEntities = EM->NewEntityCache<world::Building, world::Position>();
+			EM->UpdateCache(buildingEntities, [=](world::MaskType & signature) {
+				return signature == buildingMask;
+			});
+			for (auto & regionCache : buildingEntities.GetCaches()) {
+				for (auto & buildingEntity : regionCache.second) {
+					auto & position = buildingEntity.Get<world::Position>();
+					TrackGridEntity(gridInstancesTemp, regionCache.first, trackedTemp, modelEntities.GetComponentMask(), position.Pos, position.Rot, buildingEntity.Get<world::Building>(), camera);
+				}
+			}
+
 			m_mutex.lock();
 			std::swap(modelInstancesTemp, m_modelInstances);
+			std::swap(gridInstancesTemp, m_gridInstances);
 			std::swap(trackedTemp, m_tracked);
 			m_mutex.unlock();
 			m_syncMutex.unlock();
@@ -363,11 +390,11 @@ void RenderSystem::InitializeWorldRendering(world::WEM * entityManager)
 		m_terrainEntities = std::unique_ptr<world::WorldEntityCache<world::WEM::RegionType, world::Terrain, world::Model, world::Position>>(
 			new world::WorldEntityCache<world::WEM::RegionType, world::Terrain, world::Model, world::Position>(entityManager->NewEntityCache<world::Terrain, world::Model, world::Position>()));
 		entityManager->UpdateGlobalCache(*m_terrainEntities);
-		EM = entityManager;
 	}
 	else {
 		m_ready = false;
 	}
+	EM = entityManager;
 }
 
 void RenderSystem::RegisterHandlers()
@@ -498,7 +525,14 @@ void RenderSystem::SpriteBatchEnd()
 	m_spriteBatch->End();
 }
 
-void RenderSystem::TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<world::WEM::RegionType> region, std::set<world::EntityID> & tracked, world::MaskType signature, world::WorldEntityProxy<world::Model, world::Position> & entity, Vector3 camera,bool ignoreVerticalDistance)
+void RenderSystem::TrackEntity(
+	ModelInstanceCache & modelInstances, 
+	shared_ptr<world::WEM::RegionType> region, 
+	std::set<world::EntityID> & tracked, 
+	world::MaskType signature, 
+	world::WorldEntityProxy<world::Model, world::Position> & entity, 
+	Vector3 camera,
+	bool ignoreVerticalDistance)
 {
 	world::EntityID id = entity.GetID();
 	if (tracked.count(id) == 0) {
@@ -524,6 +558,44 @@ void RenderSystem::TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<w
 		XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
 		XMMATRIX world = XMMatrixMultiply(rotMat, translation);
 		map[signature].push_back(RenderEntityJob { id,model,position.Pos,world });
+		tracked.insert(id);
+	}
+}
+
+void RenderSystem::TrackGridEntity(
+	GridInstanceCache & gridInstances,
+	shared_ptr<world::WEM::RegionType> region,
+	std::set<world::EntityID> & tracked,
+	world::MaskType signature,
+	Vector3 position,
+	Vector3 rotation,
+	world::Building & gridComp,
+	Vector3 camera,
+	bool ignoreVerticalDistance
+)
+{
+	world::EntityID id = gridComp.ID;
+	if (tracked.count(id) == 0) {
+		auto it = gridInstances.find(region);
+		if (it == gridInstances.end()) {
+			it = gridInstances.insert(it, std::make_pair(region, std::map<world::MaskType, vector<RenderGridJob>>()));
+		}
+		auto & map = it->second;
+		float distance = 0.f;
+		if (ignoreVerticalDistance) {
+			distance = Vector2::Distance(Vector2(camera.x, camera.z), Vector2(position.x, position.z));
+		}
+		else {
+			distance = Vector3::Distance(camera, position);
+		}
+		shared_ptr<CompositeModel> model = SM->GetSystem<world::BuildingSystem>("Building")->GetModel(gridComp, distance);
+		if (map.find(signature) == map.end()) {
+			map.insert(std::make_pair(signature, vector<RenderGridJob>()));
+		}
+		XMMATRIX translation = XMMatrixTranslation(position.x, position.y, position.z);
+		XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(rotation);
+		XMMATRIX world = XMMatrixMultiply(rotMat, translation);
+		map[signature].push_back(RenderGridJob{ id,model,position,world });
 		tracked.insert(id);
 	}
 }
@@ -643,11 +715,7 @@ void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model,XMMATRIX world, 
 
 			// Do model-level setCustomState work here
 
-			mesh->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix, !opaque, [=] {
-				if (!opaque) {
-					m_d3dContext->RSSetState(m_states->CullNone());
-				}
-			});
+			mesh->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix, !opaque);
 		}
 	//}
 	//else {

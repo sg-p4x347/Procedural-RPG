@@ -877,6 +877,10 @@ VboParser * AssetManager::ProVboParser()
 {
 	return m_vboParser.get();
 }
+bool AssetManager::Find(const unsigned int & id, AssetType & type, EntityPtr & entity)
+{
+	return (type == AssetType::Authored ? m_authoredEM : m_proceduralEM)->Find(id,entity);
+}
 bool AssetManager::Find(AssetEntityManager * assetManager, string path, EntityPtr & entity)
 {
 	return assetManager->TryFindByPathID(path, entity);

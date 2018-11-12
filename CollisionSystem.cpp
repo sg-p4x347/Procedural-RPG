@@ -6,6 +6,7 @@
 #include "IEventManager.h"
 #include "TaskManager.h"
 #include "CollisionUtil.h"
+#include "AssetManager.h"
 namespace world {
 	CollisionSystem::CollisionSystem(SystemManager * systemManager, WEM * entityManager, unsigned short updatePeriod) :
 		WorldSystem::WorldSystem(entityManager, updatePeriod), 
@@ -65,11 +66,12 @@ namespace world {
 					position.Pos.x = std::max(0.f, std::min((float)terrainSystem->Width(), position.Pos.x));
 					position.Pos.z = std::max(0.f, std::min((float)terrainSystem->Width(), position.Pos.z));
 
+					BoundingBox boundingBox = GetCollisionAsset(collision).AxisAlignedBoxes[0];
 					// Get the center bottom of the box for terrain collison
 					Vector3 bottomCenter =
 						position.Pos +
-						collision.BoundingBox.Position;
-					bottomCenter.y -= collision.BoundingBox.Size.y * 0.5;
+						boundingBox.Center;
+					bottomCenter.y -= boundingBox.Extents.y * 0.5;
 
 					float terrainHeight = terrainSystem->Height(bottomCenter.x, bottomCenter.z);
 
@@ -83,7 +85,7 @@ namespace world {
 								IEventManager::Invoke(EventTypes::Sound_PlayEffect, string("Hit0"));
 							}
 							// small fudge factor to keep in contact with the ground
-							position.Pos.y = -0.01f + terrainHeight + (collision.BoundingBox.Size.y * 0.5f - collision.BoundingBox.Position.y);
+							position.Pos.y = -0.01f + terrainHeight + (boundingBox.Extents.y * 0.5f - boundingBox.Center.y);
 
 							movement.Velocity.y = 0.f;
 							collision.CollisionNormals.push_back(Vector3::Up);
@@ -96,21 +98,22 @@ namespace world {
 
 						Vector3 futurePos = position.Pos + movement.Velocity * elapsed;
 						Matrix rotationMatrix = Matrix::CreateFromYawPitchRoll(position.Rot.y, position.Rot.x, position.Rot.z);
-						Matrix boxTranslation = Matrix::CreateTranslation(collision.BoundingBox.Position);
+						Matrix boxTranslation = Matrix::CreateTranslation(boundingBox.Center);
 						Matrix world = boxTranslation * (rotationMatrix * Matrix::CreateTranslation(futurePos));
-						auto hullA = BoxVertices(collision.BoundingBox, world);
-						float radius = collision.BoundingBox.Size.Length() * 0.5f;
+						auto hullA = BoxVertices(boundingBox, world);
+						float radius = Vector3(boundingBox.Extents).Length() * 0.5f;
 
 						for (auto & other : m_static) {
 							auto & otherPos = other.Get<Position>();
 							auto & otherCollision = other.Get<Collision>();
+							BoundingBox staticBoundingBox = GetCollisionAsset(otherCollision).AxisAlignedBoxes[0];
 							auto otherRotationMatrix = Matrix::CreateFromYawPitchRoll(otherPos.Rot.y, otherPos.Rot.x, otherPos.Rot.z);
-							auto otherWorld = Matrix::CreateTranslation(otherCollision.BoundingBox.Position) * (otherRotationMatrix * Matrix::CreateTranslation(otherPos.Pos));
+							auto otherWorld = Matrix::CreateTranslation(staticBoundingBox.Center) * (otherRotationMatrix * Matrix::CreateTranslation(otherPos.Pos));
 							otherCollision.Colliding = 0;
-							float otherRadius = otherCollision.BoundingBox.Size.Length() * 0.5f;
+							float otherRadius = Vector3(staticBoundingBox.Extents).Length() * 0.5f;
 							// Radial broad phase check
-							if (((position.Pos + collision.BoundingBox.Position) - (otherPos.Pos + otherCollision.BoundingBox.Position)).Length() <= radius + otherRadius) {
-								auto hullB = BoxVertices(otherCollision.BoundingBox, otherWorld);
+							if (((position.Pos + boundingBox.Center) - (otherPos.Pos + staticBoundingBox.Center)).Length() <= radius + otherRadius) {
+								auto hullB = BoxVertices(staticBoundingBox, otherWorld);
 								CollisionUtil::GjkIntersection intersection;
 								CollisionUtil::SatResult satResult;
 
@@ -128,7 +131,7 @@ namespace world {
 									rotationMatrix = Matrix::CreateFromYawPitchRoll(position.Rot.y, position.Rot.x, position.Rot.z);
 									world = boxTranslation * (rotationMatrix * Matrix::CreateTranslation(position.Pos));
 
-									hullA = BoxVertices(collision.BoundingBox, world);
+									hullA = BoxVertices(boundingBox, world);
 									CollisionUtil::SatResult satResult;
 
 
@@ -181,17 +184,17 @@ namespace world {
 			return ((sig & staticMask) == staticMask) && !(sig & movementMask);
 		});
 	}
-	std::vector<Vector3> CollisionSystem::BoxVertices(Box & box, Matrix & transform)
+	std::vector<Vector3> CollisionSystem::BoxVertices(BoundingBox & box, Matrix & transform)
 	{
 		std::vector<Vector3> vertices = std::vector<Vector3>(8);
 		int vertexIndex = 0;
-		for (float x = 0.f; x <= box.Size.x; x += box.Size.x) {
-			for (float y = 0.f; y <= box.Size.y; y += box.Size.y) {
-				for (float z = 0.f; z <= box.Size.z; z += box.Size.z) {
+		for (float x = 0.f; x <= box.Extents.x; x += box.Extents.x) {
+			for (float y = 0.f; y <= box.Extents.y; y += box.Extents.y) {
+				for (float z = 0.f; z <= box.Extents.z; z += box.Extents.z) {
 					Vector3 & vertex = vertices[vertexIndex];
-					vertex.x = -box.Size.x * 0.5 + x;
-					vertex.y = -box.Size.y * 0.5 + y;
-					vertex.z = -box.Size.z * 0.5 + z;
+					vertex.x = -box.Extents.x * 0.5 + x;
+					vertex.y = -box.Extents.y * 0.5 + y;
+					vertex.z = -box.Extents.z * 0.5 + z;
 
 					vertex = Vector3::Transform(vertex,transform);
 
@@ -200,5 +203,20 @@ namespace world {
 			}
 		}
 		return vertices;
+	}
+	CollisionAsset CollisionSystem::GetCollisionAsset(Collision & collision)
+	{
+		auto it = m_collisionAssets.find(collision.Asset);
+		if (it != m_collisionAssets.end())
+			return it->second;
+
+		EntityPtr asset;
+		if (AssetManager::Get()->Find(collision.Asset, collision.Type, asset)) {
+			CollisionAsset collisionAsset = *(asset->GetComponent<CollisionAsset>("CollisionAsset"));
+			m_collisionAssets.insert(std::map<EntityID,CollisionAsset>::value_type(collision.Asset, collisionAsset));
+			return collisionAsset;
+		}
+		// default if asset was not found
+		return CollisionAsset();
 	}
 }

@@ -10,6 +10,7 @@
 #include "TaskThread.h"
 #include "WaterCell.h"
 #include "Model.h"
+#include "Building.h"
 #include <thread>
 #include "TopologyCruncher.h"
 #include "VboParser.h"
@@ -17,7 +18,7 @@
 #include "TreeGenerator.h"
 #include "SystemManager.h"
 //#include "ActionSystem.h"
-//#include "BuildingSystem.h"
+#include "BuildingSystem.h"
 #include "TaskManager.h"
 #include "Inventory.h"
 #include "IEventManager.h"
@@ -193,7 +194,15 @@ namespace world {
 			progressCallback(percent * 0.5, "Erosion Simulation ...");
 		});
 		// Terrain done yay!
-		
+		Utility::OutputLine("Generating Buildings...");
+		Rectangle footprint = Rectangle(20, 20, ProUtil::RandWithin(6, 10), ProUtil::RandWithin(6, 10));
+		Rectangle flattenArea = Rectangle(footprint.x - 1, footprint.y - 1, footprint.width + 2, footprint.height + 2);
+		Rectangle cacheArea = Rectangle(flattenArea.x - 10, flattenArea.y - 10, flattenArea.width + 20, flattenArea.height + 20);
+		//HeightMap cache = HeightMap(cacheArea);
+		//ImportMap(cache);
+		float height = Flatten(*TerrainMap, flattenArea, 10);
+		SM->GetSystem<BuildingSystem>("Building")->CreateBuilding(Vector3(footprint.x, height + 0.2f, footprint.y), Rectangle(0, 0, footprint.width, footprint.height), "residential");
+
 		AssetManager::Get()->CreateHeightMapModel("terrain", TerrainMap.get(), AssetManager::Get()->CreateNormalMap(TerrainMap.get()), 10.f, m_regionWidth, "Terrain");
 		CreateTerrainEntities();
 		//SaveTerrain(*TerrainMap,biome);
@@ -233,7 +242,7 @@ namespace world {
 					EM->CreateEntity(
 						Position(Vector3(x, TerrainMap->Height(x, z), z),Vector3(XM_PIDIV2 * (float)(x- offset) / (float)max,0.f, XM_PIDIV2 * (float)(z - offset) / (float)max)),
 						Model(asset->ID(), AssetType::Authored),
-						Collision(Box(Vector3(0.f,0.5f,0.f), Vector3(1.f, 1.f, 1.f)))
+						Collision(asset->ID(), AssetType::Authored)
 					);
 				}
 			}
@@ -241,15 +250,8 @@ namespace world {
 		}*/
 		//SM->GetSystem<ItemSystem>("Item")->NewContainer(Vector3(32, TerrainMap->Height(32, 32), 32), Vector3::Zero, "Crate");
 
-		/*Utility::OutputLine("Generating Buildings...");
-		Rectangle footprint = Rectangle(ProUtil::RandWithin(32, 200), ProUtil::RandWithin(32, 200), ProUtil::RandWithin(6,10), ProUtil::RandWithin(6, 10));
-		Rectangle flattenArea = Rectangle(footprint.x - 1, footprint.y - 1, footprint.width + 2, footprint.height + 2);
-		Rectangle cacheArea = Rectangle(flattenArea.x - 10, flattenArea.y - 10, flattenArea.width + 20, flattenArea.height + 20);
-		HeightMap cache = HeightMap(cacheArea);
-		ImportMap(cache);
-		float height = Flatten(cache, flattenArea,10);
-		SM->GetSystem<BuildingSystem>("Building")->CreateBuilding(Vector3(footprint.x, height + 0.1f, footprint.y), Rectangle(0, 0, footprint.width, footprint.height), "residential");
-		Save(cache);*/
+		
+		//Save(cache);
 		AssetManager::Get()->GetProceduralEM()->Save();
 	}
 

@@ -33,10 +33,10 @@ namespace world {
 
 	void MovementSystem::Update(double & elapsed)
 	{
-		
-		TaskManager::Get().RunSynchronous(Task([=] {
+		std::vector<std::pair<EntityID, Vector3>> regionChanges;
+		TaskManager::Get().RunSynchronous(Task([=, & regionChanges] {
 			auto playerPos = EM->PlayerPos();
-			std::vector<std::pair<EntityID, Vector3>> regionChanges;
+			
 			for (auto & entity : m_entities) {
 				auto & position = entity.Get<Position>();
 				auto & movement = entity.Get<Movement>();
@@ -58,17 +58,17 @@ namespace world {
 				position.Rot.y = std::fmod(position.Rot.y, XM_2PI);
 				position.Rot.z = std::fmod(position.Rot.z, XM_2PI);
 			}
-			// update the entities region
-			for (auto & regionChangeEntity : regionChanges) {
-				EM->UpdatePosition(regionChangeEntity.first, regionChangeEntity.second);
-			}
+			
 
 		},
 			m_entities.GetComponentMask(),
 			m_entities.GetComponentMask(),
 			m_entities.GetComponentMask())
 		);
-
+		// update the entities region
+		for (auto & regionChangeEntity : regionChanges) {
+			EM->UpdatePosition(regionChangeEntity.first, regionChangeEntity.second);
+		}
 		// check to see if the player has moved enough for an entity resync
 		// alternate case passes if no regions have been loaded
 			

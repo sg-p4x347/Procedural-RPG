@@ -260,6 +260,11 @@ void JsonParser::ParseObject(string json)
 	}
 }
 
+bool JsonParser::IsDefined(const string key) const
+{
+	return m_object.count(key);
+}
+
 JsonParser JsonParser::operator[](const string & key) const
 {
 	return JsonParser(m_object.at(key));

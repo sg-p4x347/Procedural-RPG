@@ -34,10 +34,11 @@ namespace world {
 		// Inherited via System
 		virtual string Name() override;
 		virtual void Update(double & elapsed) override;
+		void Run() override;
 		//----------------------------------------------------------------
 		// Input
-		void SetMousePos(Vector2 pos);
-		Vector2 AccumulatedMousePos;
+		//void SetMousePos(Vector2 pos);
+		//Vector2 AccumulatedMousePos;
 		//----------------------------------------------------------------
 		// Generation
 		void CreatePlayer();
@@ -45,7 +46,7 @@ namespace world {
 		//----------------------------------------------------------------
 		// Utility
 		Quaternion GetPlayerQuaternion(world::Player & player, world::Position & position, bool ignorePitch = false);
-		void Run() override;
+		
 		//----------------------------------------------------------------
 		// Interaction state
 		void SetInteractionState(Player::InteractionStates state);

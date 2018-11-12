@@ -1,7 +1,7 @@
 #pragma once
 #include "WorldSystem.h"
 #include "WorldDomain.h"
-#include "Box.h"
+#include "CollisionAsset.h"
 class SystemManager;
 namespace world {
 	class CollisionSystem :
@@ -18,7 +18,9 @@ namespace world {
 		SystemManager * SM;
 		WorldEntityCache<WEM::RegionType, Position, Collision,Movement> m_dynamic;
 		WorldEntityCache<WEM::RegionType, Position, Collision> m_static;
+		std::map<EntityID, CollisionAsset> m_collisionAssets;
 	private:
-		std::vector<Vector3> BoxVertices(Box & box,Matrix & transform);
+		std::vector<Vector3> BoxVertices(BoundingBox & box,Matrix & transform);
+		CollisionAsset GetCollisionAsset(Collision & collision);
 	};
 }

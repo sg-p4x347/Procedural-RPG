@@ -33,7 +33,7 @@ namespace world {
 		}
 		void Save() {
 
-			if (m_cache.size() > 0) {
+			//if (m_cache.size() > 0) {
 				
 				if (is_base_of<ISerialization, CompType>()) {
 					ostringstream ss;
@@ -44,14 +44,14 @@ namespace world {
 					m_file.Save();
 				}
 				else {
-					const char * dataPtr = (const char*)&m_cache[0];
+					const char * dataPtr = m_cache.size() ? (const char*)&m_cache[0] : nullptr;
 					size_t size = sizeof(CompType) * m_cache.size();
 					m_file.Insert(m_signature, dataPtr, size);
 					
 				}
 				
 				m_file.Save();
-			}
+			//}
 		}
 		void Import() {
 			size_t size = 0;
@@ -60,11 +60,16 @@ namespace world {
 			if (size > 0) {
 				if (is_base_of<ISerialization,CompType>()) {
 					// CompType is variable size, so stream each one in sequentially
-					istringstream ss(std::string((const char *)data, size));
-					while (!ss.eof()) {
+					istringstream ss(string(data, size));
+					while (true) {
 						CompType component{};
 						((ISerialization *)&component)->Import(ss);
-						m_cache.push_back(component);
+						if (!ss.eof()) {
+							m_cache.push_back(component);
+						}
+						else {
+							break;
+						}
 					}
 				}
 				else {

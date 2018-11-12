@@ -48,14 +48,17 @@ public:
 	{
 		return DeQuote(m_value);
 	}
+	template<>
+	inline JsonParser To() const
+	{
+		return *this;
+	}
 	template<typename T>
 	inline vector<T> ToVector()
 	{
 		vector<T> vec;
 		for (JsonParser & jp : m_array) {
-			T JSONable;
-			JSONable.Import(jp);
-			vec.push_back(JSONable);
+			vec.push_back(jp.To<T>());
 		}
 		return vec;
 	}
@@ -69,7 +72,7 @@ public:
 	//===================================
 	// JSON Object
 	//===================================
-	
+	bool IsDefined(const string key) const;
 	JsonParser operator[](const string & key) const;
 	//// get a value from an object
 	//vector<string> GetKeys() const;

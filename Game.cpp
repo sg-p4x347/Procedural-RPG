@@ -12,6 +12,7 @@
 #include "GuiSystem.h"
 #include "IEventManager.h"
 #include "TaskManager.h"
+#include "CMF.h"
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
@@ -23,17 +24,20 @@ DirectX::Mouse::ButtonStateTracker Game::MouseTracker = DirectX::Mouse::ButtonSt
 DirectX::Keyboard::KeyboardStateTracker Game::KeyboardTracker = DirectX::Keyboard::KeyboardStateTracker();
 Vector2 Game::MousePos = Vector2::Zero;
 
-void Game::SetMousePos(Vector2 pos)
-{
-	if (m_world) {
-		m_world->SetMousePos(pos);
-	}
-}
+//void Game::SetMousePos(Vector2 pos)
+//{
+//	if (m_world) {
+//		m_world->SetMousePos(pos);
+//	}
+//}
 
 Game::Game()
 {
 	m_config = JsonParser(ifstream("Config/game.json"));
 	AssetManager::Get()->SetAssetDir("Assets");
+
+	// TEST
+	geometry::CMF::CreateFromFBX("Assets/Models/Grass_0.fbx");
 }
 
 Game & Game::Get()

@@ -95,6 +95,9 @@
     <Filter Include="World\Database">
       <UniqueIdentifier>{cfece8f3-2423-4cc4-bf64-2408b77c572b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Utility\Geometry\CMF">
+      <UniqueIdentifier>{8c9ab8d6-25df-4c32-b825-39dfe3152bb7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -428,6 +431,19 @@
     <ClInclude Include="CustomModelLoadCMO.h">
       <Filter>Utility\Serialization</Filter>
     </ClInclude>
+    <ClInclude Include="CollisionAsset.h" />
+    <ClInclude Include="JsonUtil.h">
+      <Filter>Utility\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="CMF.h">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshPart.h">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -707,6 +723,16 @@
     <ClCompile Include="Global.cpp" />
     <ClCompile Include="CustomModelLoadCMO.cpp">
       <Filter>Utility\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionAsset.cpp" />
+    <ClCompile Include="CMF.cpp">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshPart.cpp">
+      <Filter>Utility\Geometry\CMF</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

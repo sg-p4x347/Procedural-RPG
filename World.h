@@ -28,8 +28,6 @@ namespace world {
 		bool Load();
 		// Allows the RenderSystem to render the world
 		void Render();
-		// Input
-		void SetMousePos(Vector2 pos);
 
 	private:
 		void InitializeResources();

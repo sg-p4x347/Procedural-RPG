@@ -5,11 +5,18 @@
 #include "PositionNormalTextureTangentColorVBO.h"
 #include "Model.h"
 #include "CompositeModel.h";
+#include "Building.h"
 #include "AssetManager.h"
 class SystemManager;
 struct RenderEntityJob {
 	world::EntityID entity;
 	std::shared_ptr<Model> model;
+	Vector3 position;
+	XMMATRIX worldMatrix;
+};
+struct RenderGridJob {
+	world::EntityID entity;
+	std::shared_ptr<CompositeModel> model;
 	Vector3 position;
 	XMMATRIX worldMatrix;
 };
@@ -95,11 +102,31 @@ private:
 	// Components::Model using DirectX::Model
 	typedef std::map<shared_ptr<world::WEM::RegionType>, std::map<world::MaskType,vector<RenderEntityJob>>> ModelInstanceCache;
 	ModelInstanceCache m_modelInstances;
+	typedef std::map<shared_ptr<world::WEM::RegionType>, std::map<world::MaskType, vector<RenderGridJob>>> GridInstanceCache;
+	GridInstanceCache m_gridInstances;
 	std::set<shared_ptr<world::WEM::RegionType>> m_visibleRegions;
 	std::set<world::EntityID> m_tracked;
 	//std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_modelInstancesTemp;
 	//std::set<world::EntityID> m_trackedTemp;
-	void TrackEntity(ModelInstanceCache & modelInstances, shared_ptr<world::WEM::RegionType> region, std::set<world::EntityID> & tracked,world::MaskType signature, world::WorldEntityProxy<world::Model,world::Position> & entity,Vector3 camera, bool ignoreVerticalDistance = false);
+	void TrackEntity(
+		ModelInstanceCache & modelInstances,
+		shared_ptr<world::WEM::RegionType> region,
+		std::set<world::EntityID> & tracked,
+		world::MaskType signature,
+		world::WorldEntityProxy<world::Model, world::Position> & entity,
+		Vector3 camera,
+		bool ignoreVerticalDistance = false);
+	void TrackGridEntity(
+		GridInstanceCache & gridInstances, 
+		shared_ptr<world::WEM::RegionType> region, 
+		std::set<world::EntityID> & tracked, 
+		world::MaskType signature,
+		Vector3 position, 
+		Vector3 rotation,
+		world::Building & gridComp,
+		Vector3 camera, 
+		bool ignoreVerticalDistance = false
+	);
 	void UpdateVisibleRegions(Vector3 & cameraPosition, Vector3 & cameraRotation);
 	bool IsRectVisible(Rectangle & area,Vector2 & observerPos,Vector2 & fovNorm1, Vector2 & fovNorm2);
 	bool IsRegionVisible(shared_ptr<world::WEM::RegionType> region, Vector3 & position, Vector3 & rotation, BoundingFrustum & frustum);
