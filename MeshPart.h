@@ -1,14 +1,13 @@
 #pragma once
 #include "EntityTypedefs.h"
+#include "Material.h"
 namespace geometry {
-	class MeshPart
+	struct MeshPart
 	{
-	public:
 		MeshPart();
-		~MeshPart();
-	private:
-		bool m_alpha;
-		vector<VertexPositionNormalTangentColorTexture> m_vertices;
-		vector<uint16_t> m_indices;
+		bool alpha;
+		vector<VertexPositionNormalTangentColorTexture> vertices;
+		vector<uint16_t> indices;
+		shared_ptr<Material> material;
 	};
 }

@@ -5,7 +5,9 @@
 #include "CustomModelLoadVBO.h"
 #include "CustomModelLoadCMO.h"
 #include "XmlParser.h"
-
+#include "Filesystem.h"
+#include "CMF.h"
+using CMF = geometry::CMF;
 AssetManager * AssetManager::m_instance = nullptr;
 void AssetManager::CreateDgslEffect(string name, vector<string> textures, const D3D11_INPUT_ELEMENT_DESC * inputElements, const UINT elementCount)
 {
@@ -286,6 +288,21 @@ AssetEntityManager * AssetManager::GetProceduralEM()
 {
 	return m_proceduralEM.get();
 }
+void AssetManager::CompileFbxAssets()
+{
+	// iterate the \Assets\Models directory
+	for (auto & dir : Filesystem::directory_iterator(m_authoredDir / "Models")) {
+		if (dir.path().has_extension()) {
+			string ext = dir.path().extension().string();
+			if (ext == ".fbx" || ext == ".FBX") {
+				auto cmf = CMF::CreateFromFBX(dir.path(),GetStaticEM());
+				cmf->Export(m_authoredDir);
+			}
+		}
+	}
+	GetStaticEM()->Save();
+	//auto cmf = CMF::CreateFromFBX((m_authoredDir / "Models/Test.fbx"), GetStaticEM());
+}
 AssetManager::AssetManager() : m_fontSize(32)
 {
 
@@ -312,6 +329,7 @@ Filesystem::path AssetManager::AppendPath(string path, string type)
 	return Filesystem::path( m_authoredDir / type / path);
 }
 
+shared_ptr<CMF> g_cmf = nullptr;
 std::shared_ptr<Model> AssetManager::GetModel(EntityPtr entity, float distance, Vector3 position, AssetType type)
 {
 	std::shared_ptr<Model> model;
@@ -326,6 +344,15 @@ std::shared_ptr<Model> AssetManager::GetModel(EntityPtr entity, float distance, 
 				//----------------------------------------------------------------
 				// Standard models
 
+
+				// TEMP **************************
+				/*if (!g_cmf)
+					g_cmf = CMF::CreateFromFBX("Assets/Models/Building/models-building-floor0.fbx", GetStaticEM());
+				
+				return g_cmf->GetModel(m_d3dDevice.Get(), distance);*/
+
+				//****************************
+
 				// get the LOD level
 				int lod = std::min(modelAsset->LodCount - 1, (int)distance / modelAsset->LodSpacing);
 				// Get the model
@@ -334,18 +361,22 @@ std::shared_ptr<Model> AssetManager::GetModel(EntityPtr entity, float distance, 
 					//----------------------------------------------------------------
 					// Cache the LOD
 
-					// get the path
-					Filesystem::path fullPath = FullPath(path + '_' + std::to_string(lod), type, type == Procedural ? ".vbo" : ".cmo");
+					
 					// Load from file
 					if (type == Procedural) {
+						// get the path
+						Filesystem::path fullPath = FullPath(path + '_' + std::to_string(lod), type, ".vbo");
 						//model.reset(Model::CreateFromVBO(m_d3dDevice.Get(), fullPath.c_str()).release());
 						shared_ptr<IEffect> effect;
 						GetEffect(modelAsset->Effect, effect);
-						model.reset(CustomModelLoadVBO::CreateFromVBO(m_d3dDevice.Get(), fullPath.string(), effect).release());
+						model = CustomModelLoadVBO::CreateFromVBO(m_d3dDevice.Get(), fullPath.string(), effect);
 						
 					}
 					else {
-						model.reset(CustomModelLoadCMO::CreateFromCMO(m_d3dDevice.Get(), fullPath.c_str(), *m_fxFactory).release());
+						// get the path
+						Filesystem::path fullPath = m_authoredDir / "Models" / (path + ".fbx");
+						model = CMF::CreateFromFBX(fullPath, GetStaticEM())->GetModel(m_d3dDevice.Get(), m_DGSLfxFactory.get() ,distance);
+						//model = CustomModelLoadCMO::CreateFromCMO(m_d3dDevice.Get(), fullPath.c_str(), *m_fxFactory);
 					}
 					if (modelAsset->LODs.size() <= lod) {
 						modelAsset->LODs.resize(lod + 1);
@@ -418,6 +449,7 @@ void AssetManager::SetAssetDir(Filesystem::path assets)
 {
 	m_authoredDir = assets;
 	m_authoredEM.reset(new AssetEntityManager(assets));
+	CompileFbxAssets();
 }
 
 void AssetManager::SetProceduralAssetDir(Filesystem::path procedural)

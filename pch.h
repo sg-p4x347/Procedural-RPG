@@ -58,9 +58,10 @@ using std::map;
 using std::unordered_map;
 using std::unordered_set;
 
-#include <experimental/filesystem>
+//#include <experimental/filesystem>
 #include <filesystem>
-namespace Filesystem = std::experimental::filesystem::v1;
+
+namespace Filesystem = std::filesystem;
 namespace DX
 {
     inline void ThrowIfFailed(HRESULT hr)

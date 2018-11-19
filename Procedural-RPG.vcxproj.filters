@@ -444,6 +444,10 @@
     <ClInclude Include="MeshPart.h">
       <Filter>Utility\Geometry\CMF</Filter>
     </ClInclude>
+    <ClInclude Include="LodGroup.h">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -734,6 +738,10 @@
     <ClCompile Include="MeshPart.cpp">
       <Filter>Utility\Geometry\CMF</Filter>
     </ClCompile>
+    <ClCompile Include="LodGroup.cpp">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
@@ -814,41 +822,6 @@
     <ImageContentTask Include="Assets\Textures\iron_ore.png">
       <Filter>Assets</Filter>
     </ImageContentTask>
-  </ItemGroup>
-  <ItemGroup>
-    <MeshContentTask Include="Assets\Models\Tree.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Cube.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Building\models-building-corner0_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Building\models-building-floor0_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Building\models-building-wall0_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Crate_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Boulder_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Iron_Boulder_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Grass_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Biped_Placeholder_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\ocean_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico">

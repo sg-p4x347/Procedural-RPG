@@ -171,7 +171,7 @@ void RenderSystem::Render()
 		RenderModels(position.Pos, m_terrainEntities->GetComponentMask(), false);
 		//----------------------------------------------------------------
 		// Render the ocean
-		RenderModel(m_oceanModel, XMMatrixMultiply(XMMatrixTranslationFromVector(Vector3(0.f, 0.05f, 0.f)), m_worldMatrix), false);
+		RenderModel(m_oceanModel, XMMatrixMultiply(XMMatrixTranslationFromVector(Vector3(0.f, 0.05f, 0.f)), m_worldMatrix), true);
 		// Draw opaque mesh parts
 		RenderModels(position.Pos, EM->GetMask<world::Position,world::Model>(), true);
 		// Draw grids
@@ -186,9 +186,9 @@ void RenderSystem::Render()
 		}
 		
 		// Draw alpha mesh parts
-		m_d3dContext->RSSetState(m_states->CullNone());
+		//m_d3dContext->RSSetState(m_states->CullNone());
 		RenderModels(position.Pos, EM->GetMask<world::Position, world::Model>(), false);
-		m_d3dContext->RSSetState(m_states->CullCounterClockwise());
+		//m_d3dContext->RSSetState(m_states->CullCounterClockwise());
 
 		m_mutex.unlock();
 
@@ -705,7 +705,9 @@ void RenderSystem::RenderModels(Vector3 & cameraPos, world::MaskType signatureMa
 
 void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model,XMMATRIX world, bool opaque)
 {
+	//model->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix !opaque)
 	//if (opaque) {
+	if (model) {
 		for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
 		{
 			auto mesh = it->get();
@@ -717,6 +719,7 @@ void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model,XMMATRIX world, 
 
 			mesh->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix, !opaque);
 		}
+	}
 	//}
 	//else {
 	//	for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
@@ -823,13 +826,13 @@ void RenderSystem::RenderCompositeModel(shared_ptr<CompositeModel> model, Vector
 void RenderSystem::RenderModelMesh(DirectX::ModelMesh * mesh, XMMATRIX world, bool backfaceCulling)
 {
 	mesh->PrepareForRendering(m_d3dContext.Get(), *m_states, false);
-	if (!backfaceCulling) {
+	/*if (!backfaceCulling) {
 		m_d3dContext->RSSetState(m_states->CullNone());
 	}
 	else {
 		m_d3dContext->RSSetState(m_states->CullCounterClockwise());
 
-	}
+	}*/
 	
 	//// Do model-level setCustomState work here
 	//m_d3dContext->RSSetState(m_states->CullNone());

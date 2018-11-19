@@ -85,8 +85,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>C:\Program Files\Autodesk\FBX\FBX SDK\2019.0\lib\vs2015\x64\release;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Program Files\Autodesk\FBX\FBX SDK\2019.0\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)FBX SDK\2019.0\lib\vs2015\x64\release;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)FBX SDK\2019.0\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -117,11 +117,12 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <FloatingPointModel>Fast</FloatingPointModel>
       <AdditionalIncludeDirectories>$(SolutionDir)\DirectXTK\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libfbxsdk.lib;d3d11.lib;dxguid.lib;uuid.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libfbxsdk-md.lib;d3d11.lib;dxguid.lib;uuid.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <FxCompile>
@@ -173,13 +174,14 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalIncludeDirectories>$(SolutionDir)\DirectXTK\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>libfbxsdk.lib;d3d11.lib;dxguid.lib;uuid.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libfbxsdk-md.lib;d3d11.lib;dxguid.lib;uuid.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ImageContentTask>
       <ContentOutput>$(ProjectDir)\Assets\%(Filename).dds</ContentOutput>
@@ -190,6 +192,9 @@
     <FxCompile>
       <ObjectFileOutput>$(ProjectDir)Assets\%(Filename).cso</ObjectFileOutput>
     </FxCompile>
+    <PostBuildEvent>
+      <Command>xcopy /y /d  "$(ProjectDir)FBX SDK\2019.0\lib\vs2015\x64\release\*.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Action.h" />
@@ -261,6 +266,8 @@
     <ClInclude Include="JsonUtil.h" />
     <ClInclude Include="Line.h" />
     <ClInclude Include="AssetTypes.h" />
+    <ClInclude Include="LodGroup.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshPart.h" />
     <ClInclude Include="NormalMapAsset.h" />
@@ -412,6 +419,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Line.cpp" />
+    <ClCompile Include="LodGroup.cpp" />
+    <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshPart.cpp" />
     <ClCompile Include="NormalMapAsset.cpp" />
@@ -547,21 +556,6 @@
       <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DisableOptimizations>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <MeshContentTask Include="Assets\Models\Biped_Placeholder_0.fbx" />
-    <MeshContentTask Include="Assets\Models\Boulder_0.fbx" />
-    <MeshContentTask Include="Assets\Models\Building\models-building-corner0_0.fbx" />
-    <MeshContentTask Include="Assets\Models\Building\models-building-floor0_0.fbx" />
-    <MeshContentTask Include="Assets\Models\Building\models-building-wall0_0.fbx" />
-    <MeshContentTask Include="Assets\Models\Crate_0.fbx" />
-    <MeshContentTask Include="Assets\Models\Cube.fbx" />
-    <MeshContentTask Include="Assets\Models\Grass_0.fbx" />
-    <MeshContentTask Include="Assets\Models\Iron_Boulder_0.fbx" />
-    <MeshContentTask Include="Assets\Models\ocean_0.fbx" />
-    <MeshContentTask Include="Assets\Models\Tree.fbx">
-      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)/Assets%(Filename).cmo</ContentOutput>
-    </MeshContentTask>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="DirectXTK\Audio\DirectXTKAudio_Desktop_2017_Win8.vcxproj">

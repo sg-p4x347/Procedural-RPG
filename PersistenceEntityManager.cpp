@@ -11,6 +11,7 @@ PersistenceEntityManager::PersistenceEntityManager(Filesystem::path & directory)
 {
 	//----------------------------------------------------------------
 	// Initialize filesystem dependencies
+	Filesystem::create_directory(directory);
 	ifstream nextEntityFile(m_directory / m_nextEntityFile);
 	if (nextEntityFile) {
 		unsigned int nextID = 1;
@@ -48,11 +49,14 @@ vector<EntityPtr> PersistenceEntityManager::LoadEntities(unsigned long & compone
 	for (int i = 0; i < m_maskSize; i++) {
 		if (mask[i]) {
 			unordered_set<unsigned int> nextMatching;
-			for (auto & dir : Filesystem::directory_iterator(m_directory / NameOf(std::pow(2, i)))) {
-				string fileName = FileSystemHelpers::StripExtension(dir.path().filename().string());
-				if (Utility::IsNumeric(fileName)) {
-					unsigned int id = std::stoi(fileName);
-					if (firstComp || unCached.count(id)) nextMatching.insert(id);
+			Filesystem::path directory = m_directory / NameOf(std::pow(2, i));
+			if (Filesystem::exists(directory)) {
+				for (auto & dir : Filesystem::directory_iterator(directory)) {
+					string fileName = FileSystemHelpers::FilenameWithoutExtension(dir.path());
+					if (Utility::IsNumeric(fileName)) {
+						unsigned int id = std::stoi(fileName);
+						if (firstComp || unCached.count(id)) nextMatching.insert(id);
+					}
 				}
 			}
 			unCached = nextMatching;

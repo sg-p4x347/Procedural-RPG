@@ -232,22 +232,22 @@ namespace world {
 		//CreateResourceEntities();
 
 		// TEMP
-		/*EntityPtr asset;
-		if (AssetManager::Get()->GetStaticEM()->TryFindByPathID("Crate",asset)) {
+		EntityPtr asset;
+		if (AssetManager::Get()->GetStaticEM()->TryFindByPathID("Test",asset)) {
 			int offset = 32;
-			int max = 10;
+			int max = 1;
 			int spacing = 1;
 			for (int x = offset; x < offset + max; x += spacing) {
 				for (int z = offset; z < offset + max; z += spacing) {
 					EM->CreateEntity(
-						Position(Vector3(x, TerrainMap->Height(x, z), z),Vector3(XM_PIDIV2 * (float)(x- offset) / (float)max,0.f, XM_PIDIV2 * (float)(z - offset) / (float)max)),
-						Model(asset->ID(), AssetType::Authored),
-						Collision(asset->ID(), AssetType::Authored)
+						Position(Vector3(x, TerrainMap->Height(x, z), z)),
+						Model(asset->ID(), AssetType::Authored)/*,
+						Collision(asset->ID(), AssetType::Authored)*/
 					);
 				}
 			}
 			
-		}*/
+		}
 		//SM->GetSystem<ItemSystem>("Item")->NewContainer(Vector3(32, TerrainMap->Height(32, 32), 32), Vector3::Zero, "Crate");
 
 		

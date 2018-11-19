@@ -2,12 +2,7 @@
 #include "MeshPart.h"
 
 namespace geometry {
-	MeshPart::MeshPart()
-	{
-	}
-
-
-	MeshPart::~MeshPart()
+	MeshPart::MeshPart() : alpha(false)
 	{
 	}
 }

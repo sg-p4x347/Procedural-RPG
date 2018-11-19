@@ -35,9 +35,6 @@ Game::Game()
 {
 	m_config = JsonParser(ifstream("Config/game.json"));
 	AssetManager::Get()->SetAssetDir("Assets");
-
-	// TEST
-	geometry::CMF::CreateFromFBX("Assets/Models/Grass_0.fbx");
 }
 
 Game & Game::Get()

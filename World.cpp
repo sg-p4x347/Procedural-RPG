@@ -144,6 +144,7 @@ namespace world {
 			gui->GetStyle("Bar")->Width = to_string(percent * 100) + '%';
 			gui->UpdateUI();
 		});
+		
 		gui->SetTextByID("Message", "Generating Plants ...");
 		m_systemManager.GetSystem<PlantSystem>("Plant")->Generate();
 		gui->SetTextByID("Message", "Generation Done");

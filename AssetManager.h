@@ -4,6 +4,7 @@
 #include "XmlParser.h"
 #include "AssetTypes.h"
 #include "HeightMap.h"
+#include "CMF.h"
 class AssetManager
 {
 public:
@@ -17,6 +18,9 @@ public:
 	// Entity manager
 	AssetEntityManager * GetStaticEM();
 	AssetEntityManager * GetProceduralEM();
+	//----------------------------------------------------------------
+	// Asset compilation
+	void CompileFbxAssets();
 	//----------------------------------------------------------------
 	// Asset Retrieval
 	

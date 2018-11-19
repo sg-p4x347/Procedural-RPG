@@ -27,7 +27,10 @@ namespace world {
 		GenerateTreeModels();
 		auto terrainSystem = SM->GetSystem<TerrainSystem>("Terrain");
 		GenerateTreeEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
-		GenerateGrassEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
+		JsonParser config(std::ifstream("config/continent.json"));
+		if (config["grass"].To<bool>()) {
+			GenerateGrassEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
+		}
 	}
 
 	void PlantSystem::GenerateTreeModels()
