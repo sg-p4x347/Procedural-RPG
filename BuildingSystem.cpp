@@ -7,7 +7,7 @@
 namespace world {
 	BuildingSystem::BuildingSystem(WEM *  entityManager, unsigned short updatePeriod) : WorldSystem::WorldSystem(entityManager, updatePeriod)
 	{
-		VoxelGrid grid(2, 2, 2);
+		VoxelGrid grid(0,0,0);
 		for (auto & voxelPtr : grid) {
 			Utility::OutputLine("X");
 		}

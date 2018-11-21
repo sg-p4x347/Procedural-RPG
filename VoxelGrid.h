@@ -6,7 +6,7 @@ public:
 	friend class VoxelGridIterator;
 
 	VoxelGrid();
-	VoxelGrid(int xSize, int ySize, int zSize);
+	VoxelGrid(size_t xSize, size_t ySize, size_t zSize);
 	~VoxelGrid();
 	
 	// Mutators
@@ -27,6 +27,9 @@ private:
 			std::vector<std::shared_ptr<Voxel>>
 		>
 	> m_voxels;
+	size_t m_xSize;
+	size_t m_ySize;
+	size_t m_zSize;
 };
 class VoxelGridIterator {
 public:
