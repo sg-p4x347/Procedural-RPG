@@ -3,10 +3,14 @@
 #include "BuildingGenerator.h"
 #include "AssetManager.h"
 #include "JSON.h"
+#include "VoxelGrid.h"
 namespace world {
 	BuildingSystem::BuildingSystem(WEM *  entityManager, unsigned short updatePeriod) : WorldSystem::WorldSystem(entityManager, updatePeriod)
 	{
-
+		VoxelGrid grid(2, 2, 2);
+		for (auto & voxelPtr : grid) {
+			Utility::OutputLine("X");
+		}
 	}
 
 	string BuildingSystem::Name()
