@@ -345,6 +345,8 @@
     <ClInclude Include="TopologyCruncher.h" />
     <ClInclude Include="TreeGenerator.h" />
     <ClInclude Include="VboParser.h" />
+    <ClInclude Include="Voxel.h" />
+    <ClInclude Include="VoxelGrid.h" />
     <ClInclude Include="Water.h" />
     <ClInclude Include="WaterCell.h" />
     <ClInclude Include="TerrainSystem.h" />
@@ -500,6 +502,8 @@
     <ClCompile Include="TopologyCruncher.cpp" />
     <ClCompile Include="TreeGenerator.cpp" />
     <ClCompile Include="VboParser.cpp" />
+    <ClCompile Include="Voxel.cpp" />
+    <ClCompile Include="VoxelGrid.cpp" />
     <ClCompile Include="Water.cpp" />
     <ClCompile Include="WaterCell.cpp" />
     <ClCompile Include="TerrainSystem.cpp" />
