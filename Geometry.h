@@ -1,5 +1,5 @@
 #pragma once
 #include "pch.h"
-namespace Geom {
+namespace geometry {
 	Vector2 Clamp(Rectangle rect, Vector2 point);
 }

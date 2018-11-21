@@ -5,7 +5,7 @@ namespace geometry {
 	Material::Material() :
 		name("Default"),
 		specularPower(0.f),
-		perVertexColor(true),
+		perVertexColor(false),
 		enableSkinning(false),
 		alpha(1.f),
 		ambientColor(1,1,1),
@@ -27,10 +27,10 @@ namespace geometry {
 			info.perVertexColor = perVertexColor;
 			info.enableSkinning = enableSkinning;
 			info.alpha = alpha;
-			info.ambientColor = ambientColor * 255.f;
-			info.diffuseColor = diffuseColor * 255.f;
+			info.ambientColor = ambientColor;
+			info.diffuseColor = diffuseColor;
 			info.specularColor = specularColor;
-			info.emissiveColor = emissiveColor * 255.f;
+			info.emissiveColor = emissiveColor;
 			vector<wstring> wideTextures;
 			for (auto & texture : textures) {
 				wideTextures.push_back(ansi2unicode(texture));

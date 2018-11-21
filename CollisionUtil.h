@@ -252,10 +252,18 @@ namespace CollisionUtil {
 		}
 		return axes;
 	}
-	bool SatIntersection(std::vector<Vector3> & hullA, std::vector<Vector3> & hullB, std::vector<Vector3> axes, SatResult & result) {
-		for (auto & axis : axes) {
-			SatProjection projectionA = Project(axis, hullA);
-			SatProjection projectionB = Project(axis, hullB);
+	bool SatIntersection(geometry::ConvexHull & hullA, geometry::ConvexHull & hullB, SatResult & result) {
+		for (auto & axis : hullA.axes) {
+			SatProjection projectionA = Project(axis, hullA.vertices);
+			SatProjection projectionB = Project(axis, hullB.vertices);
+			if (!projectionA.Overlaps(projectionB)) {
+				result.Axis = axis;
+				return false;
+			}
+		}
+		for (auto & axis : hullB.axes) {
+			SatProjection projectionA = Project(axis, hullA.vertices);
+			SatProjection projectionB = Project(axis, hullB.vertices);
 			if (!projectionA.Overlaps(projectionB)) {
 				result.Axis = axis;
 				return false;

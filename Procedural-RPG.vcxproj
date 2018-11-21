@@ -195,6 +195,9 @@
     <PostBuildEvent>
       <Command>xcopy /y /d  "$(ProjectDir)FBX SDK\2019.0\lib\vs2015\x64\release\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
+    <ShaderGraphContentTask>
+      <ContentOutput>$(ProjectDir)\Assets\%(Filename).cso</ContentOutput>
+    </ShaderGraphContentTask>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Action.h" />
@@ -221,11 +224,13 @@
     <ClInclude Include="CMF.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="CollisionAsset.h" />
+    <ClInclude Include="CollisionModel.h" />
     <ClInclude Include="CollisionSystem.h" />
     <ClInclude Include="CollisionUtil.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="ComponentCache.h" />
     <ClInclude Include="CompositeModel.h" />
+    <ClInclude Include="ConvexHull.h" />
     <ClInclude Include="CssParser.h" />
     <ClInclude Include="CubicSpline.h" />
     <ClInclude Include="CustomEffect.h" />
@@ -382,9 +387,11 @@
     <ClCompile Include="CMF.cpp" />
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CollisionAsset.cpp" />
+    <ClCompile Include="CollisionModel.cpp" />
     <ClCompile Include="CollisionSystem.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="CompositeModel.cpp" />
+    <ClCompile Include="ConvexHull.cpp" />
     <ClCompile Include="CssParser.cpp" />
     <ClCompile Include="CubicSpline.cpp" />
     <ClCompile Include="CustomEffect.cpp" />
@@ -580,6 +587,17 @@
       <SubType>Designer</SubType>
     </Xml>
     <Xml Include="Assets\UI\loading.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ShaderGraphContentTask Include="Assets\Shaders\Lambert.dgsl">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Assets\%(Filename).cso</ContentOutput>
+    </ShaderGraphContentTask>
+    <ShaderGraphContentTask Include="Assets\Shaders\Phong.dgsl">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Assets\%(Filename).cso</ContentOutput>
+    </ShaderGraphContentTask>
+    <ShaderGraphContentTask Include="Assets\Shaders\Unlit.dgsl">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)Assets/%(Filename).cso</ContentOutput>
+    </ShaderGraphContentTask>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

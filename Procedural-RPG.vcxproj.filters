@@ -447,7 +447,15 @@
     <ClInclude Include="LodGroup.h">
       <Filter>Utility\Geometry\CMF</Filter>
     </ClInclude>
-    <ClInclude Include="Material.h" />
+    <ClInclude Include="CollisionModel.h">
+      <Filter>Utility\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ConvexHull.h">
+      <Filter>Utility\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -741,7 +749,15 @@
     <ClCompile Include="LodGroup.cpp">
       <Filter>Utility\Geometry\CMF</Filter>
     </ClCompile>
-    <ClCompile Include="Material.cpp" />
+    <ClCompile Include="CollisionModel.cpp">
+      <Filter>Utility\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="ConvexHull.cpp">
+      <Filter>Utility\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
@@ -864,5 +880,16 @@
     <Xml Include="Assets\UI\loading.xml">
       <Filter>Assets\UI</Filter>
     </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <ShaderGraphContentTask Include="Assets\Shaders\Lambert.dgsl">
+      <Filter>Assets\Shaders</Filter>
+    </ShaderGraphContentTask>
+    <ShaderGraphContentTask Include="Assets\Shaders\Phong.dgsl">
+      <Filter>Assets\Shaders</Filter>
+    </ShaderGraphContentTask>
+    <ShaderGraphContentTask Include="Assets\Shaders\Unlit.dgsl">
+      <Filter>Assets\Shaders</Filter>
+    </ShaderGraphContentTask>
   </ItemGroup>
 </Project>

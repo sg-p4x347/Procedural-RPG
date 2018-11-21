@@ -284,6 +284,7 @@ void RenderSystem::SyncEntities()
 		world::MaskType accessMask = EM->GetMask<world::Model, world::Position>();
 		world::MaskType buildingMask = EM->GetMask<world::Building, world::Position>();
 		world::MaskType terrainMask = EM->GetMask<world::Terrain>();
+		world::MaskType movementMask = EM->GetMask<world::Movement>();
 		Vector3 camera = EM->PlayerPos();
 		TaskManager::Get().Push(Task([=]() {
 
@@ -299,10 +300,10 @@ void RenderSystem::SyncEntities()
 					TrackEntity(modelInstancesTemp,regionCache.first, trackedTemp, m_terrainEntities->GetComponentMask(), *modelEntity, camera, true);
 				}
 			}
-			// models
+			// static models
 			auto modelEntities = EM->NewEntityCache<world::Model, world::Position>();
 			EM->UpdateCache(modelEntities, [=] (world::MaskType & signature) {
-				return (signature & accessMask) == accessMask && !(signature & terrainMask);
+				return (signature & accessMask) == accessMask && !(signature & (terrainMask | movementMask));
 			});
 			for (auto & regionCache : modelEntities.GetCaches()) {
 				for (auto & modelEntity : regionCache.second) {
@@ -331,7 +332,26 @@ void RenderSystem::SyncEntities()
 			m_ready = true;
 		},
 			accessMask,
-			accessMask));
+			accessMask | buildingMask));
+		// dynamic models
+		world::MaskType query = accessMask | movementMask;
+		TaskManager::Get().RunSynchronous(Task([=] {
+			m_syncMutex.lock();
+			m_mutex.lock();
+			auto modelEntities = EM->NewEntityCache<world::Model, world::Position>();
+			EM->UpdateCache(modelEntities, [=](world::MaskType & signature) {
+				return (signature & query) == query;
+			});
+			for (auto & regionCache : modelEntities.GetCaches()) {
+				for (auto & modelEntity : regionCache.second) {
+					TrackEntity(m_modelInstances, regionCache.first, m_tracked, modelEntities.GetComponentMask(), modelEntity.GetProxy(), camera);
+				}
+			}
+			m_mutex.unlock();
+			m_syncMutex.unlock();
+		}, query, accessMask));
+
+
 		// terrain
 		/*accessMask = EM->GetMask<world::Terrain, world::Model, world::Position>();
 		TaskManager::Get().Push(Task([=]() {

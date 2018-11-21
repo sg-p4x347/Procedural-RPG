@@ -696,6 +696,18 @@ std::shared_ptr<Model> AssetManager::GetModel(unsigned int id, float distance, V
 	return GetModel(entity, distance,position, type);
 }
 
+std::shared_ptr<geometry::CMF> AssetManager::GetCMF(unsigned int id, AssetType type)
+{
+	EntityPtr entity;
+	switch (type) {
+	case Procedural: m_proceduralEM->Find(id, entity);break;
+	case Authored: m_authoredEM->Find(id, entity); break;
+	}
+	// get the path
+	Filesystem::path fullPath = m_authoredDir / "Models" / (entity->GetComponent<PathID>("PathID")->Path + ".fbx");
+	return CMF::CreateFromFBX(fullPath, GetStaticEM());
+}
+
 std::shared_ptr<Model> AssetManager::CreateModelFromHeightMap(
 	int regionWidth,
 	HeightMap * heightMap,

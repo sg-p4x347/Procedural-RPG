@@ -108,12 +108,12 @@ bool TaskManager::HasDependendency(Task & task)
 		if (worker->Active) {
 			world::MaskType intersect = worker->QueryDependencies & task.QueryMask;
 			if (
-				(
+				/*(
 				(intersect == worker->QueryDependencies)
 					||
 					(intersect == task.QueryMask)
 					)
-				&&
+				&&*/
 				(
 					worker->ReadDependencies & task.WriteDependencies
 					||
@@ -130,12 +130,12 @@ bool TaskManager::HasDependendency(Task & task)
 	// check synchronous task
 	world::MaskType intersect = m_queryDependencies & task.QueryMask;
 	if (
-		(
+		/*(
 		(intersect == m_queryDependencies)
 			||
 			(intersect == task.QueryMask)
 			)
-		&&
+		&&*/
 		(
 			m_readDependencies & task.WriteDependencies
 			||

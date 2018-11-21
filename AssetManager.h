@@ -30,6 +30,7 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetWicTexture(string path);
 	std::shared_ptr<Model> GetModel(string path, float distance = 0.f,Vector3 position = Vector3::Zero, AssetType type = Authored);
 	std::shared_ptr<Model> GetModel(unsigned int id, float distance = 0.f, Vector3 position = Vector3::Zero, AssetType type = Authored);
+	std::shared_ptr<geometry::CMF> GetCMF(unsigned int id, AssetType type = Authored);
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> GetInputLayout(string name);
 	template <typename EffectType>
 	inline bool GetEffect(string name, shared_ptr<EffectType> & effect) {
