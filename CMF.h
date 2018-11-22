@@ -4,6 +4,7 @@
 #include "Material.h"
 #include "ISerialization.h"
 #include <fbxsdk.h>
+#include "CollisionModel.h"
 class AssetEntityManager;
 namespace geometry {
 	class CMF :
@@ -15,6 +16,7 @@ namespace geometry {
 		//----------------------------------------------------------------
 		// Accessors
 		string GetName() const;
+		const CollisionModel GetCollision() const;
 		//----------------------------------------------------------------
 		// Modifiers
 		void AddMesh(shared_ptr<Mesh> mesh);
@@ -40,6 +42,11 @@ namespace geometry {
 		void ProcessNodeChildren(fbxsdk::FbxNode * node, std::vector<shared_ptr<Mesh>> & meshes);
 		shared_ptr<Mesh> CreateMesh(fbxsdk::FbxMesh * fbxMesh);
 		//----------------------------------------------------------------
+		// Collision Model import
+		void ProcessCollisionNode(fbxsdk::FbxNode * node, CollisionModel & collision);
+		void ProcessCollisionNodeChildren(fbxsdk::FbxNode * node, CollisionModel & collision);
+		ConvexHull CreateConvexHull(fbxsdk::FbxMesh * fbxMesh);
+		//----------------------------------------------------------------
 		// Material import
 		void ImportMaterials(fbxsdk::FbxScene * scene);
 		//----------------------------------------------------------------
@@ -55,5 +62,6 @@ namespace geometry {
 		vector<shared_ptr<Mesh>> m_meshes;
 		vector<LodGroup> m_lodGroups;
 		map<string,shared_ptr<Material>> m_materials;
+		CollisionModel m_collision;
 	};
 }

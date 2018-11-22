@@ -19,6 +19,10 @@ namespace geometry {
 	{
 		return m_name;
 	}
+	const CollisionModel CMF::GetCollision() const
+	{
+		return m_collision;
+	}
 	void CMF::AddMesh(shared_ptr<Mesh> mesh)
 	{
 		m_meshes.push_back(mesh);
@@ -197,8 +201,6 @@ namespace geometry {
 	}
 	void CMF::ProcessNode(fbxsdk::FbxNode * node, std::vector<shared_ptr<Mesh>> & meshes)
 	{
-
-		//for (int i = 0; i < node->GetNodeAttributeCount(); i++) {
 		auto attribute = node->GetNodeAttribute();
 		if (attribute) {
 			auto type = attribute->GetAttributeType();
@@ -225,12 +227,18 @@ namespace geometry {
 		else {
 			ProcessNodeChildren(node, meshes);
 		}
-		//}
 	}
 	void CMF::ProcessNodeChildren(fbxsdk::FbxNode * node, std::vector<shared_ptr<Mesh>>& meshes)
 	{
 		for (int i = 0; i < node->GetChildCount(); i++) {
-			ProcessNode(node->GetChild(i), meshes);
+			auto child = node->GetChild(i);
+			string name = child->GetNameOnly();
+			if (name == "collision") {
+				ProcessCollisionNode(child, m_collision);
+			}
+			else {
+				ProcessNode(child, meshes);
+			}
 		}
 	}
 	shared_ptr<Mesh> CMF::CreateMesh(fbxsdk::FbxMesh * fbxMesh)
@@ -253,7 +261,7 @@ namespace geometry {
 				vertex.position.z = control[2];
 				fbxsdk::FbxVector4 normal;
 				if (fbxMesh->GetPolygonVertexNormal(polyIndex, polyVertIndex, normal)) {
-					normal = transform.MultT(normal);
+					normal = transform.MultT(normal) - transform.MultT(fbxsdk::FbxZeroVector4);
 					Vector3 normalVector = Vector3(normal[0], normal[1], normal[2]);
 					normalVector.Normalize();
 					vertex.normal = normalVector;
@@ -318,6 +326,44 @@ namespace geometry {
 		
 		mesh->AddPart(part);
 		return mesh;
+	}
+	void CMF::ProcessCollisionNode(fbxsdk::FbxNode * node, CollisionModel & collision)
+	{
+		auto attribute = node->GetNodeAttribute();
+		if (attribute) {
+			auto type = attribute->GetAttributeType();
+			// Attribute type determines how to process child nodes
+			if (type == fbxsdk::FbxNodeAttribute::eMesh) {
+				collision.hulls.push_back(CreateConvexHull((FbxMesh *)attribute));
+			}
+		}
+		ProcessCollisionNodeChildren(node, collision);
+	}
+	void CMF::ProcessCollisionNodeChildren(fbxsdk::FbxNode * node, CollisionModel & collision)
+	{
+		for (int i = 0; i < node->GetChildCount(); i++) {
+			ProcessCollisionNode(node->GetChild(i), collision);
+		}
+	}
+	ConvexHull CMF::CreateConvexHull(fbxsdk::FbxMesh * fbxMesh)
+	{
+		ConvexHull hull;
+		auto transform = fbxMesh->GetNode()->EvaluateGlobalTransform();
+		// iterate control points
+		for (int i = 0; i < fbxMesh->GetControlPointsCount(); i++) {
+			auto control = transform.MultT(fbxMesh->GetControlPointAt(i));
+			hull.AddVertex(Vector3(control[0], control[1], control[2]));
+		}
+		// iterate polygons
+		for (int polygonIndex = 0; polygonIndex < fbxMesh->GetPolygonCount(); polygonIndex++) {
+			
+			fbxsdk::FbxVector4 axis;
+			if (fbxMesh->GetPolygonVertexNormal(polygonIndex, 0, axis)) {
+				axis = transform.MultT(axis) - transform.MultT(fbxsdk::FbxZeroVector4);
+				hull.AddAxis(Vector3(axis[0], axis[1], axis[2]));
+			}
+		}
+		return hull;
 	}
 	void CMF::ImportMaterials(fbxsdk::FbxScene * scene)
 	{

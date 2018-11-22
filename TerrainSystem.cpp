@@ -233,7 +233,7 @@ namespace world {
 
 		// TEMP
 		EntityPtr asset;
-		if (AssetManager::Get()->GetStaticEM()->TryFindByPathID("Test",asset)) {
+		if (AssetManager::Get()->GetStaticEM()->TryFindByPathID("Crate",asset)) {
 			int offset = 32;
 			int max = 1;
 			int spacing = 1;
@@ -241,8 +241,8 @@ namespace world {
 				for (int z = offset; z < offset + max; z += spacing) {
 					EM->CreateEntity(
 						Position(Vector3(x, TerrainMap->Height(x, z), z)),
-						Model(asset->ID(), AssetType::Authored)/*,
-						Collision(asset->ID(), AssetType::Authored)*/
+						Model(asset->ID(), AssetType::Authored),
+						Collision(asset->ID(), AssetType::Authored)
 					);
 				}
 			}
@@ -933,7 +933,7 @@ namespace world {
 					cache.ValueAt(location.x, location.y) = targetHeight;
 				}
 				else {
-					Vector2 inner = Geom::Clamp(area, location);
+					Vector2 inner = geometry::Clamp(area, location);
 
 					Vector2 tangent = location - inner;
 					float t = tangent.Length();
