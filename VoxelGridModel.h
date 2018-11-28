@@ -1,21 +1,18 @@
 #pragma once
-#include "Room.h"
-#include "BuildingVoxel.h"
 #include "WorldComponent.h"
 #include "ISerialization.h"
-#include "Map.h"
+#include "VoxelGrid.h"
+#include "BuildingVoxel.h"
 namespace world {
-class Building : 
+class VoxelGridModel : 
 	public WorldComponent,
 	public ISerialization
 {
 public:
-	Building();
-	Building(vector<Architecture::Room> & rooms, Map<BuildingVoxel> & voxels);
+	VoxelGridModel();
+	VoxelGridModel(VoxelGrid<BuildingVoxel> & voxels);
 	// Data
-	vector<Architecture::Room> Rooms;
-	Map<BuildingVoxel> Voxels;
-
+	VoxelGrid<BuildingVoxel> Voxels;
 
 	// Inherited via Component
 	virtual void Export(std::ostream & ofs) override;

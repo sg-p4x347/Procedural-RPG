@@ -2,7 +2,7 @@
 #include "WorldComponent.h"
 
 #include "Action.h"
-#include "Building.h"
+#include "VoxelGridModel.h"
 #include "Collision.h"
 #include "Inventory.h"
 #include "Model.h"
@@ -14,5 +14,5 @@
 #include "Global.h"
 #include "WorldEntityManager.h"
 namespace world {
-	typedef WorldEntityManager<Position, Movement, Player, Action, Building, Collision, Model, Terrain,Water,Global> WEM;
+	typedef WorldEntityManager<Position, Movement, Player, Action, VoxelGridModel, Collision, Model, Terrain,Water,Global> WEM;
 }

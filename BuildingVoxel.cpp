@@ -5,12 +5,13 @@ using namespace DirectX;
 using namespace Utility;
 BuildingVoxel::BuildingVoxel()
 {
-	InitArray<unsigned int>(m_floors, 4, 0);
-	InitArray<unsigned int>(m_walls, 8, 0);
-	InitArray<unsigned int>(m_corners, 4, 0);
+	InitArray<BuildingVoxel::SubType>(m_floors, m_floorCount, 0);
+	InitArray<BuildingVoxel::SubType>(m_ceilings, m_ceilingCount, 0);
+	InitArray<BuildingVoxel::SubType>(m_walls, m_wallCount, 0);
+	InitArray<BuildingVoxel::SubType>(m_corners, m_cornerCount, 0);
 }
 
-void BuildingVoxel::Wall(int unitX, int unitZ, unsigned int type)
+void BuildingVoxel::Wall(int unitX, int unitZ, BuildingVoxel::SubType type)
 {
 	/*
 	^
@@ -44,12 +45,12 @@ void BuildingVoxel::Wall(int unitX, int unitZ, unsigned int type)
 	}
 }
 
-void BuildingVoxel::Floor(int unitX,  int unitY, unsigned int floorType)
+void BuildingVoxel::Floor(int unitX,  int unitY, BuildingVoxel::SubType floorType)
 {
 	m_floors[0] = floorType;
 }
 
-void BuildingVoxel::Corner(int unitX, int unitZ, unsigned int type)
+void BuildingVoxel::Corner(int unitX, int unitZ, BuildingVoxel::SubType type)
 {
 	/*
 	^
@@ -112,17 +113,17 @@ void BuildingVoxel::Export(std::ostream & ofs)
 	}
 }
 
-const UINT * BuildingVoxel::GetFloors()
+const BuildingVoxel::SubType * BuildingVoxel::GetFloors()
 {
 	return m_floors;
 }
 
-const UINT * BuildingVoxel::GetWalls()
+const BuildingVoxel::SubType * BuildingVoxel::GetWalls()
 {
 	return m_walls;
 }
 
-const UINT * BuildingVoxel::GetCorners()
+const BuildingVoxel::SubType * BuildingVoxel::GetCorners()
 {
 	return m_corners;
 }
@@ -133,17 +134,22 @@ XMMATRIX BuildingVoxel::TransformWall(unsigned int index)
 	return XMMATRIX();
 }
 
-const UINT BuildingVoxel::GetFloorCount()
+const uint8_t BuildingVoxel::GetFloorCount()
 {
 	return m_floorCount;
 }
 
-const UINT BuildingVoxel::GetWallCount()
+const uint8_t BuildingVoxel::GetCeilingCount()
+{
+	return m_ceilingCount;
+}
+
+const uint8_t BuildingVoxel::GetWallCount()
 {
 	return m_wallCount;
 }
 
-const UINT BuildingVoxel::GetCornerCount()
+const uint8_t BuildingVoxel::GetCornerCount()
 {
 	return m_cornerCount;
 }

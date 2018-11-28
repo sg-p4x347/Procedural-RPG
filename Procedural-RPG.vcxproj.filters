@@ -298,9 +298,6 @@
     <ClInclude Include="BuildingVoxel.h">
       <Filter>World\Generator\Building</Filter>
     </ClInclude>
-    <ClInclude Include="Building.h">
-      <Filter>World\Component</Filter>
-    </ClInclude>
     <ClInclude Include="Room.h">
       <Filter>World\Generator\Building</Filter>
     </ClInclude>
@@ -455,6 +452,15 @@
     </ClInclude>
     <ClInclude Include="Material.h">
       <Filter>Utility\Geometry\CMF</Filter>
+    </ClInclude>
+    <ClInclude Include="VoxelGrid.h">
+      <Filter>World\Generator\Building</Filter>
+    </ClInclude>
+    <ClInclude Include="Voxel.h">
+      <Filter>World\Generator\Building</Filter>
+    </ClInclude>
+    <ClInclude Include="VoxelGridModel.h">
+      <Filter>World\Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -636,9 +642,6 @@
     <ClCompile Include="BuildingVoxel.cpp">
       <Filter>World\Generator\Building</Filter>
     </ClCompile>
-    <ClCompile Include="Building.cpp">
-      <Filter>World\Component</Filter>
-    </ClCompile>
     <ClCompile Include="Room.cpp">
       <Filter>World\Generator\Building</Filter>
     </ClCompile>
@@ -757,6 +760,15 @@
     </ClCompile>
     <ClCompile Include="Material.cpp">
       <Filter>Utility\Geometry\CMF</Filter>
+    </ClCompile>
+    <ClCompile Include="Voxel.cpp">
+      <Filter>World\Generator\Building</Filter>
+    </ClCompile>
+    <ClCompile Include="VoxelGrid.cpp">
+      <Filter>World\Generator\Building</Filter>
+    </ClCompile>
+    <ClCompile Include="VoxelGridModel.cpp">
+      <Filter>World\Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

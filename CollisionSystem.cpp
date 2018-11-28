@@ -69,7 +69,7 @@ namespace world {
 					for (auto & hull : GetCollisionAsset(collision).hulls) {
 						// Get the center bottom of the box for terrain collison
 						Vector3 bottomCenter = position.Pos;
-						float yRadius = hull.Support(Vector3::Down).y;
+						float yRadius = hull.Max(Vector3::Down).y;
 						bottomCenter.y += yRadius;
 
 

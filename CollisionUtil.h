@@ -1,6 +1,6 @@
 #pragma once
 #include "pch.h"
-using DirectX::SimpleMath::Vector3;
+
 namespace CollisionUtil {
 	struct Simplex {
 		Simplex() : Size(0), A(Vertices[0]), B(Vertices[1]), C(Vertices[2]), D(Vertices[3]) {}
@@ -26,7 +26,7 @@ namespace CollisionUtil {
 		Simplex Simplex;
 		Vector3 Direction;
 	};
-	Vector3 & HullSupport(std::vector<Vector3> & hull, Vector3 & d) {
+	 inline Vector3 & HullSupport(std::vector<Vector3> & hull, Vector3 & d) {
 		Vector3 & max = hull[0];
 		float maxDot = -INFINITY;
 		for (auto & vertex : hull) {
@@ -38,7 +38,7 @@ namespace CollisionUtil {
 		}
 		return max;
 	}
-	void NearestSimplexHelper(GjkIntersection & result, Vector3 & a, Vector3 & b, Vector3 & ao, Vector3 & ab) {
+	inline void NearestSimplexHelper(GjkIntersection & result, Vector3 & a, Vector3 & b, Vector3 & ao, Vector3 & ab) {
 		if (ab.Dot(ao) > 0) {
 			result.Simplex.Set(a,b);
 			result.Direction = ab.Cross(ao).Cross(ab);
@@ -48,7 +48,7 @@ namespace CollisionUtil {
 			result.Direction = ao;
 		}
 	}
-	bool NearestSimplex(GjkIntersection & result) {
+	inline bool NearestSimplex(GjkIntersection & result) {
 		if (result.Simplex.Size == 2) {
 			Vector3 & a = result.Simplex.A;
 			Vector3 & b = result.Simplex.B;
@@ -181,7 +181,7 @@ namespace CollisionUtil {
 		return false;
 	}
 	
-	bool GJK( std::vector<Vector3> & hullA, std::vector<Vector3> & hullB, GjkIntersection & result) {
+	inline bool GJK( std::vector<Vector3> & hullA, std::vector<Vector3> & hullB, GjkIntersection & result) {
 		Vector3 initialAxis = Vector3::Up;
 		Vector3 a = HullSupport(hullA, initialAxis) - HullSupport(hullB, -initialAxis);
 		result.Simplex.Set(a);
@@ -216,7 +216,7 @@ namespace CollisionUtil {
 		float Max;
 	};
 	
-	SatProjection Project(Vector3 & axis, std::vector<Vector3> & hull) {
+	inline SatProjection Project(Vector3 & axis, std::vector<Vector3> & hull) {
 		SatProjection projection;
 		for (auto & vertex : hull) {
 			float dot = vertex.Dot(axis);
@@ -230,7 +230,7 @@ namespace CollisionUtil {
 		return projection;
 	}
 	// generate axes from boxes
-	std::vector<Vector3> GenerateSatAxes(SimpleMath::Matrix transformA, SimpleMath::Matrix transformB) {
+	inline std::vector<Vector3> GenerateSatAxes(SimpleMath::Matrix transformA, SimpleMath::Matrix transformB) {
 		std::vector<Vector3> axes;
 		axes.push_back(Vector3::Transform(Vector3::Up, transformA));
 		axes.push_back(Vector3::Transform(Vector3::Forward, transformA));
@@ -252,7 +252,7 @@ namespace CollisionUtil {
 		}
 		return axes;
 	}
-	bool SatIntersection(geometry::ConvexHull & hullA, geometry::ConvexHull & hullB, SatResult & result) {
+	inline bool SatIntersection(geometry::ConvexHull & hullA, geometry::ConvexHull & hullB, SatResult & result) {
 		for (auto & axis : hullA.axes) {
 			SatProjection projectionA = Project(axis, hullA.vertices);
 			SatProjection projectionB = Project(axis, hullB.vertices);

@@ -282,7 +282,7 @@ void RenderSystem::SyncEntities()
 		
 		
 		world::MaskType accessMask = EM->GetMask<world::Model, world::Position>();
-		world::MaskType buildingMask = EM->GetMask<world::Building, world::Position>();
+		world::MaskType buildingMask = EM->GetMask<world::VoxelGridModel, world::Position>();
 		world::MaskType terrainMask = EM->GetMask<world::Terrain>();
 		world::MaskType movementMask = EM->GetMask<world::Movement>();
 		Vector3 camera = EM->PlayerPos();
@@ -311,14 +311,14 @@ void RenderSystem::SyncEntities()
 				}
 			}
 			// buildings
-			auto buildingEntities = EM->NewEntityCache<world::Building, world::Position>();
+			auto buildingEntities = EM->NewEntityCache<world::VoxelGridModel, world::Position>();
 			EM->UpdateCache(buildingEntities, [=](world::MaskType & signature) {
 				return signature == buildingMask;
 			});
 			for (auto & regionCache : buildingEntities.GetCaches()) {
 				for (auto & buildingEntity : regionCache.second) {
 					auto & position = buildingEntity.Get<world::Position>();
-					TrackGridEntity(gridInstancesTemp, regionCache.first, trackedTemp, modelEntities.GetComponentMask(), position.Pos, position.Rot, buildingEntity.Get<world::Building>(), camera);
+					TrackGridEntity(gridInstancesTemp, regionCache.first, trackedTemp, modelEntities.GetComponentMask(), position.Pos, position.Rot, buildingEntity.Get<world::VoxelGridModel>(), camera);
 				}
 			}
 
@@ -589,7 +589,7 @@ void RenderSystem::TrackGridEntity(
 	world::MaskType signature,
 	Vector3 position,
 	Vector3 rotation,
-	world::Building & gridComp,
+	world::VoxelGridModel & gridComp,
 	Vector3 camera,
 	bool ignoreVerticalDistance
 )
