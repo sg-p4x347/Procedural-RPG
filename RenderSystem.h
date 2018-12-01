@@ -5,7 +5,7 @@
 #include "PositionNormalTextureTangentColorVBO.h"
 #include "Model.h"
 #include "CompositeModel.h";
-#include "Building.h"
+#include "VoxelGridModel.h"
 #include "AssetManager.h"
 class SystemManager;
 struct RenderEntityJob {
@@ -123,7 +123,7 @@ private:
 		world::MaskType signature,
 		Vector3 position, 
 		Vector3 rotation,
-		world::Building & gridComp,
+		world::VoxelGridModel & gridComp,
 		Vector3 camera, 
 		bool ignoreVerticalDistance = false
 	);

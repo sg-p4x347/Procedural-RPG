@@ -212,7 +212,7 @@
     <ClInclude Include="BaseEntityManager.h" />
     <ClInclude Include="Bezier.h" />
     <ClInclude Include="Box.h" />
-    <ClInclude Include="Building.h" />
+    <ClInclude Include="VoxelGridModel.h" />
     <ClInclude Include="BuildingGenerator.h" />
     <ClInclude Include="BuildingSystem.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -377,7 +377,7 @@
     <ClCompile Include="BaseEntityManager.cpp" />
     <ClCompile Include="Bezier.cpp" />
     <ClCompile Include="Box.cpp" />
-    <ClCompile Include="Building.cpp" />
+    <ClCompile Include="VoxelGridModel.cpp" />
     <ClCompile Include="BuildingGenerator.cpp" />
     <ClCompile Include="BuildingSystem.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

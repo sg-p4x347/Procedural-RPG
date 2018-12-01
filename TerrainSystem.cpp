@@ -10,7 +10,7 @@
 #include "TaskThread.h"
 #include "WaterCell.h"
 #include "Model.h"
-#include "Building.h"
+#include "VoxelGridModel.h"
 #include <thread>
 #include "TopologyCruncher.h"
 #include "VboParser.h"

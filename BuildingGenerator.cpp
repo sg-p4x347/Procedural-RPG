@@ -21,7 +21,7 @@ namespace world {
 	using namespace std;
 	using namespace Utility;
 
-	Building BuildingGenerator::Create(SimpleMath::Rectangle footprint, JsonParser & config)
+	VoxelGridModel BuildingGenerator::Create(SimpleMath::Rectangle footprint, JsonParser & config)
 	{
 		m_config = config;
 		// initialize configuration settings
@@ -80,7 +80,7 @@ namespace world {
 			finalRooms.push_back(*room);
 		}
 		// Return the building
-		return Building(finalRooms, voxels);
+		return VoxelGridModel(voxels);
 	}
 	int BuildingGenerator::RoomCount(string type, RoomPtrs & rooms)
 	{
@@ -594,10 +594,10 @@ namespace world {
 			rooms.push_back(hallway);
 		}
 	}
-	Map<BuildingVoxel> BuildingGenerator::Voxelize(RoomPtrs & rooms, SimpleMath::Rectangle footprint)
+	VoxelGrid BuildingGenerator::Voxelize(RoomPtrs & rooms, SimpleMath::Rectangle footprint)
 	{
-		// 2d voxel array
-		Map<BuildingVoxel> voxels = Map<BuildingVoxel>(footprint.width + 1, footprint.height + 1);
+		// 3D voxel array
+		VoxelGrid voxels(footprint.width + 1, 1, footprint.height + 1);
 		// building level assets
 		EntityPtr exteriorWallAsset;
 		EntityPtr exteriorCornerAsset;
@@ -633,7 +633,7 @@ namespace world {
 
 						int voxelX = std::min(room->rect.x + room->rect.width, x + 1);
 						int voxelZ = std::min(room->rect.y + room->rect.height, z + 1);
-
+						BuildingVoxel
 						voxels.map[voxelX][voxelZ].Floor(
 							unitX,
 							unitZ,

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Utility.h"
 #include "Voxel.h"
+#include "VoxelGrid.h"
 
 using namespace DirectX;
 using namespace Utility;
@@ -19,21 +20,35 @@ Vector3 Voxel::GetPosition()
 	return Vector3(m_x, m_y, m_z);
 }
 
-int Voxel::GetX()
+DirectX::BoundingBox Voxel::Bounds()
+{
+	return DirectX::BoundingBox(GetPosition(),Vector3::One);
+}
+
+Voxel::Ordinal Voxel::GetX()
 {
 	return m_x;
 }
 
-int Voxel::GetY()
+Voxel::Ordinal Voxel::GetY()
 {
 	return m_y;
 }
 
-int Voxel::GetZ()
+Voxel::Ordinal Voxel::GetZ()
 {
 	return m_z;
 }
 
-Voxel::Voxel(int x, int y, int z) : m_x(x), m_y(y), m_z(z)
+Voxel::Voxel(Voxel::Ordinal x, Voxel::Ordinal y, Voxel::Ordinal z) : m_x(x), m_y(y), m_z(z)
+{
+}
+
+void Voxel::Import(std::istream & ifs)
+{
+	
+}
+
+void Voxel::Export(std::ostream & ofs)
 {
 }

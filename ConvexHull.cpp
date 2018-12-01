@@ -7,6 +7,15 @@ namespace geometry {
 	{
 	}
 
+	ConvexHull::ConvexHull(DirectX::BoundingBox && box)
+	{
+		XMFLOAT3 corners[8];
+		box.GetCorners(&corners[0]);
+		for (int i = 0; i < 8; i++) {
+			AddVertex(corners[i]);
+		}
+	}
+
 	void ConvexHull::AddVertex(Vector3 && vertex)
 	{
 		auto length = vertex.Length();
@@ -24,7 +33,7 @@ namespace geometry {
 		// normal not found, add it
 		axes.push_back(normal);
 	}
-	Vector3 & ConvexHull::Support(Vector3 direction)
+	Vector3 & ConvexHull::Max(Vector3 direction)
 	{
 		Vector3 & max = vertices[0];
 		float maxDot = -INFINITY;
@@ -36,6 +45,25 @@ namespace geometry {
 			}
 		}
 		return max;
+	}
+	std::pair<Vector3, Vector3> ConvexHull::MinMax(Vector3 direction)
+	{
+		Vector3 min = vertices[0];
+		Vector3 max = vertices[0];
+		float minDot = INFINITY;
+		float maxDot = -INFINITY;
+		for (auto & vertex : vertices) {
+			auto dot = vertex.Dot(direction);
+			if (dot > maxDot) {
+				max = vertex;
+				maxDot = dot;
+			}
+			if (dot < minDot) {
+				min = vertex;
+				minDot = dot;
+			}
+		}
+		return std::make_pair(min,max);
 	}
 	bool ConvexHull::WithinTolerance(float a, float b)
 	{
@@ -53,5 +81,23 @@ namespace geometry {
 			result.axes.push_back(Vector3::Transform(axis, matrix) - Oprime);
 		}
 		return result;
+	}
+	DirectX::BoundingBox ConvexHull::Bounds()
+	{
+		auto xMinMax = MinMax(Vector3::UnitX);
+		auto yMinMax = MinMax(Vector3::UnitY);
+		auto zMinMax = MinMax(Vector3::UnitZ);
+		return BoundingBox(
+			Vector3(
+				(xMinMax.first.x + xMinMax.second.x) * 0.5f,
+				(yMinMax.first.y + yMinMax.second.y) * 0.5f,
+				(zMinMax.first.z + zMinMax.second.z) * 0.5f
+			),
+			Vector3(
+				(xMinMax.second.x - xMinMax.first.x),
+				(yMinMax.second.y - yMinMax.first.y),
+				(zMinMax.second.z - zMinMax.first.z)
+			)
+		);
 	}
 }

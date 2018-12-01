@@ -1,20 +1,29 @@
 #pragma once
+#include "ISerialization.h"
 class VoxelGrid;
-struct Voxel
+struct Voxel :
+	public ISerialization
 {
 public:
+	typedef uint16_t Ordinal;
 	Voxel();
 	~Voxel();
 	Vector3 GetPosition();
-	int GetX();
-	int GetY();
-	int GetZ();
+	DirectX::BoundingBox Bounds();
+	Ordinal GetX();
+	Ordinal GetY();
+	Ordinal GetZ();
+	// Inherited via ISerialization
+	virtual void Import(std::istream & ifs) override;
+	virtual void Export(std::ostream & ofs) override;
 protected:
 	friend class VoxelGrid;
-	Voxel(int x, int y, int z);
+	Voxel(Ordinal x, Ordinal y, Ordinal z);
 private:
-	int m_x;
-	int m_y;
-	int m_z;
+	Voxel::Ordinal m_x;
+	Voxel::Ordinal m_y;
+	Voxel::Ordinal m_z;
+
+	
 };
 

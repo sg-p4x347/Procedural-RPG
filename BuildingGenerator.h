@@ -1,5 +1,5 @@
 #pragma once
-#include "Building.h"
+#include "VoxelGridModel.h"
 #include "BuildingVoxel.h"
 #include "Room.h"
 using RoomPtr = std::shared_ptr<Architecture::Room>;
@@ -11,7 +11,7 @@ namespace world {
 		BuildingGenerator();
 
 	public:
-		Building Create(SimpleMath::Rectangle footprint, JsonParser & config);
+		VoxelGridModel Create(SimpleMath::Rectangle footprint, JsonParser & config);
 	private:
 
 		//bool MeetsConstraints(Rectangle & rect, JsonParser & room);
@@ -43,7 +43,7 @@ namespace world {
 		void CreateHallwayFromEdge(RoomPtrs rooms, RoomPtr room, Architecture::Edge edge);
 
 		// Voxelization ================================
-		Map<BuildingVoxel> Voxelize(RoomPtrs & rooms, SimpleMath::Rectangle footprint);
+		VoxelGrid Voxelize(RoomPtrs & rooms, SimpleMath::Rectangle footprint);
 
 		//=================================================
 		// Properties

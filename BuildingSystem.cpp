@@ -7,10 +7,7 @@
 namespace world {
 	BuildingSystem::BuildingSystem(WEM *  entityManager, unsigned short updatePeriod) : WorldSystem::WorldSystem(entityManager, updatePeriod)
 	{
-		VoxelGrid grid(0,0,0);
-		for (auto & voxelPtr : grid) {
-			Utility::OutputLine("X");
-		}
+		VoxelGrid grid(2, 2, 2);
 	}
 
 	string BuildingSystem::Name()
@@ -27,7 +24,7 @@ namespace world {
 		BuildingGenerator bg;
 		EM->CreateEntity(
 			Position(position),
-			Building(bg.Create(footprint, JsonParser(ifstream("Config/building.json"))[type]))
+			bg.Create(footprint, JsonParser(ifstream("Config/building.json"))[type])
 		);
 		/*
 		EntityPtr building = EM->NewEntity();
@@ -37,7 +34,7 @@ namespace world {
 		*/
 	}
 
-	shared_ptr<CompositeModel> BuildingSystem::GetModel(Building & building, float distance)
+	shared_ptr<CompositeModel> BuildingSystem::GetModel(VoxelGridModel & building, float distance)
 	{
 		// Search the cache
 		if (m_models.find(building.ID) != m_models.end()) {
