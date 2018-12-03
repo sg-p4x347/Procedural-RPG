@@ -2,6 +2,7 @@
 #include "SystemManager.h"
 #include "StepTimer.h"
 #include "World.h"
+#include "JsonParser.h"
 class Game
 {
 public:

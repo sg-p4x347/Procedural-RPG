@@ -20,6 +20,13 @@ Vector3 Voxel::GetPosition()
 	return Vector3(m_x, m_y, m_z);
 }
 
+void Voxel::SetPosition(Ordinal x, Ordinal y, Ordinal z)
+{
+	m_x = x;
+	m_y = y;
+	m_z = z;
+}
+
 DirectX::BoundingBox Voxel::Bounds()
 {
 	return DirectX::BoundingBox(GetPosition(),Vector3::One);
@@ -40,15 +47,14 @@ Voxel::Ordinal Voxel::GetZ()
 	return m_z;
 }
 
-Voxel::Voxel(Voxel::Ordinal x, Voxel::Ordinal y, Voxel::Ordinal z) : m_x(x), m_y(y), m_z(z)
-{
-}
-
 void Voxel::Import(std::istream & ifs)
 {
-	
 }
 
 void Voxel::Export(std::ostream & ofs)
+{
+}
+
+Voxel::Voxel(Voxel::Ordinal x, Voxel::Ordinal y, Voxel::Ordinal z) : m_x(x), m_y(y), m_z(z)
 {
 }

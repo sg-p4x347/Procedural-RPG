@@ -209,6 +209,7 @@
     </ClInclude>
     <ClInclude Include="AssetEntityManager.h" />
     <ClInclude Include="AssetManager.h" />
+    <ClInclude Include="AssetTypedefs.h" />
     <ClInclude Include="BaseEntityManager.h" />
     <ClInclude Include="Bezier.h" />
     <ClInclude Include="Box.h" />
@@ -220,7 +221,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="BuildingVoxel.h" />
+    <ClInclude Include="ModelVoxel.h" />
     <ClInclude Include="CMF.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="CollisionAsset.h" />
@@ -385,7 +386,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="BuildingVoxel.cpp" />
+    <ClCompile Include="ModelVoxel.cpp" />
     <ClCompile Include="CMF.cpp" />
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CollisionAsset.cpp" />
@@ -503,7 +504,6 @@
     <ClCompile Include="TreeGenerator.cpp" />
     <ClCompile Include="VboParser.cpp" />
     <ClCompile Include="Voxel.cpp" />
-    <ClCompile Include="VoxelGrid.cpp" />
     <ClCompile Include="Water.cpp" />
     <ClCompile Include="WaterCell.cpp" />
     <ClCompile Include="TerrainSystem.cpp" />

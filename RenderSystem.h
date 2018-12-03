@@ -6,17 +6,49 @@
 #include "Model.h"
 #include "CompositeModel.h";
 #include "VoxelGridModel.h"
+#include "ModelVoxel.h"
 #include "AssetManager.h"
 class SystemManager;
 struct RenderEntityJob {
+	bool moves;
 	world::EntityID entity;
 	std::shared_ptr<Model> model;
 	Vector3 position;
 	XMMATRIX worldMatrix;
 };
+class RenderJobVoxel :
+	public Voxel 
+{
+public:
+	std::vector<RenderEntityJob> jobs;
+};
 struct RenderGridJob {
-	world::EntityID entity;
-	std::shared_ptr<CompositeModel> model;
+	RenderGridJob(world::VoxelGridModel & gridModel,Vector3 position, Vector3 rotation) : voxels(
+		gridModel.Voxels.GetXsize(),
+		gridModel.Voxels.GetYsize(),
+		gridModel.Voxels.GetZsize()
+	) {
+		position = position;
+		worldMatrix = XMMatrixAffineTransformation(Vector3::One, rotation, Vector3::Zero, position + Vector3(0.5f,0.5f,0.5f));
+		// create a RenderJobVoxel for each ModelVoxel
+		for (ModelVoxel & modelVoxel : gridModel.Voxels) {
+			RenderJobVoxel rjv;
+			// create a RenderEntityJob for each component
+			for (auto & component : modelVoxel.GetComponents()) {
+				RenderEntityJob job;
+				job.entity = gridModel.ID;
+				Vector3 voxelPos = modelVoxel.GetPosition();
+				job.model = AssetManager::Get()->GetModel(component.first, 0.f, Vector3::Zero, AssetType::Authored);
+				Matrix world = TRANSFORMS[component.second];
+				world.Translation(voxelPos);
+				job.worldMatrix = world * worldMatrix;
+				rjv.jobs.push_back(job);
+				
+			}
+			voxels.Set(rjv, modelVoxel.GetX(), modelVoxel.GetY(), modelVoxel.GetZ());
+		}
+	}
+	VoxelGrid<RenderJobVoxel> voxels;
 	Vector3 position;
 	XMMATRIX worldMatrix;
 };
@@ -115,6 +147,7 @@ private:
 		world::MaskType signature,
 		world::WorldEntityProxy<world::Model, world::Position> & entity,
 		Vector3 camera,
+		bool moves,
 		bool ignoreVerticalDistance = false);
 	void TrackGridEntity(
 		GridInstanceCache & gridInstances, 

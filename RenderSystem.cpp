@@ -175,11 +175,19 @@ void RenderSystem::Render()
 		// Draw opaque mesh parts
 		RenderModels(position.Pos, EM->GetMask<world::Position,world::Model>(), true);
 		// Draw grids
+
 		for (auto & visibleRegion : m_visibleRegions) {
 			for (auto & gridJobs : m_gridInstances[visibleRegion]) {
 				for (auto & gridJob : gridJobs.second) {
-					for (auto & pair : gridJob.model->meshes) {
-						RenderModelMesh(pair.first.get(), XMMatrixMultiply(pair.second, gridJob.worldMatrix), true);
+					
+					BoundingFrustum gridRelativeFrustum;
+					Matrix inverse = Matrix(gridJob.worldMatrix).Invert();
+					m_frustum.Transform(gridRelativeFrustum, inverse);
+					for (auto & renderJobVoxel : gridJob.voxels.GetIntersection(gridRelativeFrustum)) {
+						for (auto & renderJob : renderJobVoxel.jobs) {
+							RenderModel(renderJob.model, renderJob.worldMatrix, true);
+							//RenderModelMesh(pair.first.get(), XMMatrixMultiply(pair.second, gridJob.worldMatrix), true);
+						}
 					}
 				}
 			}
@@ -297,7 +305,7 @@ void RenderSystem::SyncEntities()
 			
 				for (auto & terrainEntity : regionCache.second) {
 					auto modelEntity = EM->GetEntity<world::Model, world::Position>(terrainEntity.GetID());
-					TrackEntity(modelInstancesTemp,regionCache.first, trackedTemp, m_terrainEntities->GetComponentMask(), *modelEntity, camera, true);
+					TrackEntity(modelInstancesTemp,regionCache.first, trackedTemp, m_terrainEntities->GetComponentMask(), *modelEntity, camera,false,true);
 				}
 			}
 			// static models
@@ -307,7 +315,7 @@ void RenderSystem::SyncEntities()
 			});
 			for (auto & regionCache : modelEntities.GetCaches()) {
 				for (auto & modelEntity : regionCache.second) {
-					TrackEntity(modelInstancesTemp, regionCache.first,trackedTemp, modelEntities.GetComponentMask(),modelEntity.GetProxy(), camera);
+					TrackEntity(modelInstancesTemp, regionCache.first,trackedTemp, modelEntities.GetComponentMask(),modelEntity.GetProxy(), camera,false);
 				}
 			}
 			// buildings
@@ -344,7 +352,7 @@ void RenderSystem::SyncEntities()
 			});
 			for (auto & regionCache : modelEntities.GetCaches()) {
 				for (auto & modelEntity : regionCache.second) {
-					TrackEntity(m_modelInstances, regionCache.first, m_tracked, modelEntities.GetComponentMask(), modelEntity.GetProxy(), camera);
+					TrackEntity(m_modelInstances, regionCache.first, m_tracked, modelEntities.GetComponentMask(), modelEntity.GetProxy(), camera,true);
 				}
 			}
 			m_mutex.unlock();
@@ -552,6 +560,7 @@ void RenderSystem::TrackEntity(
 	world::MaskType signature, 
 	world::WorldEntityProxy<world::Model, world::Position> & entity, 
 	Vector3 camera,
+	bool moves,
 	bool ignoreVerticalDistance)
 {
 	world::EntityID id = entity.GetID();
@@ -577,7 +586,7 @@ void RenderSystem::TrackEntity(
 		XMMATRIX translation = XMMatrixTranslation(position.Pos.x, position.Pos.y, position.Pos.z);
 		XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(position.Rot);
 		XMMATRIX world = XMMatrixMultiply(rotMat, translation);
-		map[signature].push_back(RenderEntityJob { id,model,position.Pos,world });
+		map[signature].push_back(RenderEntityJob { moves,id,model,position.Pos,world });
 		tracked.insert(id);
 	}
 }
@@ -608,14 +617,13 @@ void RenderSystem::TrackGridEntity(
 		else {
 			distance = Vector3::Distance(camera, position);
 		}
-		shared_ptr<CompositeModel> model = SM->GetSystem<world::BuildingSystem>("Building")->GetModel(gridComp, distance);
 		if (map.find(signature) == map.end()) {
 			map.insert(std::make_pair(signature, vector<RenderGridJob>()));
 		}
 		XMMATRIX translation = XMMatrixTranslation(position.x, position.y, position.z);
 		XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(rotation);
 		XMMATRIX world = XMMatrixMultiply(rotMat, translation);
-		map[signature].push_back(RenderGridJob{ id,model,position,world });
+		map[signature].push_back(RenderGridJob(gridComp,position,rotation));
 		tracked.insert(id);
 	}
 }
@@ -679,9 +687,9 @@ void RenderSystem::RenderModels(Vector3 & cameraPos, world::MaskType signatureMa
 			if (signature == signatureMask) {
 				for (auto & job : sigCache.second) {
 					shared_ptr<Model> dxModel = job.model;
-					if (m_tracked.count(job.entity) != 0) {
+					//if (m_tracked.count(job.entity) != 0) {
 						XMMATRIX & world = job.worldMatrix;
-						if ((EM->GetSignature(job.entity) & movementMask) == movementMask) {
+						if (job.moves) {
 							auto & position = EM->GetEntity<world::Position>(job.entity)->Get<world::Position>();
 							world::EntityInfo * info;
 
@@ -716,7 +724,7 @@ void RenderSystem::RenderModels(Vector3 & cameraPos, world::MaskType signatureMa
 								box->Draw(collisionWorld, m_viewMatrix, m_projMatrix, color, nullptr, true);
 							}
 						}*/
-					}
+					//}
 				}
 			}
 		}

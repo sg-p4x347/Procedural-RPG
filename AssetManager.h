@@ -3,6 +3,7 @@
 #include "AssetEntityManager.h"
 #include "XmlParser.h"
 #include "AssetTypes.h"
+#include "AssetTypedefs.h"
 #include "HeightMap.h"
 #include "CMF.h"
 class AssetManager
@@ -50,14 +51,14 @@ public:
 	shared_ptr<Map<Vector3>> CreateNormalMap(HeightMap * heightMap);
 	shared_ptr<Map<Vector3>> CreateNormalMap(int width, int length, std::function<float(int x, int y)> && getHeight);
 	EntityPtr CreateNormalMap(string path, shared_ptr<Map<Vector3>> normalMap);
-	shared_ptr<HeightMap> GetHeightMap(string path, AssetType type, Rectangle sampleArea, int sampleSpacing = 1);
-	shared_ptr<Map<Vector3>> GetNormalMap(int mapWidth,string path, AssetType type, Rectangle sampleArea, int sampleSpacing = 1);
+	shared_ptr<HeightMap> GetHeightMap(string path, AssetType type, DirectX::SimpleMath::Rectangle sampleArea, int sampleSpacing = 1);
+	shared_ptr<Map<Vector3>> GetNormalMap(int mapWidth,string path, AssetType type, DirectX::SimpleMath::Rectangle sampleArea, int sampleSpacing = 1);
 	int LOD(double distance, unsigned int regionWidth);
 	std::shared_ptr<Model> CreateModelFromHeightMap(
 		int regionWidth,
 		HeightMap * heightMap,
 		shared_ptr<Map<Vector3>> normalMap, 
-		Rectangle sampleArea, 
+		DirectX::SimpleMath::Rectangle sampleArea,
 		int sampleSpacing,
 		shared_ptr<IEffect> effect);
 	
@@ -66,7 +67,7 @@ public:
 		int regionWidth,
 		HeightMap * heightMap,
 		shared_ptr<Map<Vector3>> normalMap,
-		Rectangle sampleArea,
+		DirectX::SimpleMath::Rectangle sampleArea,
 		int sampleSpacing,
 		shared_ptr<IEffect> effect);
 	float LowestNeighbor(HeightMap & water, HeightMap & terrain, int x, int z);
@@ -87,7 +88,6 @@ public:
 	void CreateInputLayouts();
 	
 	VertexPositionNormalTangentColorTexture CreateVertex(Vector3 position, Vector3 normal, Vector2 texture);
-	
 private:
 	static AssetManager * m_instance;
 	AssetManager();

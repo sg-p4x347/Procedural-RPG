@@ -295,9 +295,6 @@
     <ClInclude Include="BuildingGenerator.h">
       <Filter>World\Generator\Building</Filter>
     </ClInclude>
-    <ClInclude Include="BuildingVoxel.h">
-      <Filter>World\Generator\Building</Filter>
-    </ClInclude>
     <ClInclude Include="Room.h">
       <Filter>World\Generator\Building</Filter>
     </ClInclude>
@@ -462,6 +459,10 @@
     <ClInclude Include="VoxelGridModel.h">
       <Filter>World\Component</Filter>
     </ClInclude>
+    <ClInclude Include="ModelVoxel.h">
+      <Filter>World\Generator\Building</Filter>
+    </ClInclude>
+    <ClInclude Include="AssetTypedefs.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -639,9 +640,6 @@
     <ClCompile Include="BuildingGenerator.cpp">
       <Filter>World\Generator\Building</Filter>
     </ClCompile>
-    <ClCompile Include="BuildingVoxel.cpp">
-      <Filter>World\Generator\Building</Filter>
-    </ClCompile>
     <ClCompile Include="Room.cpp">
       <Filter>World\Generator\Building</Filter>
     </ClCompile>
@@ -764,11 +762,11 @@
     <ClCompile Include="Voxel.cpp">
       <Filter>World\Generator\Building</Filter>
     </ClCompile>
-    <ClCompile Include="VoxelGrid.cpp">
-      <Filter>World\Generator\Building</Filter>
-    </ClCompile>
     <ClCompile Include="VoxelGridModel.cpp">
       <Filter>World\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelVoxel.cpp">
+      <Filter>World\Generator\Building</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

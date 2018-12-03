@@ -2,7 +2,7 @@
 #include "WorldComponent.h"
 #include "ISerialization.h"
 #include "VoxelGrid.h"
-#include "BuildingVoxel.h"
+#include "ModelVoxel.h"
 namespace world {
 class VoxelGridModel : 
 	public WorldComponent,
@@ -10,9 +10,9 @@ class VoxelGridModel :
 {
 public:
 	VoxelGridModel();
-	VoxelGridModel(VoxelGrid<BuildingVoxel> & voxels);
+	VoxelGridModel(VoxelGrid<ModelVoxel> & voxels);
 	// Data
-	VoxelGrid<BuildingVoxel> Voxels;
+	VoxelGrid<ModelVoxel> Voxels;
 
 	// Inherited via Component
 	virtual void Export(std::ostream & ofs) override;

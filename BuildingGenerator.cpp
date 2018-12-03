@@ -6,7 +6,7 @@
 #include "Room.h"
 #include "BuildingGenerator.h"
 #include "Rectangle.h"
-#include "BuildingVoxel.h"
+#include "ModelVoxel.h"
 #include "AssetManager.h"
 using namespace Architecture;
 using RoomPtr = std::shared_ptr<Room>;
@@ -15,11 +15,6 @@ namespace world {
 	BuildingGenerator::BuildingGenerator()
 	{
 	}
-
-
-
-	using namespace std;
-	using namespace Utility;
 
 	VoxelGridModel BuildingGenerator::Create(SimpleMath::Rectangle footprint, JsonParser & config)
 	{
@@ -251,7 +246,7 @@ namespace world {
 
 			// try to add some randomness to the mix
 			// divides the rect on the long side, deviating by "divisionDeviation" away from half way (0.5)
-			vector<Architecture::Rectangle> unequalRects = DivideRect(parentRect, Deviation(m_divisionDeviation, 0.5), true);
+			vector<Architecture::Rectangle> unequalRects = DivideRect(parentRect, Utility::Deviation(m_divisionDeviation, 0.5), true);
 			double fitnessUneqA = RoomFitness(unequalRects[0], roomCfg);
 			double fitnessUneqB = RoomFitness(unequalRects[1], roomCfg);
 			if ((fitnessUneqA + fitnessUneqB) / 2.0 > parentFitness) {
@@ -594,27 +589,31 @@ namespace world {
 			rooms.push_back(hallway);
 		}
 	}
-	VoxelGrid BuildingGenerator::Voxelize(RoomPtrs & rooms, SimpleMath::Rectangle footprint)
+	VoxelGrid<ModelVoxel> BuildingGenerator::Voxelize(RoomPtrs & rooms, SimpleMath::Rectangle footprint)
 	{
 		// 3D voxel array
-		VoxelGrid voxels(footprint.width + 1, 1, footprint.height + 1);
+		VoxelGrid<ModelVoxel> voxels(footprint.width + 2, 2, footprint.height + 2);
 		// building level assets
-		EntityPtr exteriorWallAsset;
+		EntityPtr exteriorWallBottomAsset;
+		EntityPtr exteriorWallMiddleAsset;
 		EntityPtr exteriorCornerAsset;
-		AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorWallType"], exteriorWallAsset);
+		AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorWallType"] + "_bottom", exteriorWallBottomAsset);
+		AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorWallType"] + "_middle", exteriorWallMiddleAsset);
 		AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorCornerType"], exteriorCornerAsset);
 		// iterate & voxelize each room
 		for (RoomPtr & room : rooms) {
 			EntityPtr floorAsset;
-			EntityPtr wallAsset;
+			EntityPtr wallBottomAsset;
+			EntityPtr wallMiddleAsset;
 			EntityPtr cornerAsset;
 			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["floorType"], floorAsset);
-			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["wallType"], wallAsset);
+			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["wallType"] + "_bottom", wallBottomAsset);
+			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["wallType"] + "_middle", wallMiddleAsset);
 			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["cornerType"], cornerAsset);
 			//AssetManager::Get()->Find((string)room->config["cornerType"], cornerAsset);
 
-			for (int x = room->rect.x - 1; x <= room->rect.x + room->rect.width + 1; x++) {
-				for (int z = room->rect.y - 1; z <= room->rect.y + room->rect.height + 1; z++) {
+			for (int x = room->rect.x; x <= room->rect.x + room->rect.width; x++) {
+				for (int z = room->rect.y; z <= room->rect.y + room->rect.height; z++) {
 					if (x >= room->rect.x && x <= room->rect.x + room->rect.width && z >= room->rect.y && z <= room->rect.y + room->rect.height) {
 						//----------------------------------------------------------------
 						// Interiror
@@ -627,23 +626,20 @@ namespace world {
 						|				|
 						(-1,-1)------(1,-1)
 						*/
-						int unitX = (x == room->rect.x ? -1 : (x == room->rect.x + room->rect.width ? 1 : 0));
+						int unitX = (x == room->rect.x ? -1 : (x == (room->rect.x + room->rect.width) ? 1 : 0));
 
-						int unitZ = (z == room->rect.y ? -1 : (z == room->rect.y + room->rect.height ? 1 : 0));
+						int unitZ = (z == room->rect.y ? -1 : (z == (room->rect.y + room->rect.height) ? 1 : 0));
 
 						int voxelX = std::min(room->rect.x + room->rect.width, x + 1);
 						int voxelZ = std::min(room->rect.y + room->rect.height, z + 1);
-						BuildingVoxel
-						voxels.map[voxelX][voxelZ].Floor(
-							unitX,
-							unitZ,
-							floorAsset->ID()
-						);
-						voxels.map[voxelX][voxelZ].Wall(
-							unitX,
-							unitZ,
-							wallAsset->ID()
-						);
+						ModelVoxel bottom;
+						AddFloor(bottom,floorAsset->ID());
+						AddWall(bottom,wallBottomAsset->ID(),unitX,unitZ);
+						voxels.Set(bottom, voxelX, 0, voxelZ);
+
+						ModelVoxel middle;
+						AddWall(middle, wallMiddleAsset->ID(), unitX, unitZ);
+						voxels.Set(middle, voxelX, 1, voxelZ);
 					}
 				}
 			}
@@ -660,24 +656,102 @@ namespace world {
 
 					/*int voxelX = std::min(room->rect.x + room->rect.width + 1, x);
 					int voxelZ = std::min(room->rect.y + room->rect.height + 1, z);*/
+					ModelVoxel bottomVoxel;
 					if (std::abs(unitX) == 1 && std::abs(unitZ) == 1) {
-						voxels.map[x][z].Corner(
-							unitX,
-							unitZ,
-							exteriorCornerAsset->ID()
-						);
+						AddCorner(bottomVoxel, exteriorCornerAsset->ID(), unitX, unitZ);
 					}
 					else {
-						voxels.map[x][z].Wall(
-							unitX,
-							unitZ,
-							exteriorWallAsset->ID()
-						);
+						AddWall(bottomVoxel, exteriorWallBottomAsset->ID(), unitX, unitZ);
 					}
+					voxels.Set(bottomVoxel, x, 0, z);
+
+					ModelVoxel middleVoxel;
+					if (std::abs(unitX) == 1 && std::abs(unitZ) == 1) {
+					}
+					else {
+						AddWall(middleVoxel, exteriorWallMiddleAsset->ID(), unitX, unitZ);
+					}
+					voxels.Set(middleVoxel, x, 1, z);
 				}
 			}
 		}
 		return voxels;
+	}
+
+	void BuildingGenerator::AddWall(ModelVoxel & voxel, AssetID wallAsset, int unitX, int unitZ)
+	{
+		/*
+		^
+		|
+		+X
+				  1
+		 +--------+--------+
+		 |		  |		   |
+		 |		  |		   |
+		 |		  |		   |
+		2+--------*--------+0
+		 |		  |		   |
+		 |		  |		   |
+		 |		  |		   |
+		 +--------+--------+
+				  3
+		+Z --->
+
+		The '*' in the above diagram represents the local
+		origin of this voxel
+
+		Each '+' in the above diagram represents a valid
+		Unit square position; the two interior walls that
+		intersect this point are selected
+		*/
+		if (abs(unitZ) == 1)
+			voxel.AddComponent(wallAsset,2 - (unitZ + 1));
+
+		if (abs(unitX) == 1) {
+			voxel.AddComponent(wallAsset,3 - (unitX + 1));
+		}
+	}
+
+	void BuildingGenerator::AddCorner(ModelVoxel & voxel, AssetID cornerAsset, int unitX, int unitZ)
+	{
+		/*
+		^
+		|
+		+X
+		1				  0
+		+-----------------+
+		|		 |		  |
+		|		 |		  |
+		|		 |		  |
+		|--------*--------|
+		|		 |		  |
+		|		 |		  |
+		|		 |		  |
+		+-----------------+
+		2				  3
+		+Z --->
+		*/
+		if (unitZ == 1) {
+			if (unitX == 1) {
+				voxel.AddComponent(cornerAsset, Transforms::None);
+			}
+			else {
+				voxel.AddComponent(cornerAsset, Transforms::Rotate270);
+			}
+		}
+		else {
+			if (unitX == 1) {
+				voxel.AddComponent(cornerAsset, Transforms::Rotate90);
+			}
+			else {
+				voxel.AddComponent(cornerAsset, Transforms::Rotate180);
+			}
+		}
+	}
+
+	void BuildingGenerator::AddFloor(ModelVoxel & voxel, AssetID floorAsset)
+	{
+		voxel.AddComponent(floorAsset, Transforms::None);
 	}
 
 	bool BuildingGenerator::HasRequiredRooms(RoomPtrs & rooms)

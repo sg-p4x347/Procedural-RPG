@@ -7,7 +7,7 @@ namespace world {
 	{
 	}
 
-	VoxelGridModel::VoxelGridModel(VoxelGrid & voxels) : Voxels(voxels)
+	VoxelGridModel::VoxelGridModel(VoxelGrid<ModelVoxel> & voxels) : Voxels(voxels)
 	{
 	}
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "VoxelGridModel.h"
-#include "BuildingVoxel.h"
+#include "VoxelGrid.h"
+#include "ModelVoxel.h"
 #include "Room.h"
 using RoomPtr = std::shared_ptr<Architecture::Room>;
 using RoomPtrs = vector<shared_ptr<Architecture::Room>>;
@@ -43,8 +44,11 @@ namespace world {
 		void CreateHallwayFromEdge(RoomPtrs rooms, RoomPtr room, Architecture::Edge edge);
 
 		// Voxelization ================================
-		VoxelGrid Voxelize(RoomPtrs & rooms, SimpleMath::Rectangle footprint);
-
+		VoxelGrid<ModelVoxel> Voxelize(RoomPtrs & rooms, SimpleMath::Rectangle footprint);
+		void AddWall(ModelVoxel & voxel, AssetID wallAsset, int unitX, int unitZ);
+		void AddCorner(ModelVoxel & voxel, AssetID cornerAsset, int unitX, int unitZ);
+		void AddFloor(ModelVoxel & voxel, AssetID floorAsset);
+		
 		//=================================================
 		// Properties
 		//=================================================

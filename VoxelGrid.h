@@ -2,32 +2,47 @@
 #include "Voxel.h"
 #include "ConvexHull.h"
 #include "ISerialization.h"
+
+template<typename VoxelType>
+class VoxelGridIterator;
+
 template<typename VoxelType>
 class VoxelGrid :
 	public ISerialization
 {
 public:
-	friend class VoxelGridIterator;
+	friend class VoxelGridIterator<VoxelType>;
 
-	inline VoxelGrid() {};
+	inline VoxelGrid() : VoxelGrid<VoxelType>::VoxelGrid(0,0,0) {};
 	inline VoxelGrid(Voxel::Ordinal xSize, Voxel::Ordinal ySize, Voxel::Ordinal zSize) :
 		m_xSize(xSize),
 		m_ySize(ySize),
 		m_zSize(zSize),
-		m_voxels(xSize, std::vector<std::vector<std::shared_ptr<VoxelType>>>(ySize, std::vector<std::shared_ptr<VoxelType>>(zSize)))
+		m_voxels(xSize, std::vector<std::vector<VoxelType>>(ySize, std::vector<VoxelType>(zSize)))
 	{
 	};
 	~VoxelGrid() {};
 	
 	// Mutators
-	void Set(VoxelType && voxel, Voxel::Ordinal x, Voxel::Ordinal y, Voxel::Ordinal z) {
-		assert(!Bounded(x, y, z));
+	void Set(VoxelType & voxel, Voxel::Ordinal x, Voxel::Ordinal y, Voxel::Ordinal z) {
+		assert(Bounded(x, y, z));
 
-		voxel.m_x = x;
-		voxel.m_y = y;
-		voxel.m_z = z;
-		m_voxels[x][y][z] = std::make_shared<Voxel>(std::move(voxel));
+		voxel.SetPosition(x, y, z);
+		m_voxels[x][y][z] = voxel;
 	};
+	void Resize(Voxel::Ordinal xSize, Voxel::Ordinal ySize, Voxel::Ordinal zSize) {
+		if (m_xSize < xSize) {
+			// expand existing vectors
+			for (Voxel::Ordinal x = 0; x < m_xSize; x++) {
+				m_voxels[x].resize(ySize, std::vector<VoxelType>(zSize));
+			}
+			// add new vectors
+			m_voxels.resize(xSize,std::vector<std::vector<VoxelType>>(ySize, std::vector<VoxelType>(zSize)));
+			m_xSize = xSize;
+			m_ySize = ySize;
+			m_zSize = zSize;
+		}
+	}
 	// Accessors
 	bool Bounded(Voxel::Ordinal x, Voxel::Ordinal y, Voxel::Ordinal z) {
 		return
@@ -47,46 +62,57 @@ public:
 	const Voxel::Ordinal & GetZsize() {
 		return m_zSize;
 	};
-	const std::vector<std::vector<std::shared_ptr<VoxelType>>> & operator[](const int index) {
+	const std::vector<std::vector<VoxelType>> & operator[](const int index) {
 		return m_voxels[index];
 	};
-	std::set<std::shared_ptr<VoxelType>> GetIntersection(DirectX::BoundingFrustum & frustum) {
-		std::set<std::shared_ptr<VoxelType>> intersection;
+	std::vector<VoxelType> GetIntersection(DirectX::BoundingFrustum & frustum) {
+		std::vector<VoxelType> intersection;
+		for (auto & voxel : *this) {
+			if (frustum.Intersects(voxel.Bounds())) {
+				intersection.push_back(voxel);
+			}
+		}
 		return intersection;
 	};
-	std::set<std::shared_ptr<VoxelType>> GetIntersection(geometry::ConvexHull & convexHull) {
-		std::set<std::shared_ptr<VoxelType>> broadPhase;
+	std::set<VoxelType> GetIntersection(geometry::ConvexHull & convexHull) {
+		std::set<VoxelType> broadPhase;
 		DirectX::BoundingBox hullBounds = convexHull.Bounds();
 		for (auto & voxel : *this) {
-			if (voxel && hullBounds.Intersects(voxel->Bounds())) {
+			if (voxel && hullBounds.Intersects(voxel.Bounds())) {
 				broadPhase.insert(voxel);
 			}
 		}
-		std::set<std::shared_ptr<VoxelType>> narrowPhase;
+		std::set<VoxelType> narrowPhase;
 		for (auto & voxel : broadPhase) {
 			CollisionUtil::GjkIntersection intersection;
-			auto voxelHull = geometry::ConvexHull(voxel->Bounds());
+			auto voxelHull = geometry::ConvexHull(voxel.Bounds());
 			if (CollisionUtil::GJK(convexHull.vertices, voxelHull.vertices, intersection)) {
 				narrowPhase.insert(voxel);
 			}
 		}
 		return narrowPhase;
 	};
-	VoxelGridIterator begin() {
+	VoxelGridIterator<VoxelType> begin() {
 		return VoxelGridIterator(*this);
 	};
-	VoxelGridIterator end() {
+	VoxelGridIterator<VoxelType>  end() {
 		return VoxelGridIterator(*this, true);
 	};
 	// Inherited via ISerialization
 	virtual void Import(std::istream & ifs) {
-		DeSerialize(m_xSize, ifs);
-		DeSerialize(m_ySize, ifs);
-		DeSerialize(m_zSize, ifs);
+		Voxel::Ordinal xSize;
+		Voxel::Ordinal ySize;
+		Voxel::Ordinal zSize;
+		DeSerialize(xSize, ifs);
+		DeSerialize(ySize, ifs);
+		DeSerialize(zSize, ifs);
+		Resize(xSize, ySize, zSize);
 		for (Voxel::Ordinal x = 0; x < m_xSize; x++) {
 			for (Voxel::Ordinal y = 0; y < m_ySize; y++) {
 				for (Voxel::Ordinal z = 0; z < m_zSize; z++) {
-
+					VoxelType voxel; // default construct
+					voxel.Import(ifs);
+					Set(voxel, x, y, z);
 				}
 			}
 		}
@@ -95,14 +121,18 @@ public:
 		Serialize(m_xSize, ofs);
 		Serialize(m_ySize, ofs);
 		Serialize(m_zSize, ofs);
-		for (auto & voxel : *this) {
-			voxel->Export(ofs);
+		for (Voxel::Ordinal x = 0; x < m_xSize; x++) {
+			for (Voxel::Ordinal y = 0; y < m_ySize; y++) {
+				for (Voxel::Ordinal z = 0; z < m_zSize; z++) {
+					m_voxels[x][y][z].Export(ofs);
+				}
+			}
 		}
 	};
 private:
 	std::vector<
 		std::vector<
-			std::vector<std::shared_ptr<Voxel>>
+			std::vector<VoxelType>
 		>
 	> m_voxels;
 	Voxel::Ordinal m_xSize;
@@ -123,10 +153,10 @@ public:
 			m_Ziterator = (*m_Yiterator).begin();
 		}
 	};
-	typedef std::vector<std::vector<std::vector<std::shared_ptr<VoxelType>>>> Xiterator;
-	typedef std::vector<std::vector<std::shared_ptr<VoxelType>>> Yiterator;
-	typedef std::vector<std::shared_ptr<VoxelType>> Ziterator;
-	std::shared_ptr<VoxelType> & operator*() {
+	typedef std::vector<std::vector<std::vector<VoxelType>>> Xiterator;
+	typedef std::vector<std::vector<VoxelType>> Yiterator;
+	typedef std::vector<VoxelType> Ziterator;
+	VoxelType & operator*() {
 		return (*m_Ziterator);
 	};
 	bool operator==(const VoxelGridIterator & other) {
@@ -163,7 +193,7 @@ public:
 	
 private:
 	VoxelGrid<VoxelType> & m_grid;
-	std::vector<std::vector<std::vector<std::shared_ptr<VoxelType>>>>::iterator m_Xiterator;
-	std::vector<std::vector<std::shared_ptr<VoxelType>>>::iterator m_Yiterator;
-	std::vector<std::shared_ptr<VoxelType>>::iterator m_Ziterator;
+	typename std::vector<std::vector<std::vector<VoxelType>>>::iterator m_Xiterator;
+	typename std::vector<std::vector<VoxelType>>::iterator m_Yiterator;
+	typename std::vector<VoxelType>::iterator m_Ziterator;
 };

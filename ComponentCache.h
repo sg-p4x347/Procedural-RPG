@@ -37,6 +37,7 @@ namespace world {
 				
 				if (is_base_of<ISerialization, CompType>()) {
 					ostringstream ss;
+					ss << m_cache.size();
 					for (auto & component : m_cache) {
 						((ISerialization *)&component)->Export(ss);
 					}
@@ -61,7 +62,9 @@ namespace world {
 				if (is_base_of<ISerialization,CompType>()) {
 					// CompType is variable size, so stream each one in sequentially
 					istringstream ss(string(data, size));
-					while (true) {
+					size_t size;
+					ss >> size;
+					for (int i = 0; i < size; i++) {
 						CompType component{};
 						((ISerialization *)&component)->Import(ss);
 						if (!ss.eof()) {

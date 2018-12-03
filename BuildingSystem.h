@@ -22,7 +22,7 @@ namespace world {
 
 		//----------------------------------------------------------------
 		// Custom Model loader for component-based buildings
-		shared_ptr<CompositeModel> GetModel(VoxelGridModel & building, float distance);
+		//shared_ptr<CompositeModel> GetModel(VoxelGridModel & building, float distance);
 	private:
 		// Cached models
 		map<unsigned int, shared_ptr<CompositeModel>> m_models;

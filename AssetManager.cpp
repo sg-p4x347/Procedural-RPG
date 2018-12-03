@@ -305,7 +305,9 @@ void AssetManager::CompileFbxAssets()
 }
 AssetManager::AssetManager() : m_fontSize(32)
 {
+	// initialize transforms
 
+	
 }
 
 Filesystem::path AssetManager::FullPath(string path, AssetType type, string extension)
