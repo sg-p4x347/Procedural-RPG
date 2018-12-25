@@ -213,6 +213,8 @@
     <ClInclude Include="BaseEntityManager.h" />
     <ClInclude Include="Bezier.h" />
     <ClInclude Include="Box.h" />
+    <ClInclude Include="CollisionVolume.h" />
+    <ClInclude Include="Cylinder.h" />
     <ClInclude Include="VoxelGridModel.h" />
     <ClInclude Include="BuildingGenerator.h" />
     <ClInclude Include="BuildingSystem.h">
@@ -378,6 +380,8 @@
     <ClCompile Include="BaseEntityManager.cpp" />
     <ClCompile Include="Bezier.cpp" />
     <ClCompile Include="Box.cpp" />
+    <ClCompile Include="CollisionVolume.cpp" />
+    <ClCompile Include="Cylinder.cpp" />
     <ClCompile Include="VoxelGridModel.cpp" />
     <ClCompile Include="BuildingGenerator.cpp" />
     <ClCompile Include="BuildingSystem.cpp">

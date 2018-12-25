@@ -1,9 +1,9 @@
 #pragma once
-#include "ConvexHull.h"
+#include "CollisionVolume.h"
 namespace geometry {
 	struct CollisionModel
 	{
 		CollisionModel();
-		std::vector<ConvexHull> hulls;
+		std::vector<shared_ptr<CollisionVolume>> volumes;
 	};
 }

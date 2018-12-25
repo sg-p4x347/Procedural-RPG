@@ -291,17 +291,21 @@ AssetEntityManager * AssetManager::GetProceduralEM()
 void AssetManager::CompileFbxAssets()
 {
 	// iterate the \Assets\Models directory
-	for (auto & dir : Filesystem::directory_iterator(m_authoredDir / "Models")) {
-		if (dir.path().has_extension()) {
-			string ext = dir.path().extension().string();
+	for (auto & path : Filesystem::directory_iterator(m_authoredDir / "Models")) {
+		if (path.path().has_extension()) {
+			string ext = path.path().extension().string();
 			if (ext == ".fbx" || ext == ".FBX") {
-				auto cmf = CMF::CreateFromFBX(dir.path(),GetStaticEM());
-				cmf->Export(m_authoredDir);
+				CompileFbxAsset(path);
 			}
 		}
 	}
 	GetStaticEM()->Save();
 	//auto cmf = CMF::CreateFromFBX((m_authoredDir / "Models/Test.fbx"), GetStaticEM());
+}
+void AssetManager::CompileFbxAsset(Filesystem::path path)
+{
+	auto cmf = CMF::CreateFromFBX(path, GetStaticEM());
+	cmf->Export(m_authoredDir);
 }
 AssetManager::AssetManager() : m_fontSize(32)
 {
@@ -452,6 +456,7 @@ void AssetManager::SetAssetDir(Filesystem::path assets)
 	m_authoredDir = assets;
 	m_authoredEM.reset(new AssetEntityManager(assets));
 	CompileFbxAssets();
+	//CompileFbxAsset(m_authoredDir / "Models" / "cylinderTest.fbx");
 }
 
 void AssetManager::SetProceduralAssetDir(Filesystem::path procedural)

@@ -66,10 +66,10 @@ namespace world {
 					position.Pos.x = std::max(0.f, std::min((float)terrainSystem->Width(), position.Pos.x));
 					position.Pos.z = std::max(0.f, std::min((float)terrainSystem->Width(), position.Pos.z));
 
-					for (auto & hull : GetCollisionAsset(collision).hulls) {
+					for (auto & volume : GetCollisionAsset(collision).volumes) {
 						// Get the center bottom of the box for terrain collison
 						Vector3 bottomCenter = position.Pos;
-						float yRadius = hull.Max(Vector3::Down).y;
+						float yRadius = volume->Support(Vector3::Down).y;
 						bottomCenter.y += yRadius;
 
 
@@ -99,28 +99,28 @@ namespace world {
 							Vector3 futurePos = position.Pos + movement.Velocity * elapsed;
 							Matrix rotationMatrix = Matrix::CreateFromYawPitchRoll(position.Rot.y, position.Rot.x, position.Rot.z);
 							Matrix world = rotationMatrix * Matrix::CreateTranslation(futurePos);
-							auto hullA = hull.Transform(world);
+							auto hullA = volume->Transform(world);
 
 							for (auto & other : m_static) {
 								auto & otherPos = other.Get<Position>();
 								auto & otherCollision = other.Get<Collision>();
 								auto staticCollisionModel = GetCollisionAsset(otherCollision);
-								for (auto & staticHull : staticCollisionModel.hulls) {
+								for (auto & staticHull : staticCollisionModel.volumes) {
 									auto otherRotationMatrix = Matrix::CreateFromYawPitchRoll(otherPos.Rot.y, otherPos.Rot.x, otherPos.Rot.z);
 									auto otherWorld = (otherRotationMatrix * Matrix::CreateTranslation(otherPos.Pos));
-									auto hullB = staticHull.Transform(otherWorld);
+									auto hullB = staticHull->Transform(otherWorld);
 									otherCollision.Colliding = 0;
-									// Radial broad phase check
-									if ((position.Pos - otherPos.Pos).Length() <= hullA.radius + hullB.radius) {
-										CollisionUtil::GjkIntersection intersection;
-										CollisionUtil::SatResult satResult;
+									// AABB Broad Phase
+									if (hullA->Bounds().Intersects(hullB->Bounds())) {
+										geometry::GjkIntersection intersection;
+										geometry::SatResult satResult;
 
 										/*if (CollisionUtil::SatIntersection(hullA, hullB, axes, satResult)) {
 											collision.Colliding = 1;
 											otherCollision.Colliding = 1;
 										}*/
 										//if (CollisionUtil::SatIntersection(hullA, hullB, satResult)) {
-										if (CollisionUtil::GJK(hullA.vertices, hullB.vertices, intersection)) {
+										if (geometry::GJK(hullA, hullB, intersection)) {
 											collision.Colliding = 1;
 											otherCollision.Colliding = 1;
 
@@ -128,11 +128,10 @@ namespace world {
 											rotationMatrix = Matrix::CreateFromYawPitchRoll(position.Rot.y, position.Rot.x, position.Rot.z);
 											world = (rotationMatrix * Matrix::CreateTranslation(position.Pos));
 
-											hullA = hull.Transform(world);
-											CollisionUtil::SatResult satResult;
+											hullA = volume->Transform(world);
+											geometry::SatResult satResult;
 
-
-											if (!CollisionUtil::SatIntersection(hullA, hullB, satResult)) {
+											if (!geometry::SatIntersection(hullA, hullB, satResult)) {
 												collision.CollisionNormals.push_back(satResult.Axis);
 												movement.Velocity -= satResult.Axis * satResult.Axis.Dot(movement.Velocity);
 											}

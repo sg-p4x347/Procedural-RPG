@@ -22,6 +22,7 @@ public:
 	//----------------------------------------------------------------
 	// Asset compilation
 	void CompileFbxAssets();
+	void CompileFbxAsset(Filesystem::path path);
 	//----------------------------------------------------------------
 	// Asset Retrieval
 	
