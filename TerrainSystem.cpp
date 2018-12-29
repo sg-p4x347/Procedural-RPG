@@ -201,7 +201,7 @@ namespace world {
 		//HeightMap cache = HeightMap(cacheArea);
 		//ImportMap(cache);
 		float height = Flatten(*TerrainMap, flattenArea, 10);
-		SM->GetSystem<BuildingSystem>("Building")->CreateBuilding(Vector3(footprint.x, height + 0.2f, footprint.y), Rectangle(0, 0, footprint.width, footprint.height), "residential");
+		SM->GetSystem<BuildingSystem>("Building")->CreateBuilding(Vector3(footprint.x, height + 5.f, footprint.y), Rectangle(0, 0, footprint.width, footprint.height), "residential");
 
 		AssetManager::Get()->CreateHeightMapModel("terrain", TerrainMap.get(), AssetManager::Get()->CreateNormalMap(TerrainMap.get()), 10.f, m_regionWidth, "Terrain");
 		CreateTerrainEntities();
@@ -234,7 +234,7 @@ namespace world {
 		// TEMP
 		EntityPtr asset;
 		if (AssetManager::Get()->GetStaticEM()->TryFindByPathID("Crate",asset)) {
-			int offset = 32;
+			int offset = 0;
 			int max = 1;
 			int spacing = 1;
 			for (int x = offset; x < offset + max; x += spacing) {

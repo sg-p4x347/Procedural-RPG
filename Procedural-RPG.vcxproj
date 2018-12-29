@@ -215,6 +215,8 @@
     <ClInclude Include="Box.h" />
     <ClInclude Include="CollisionVolume.h" />
     <ClInclude Include="Cylinder.h" />
+    <ClInclude Include="RegionJobCache.h" />
+    <ClInclude Include="RenderJob.h" />
     <ClInclude Include="VoxelGridModel.h" />
     <ClInclude Include="BuildingGenerator.h" />
     <ClInclude Include="BuildingSystem.h">
@@ -382,6 +384,8 @@
     <ClCompile Include="Box.cpp" />
     <ClCompile Include="CollisionVolume.cpp" />
     <ClCompile Include="Cylinder.cpp" />
+    <ClCompile Include="RegionJobCache.cpp" />
+    <ClCompile Include="RenderJob.cpp" />
     <ClCompile Include="VoxelGridModel.cpp" />
     <ClCompile Include="BuildingGenerator.cpp" />
     <ClCompile Include="BuildingSystem.cpp">

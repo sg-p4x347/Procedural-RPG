@@ -5,5 +5,7 @@ namespace geometry {
 	{
 		CollisionModel();
 		std::vector<shared_ptr<CollisionVolume>> volumes;
+		void Merge(CollisionModel & other);
+		CollisionModel Transform(Matrix matrix);
 	};
 }

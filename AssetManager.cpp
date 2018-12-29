@@ -693,7 +693,7 @@ std::shared_ptr<Model> AssetManager::GetModel(string path, float distance, Vecto
 	}
 	return GetModel(entity, distance,position, type);
 }
-std::shared_ptr<Model> AssetManager::GetModel(unsigned int id, float distance, Vector3 position, AssetType type)
+std::shared_ptr<Model> AssetManager::GetModel(AssetID id, float distance, Vector3 position, AssetType type)
 {
 	EntityPtr entity;
 	switch (type) {
@@ -703,16 +703,23 @@ std::shared_ptr<Model> AssetManager::GetModel(unsigned int id, float distance, V
 	return GetModel(entity, distance,position, type);
 }
 
-std::shared_ptr<geometry::CMF> AssetManager::GetCMF(unsigned int id, AssetType type)
+std::shared_ptr<geometry::CMF> AssetManager::GetCMF(AssetID id, AssetType type)
 {
-	EntityPtr entity;
-	switch (type) {
-	case Procedural: m_proceduralEM->Find(id, entity);break;
-	case Authored: m_authoredEM->Find(id, entity); break;
+	auto it = m_cmfCache.find(id);
+	if (it != m_cmfCache.end()) {
+		return it->second;
 	}
-	// get the path
-	Filesystem::path fullPath = m_authoredDir / "Models" / (entity->GetComponent<PathID>("PathID")->Path + ".fbx");
-	return CMF::CreateFromFBX(fullPath, GetStaticEM());
+	else {
+		EntityPtr entity;
+		switch (type) {
+		case Procedural: m_proceduralEM->Find(id, entity); break;
+		case Authored: m_authoredEM->Find(id, entity); break;
+		}
+		// get the path
+		Filesystem::path fullPath = m_authoredDir / "Models" / (entity->GetComponent<PathID>("PathID")->Path + ".fbx");
+		m_cmfCache[id] = CMF::CreateFromFBX(fullPath, GetStaticEM());
+		return m_cmfCache[id];
+	}
 }
 
 std::shared_ptr<Model> AssetManager::CreateModelFromHeightMap(

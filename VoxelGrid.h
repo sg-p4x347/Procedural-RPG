@@ -74,24 +74,26 @@ public:
 		}
 		return intersection;
 	};
-	std::set<VoxelType> GetIntersection(geometry::ConvexHull & convexHull) {
-		std::set<VoxelType> broadPhase;
-		DirectX::BoundingBox hullBounds = convexHull.Bounds();
-		for (auto & voxel : *this) {
-			if (voxel && hullBounds.Intersects(voxel.Bounds())) {
-				broadPhase.insert(voxel);
-			}
-		}
-		std::set<VoxelType> narrowPhase;
-		for (auto & voxel : broadPhase) {
+	std::vector<VoxelType> GetIntersection(geometry::ConvexHull & convexHull) {
+		std::vector<VoxelType> results;
+		for (auto & voxel : GetIntersection(convexHull.Bounds())) {
 			CollisionUtil::GjkIntersection intersection;
 			auto voxelHull = geometry::ConvexHull(voxel.Bounds());
 			if (CollisionUtil::GJK(convexHull.vertices, voxelHull.vertices, intersection)) {
-				narrowPhase.insert(voxel);
+				results.push_back(voxel);
 			}
 		}
-		return narrowPhase;
+		return results;
 	};
+	std::vector<VoxelType> GetIntersection(BoundingBox & box) {
+		std::vector<VoxelType> intersection;
+		for (auto & voxel : *this) {
+			if (box.Intersects(voxel.Bounds())) {
+				intersection.push_back(voxel);
+			}
+		}
+		return intersection;
+	}
 	VoxelGridIterator<VoxelType> begin() {
 		return VoxelGridIterator(*this);
 	};

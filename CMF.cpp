@@ -21,9 +21,19 @@ namespace geometry {
 	{
 		return m_name;
 	}
-	const CollisionModel CMF::GetCollision() const
+	shared_ptr<CollisionModel> CMF::GetCollision()
 	{
 		return m_collision;
+	}
+	bool CMF::IsAlpha() const
+	{
+		for (auto & mesh : m_meshes) {
+			for (auto & part : mesh->GetParts()) {
+				if (part.alpha)
+					return true;
+			}
+		}
+		return false;
 	}
 	void CMF::AddMesh(shared_ptr<Mesh> mesh)
 	{
@@ -235,6 +245,7 @@ namespace geometry {
 			auto child = node->GetChild(i);
 			string name = child->GetNameOnly();
 			if (name == "collision") {
+				m_collision = std::make_shared<CollisionModel>();
 				ProcessCollisionNode(child, m_collision);
 			}
 			else {
@@ -331,7 +342,7 @@ namespace geometry {
 	enum PolyTypes {
 		PolyCylinder
 	};
-	void CMF::ProcessCollisionNode(fbxsdk::FbxNode * node, CollisionModel & collision)
+	void CMF::ProcessCollisionNode(fbxsdk::FbxNode * node, shared_ptr<CollisionModel> & collision)
 	{
 		auto attribute = node->GetNodeAttribute();
 		if (attribute) {
@@ -344,17 +355,17 @@ namespace geometry {
 				if (polyType.IsValid()) {
 					PolyTypes polyTypeName = (PolyTypes)polyType.Get<FbxEnum>();
 					if (polyTypeName == PolyTypes::PolyCylinder) {
-						collision.volumes.push_back(CreateCylinder(node));
+						collision->volumes.push_back(CreateCylinder(node));
 					}
 				}
 				else {
-					collision.volumes.push_back(CreateConvexHull((FbxMesh *)attribute));
+					collision->volumes.push_back(CreateConvexHull((FbxMesh *)attribute));
 				}
 			}
 		}
 		ProcessCollisionNodeChildren(node, collision);
 	}
-	void CMF::ProcessCollisionNodeChildren(fbxsdk::FbxNode * node, CollisionModel & collision)
+	void CMF::ProcessCollisionNodeChildren(fbxsdk::FbxNode * node, shared_ptr<CollisionModel> & collision)
 	{
 		for (int i = 0; i < node->GetChildCount(); i++) {
 			ProcessCollisionNode(node->GetChild(i), collision);

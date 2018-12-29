@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "CollisionSystem.h"
 #include "TerrainSystem.h"
+#include "MovementSystem.h"
+
 #include "SystemManager.h"
 #include "Game.h"
 #include "IEventManager.h"
@@ -12,7 +14,9 @@ namespace world {
 		WorldSystem::WorldSystem(entityManager, updatePeriod), 
 		SM(systemManager), 
 		m_dynamic(entityManager->NewEntityCache<Position,Collision,Movement>()),
-		m_static(entityManager->NewEntityCache<Position, Collision>())
+		m_static(entityManager->NewEntityCache<Position, Collision>()),
+		m_grids(entityManager->NewEntityCache<Position, VoxelGridModel>())
+	
 	{
 		IEventManager::RegisterHandler(EventTypes::WEM_Resync, std::function<void(void)> ([=]() {
 			SyncEntities();
@@ -66,15 +70,13 @@ namespace world {
 					position.Pos.x = std::max(0.f, std::min((float)terrainSystem->Width(), position.Pos.x));
 					position.Pos.z = std::max(0.f, std::min((float)terrainSystem->Width(), position.Pos.z));
 
-					for (auto & volume : GetCollisionAsset(collision).volumes) {
+					for (auto & volume : GetCollisionAsset(collision.Asset)->volumes) {
 						// Get the center bottom of the box for terrain collison
 						Vector3 bottomCenter = position.Pos;
 						float yRadius = volume->Support(Vector3::Down).y;
 						bottomCenter.y += yRadius;
 
-
 						float terrainHeight = terrainSystem->Height(bottomCenter.x, bottomCenter.z);
-
 
 						auto & movement = entity.Get<Movement>();
 						if (movement.Velocity.LengthSquared() > 0.f) {
@@ -91,63 +93,47 @@ namespace world {
 								collision.CollisionNormals.push_back(Vector3::Up);
 							}
 
-
 							//----------------------------------------------------------------
 							// Dynamic vs Static
 
-
-							Vector3 futurePos = position.Pos + movement.Velocity * elapsed;
-							Matrix rotationMatrix = Matrix::CreateFromYawPitchRoll(position.Rot.y, position.Rot.x, position.Rot.z);
-							Matrix world = rotationMatrix * Matrix::CreateTranslation(futurePos);
-							auto hullA = volume->Transform(world);
-
-							for (auto & other : m_static) {
-								auto & otherPos = other.Get<Position>();
-								auto & otherCollision = other.Get<Collision>();
-								auto staticCollisionModel = GetCollisionAsset(otherCollision);
-								for (auto & staticHull : staticCollisionModel.volumes) {
-									auto otherRotationMatrix = Matrix::CreateFromYawPitchRoll(otherPos.Rot.y, otherPos.Rot.x, otherPos.Rot.z);
-									auto otherWorld = (otherRotationMatrix * Matrix::CreateTranslation(otherPos.Pos));
-									auto hullB = staticHull->Transform(otherWorld);
-									otherCollision.Colliding = 0;
-									// AABB Broad Phase
-									if (hullA->Bounds().Intersects(hullB->Bounds())) {
-										geometry::GjkIntersection intersection;
-										geometry::SatResult satResult;
-
-										/*if (CollisionUtil::SatIntersection(hullA, hullB, axes, satResult)) {
-											collision.Colliding = 1;
-											otherCollision.Colliding = 1;
-										}*/
-										//if (CollisionUtil::SatIntersection(hullA, hullB, satResult)) {
-										if (geometry::GJK(hullA, hullB, intersection)) {
-											collision.Colliding = 1;
-											otherCollision.Colliding = 1;
-
-											// determine the seperating axis from the current position
-											rotationMatrix = Matrix::CreateFromYawPitchRoll(position.Rot.y, position.Rot.x, position.Rot.z);
-											world = (rotationMatrix * Matrix::CreateTranslation(position.Pos));
-
-											hullA = volume->Transform(world);
-											geometry::SatResult satResult;
-
-											if (!geometry::SatIntersection(hullA, hullB, satResult)) {
-												collision.CollisionNormals.push_back(satResult.Axis);
-												movement.Velocity -= satResult.Axis * satResult.Axis.Dot(movement.Velocity);
-											}
-											break;
-										}
-										else {
-											// culled by gjk
-											collision.Colliding = std::min(2, collision.Colliding);
-											otherCollision.Colliding = 2;
-										}
-									}
-									else {
-										// culled by broad phase
-										collision.Colliding = std::min(3, collision.Colliding);
-										otherCollision.Colliding = 3;
-									}
+							
+							auto currentMatrix = MovementSystem::GetWorldMatrix(position.Pos,position.Rot);
+							auto futurePos = MovementSystem::UpdatedPosition(position.Pos, movement.Velocity, elapsed);
+							auto primeMatrix = MovementSystem::GetWorldMatrix(futurePos, position.Rot);
+							auto dynamicVolume = volume->Transform(currentMatrix);
+							auto dynamicVolumePrime = volume->Transform(primeMatrix);
+							// Static colliders
+							for (auto & other : m_static) { 
+								auto & staticPos = other.Get<Position>();
+								auto & staticCollision = other.Get<Collision>();
+								auto staticCollisionModel = GetCollisionAsset(staticCollision.Asset);
+								if (staticCollisionModel) {
+									HandleCollision(
+										position,
+										collision,
+										movement,
+										dynamicVolume,
+										dynamicVolumePrime,
+										staticPos,
+										staticCollisionModel);
+								}
+							}
+							// Static grids
+							for (auto & grid : m_grids) {
+								auto & staticPos = grid.Get<Position>();
+								auto & gridModel = grid.Get<VoxelGridModel>();
+								auto dynamicBounds = dynamicVolume->Bounds();
+								dynamicBounds.Transform(dynamicBounds, MovementSystem::GetWorldMatrix(staticPos.Pos, staticPos.Rot).Invert());
+								for (ModelVoxel & voxel : gridModel.Voxels.GetIntersection(dynamicBounds)) {
+									auto staticCollisionModel = GetCollisionAsset(voxel);
+									HandleCollision(
+										position,
+										collision,
+										movement,
+										dynamicVolume,
+										dynamicVolumePrime,
+										staticPos,
+										staticCollisionModel);
 								}
 							}
 						}
@@ -177,10 +163,12 @@ namespace world {
 	{
 		EM->UpdateCache(m_dynamic);
 		MaskType staticMask = EM->GetMask<Position, Collision>();
+		MaskType gridMask = EM->GetMask<Position, VoxelGridModel>();
 		MaskType movementMask = EM->GetMask<Movement>();
 		EM->UpdateCache(m_static, [=](world::MaskType & sig) {
 			return ((sig & staticMask) == staticMask) && !(sig & movementMask);
 		});
+		EM->UpdateCache(m_grids, gridMask);
 	}
 	std::vector<Vector3> CollisionSystem::BoxVertices(BoundingBox & box, Matrix & transform)
 	{
@@ -202,18 +190,95 @@ namespace world {
 		}
 		return vertices;
 	}
-	geometry::CollisionModel CollisionSystem::GetCollisionAsset(Collision & collision)
+	shared_ptr<geometry::CollisionModel> CollisionSystem::GetCollisionAsset(AssetID asset)
 	{
-		auto it = m_collisionAssets.find(collision.Asset);
+		auto it = m_collisionAssets.find(asset);
 		if (it != m_collisionAssets.end())
 			return it->second;
 
-		auto model = AssetManager::Get()->GetCMF(collision.Asset, collision.Type);
+		auto model = AssetManager::Get()->GetCMF(asset, AssetType::Authored);
 		if (model) {
-			m_collisionAssets.insert(std::map<EntityID, geometry::CollisionModel>::value_type(collision.Asset, model->GetCollision()));
+			m_collisionAssets.insert(std::make_pair(asset, model->GetCollision()));
 			return model->GetCollision();
 		}
 		// default if asset was not found
-		return geometry::CollisionModel();
+		return nullptr;
+	}
+	shared_ptr<geometry::CollisionModel> CollisionSystem::GetCollisionAsset( ModelVoxel & voxel)
+	{
+		if (voxel.GetCollision() == nullptr) {
+			geometry::CollisionModel collision;
+		
+			for (auto & component : voxel.GetComponents()) {
+
+				auto compCollision = GetCollisionAsset(component.first);
+				if (compCollision) {
+					// transform the component collision asset within the voxel space
+					collision.Merge(compCollision->Transform(TRANSFORMS[component.second]));
+				}
+			}
+			// transform the voxel collision model into grid space
+			voxel.SetCollision(shared_ptr<geometry::CollisionModel>(new geometry::CollisionModel(collision.Transform(Matrix::CreateTranslation(voxel.GetPosition() + Vector3(0.5f,0.5f,0.5f))))));
+		}
+		return voxel.GetCollision();
+	}
+	ContactInfo CollisionSystem::CheckCollision(
+		shared_ptr<geometry::CollisionVolume> volumeA,
+		shared_ptr<geometry::CollisionVolume> volumeAprime, 
+		shared_ptr<geometry::CollisionVolume> volumeB
+	)
+	{
+		ContactInfo result;
+		// AABB Broad Phase
+		if (volumeAprime->Bounds().Intersects(volumeB->Bounds())) {
+			geometry::GjkIntersection intersection;
+			geometry::SatResult satResult;
+
+			/*if (CollisionUtil::SatIntersection(hullA, hullB, axes, satResult)) {
+				collision.Colliding = 1;
+				otherCollision.Colliding = 1;
+			}*/
+			if (geometry::SatIntersection(volumeAprime,volumeB, satResult)) {
+			//if (geometry::GJK(volumeAprime, volumeB, intersection)) {
+				result.colliding = true;
+
+				// determine the seperating axis from the current position
+				geometry::SatResult satResult;
+
+				if (!geometry::SatIntersection(volumeA, volumeB, satResult)) {
+					result.contactNormal = satResult.Axis;
+				}
+				else {
+					// Could not detect a separating axis
+				}
+			}
+			else {
+				// culled by narrow phase
+			}
+		}
+		else {
+			// culled by broad phase
+		}
+		return result;
+	}
+	void CollisionSystem::HandleCollision(
+		Position & position,
+		Collision & dynamicCollision,
+		Movement & dynamicMovement,
+		shared_ptr<geometry::CollisionVolume> & dynamicCollisionVolume,
+		shared_ptr<geometry::CollisionVolume> & dynamicCollisionVolumePrime,
+		Position & staticPosition,
+		shared_ptr<geometry::CollisionModel> & staticCollisionModel)
+	{
+		for (auto & volume : staticCollisionModel->volumes) {
+			auto staticWorld = MovementSystem::GetWorldMatrix(staticPosition.Pos, staticPosition.Rot);
+			auto staticVolume = volume->Transform(staticWorld);
+
+			ContactInfo contact = CheckCollision(dynamicCollisionVolume, dynamicCollisionVolumePrime, staticVolume);
+			if (contact.colliding) {
+				dynamicMovement.Velocity -= contact.contactNormal * contact.contactNormal.Dot(dynamicMovement.Velocity);
+				dynamicCollision.CollisionNormals.push_back(contact.contactNormal);
+			}
+		}
 	}
 }

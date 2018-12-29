@@ -48,6 +48,9 @@ namespace geometry {
 		if (axis.x == 0 && axis.z == 0) {
 			return BoundingBox(center, XMFLOAT3(radius, Length(), radius));
 		}
+		else {
+			return CollisionVolume::Bounds();
+		}
 	}
 	std::vector<Vector3> Cylinder::Normals()
 	{

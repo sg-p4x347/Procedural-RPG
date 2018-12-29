@@ -22,7 +22,7 @@ namespace world {
 	{
 		BuildingGenerator bg;
 		EM->CreateEntity(
-			Position(position),
+			Position(position,Vector3(0.f,1.f, 0.71f)),
 			bg.Create(footprint, JsonParser(ifstream("Config/building.json"))[type])
 		);
 		/*

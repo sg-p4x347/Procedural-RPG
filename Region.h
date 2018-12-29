@@ -14,6 +14,9 @@ namespace world {
 		DirectX::SimpleMath::Rectangle & GetArea() {
 			return m_area;
 		}
+		Vector2 GetCenter() {
+			return Vector2(m_area.width * 0.5f + m_area.x, m_area.height * 0.5f + m_area.y);
+		}
 		template<typename CompType>
 		inline vector<std::shared_ptr<ComponentCache<CompType>>> LoadComponents(MaskType signature) {
 			vector<std::shared_ptr<ComponentCache<CompType>>> caches;

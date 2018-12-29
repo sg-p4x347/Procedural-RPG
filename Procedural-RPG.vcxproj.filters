@@ -469,6 +469,8 @@
     <ClInclude Include="Cylinder.h">
       <Filter>Utility\Geometry</Filter>
     </ClInclude>
+    <ClInclude Include="RegionJobCache.h" />
+    <ClInclude Include="RenderJob.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -780,6 +782,8 @@
     <ClCompile Include="Cylinder.cpp">
       <Filter>Utility\Geometry</Filter>
     </ClCompile>
+    <ClCompile Include="RegionJobCache.cpp" />
+    <ClCompile Include="RenderJob.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">

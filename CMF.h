@@ -17,7 +17,8 @@ namespace geometry {
 		//----------------------------------------------------------------
 		// Accessors
 		string GetName() const;
-		const CollisionModel GetCollision() const;
+		shared_ptr<CollisionModel> GetCollision();
+		bool IsAlpha() const;
 		//----------------------------------------------------------------
 		// Modifiers
 		void AddMesh(shared_ptr<Mesh> mesh);
@@ -44,8 +45,8 @@ namespace geometry {
 		shared_ptr<Mesh> CreateMesh(fbxsdk::FbxMesh * fbxMesh);
 		//----------------------------------------------------------------
 		// Collision Model import
-		void ProcessCollisionNode(fbxsdk::FbxNode * node, CollisionModel & collision);
-		void ProcessCollisionNodeChildren(fbxsdk::FbxNode * node, CollisionModel & collision);
+		void ProcessCollisionNode(fbxsdk::FbxNode * node, shared_ptr<CollisionModel> & collision);
+		void ProcessCollisionNodeChildren(fbxsdk::FbxNode * node, shared_ptr<CollisionModel> & collision);
 		shared_ptr<CollisionVolume> CreateConvexHull(fbxsdk::FbxMesh * fbxMesh);
 		shared_ptr<CollisionVolume> CreateCylinder(fbxsdk::FbxNode * fbxNode);
 		//----------------------------------------------------------------
@@ -66,6 +67,6 @@ namespace geometry {
 		vector<shared_ptr<Mesh>> m_meshes;
 		vector<LodGroup> m_lodGroups;
 		map<string,shared_ptr<Material>> m_materials;
-		CollisionModel m_collision;
+		shared_ptr<CollisionModel> m_collision;
 	};
 }

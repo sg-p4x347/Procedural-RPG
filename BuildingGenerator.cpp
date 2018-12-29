@@ -594,22 +594,22 @@ namespace world {
 		// 3D voxel array
 		VoxelGrid<ModelVoxel> voxels(footprint.width + 2, 2, footprint.height + 2);
 		// building level assets
-		EntityPtr exteriorWallBottomAsset;
-		EntityPtr exteriorWallMiddleAsset;
-		EntityPtr exteriorCornerAsset;
-		AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorWallType"] + "_bottom", exteriorWallBottomAsset);
-		AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorWallType"] + "_middle", exteriorWallMiddleAsset);
-		AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorCornerType"], exteriorCornerAsset);
+		//EntityPtr exteriorWallBottomAsset;
+		//EntityPtr exteriorWallMiddleAsset;
+		//EntityPtr exteriorCornerAsset;
+		//AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorWallType"] + "_bottom", exteriorWallBottomAsset);
+		//AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorWallType"] + "_middle", exteriorWallMiddleAsset);
+		//AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorCornerType"], exteriorCornerAsset);
 		// iterate & voxelize each room
 		for (RoomPtr & room : rooms) {
 			EntityPtr floorAsset;
-			EntityPtr wallBottomAsset;
-			EntityPtr wallMiddleAsset;
-			EntityPtr cornerAsset;
+			//EntityPtr wallBottomAsset;
+			//EntityPtr wallMiddleAsset;
+			//EntityPtr cornerAsset;
 			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["floorType"], floorAsset);
-			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["wallType"] + "_bottom", wallBottomAsset);
-			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["wallType"] + "_middle", wallMiddleAsset);
-			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["cornerType"], cornerAsset);
+			//AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["wallType"] + "_bottom", wallBottomAsset);
+			//AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["wallType"] + "_middle", wallMiddleAsset);
+			//AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["cornerType"], cornerAsset);
 			//AssetManager::Get()->Find((string)room->config["cornerType"], cornerAsset);
 
 			for (int x = room->rect.x; x <= room->rect.x + room->rect.width; x++) {
@@ -634,47 +634,47 @@ namespace world {
 						int voxelZ = std::min(room->rect.y + room->rect.height, z + 1);
 						ModelVoxel bottom;
 						AddFloor(bottom,floorAsset->ID());
-						AddWall(bottom,wallBottomAsset->ID(),unitX,unitZ);
+						//AddWall(bottom,wallBottomAsset->ID(),unitX,unitZ);
 						voxels.Set(bottom, voxelX, 0, voxelZ);
 
 						ModelVoxel middle;
-						AddWall(middle, wallMiddleAsset->ID(), unitX, unitZ);
-						voxels.Set(middle, voxelX, 1, voxelZ);
+						//AddWall(middle, wallMiddleAsset->ID(), unitX, unitZ);
+						//voxels.Set(middle, voxelX, 1, voxelZ);
 					}
 				}
 			}
 		}
 		//----------------------------------------------------------------
 		// Exterior
-		for (int x = 0; x <= footprint.width + 1; x++) {
-			for (int z = 0; z <= footprint.height + 1; z++) {
-				if (x == 0 || x == footprint.width + 1 || z == 0 || z == footprint.height + 1) {
-					//----------------------------------------------------------------
-					// Exterior
-					int unitX = (x == 0 ? 1 : (x == footprint.width + 1 ? -1 : 0));
-					int unitZ = (z == 0 ? 1 : (z == footprint.height + 1 ? -1 : 0));
+		//for (int x = 0; x <= footprint.width + 1; x++) {
+		//	for (int z = 0; z <= footprint.height + 1; z++) {
+		//		if (x == 0 || x == footprint.width + 1 || z == 0 || z == footprint.height + 1) {
+		//			//----------------------------------------------------------------
+		//			// Exterior
+		//			int unitX = (x == 0 ? 1 : (x == footprint.width + 1 ? -1 : 0));
+		//			int unitZ = (z == 0 ? 1 : (z == footprint.height + 1 ? -1 : 0));
 
-					/*int voxelX = std::min(room->rect.x + room->rect.width + 1, x);
-					int voxelZ = std::min(room->rect.y + room->rect.height + 1, z);*/
-					ModelVoxel bottomVoxel;
-					if (std::abs(unitX) == 1 && std::abs(unitZ) == 1) {
-						AddCorner(bottomVoxel, exteriorCornerAsset->ID(), unitX, unitZ);
-					}
-					else {
-						AddWall(bottomVoxel, exteriorWallBottomAsset->ID(), unitX, unitZ);
-					}
-					voxels.Set(bottomVoxel, x, 0, z);
+		//			/*int voxelX = std::min(room->rect.x + room->rect.width + 1, x);
+		//			int voxelZ = std::min(room->rect.y + room->rect.height + 1, z);*/
+		//			ModelVoxel bottomVoxel;
+		//			if (std::abs(unitX) == 1 && std::abs(unitZ) == 1) {
+		//				AddCorner(bottomVoxel, exteriorCornerAsset->ID(), unitX, unitZ);
+		//			}
+		//			else {
+		//				AddWall(bottomVoxel, exteriorWallBottomAsset->ID(), unitX, unitZ);
+		//			}
+		//			voxels.Set(bottomVoxel, x, 0, z);
 
-					ModelVoxel middleVoxel;
-					if (std::abs(unitX) == 1 && std::abs(unitZ) == 1) {
-					}
-					else {
-						AddWall(middleVoxel, exteriorWallMiddleAsset->ID(), unitX, unitZ);
-					}
-					voxels.Set(middleVoxel, x, 1, z);
-				}
-			}
-		}
+		//			ModelVoxel middleVoxel;
+		//			if (std::abs(unitX) == 1 && std::abs(unitZ) == 1) {
+		//			}
+		//			else {
+		//				AddWall(middleVoxel, exteriorWallMiddleAsset->ID(), unitX, unitZ);
+		//			}
+		//			voxels.Set(middleVoxel, x, 1, z);
+		//		}
+		//	}
+		//}
 		return voxels;
 	}
 
