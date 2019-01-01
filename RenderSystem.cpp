@@ -74,9 +74,11 @@ void RenderSystem::Update(double & elapsed)
 void RenderSystem::Render()
 {
 	
-
+	Vector3 cameraPos;
+	Vector3 cameraRot;
+	Vector3 lookAt;
 	world::MaskType mask = EM->GetMask<world::Position, world::Player>();
-	TaskManager::Get().RunSynchronous(Task([=] {
+	TaskManager::Get().RunSynchronous(Task([=,&cameraPos,&cameraRot,&lookAt] {
 		auto player = EM->GetEntity<world::Position, world::Player>(EM->PlayerID());
 		world::Position & position = player->Get<world::Position>();
 		world::Player & playerComp = player->Get<world::Player>();
@@ -85,9 +87,9 @@ void RenderSystem::Render()
 		float z = r * cosf(position.Rot.y);
 		float x = r * sinf(position.Rot.y);
 
-		Vector3 cameraPos;
-		Vector3 cameraRot = Vector3(position.Rot.y, 0.f, playerComp.CameraPitch);
-		Vector3 lookAt;
+		
+		cameraRot = Vector3(position.Rot.y, 0.f, playerComp.CameraPitch);
+		
 
 		switch (playerComp.InteractionState) {
 		case world::Player::InteractionStates::FirstPerson:
@@ -97,8 +99,10 @@ void RenderSystem::Render()
 		case world::Player::InteractionStates::ThirdPerson:
 			lookAt = position.Pos + Vector3(0.f, 1.7f, 0.f);
 			cameraPos = lookAt - Vector3(x, y, z) * 3.f;
+			
 			break;
 		}
+	}, mask, mask));
 		//Vector3 lookAt = position.Pos + Vector3(0.f,1.7f,0.f); // third person
 		// XMMATRIX view = XMMatrixLookAtRH(position.Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f)); // first person
 		//XMVECTOR cameraPos = lookAt - Vector3(x, y, z) * 3.f; // third person
@@ -184,7 +188,7 @@ void RenderSystem::Render()
 		
 
 		
-	}, mask, mask));
+	
 	//for (auto & regionCache : m_modelInstances) {
 	//	if (IsRegionVisible(regionCache.first, position.Pos, position.Rot,m_frustum)) {
 	//		for (auto & instanceCache : regionCache.second) {
@@ -401,13 +405,13 @@ Rectangle RenderSystem::GetViewport()
 
 void RenderSystem::InitializeWorldRendering(world::WEM * entityManager)
 {
-	
+	EM = entityManager;
 	if (entityManager) {
 		/*EntityPtr ocean;
 		if (AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), "ocean", ocean)) {
 			CreateJob(m_staticJobs.opaque, 0, Vector3::Zero, Vector3::Zero, ocean->ID());
 		}*/
-		EM = entityManager;
+		
 		RegisterHandlers();
 		InitializeJobCache();
 		m_terrainEntities = std::unique_ptr<world::WorldEntityCache<world::WEM::RegionType, world::Terrain, world::Model, world::Position>>(

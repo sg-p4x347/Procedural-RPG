@@ -160,7 +160,7 @@ namespace world {
 		// Cherry pick a set of components by entity ID
 		template<typename HeadType, typename ... MaskTypes>
 		shared_ptr<WorldEntityProxy<HeadType, MaskTypes...>> GetEntity(EntityID id) {
-			std::lock_guard<std::mutex> lock(m_mutex);
+			std::lock_guard<std::recursive_mutex> lock(m_mutex);
 			EntityInfo * info;
 			if (m_entityIndex.Find(id, info)) {
 				auto & region = *m_regions[info->regionX][info->regionZ];
@@ -185,7 +185,7 @@ namespace world {
 		}
 		template<typename HeadType, typename ... MaskTypes>
 		void UpdateCache(WorldEntityCache<Region<CompTypes...>, HeadType, MaskTypes...> & cache, std::function<bool(world::MaskType &)> && predicate) {
-			std::lock_guard<std::mutex> lock(m_mutex);
+			std::lock_guard<std::recursive_mutex> lock(m_mutex);
 			// iterate over the cached regions
 			unordered_set<shared_ptr<Region<CompTypes...>>> staleRegions;
 			for (auto & regionCache : cache.GetCaches()) {
@@ -223,7 +223,7 @@ namespace world {
 		// Not restricted by the loaded region subset
 		template<typename HeadType, typename ... MaskTypes>
 		void UpdateGlobalCache(WorldEntityCache<Region<CompTypes...>, HeadType, MaskTypes...> & cache,std::function<bool(world::MaskType &)> && predicate) {
-			std::lock_guard<std::mutex> lock(m_mutex);
+			std::lock_guard<std::recursive_mutex> lock(m_mutex);
 			for (auto & regionRow : m_regions) {
 				for (auto & region : regionRow) {
 					if (!cache.GetCaches().count(region)) {
@@ -319,7 +319,7 @@ namespace world {
 		const unsigned int m_regionWidth;
 		const unsigned int m_regionDimension;
 		const float m_loadRange;
-		std::mutex m_mutex;
+		std::recursive_mutex m_mutex;
 		tuple<pair<MaskType, CompTypes>...> m_maskIndex;
 
 		//----------------------------------------------------------------

@@ -37,7 +37,7 @@ namespace world {
 	{
 
 		TreeGenerator tg;
-		static const int lodCount = 4;
+		static const int lodCount = 8;
 		static const int lodSpacing = 8;
 		vector<shared_ptr<Components::VBO<VertexPositionNormalTangentColorTexture>>> vbos;
 		for (int lod = 0; lod < lodCount; lod++) {
