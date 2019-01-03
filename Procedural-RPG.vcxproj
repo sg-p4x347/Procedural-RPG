@@ -531,6 +531,7 @@
     <ImageContentTask Include="Assets\Textures\wood.png" />
     <ImageContentTask Include="Assets\Textures\Building\interior_paint.png" />
     <ImageContentTask Include="Assets\Textures\iron_ore.png" />
+    <Image Include="Assets\Textures\adobe.png" />
     <Image Include="Assets\Textures\grass_billboard_0.png" />
     <Image Include="Assets\Textures\Item\logs.png" />
     <ImageContentTask Include="Assets\Textures\test.png" />

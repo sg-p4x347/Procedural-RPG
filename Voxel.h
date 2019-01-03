@@ -22,10 +22,5 @@ private:
 	Voxel::Ordinal m_x;
 	Voxel::Ordinal m_y;
 	Voxel::Ordinal m_z;
-
-	
-
-	
-
 };
 

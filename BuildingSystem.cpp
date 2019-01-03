@@ -3,7 +3,6 @@
 #include "BuildingGenerator.h"
 #include "AssetManager.h"
 #include "JSON.h"
-#include "VoxelGrid.h"
 namespace world {
 	BuildingSystem::BuildingSystem(WEM *  entityManager, unsigned short updatePeriod) : WorldSystem::WorldSystem(entityManager, updatePeriod)
 	{
@@ -31,6 +30,107 @@ namespace world {
 		BuildingGenerator bg;
 		building->AddComponent(new Components::Building(bg.Create(footprint, JsonParser(ifstream("Config/building.json"))[type])));
 		*/
+	}
+
+	void BuildingSystem::CreateAdobe(Vector3 position, DirectX::SimpleMath::Rectangle footprint)
+	{
+		const int height = 20;
+		VoxelGrid<ModelVoxel> grid(footprint.width + 1, height + 1, footprint.height + 1);
+		EntityPtr floor;
+		EntityPtr wall;
+		EntityPtr corner;
+		EntityPtr wallCap;
+		EntityPtr cornerCap;
+		EntityPtr doorFrameBottom;
+		EntityPtr doorFrameTop;
+		if (AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_wall",wall)
+			&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_corner", corner)
+			//&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_wall_cap", wallCap)
+			//&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_corner_cap", cornerCap)
+			//&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_door_frame_bottom", doorFrameBottom)
+			//&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_door_frame_top", doorFrameTop)
+			//&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_floor", floor)) 
+		) {
+			Int3 start(0, 0, 0);
+			Int3 end(footprint.width, 0, footprint.height);
+			// Floor
+			//AddUniform(grid, floor->ID(), Transforms::None, start, end);
+			// Walls
+			AddPerimeter(grid, wall->ID(), corner->ID(), Int3(start.x,0,start.z), Int3(end.x,height-1,end.z));
+			// Wall Caps
+			//AddPerimeter(grid, wallCap->ID(), cornerCap->ID(), Int3(start.x, height, start.z), Int3(end.x, height, end.z));
+		
+			EM->CreateEntity(world::Position(position), world::VoxelGridModel(grid));
+		}
+		
+	}
+
+	void BuildingSystem::AddUniform(Grid & grid, AssetID asset, TransformID transform, Int3 start, Int3 end)
+	{
+		for (int x = start.x; x <= end.x; x++) {
+			for (int y = start.y; y <= end.y; y++) {
+				for (int z = start.z; z <= end.z; z++) {
+					grid[x][y][z].AddComponent(asset, transform);
+				}
+			}
+		}
+		
+	}
+
+	void BuildingSystem::AddPerimeter(Grid & grid, AssetID sideAsset,AssetID cornerAsset, Int3 start, Int3 end)
+	{
+		for (int x = start.x; x <= end.x; x++) {
+			for (int z = start.y; z <= end.z; z++) {
+				int zLength = end.z - start.z;
+				int unitZ = z == start.z ? -1 : (z - start.z) / zLength;
+				int xLength = end.x - start.z;
+				int unitX = x == start.x ? -1 : (x - start.x) / xLength;
+				for (int y = start.y; y <= end.y; y++) {
+					/*
+					^
+					|
+					+X
+							  1
+					 +--------+--------+
+					 |		  |		   |
+					 |		  |		   |
+					 |		  |		   |
+					2+--------*--------+0
+					 |		  |		   |
+					 |		  |		   |
+					 |		  |		   |
+					 +--------+--------+
+							  3
+					+Z --->
+					*/	
+					auto & voxel = grid[x][y][z];
+					if (abs(unitX) == 1 && abs(unitZ) == 1) {
+						if (unitZ == 1) {
+							if (unitX == 1) {
+								voxel.AddComponent(cornerAsset, Transforms::None);
+							}
+							else {
+								voxel.AddComponent(cornerAsset, Transforms::Rotate270);
+							}
+						}
+						else {
+							if (unitX == 1) {
+								voxel.AddComponent(cornerAsset, Transforms::Rotate90);
+							}
+							else {
+								voxel.AddComponent(cornerAsset, Transforms::Rotate180);
+							}
+						}
+					}
+					else if (abs(unitZ) == 1) {
+						voxel.AddComponent(sideAsset, 2 - (unitZ + 1));
+					}
+					else if (abs(unitX) == 1) {
+						voxel.AddComponent(sideAsset, 3 - (unitX + 1));
+					}
+				}
+			}
+		}
 	}
 
 	//shared_ptr<CompositeModel> BuildingSystem::GetModel(VoxelGridModel & building, float distance)

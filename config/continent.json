@@ -3,7 +3,7 @@
 {
 	// General
 	"grass":  false,
-	"erosion": false, // Whether to erode or not
+	"erosion": true, // Whether to erode or not
 	"landAmplitude": 0.15, // scale factor For the continent map above ocean level
 	"oceanAmplitude": 0.6, // scale factor For the continent map below ocean level
 	"biomeDeviationConst": 0.09, // scales the ammount Of deviation that mountain ranges have

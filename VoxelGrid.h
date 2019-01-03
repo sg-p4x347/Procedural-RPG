@@ -62,7 +62,7 @@ public:
 	const Voxel::Ordinal & GetZsize() {
 		return m_zSize;
 	};
-	const std::vector<std::vector<VoxelType>> & operator[](const int index) {
+	std::vector<std::vector<VoxelType>> & operator[](const int index) {
 		return m_voxels[index];
 	};
 	std::vector<VoxelType> GetIntersection(DirectX::BoundingFrustum & frustum) {

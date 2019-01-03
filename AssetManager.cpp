@@ -356,7 +356,7 @@ std::shared_ptr<Model> AssetManager::GetModel(EntityPtr entity, float distance, 
 				//****************************
 
 				// get the LOD level
-				int lod = std::min(modelAsset->LodCount - 1, (int)distance / modelAsset->LodSpacing);
+				int lod = std::min(modelAsset->LodCount - 1, modelAsset->LodSpacing > 0 ? (int)distance / modelAsset->LodSpacing : 0);
 				// Get the model
 				
 				if (modelAsset->LODs.size() <= lod || !modelAsset->LODs[lod]) {

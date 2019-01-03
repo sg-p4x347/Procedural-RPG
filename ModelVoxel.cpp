@@ -5,7 +5,7 @@ ModelVoxel::ModelVoxel() {}
 
 void ModelVoxel::AddComponent(AssetID asset, TransformID transform)
 {
-	m_components.push_back(std::make_pair(asset, transform));
+	m_components.push_back(std::pair<AssetID, TransformID>(asset, transform));
 }
 
 void ModelVoxel::AddComponent(AssetID asset, Transforms transform)
