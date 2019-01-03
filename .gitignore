@@ -75,3 +75,5 @@ Release/
 *.log
 Version.h
 Version.cpp
+/Assets
+/Misc
