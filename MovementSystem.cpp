@@ -26,6 +26,18 @@ namespace world {
 		}));*/
 	}
 
+	Vector3 MovementSystem::UpdatedPosition(Vector3 & position, Vector3 & velocity, const double & elapsed)
+	{
+		return position + velocity * elapsed;
+	}
+
+	Matrix MovementSystem::GetWorldMatrix(Vector3 & position, Vector3 & rotation)
+	{
+		auto rotationMatrix = Matrix::CreateFromYawPitchRoll(rotation.y, rotation.x, rotation.z);
+		auto world = (rotationMatrix * Matrix::CreateTranslation(position));
+		return world;
+	}
+
 	string MovementSystem::Name()
 	{
 		return "Movement";
@@ -44,7 +56,7 @@ namespace world {
 
 				MovementTracker tracker(EM->GetRegionWidth());
 				tracker.Update(position.Pos);
-				position.Pos += movement.Velocity * elapsed;
+				position.Pos = MovementSystem::UpdatedPosition(position.Pos, movement.Velocity,elapsed);
 				movement.Velocity += movement.Acceleration * elapsed;
 				if (tracker.Update(position.Pos)) {
 					// region boundary crossed

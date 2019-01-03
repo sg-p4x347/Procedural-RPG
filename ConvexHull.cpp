@@ -33,20 +33,7 @@ namespace geometry {
 		// normal not found, add it
 		axes.push_back(normal);
 	}
-	Vector3 & ConvexHull::Max(Vector3 direction)
-	{
-		Vector3 & max = vertices[0];
-		float maxDot = -INFINITY;
-		for (auto & vertex : vertices) {
-			auto dot = vertex.Dot(direction);
-			if (dot > maxDot) {
-				max = vertex;
-				maxDot = dot;
-			}
-		}
-		return max;
-	}
-	std::pair<Vector3, Vector3> ConvexHull::MinMax(Vector3 direction)
+	std::pair<Vector3, Vector3> ConvexHull::BiSupport(Vector3 direction)
 	{
 		Vector3 min = vertices[0];
 		Vector3 max = vertices[0];
@@ -69,35 +56,34 @@ namespace geometry {
 	{
 		return a - axisTolerance <= b && a + axisTolerance >= b;
 	}
-	ConvexHull ConvexHull::Transform(Matrix matrix)
+	Vector3 ConvexHull::Support(Vector3 direction)
 	{
-		ConvexHull result;
+		Vector3 max = vertices[0];
+		float maxDot = -INFINITY;
 		for (auto & vertex : vertices) {
-			result.vertices.push_back(Vector3::Transform(vertex,matrix));
+			auto dot = vertex.Dot(direction);
+			if (dot > maxDot) {
+				max = vertex;
+				maxDot = dot;
+			}
 		}
-		result.radius = radius;
+		return max;
+	}
+	shared_ptr<CollisionVolume> ConvexHull::Transform(DirectX::SimpleMath::Matrix matrix)
+	{
+		shared_ptr<ConvexHull> result(new ConvexHull());
+		for (auto & vertex : vertices) {
+			result->vertices.push_back(Vector3::Transform(vertex, matrix));
+		}
+		result->radius = radius;
 		auto Oprime = Vector3::Transform(Vector3::Zero, matrix);
 		for (auto & axis : axes) {
-			result.axes.push_back(Vector3::Transform(axis, matrix) - Oprime);
+			result->axes.push_back(Vector3::Transform(axis, matrix) - Oprime);
 		}
-		return result;
+		return static_pointer_cast<CollisionVolume>(result);
 	}
-	DirectX::BoundingBox ConvexHull::Bounds()
+	std::vector<Vector3> ConvexHull::Normals()
 	{
-		auto xMinMax = MinMax(Vector3::UnitX);
-		auto yMinMax = MinMax(Vector3::UnitY);
-		auto zMinMax = MinMax(Vector3::UnitZ);
-		return BoundingBox(
-			Vector3(
-				(xMinMax.first.x + xMinMax.second.x) * 0.5f,
-				(yMinMax.first.y + yMinMax.second.y) * 0.5f,
-				(zMinMax.first.z + zMinMax.second.z) * 0.5f
-			),
-			Vector3(
-				(xMinMax.second.x - xMinMax.first.x),
-				(yMinMax.second.y - yMinMax.first.y),
-				(zMinMax.second.z - zMinMax.first.z)
-			)
-		);
+		return axes;
 	}
 }

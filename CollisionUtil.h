@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 
-namespace CollisionUtil {
+namespace geometry {
 	struct Simplex {
 		Simplex() : Size(0), A(Vertices[0]), B(Vertices[1]), C(Vertices[2]), D(Vertices[3]) {}
 		Vector3 Vertices[4];
@@ -181,14 +181,14 @@ namespace CollisionUtil {
 		return false;
 	}
 	
-	inline bool GJK( std::vector<Vector3> & hullA, std::vector<Vector3> & hullB, GjkIntersection & result) {
+	inline bool GJK( shared_ptr<CollisionVolume> & volumeA, shared_ptr<CollisionVolume> & volumeB, GjkIntersection & result) {
 		Vector3 initialAxis = Vector3::Up;
-		Vector3 a = HullSupport(hullA, initialAxis) - HullSupport(hullB, -initialAxis);
+		Vector3 a = volumeA->Support(initialAxis) - volumeB->Support(-initialAxis);
 		result.Simplex.Set(a);
 		result.Direction = -a;
 		
 		for (int i = 0; i < 20;i++) {
-			a = HullSupport(hullA, result.Direction) - HullSupport(hullB, -result.Direction);
+			a = volumeA->Support(result.Direction) - volumeB->Support(-result.Direction);
 			if (a.Dot(result.Direction) < 0) {
 				return false;
 			}
@@ -204,67 +204,43 @@ namespace CollisionUtil {
 		Vector3 Axis;
 
 	};
-	struct SatProjection {
-		SatProjection() : SatProjection(INFINITY,-INFINITY) {}
-		SatProjection(float min, float max) : Min(min), Max(max) {
-
-		}
-		bool Overlaps(SatProjection & projection) {
-			return projection.Max > Min && Max > projection.Min;
-		}
-		float Min;
-		float Max;
-	};
 	
-	inline SatProjection Project(Vector3 & axis, std::vector<Vector3> & hull) {
-		SatProjection projection;
-		for (auto & vertex : hull) {
-			float dot = vertex.Dot(axis);
-			if (dot < projection.Min) {
-				projection.Min = dot;
-			}
-			if (dot > projection.Max) {
-				projection.Max = dot;
-			}
-		}
-		return projection;
+	inline bool DoProjectionsOverlap(Vector3 & axis, shared_ptr<CollisionVolume> & volumeA, shared_ptr<CollisionVolume> & volumeB) {
+		auto projectionA = volumeA->Project(axis);
+		auto projectionB = volumeB->Project(axis);
+		return (projectionA.second >= projectionB.first && projectionB.second >= projectionA.first);
 	}
 	// generate axes from boxes
-	inline std::vector<Vector3> GenerateSatAxes(SimpleMath::Matrix transformA, SimpleMath::Matrix transformB) {
+	inline std::vector<Vector3> GenerateSatAxes(vector<Vector3> & axesA, vector<Vector3> & axesB) {
 		std::vector<Vector3> axes;
-		axes.push_back(Vector3::Transform(Vector3::Up, transformA));
-		axes.push_back(Vector3::Transform(Vector3::Forward, transformA));
-		axes.push_back(Vector3::Transform(Vector3::Right, transformA));
-
-		axes.push_back(Vector3::Transform(Vector3::Up, transformB));
-		axes.push_back(Vector3::Transform(Vector3::Forward, transformB));
-		axes.push_back(Vector3::Transform(Vector3::Right, transformB));
-
-		for (int a = 0; a < 3; a++) {
-			for (int b = 3; b < 6; b++) {
-				Vector3 cross = axes[a].Cross(axes[b]);
-				if (cross.LengthSquared() > 0)
+		for (auto & a : axesA) {
+			for (auto & b : axesB) {
+				Vector3 cross = a.Cross(b);
+				if (cross.LengthSquared() > 0) {
+					cross.Normalize();
 					axes.push_back(cross);
+				}
 			}
-		}
-		for (auto & axis : axes) {
-			axis.Normalize();
 		}
 		return axes;
 	}
-	inline bool SatIntersection(geometry::ConvexHull & hullA, geometry::ConvexHull & hullB, SatResult & result) {
-		for (auto & axis : hullA.axes) {
-			SatProjection projectionA = Project(axis, hullA.vertices);
-			SatProjection projectionB = Project(axis, hullB.vertices);
-			if (!projectionA.Overlaps(projectionB)) {
+	inline bool SatIntersection(shared_ptr<CollisionVolume> & hullA, shared_ptr<CollisionVolume> & hullB, SatResult & result) {
+		auto aNormals = hullA->Normals();
+		for (auto & axis : aNormals) {
+			if (!DoProjectionsOverlap(axis,hullA,hullB)) {
 				result.Axis = axis;
 				return false;
 			}
 		}
-		for (auto & axis : hullB.axes) {
-			SatProjection projectionA = Project(axis, hullA.vertices);
-			SatProjection projectionB = Project(axis, hullB.vertices);
-			if (!projectionA.Overlaps(projectionB)) {
+		auto bNormals = hullB->Normals();
+		for (auto & axis : bNormals) {
+			if (!DoProjectionsOverlap(axis, hullA, hullB)) {
+				result.Axis = axis;
+				return false;
+			}
+		}
+		for (auto & axis : GenerateSatAxes(aNormals, bNormals)) {
+			if (!DoProjectionsOverlap(axis, hullA, hullB)) {
 				result.Axis = axis;
 				return false;
 			}

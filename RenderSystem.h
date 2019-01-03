@@ -4,23 +4,18 @@
 #include "PositionNormalTextureVBO.h"
 #include "PositionNormalTextureTangentColorVBO.h"
 #include "Model.h"
-#include "CompositeModel.h";
+#include "CompositeModel.h"
 #include "VoxelGridModel.h"
 #include "ModelVoxel.h"
 #include "AssetManager.h"
+#include "RegionJobCache.h"
 class SystemManager;
-struct RenderEntityJob {
-	bool moves;
-	world::EntityID entity;
-	std::shared_ptr<Model> model;
-	Vector3 position;
-	XMMATRIX worldMatrix;
-};
+
 class RenderJobVoxel :
 	public Voxel 
 {
 public:
-	std::vector<RenderEntityJob> jobs;
+	std::vector<RenderJob> jobs;
 };
 struct RenderGridJob {
 	RenderGridJob(world::VoxelGridModel & gridModel,Vector3 position, Vector3 rotation) : voxels(
@@ -29,16 +24,15 @@ struct RenderGridJob {
 		gridModel.Voxels.GetZsize()
 	) {
 		position = position;
-		worldMatrix = XMMatrixAffineTransformation(Vector3::One, rotation, Vector3::Zero, position + Vector3(0.5f,0.5f,0.5f));
+		worldMatrix = XMMatrixAffineTransformation(Vector3::One, Vector3::Zero,Quaternion::CreateFromYawPitchRoll(rotation.y,rotation.x,rotation.z), position + Vector3(0.5f,0.5f,0.5f));
 		// create a RenderJobVoxel for each ModelVoxel
 		for (ModelVoxel & modelVoxel : gridModel.Voxels) {
 			RenderJobVoxel rjv;
-			// create a RenderEntityJob for each component
+			// create a RenderJob for each component
 			for (auto & component : modelVoxel.GetComponents()) {
-				RenderEntityJob job;
-				job.entity = gridModel.ID;
+				
 				Vector3 voxelPos = modelVoxel.GetPosition();
-				job.model = AssetManager::Get()->GetModel(component.first, 0.f, Vector3::Zero, AssetType::Authored);
+				RenderJob job = RenderJob(gridModel.ID, voxelPos, Vector3::Zero, component.first);
 				Matrix world = TRANSFORMS[component.second];
 				world.Translation(voxelPos);
 				job.worldMatrix = world * worldMatrix;
@@ -131,19 +125,37 @@ private:
 	
 	void RenderVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo);
 	//----------------------------------------------------------------
+	// Render Jobs
+	typedef std::map<shared_ptr<world::WEM::RegionType>, RegionJobCache> JobCaches;
+	JobCaches m_jobs;
+	JobCaches m_terrainJobs;
+	void InitializeJobCache();
+	void CreateJob(
+		vector<RenderJob> & jobs,
+		world::EntityID entity,
+		Vector3 position, 
+		Vector3 rotation, 
+		AssetID modelAsset,
+		AssetType assetType = AssetType::Authored
+	);
+	JobCaches CreateDynamicJobs();
+	void DepthSort(vector<shared_ptr<world::WEM::RegionType>> & regions,Vector2 center);
+	void DepthSort(vector<RenderJob> & jobs,Vector3 center);
+	void RenderJobs(vector<RenderJob> & jobs, Vector3 cameraPos,bool alpha);
+	void RenderRenderJob(RenderJob & job, Vector3 cameraPos, bool alpha);
+	//----------------------------------------------------------------
 	// Components::Model using DirectX::Model
-	typedef std::map<shared_ptr<world::WEM::RegionType>, std::map<world::MaskType,vector<RenderEntityJob>>> ModelInstanceCache;
+	typedef std::map<shared_ptr<world::WEM::RegionType>, std::map<world::MaskType,vector<RenderJob>>> ModelInstanceCache;
+	ModelInstanceCache m_terrainInstances;
 	ModelInstanceCache m_modelInstances;
+	ModelInstanceCache m_dynamicModelInstances;
 	typedef std::map<shared_ptr<world::WEM::RegionType>, std::map<world::MaskType, vector<RenderGridJob>>> GridInstanceCache;
 	GridInstanceCache m_gridInstances;
-	std::set<shared_ptr<world::WEM::RegionType>> m_visibleRegions;
-	std::set<world::EntityID> m_tracked;
-	//std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_modelInstancesTemp;
-	//std::set<world::EntityID> m_trackedTemp;
+	set<shared_ptr<world::WEM::RegionType>> m_visibleRegions;
+	
 	void TrackEntity(
 		ModelInstanceCache & modelInstances,
 		shared_ptr<world::WEM::RegionType> region,
-		std::set<world::EntityID> & tracked,
 		world::MaskType signature,
 		world::WorldEntityProxy<world::Model, world::Position> & entity,
 		Vector3 camera,
@@ -152,7 +164,6 @@ private:
 	void TrackGridEntity(
 		GridInstanceCache & gridInstances, 
 		shared_ptr<world::WEM::RegionType> region, 
-		std::set<world::EntityID> & tracked, 
 		world::MaskType signature,
 		Vector3 position, 
 		Vector3 rotation,
@@ -169,7 +180,7 @@ private:
 
 	void RenderModels(Vector3 & cameraPos,world::MaskType signatureMask, bool opaque);
 	// Render all opaque or alpha meshes within the model 
-	void RenderModel(shared_ptr<DirectX::Model> model, XMMATRIX world,bool opaque);
+	void RenderModel(shared_ptr<DirectX::Model> model, XMMATRIX world,bool alpha);
 	void RenderCompositeModel(shared_ptr<CompositeModel> model, Vector3 & position, Vector3 & rotation, bool backfaceCulling);
 	void RenderModelMesh(DirectX::ModelMesh * mesh, XMMATRIX world, bool backfaceCulling);
 	//----------------------------------------------------------------

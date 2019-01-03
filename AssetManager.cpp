@@ -291,17 +291,21 @@ AssetEntityManager * AssetManager::GetProceduralEM()
 void AssetManager::CompileFbxAssets()
 {
 	// iterate the \Assets\Models directory
-	for (auto & dir : Filesystem::directory_iterator(m_authoredDir / "Models")) {
-		if (dir.path().has_extension()) {
-			string ext = dir.path().extension().string();
+	for (auto & path : Filesystem::directory_iterator(m_authoredDir / "Models")) {
+		if (path.path().has_extension()) {
+			string ext = path.path().extension().string();
 			if (ext == ".fbx" || ext == ".FBX") {
-				auto cmf = CMF::CreateFromFBX(dir.path(),GetStaticEM());
-				cmf->Export(m_authoredDir);
+				CompileFbxAsset(path);
 			}
 		}
 	}
 	GetStaticEM()->Save();
 	//auto cmf = CMF::CreateFromFBX((m_authoredDir / "Models/Test.fbx"), GetStaticEM());
+}
+void AssetManager::CompileFbxAsset(Filesystem::path path)
+{
+	auto cmf = CMF::CreateFromFBX(path, GetStaticEM());
+	cmf->Export(m_authoredDir);
 }
 AssetManager::AssetManager() : m_fontSize(32)
 {
@@ -452,6 +456,7 @@ void AssetManager::SetAssetDir(Filesystem::path assets)
 	m_authoredDir = assets;
 	m_authoredEM.reset(new AssetEntityManager(assets));
 	CompileFbxAssets();
+	//CompileFbxAsset(m_authoredDir / "Models" / "cylinderTest.fbx");
 }
 
 void AssetManager::SetProceduralAssetDir(Filesystem::path procedural)
@@ -688,7 +693,7 @@ std::shared_ptr<Model> AssetManager::GetModel(string path, float distance, Vecto
 	}
 	return GetModel(entity, distance,position, type);
 }
-std::shared_ptr<Model> AssetManager::GetModel(unsigned int id, float distance, Vector3 position, AssetType type)
+std::shared_ptr<Model> AssetManager::GetModel(AssetID id, float distance, Vector3 position, AssetType type)
 {
 	EntityPtr entity;
 	switch (type) {
@@ -698,16 +703,23 @@ std::shared_ptr<Model> AssetManager::GetModel(unsigned int id, float distance, V
 	return GetModel(entity, distance,position, type);
 }
 
-std::shared_ptr<geometry::CMF> AssetManager::GetCMF(unsigned int id, AssetType type)
+std::shared_ptr<geometry::CMF> AssetManager::GetCMF(AssetID id, AssetType type)
 {
-	EntityPtr entity;
-	switch (type) {
-	case Procedural: m_proceduralEM->Find(id, entity);break;
-	case Authored: m_authoredEM->Find(id, entity); break;
+	auto it = m_cmfCache.find(id);
+	if (it != m_cmfCache.end()) {
+		return it->second;
 	}
-	// get the path
-	Filesystem::path fullPath = m_authoredDir / "Models" / (entity->GetComponent<PathID>("PathID")->Path + ".fbx");
-	return CMF::CreateFromFBX(fullPath, GetStaticEM());
+	else {
+		EntityPtr entity;
+		switch (type) {
+		case Procedural: m_proceduralEM->Find(id, entity); break;
+		case Authored: m_authoredEM->Find(id, entity); break;
+		}
+		// get the path
+		Filesystem::path fullPath = m_authoredDir / "Models" / (entity->GetComponent<PathID>("PathID")->Path + ".fbx");
+		m_cmfCache[id] = CMF::CreateFromFBX(fullPath, GetStaticEM());
+		return m_cmfCache[id];
+	}
 }
 
 std::shared_ptr<Model> AssetManager::CreateModelFromHeightMap(

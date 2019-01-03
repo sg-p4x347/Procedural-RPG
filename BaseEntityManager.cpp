@@ -101,7 +101,6 @@ EntityPtr BaseEntityManager::Copy(Entity * source)
 
 void BaseEntityManager::DeleteEntity(EntityPtr & entity)
 {
-	IEventManager::Invoke(EventTypes::Entity_Deleted, entity);
 	m_removedIDs.push(entity->ID());
 	// Remove all components from the entity
 	entity->RemoveComponents();

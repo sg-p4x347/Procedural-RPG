@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "CMF.h"
+#include "ConvexHull.h"
+#include "Cylinder.h"
 #include <sstream>
 
 #include "AssetEntityManager.h"
@@ -19,9 +21,19 @@ namespace geometry {
 	{
 		return m_name;
 	}
-	const CollisionModel CMF::GetCollision() const
+	shared_ptr<CollisionModel> CMF::GetCollision()
 	{
 		return m_collision;
+	}
+	bool CMF::IsAlpha() const
+	{
+		for (auto & mesh : m_meshes) {
+			for (auto & part : mesh->GetParts()) {
+				if (part.alpha)
+					return true;
+			}
+		}
+		return false;
 	}
 	void CMF::AddMesh(shared_ptr<Mesh> mesh)
 	{
@@ -121,7 +133,6 @@ namespace geometry {
 		numTabs++;
 		for (int i = 0; i < pNode->GetNodeAttributeCount(); i++)
 			PrintAttribute(numTabs,out,pNode->GetNodeAttributeByIndex(i));
-
 		numTabs--;
 		out << std::endl;
 		
@@ -234,6 +245,7 @@ namespace geometry {
 			auto child = node->GetChild(i);
 			string name = child->GetNameOnly();
 			if (name == "collision") {
+				m_collision = std::make_shared<CollisionModel>();
 				ProcessCollisionNode(child, m_collision);
 			}
 			else {
@@ -327,32 +339,46 @@ namespace geometry {
 		mesh->AddPart(part);
 		return mesh;
 	}
-	void CMF::ProcessCollisionNode(fbxsdk::FbxNode * node, CollisionModel & collision)
+	enum PolyTypes {
+		PolyCylinder
+	};
+	void CMF::ProcessCollisionNode(fbxsdk::FbxNode * node, shared_ptr<CollisionModel> & collision)
 	{
 		auto attribute = node->GetNodeAttribute();
 		if (attribute) {
 			auto type = attribute->GetAttributeType();
 			// Attribute type determines how to process child nodes
+			fbxsdk::FbxProperty polyType = node->FindProperty("PolyType");
+			
+			
 			if (type == fbxsdk::FbxNodeAttribute::eMesh) {
-				collision.hulls.push_back(CreateConvexHull((FbxMesh *)attribute));
+				if (polyType.IsValid()) {
+					PolyTypes polyTypeName = (PolyTypes)polyType.Get<FbxEnum>();
+					if (polyTypeName == PolyTypes::PolyCylinder) {
+						collision->volumes.push_back(CreateCylinder(node));
+					}
+				}
+				else {
+					collision->volumes.push_back(CreateConvexHull((FbxMesh *)attribute));
+				}
 			}
 		}
 		ProcessCollisionNodeChildren(node, collision);
 	}
-	void CMF::ProcessCollisionNodeChildren(fbxsdk::FbxNode * node, CollisionModel & collision)
+	void CMF::ProcessCollisionNodeChildren(fbxsdk::FbxNode * node, shared_ptr<CollisionModel> & collision)
 	{
 		for (int i = 0; i < node->GetChildCount(); i++) {
 			ProcessCollisionNode(node->GetChild(i), collision);
 		}
 	}
-	ConvexHull CMF::CreateConvexHull(fbxsdk::FbxMesh * fbxMesh)
+	shared_ptr<CollisionVolume> CMF::CreateConvexHull(fbxsdk::FbxMesh * fbxMesh)
 	{
-		ConvexHull hull;
+		shared_ptr<ConvexHull> hull(new ConvexHull());
 		auto transform = fbxMesh->GetNode()->EvaluateGlobalTransform();
 		// iterate control points
 		for (int i = 0; i < fbxMesh->GetControlPointsCount(); i++) {
 			auto control = transform.MultT(fbxMesh->GetControlPointAt(i));
-			hull.AddVertex(Vector3(control[0], control[1], control[2]));
+			hull->AddVertex(Vector3(control[0], control[1], control[2]));
 		}
 		// iterate polygons
 		for (int polygonIndex = 0; polygonIndex < fbxMesh->GetPolygonCount(); polygonIndex++) {
@@ -360,10 +386,34 @@ namespace geometry {
 			fbxsdk::FbxVector4 axis;
 			if (fbxMesh->GetPolygonVertexNormal(polygonIndex, 0, axis)) {
 				axis = transform.MultT(axis) - transform.MultT(fbxsdk::FbxZeroVector4);
-				hull.AddAxis(Vector3(axis[0], axis[1], axis[2]));
+				hull->AddAxis(Vector3(axis[0], axis[1], axis[2]));
 			}
 		}
-		return hull;
+		return static_pointer_cast<CollisionVolume>(hull);
+	}
+	shared_ptr<CollisionVolume> CMF::CreateCylinder(fbxsdk::FbxNode * node)
+	{
+		fbxsdk::FbxProperty radius = node->FindProperty("Radius");
+		fbxsdk::FbxProperty length = node->FindProperty("Length");
+		if (radius.IsValid() && length.IsValid()) {
+			auto transform = node->EvaluateGlobalTransform();
+			auto axis = fbxsdk::FbxVector4(0.f, length.Get<float>(), 0.f);
+			axis = transform.MultR(transform.MultS(axis));
+			auto radial = fbxsdk::FbxVector4(radius.Get<float>(), 0.f, 0.f);
+			radial = transform.MultS(radial);
+			auto center = fbxsdk::FbxVector4(0.f, 0.f, 0.f);
+			center = transform.MultT(transform.MultR(transform.MultS(center)));
+			Vector3 axisVec3 = Vector3(axis[0], axis[1], axis[2]);
+			Vector3 centerVec3 = Vector3(center[0], center[1], center[2]);
+			return shared_ptr<CollisionVolume>(new geometry::Cylinder(
+				radial.Length(),
+				axisVec3,
+				centerVec3
+			));
+		}
+		else {
+			throw std::exception("Could not find 'Radius' or 'Length' property on 'Cylinder'");
+		}
 	}
 	void CMF::ImportMaterials(fbxsdk::FbxScene * scene)
 	{
@@ -526,6 +576,10 @@ namespace geometry {
 	{
 		return XMFLOAT3(double3[0],double3[1],double3[2]);
 	}
+	XMFLOAT4 CMF::Convert(fbxsdk::FbxDouble4 & double4)
+	{
+		return XMFLOAT4(double4[0], double4[1], double4[2], double4[3]);
+	}
 	vector<string> CMF::GetTextureConnections(FbxProperty & property)
 	{
 		vector<string> textures;
@@ -542,6 +596,20 @@ namespace geometry {
 		}
 		return textures;
 	}
+	Matrix CMF::Convert(fbxsdk::FbxMatrix & matrix)
+	{
+		auto col0 = CMF::Convert(matrix.Buffer()[0]);
+		auto col1 = CMF::Convert(matrix.Buffer()[1]);
+		auto col2 = CMF::Convert(matrix.Buffer()[2]);
+		auto col3 = CMF::Convert(matrix.Buffer()[3]);
+
+		return Matrix(
+			col0.x, col1.x, col2.x, col3.x,
+			col0.y, col1.y, col2.y, col3.y,
+			col0.z, col1.z, col2.z, col3.z,
+			col0.w, col1.w, col2.w, col3.w
+		);
+	}
 	void CMF::Import(fbxsdk::FbxScene * scene)
 	{
 		// import textures
@@ -555,7 +623,7 @@ namespace geometry {
 	}
 	void CMF::Export(Filesystem::path directory)
 	{
-		std::ofstream ofs(directory / m_name / ".cmf");
+		std::ofstream ofs(directory / (m_name + ".cmf"));
 		Export(ofs);
 	}
 	shared_ptr<DirectX::Model> CMF::GetModel(ID3D11Device * d3dDevice, IEffectFactory * fxFactory, float distance)

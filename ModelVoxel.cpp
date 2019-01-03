@@ -13,9 +13,19 @@ void ModelVoxel::AddComponent(AssetID asset, Transforms transform)
 	AddComponent(asset, (TransformID)transform);
 }
 
-const std::vector<std::pair<AssetID, TransformID>>& ModelVoxel::GetComponents()
+const std::vector<std::pair<AssetID, TransformID>>& ModelVoxel::GetComponents() const
 {
 	return m_components;
+}
+
+shared_ptr<geometry::CollisionModel> ModelVoxel::GetCollision()
+{
+	return m_collision;
+}
+
+void ModelVoxel::SetCollision(shared_ptr<geometry::CollisionModel>& collision)
+{
+	m_collision = collision;
 }
 
 void ModelVoxel::Import(std::istream & ifs)

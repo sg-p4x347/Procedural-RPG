@@ -1,5 +1,5 @@
 #pragma once
-
+#include "AssetTypes.h"
 typedef uint32_t AssetID;
 typedef uint8_t TransformID;
 enum Transforms {

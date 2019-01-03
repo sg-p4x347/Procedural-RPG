@@ -31,7 +31,8 @@ namespace world {
 		MovementSystem(
 			WEM *  entityManager, 
 			unsigned short updatePeriod);
-
+		static Vector3 UpdatedPosition(Vector3 & position, Vector3 & velocity, const double & elapsed);
+		static Matrix GetWorldMatrix(Vector3 & position, Vector3 & rotation);
 		// Inherited via System
 		virtual string Name() override;
 		virtual void Update(double & elapsed) override;

@@ -22,6 +22,7 @@ public:
 	//----------------------------------------------------------------
 	// Asset compilation
 	void CompileFbxAssets();
+	void CompileFbxAsset(Filesystem::path path);
 	//----------------------------------------------------------------
 	// Asset Retrieval
 	
@@ -30,8 +31,8 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetTexture(string path,AssetType type = Authored);
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetWicTexture(string path);
 	std::shared_ptr<Model> GetModel(string path, float distance = 0.f,Vector3 position = Vector3::Zero, AssetType type = Authored);
-	std::shared_ptr<Model> GetModel(unsigned int id, float distance = 0.f, Vector3 position = Vector3::Zero, AssetType type = Authored);
-	std::shared_ptr<geometry::CMF> GetCMF(unsigned int id, AssetType type = Authored);
+	std::shared_ptr<Model> GetModel(AssetID id, float distance = 0.f, Vector3 position = Vector3::Zero, AssetType type = Authored);
+	std::shared_ptr<geometry::CMF> GetCMF(AssetID id, AssetType type = Authored);
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> GetInputLayout(string name);
 	template <typename EffectType>
 	inline bool GetEffect(string name, shared_ptr<EffectType> & effect) {
@@ -109,6 +110,7 @@ private:
 	
 	//----------------------------------------------------------------
 	// Models
+	map<AssetID,std::shared_ptr<geometry::CMF>> m_cmfCache;
 	std::shared_ptr<Model> GetModel(EntityPtr entity, float distance, Vector3 position, AssetType type);
 	unique_ptr<VboParser> m_vboParser;
 	//----------------------------------------------------------------

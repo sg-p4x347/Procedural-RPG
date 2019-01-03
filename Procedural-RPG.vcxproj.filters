@@ -463,6 +463,14 @@
       <Filter>World\Generator\Building</Filter>
     </ClInclude>
     <ClInclude Include="AssetTypedefs.h" />
+    <ClInclude Include="CollisionVolume.h">
+      <Filter>Utility\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Cylinder.h">
+      <Filter>Utility\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="RegionJobCache.h" />
+    <ClInclude Include="RenderJob.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -768,6 +776,14 @@
     <ClCompile Include="ModelVoxel.cpp">
       <Filter>World\Generator\Building</Filter>
     </ClCompile>
+    <ClCompile Include="CollisionVolume.cpp">
+      <Filter>Utility\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="Cylinder.cpp">
+      <Filter>Utility\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="RegionJobCache.cpp" />
+    <ClCompile Include="RenderJob.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
@@ -846,7 +862,7 @@
       <Filter>Assets\Textures</Filter>
     </ImageContentTask>
     <ImageContentTask Include="Assets\Textures\iron_ore.png">
-      <Filter>Assets</Filter>
+      <Filter>Assets\Textures</Filter>
     </ImageContentTask>
   </ItemGroup>
   <ItemGroup>

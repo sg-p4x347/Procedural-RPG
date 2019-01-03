@@ -18,6 +18,7 @@ namespace world {
 			m_regionDimension(worldWidth / regionWidth),
 			m_entityIndex(directory),
 			m_player(1),
+			m_loadRange(loadRange),
 			m_playerCache(NewEntityCache<Position,Player>())
 		{
 			SetMask<CompTypes...>();
@@ -31,17 +32,19 @@ namespace world {
 				}
 			}
 
-			// Re-center the loaded regions on the player position
-			IEventManager::RegisterHandler(EventTypes::Movement_PlayerMoved, std::function<void(float, float)>([=](float x, float z) {
-				ReCenter(x, z, loadRange);
-			}));
+			RegisterHandlers();
 
 		}
 		~WorldEntityManager() {
 			Save();
 		}
 
-
+		void RegisterHandlers() {
+			// Re-center the loaded regions on the player position
+			IEventManager::RegisterHandler(EventTypes::Movement_PlayerMoved, std::function<void(float, float)>([=](float x, float z) {
+				ReCenter(x, z, m_loadRange);
+			}));
+		}
 		EntityID PlayerID() {
 			return m_player;
 		}
@@ -157,7 +160,7 @@ namespace world {
 		// Cherry pick a set of components by entity ID
 		template<typename HeadType, typename ... MaskTypes>
 		shared_ptr<WorldEntityProxy<HeadType, MaskTypes...>> GetEntity(EntityID id) {
-			std::lock_guard<std::mutex> lock(m_mutex);
+			std::lock_guard<std::recursive_mutex> lock(m_mutex);
 			EntityInfo * info;
 			if (m_entityIndex.Find(id, info)) {
 				auto & region = *m_regions[info->regionX][info->regionZ];
@@ -182,7 +185,7 @@ namespace world {
 		}
 		template<typename HeadType, typename ... MaskTypes>
 		void UpdateCache(WorldEntityCache<Region<CompTypes...>, HeadType, MaskTypes...> & cache, std::function<bool(world::MaskType &)> && predicate) {
-			std::lock_guard<std::mutex> lock(m_mutex);
+			std::lock_guard<std::recursive_mutex> lock(m_mutex);
 			// iterate over the cached regions
 			unordered_set<shared_ptr<Region<CompTypes...>>> staleRegions;
 			for (auto & regionCache : cache.GetCaches()) {
@@ -220,7 +223,7 @@ namespace world {
 		// Not restricted by the loaded region subset
 		template<typename HeadType, typename ... MaskTypes>
 		void UpdateGlobalCache(WorldEntityCache<Region<CompTypes...>, HeadType, MaskTypes...> & cache,std::function<bool(world::MaskType &)> && predicate) {
-			std::lock_guard<std::mutex> lock(m_mutex);
+			std::lock_guard<std::recursive_mutex> lock(m_mutex);
 			for (auto & regionRow : m_regions) {
 				for (auto & region : regionRow) {
 					if (!cache.GetCaches().count(region)) {
@@ -234,6 +237,15 @@ namespace world {
 
 		RegionType & GetRegion(int x, int z) {
 			return *(m_regions[x][z]);
+		}
+		std::set<shared_ptr<RegionType>> GetRegions() {
+			std::set<shared_ptr<RegionType>> regions;
+			for (auto & regionRow : m_regions) {
+				for (auto & region : regionRow) {
+					regions.insert(region);
+				}
+			}
+			return regions;
 		}
 
 		void Save() {
@@ -250,12 +262,28 @@ namespace world {
 			int minZ = ClampRegion((int)floor((z - range) / m_regionWidth));
 			int maxZ = ClampRegion((int)ceil((z + range) / m_regionWidth));
 
-			m_loadedRegions.clear();
+			unordered_set<shared_ptr<RegionType>> newRegions;
 			for (x = minX; x < maxX; x++) {
 				for (z = minZ; z < maxZ; z++) {
-					m_loadedRegions.insert(m_regions[x][z]);
+					newRegions.insert(m_regions[x][z]);
 				}
 			}
+			// Fire unload event for regions going out of scope
+			for (auto & oldRegion : m_loadedRegions) {
+				if (!newRegions.count(oldRegion)) {
+					IEventManager::Invoke(EventTypes::WEM_RegionUnloaded, oldRegion);
+				}
+			}
+			// Fire load event for regions coming into scope
+			for (auto & newRegion : newRegions) {
+				if (!m_loadedRegions.count(newRegion)) {
+					IEventManager::Invoke(EventTypes::WEM_RegionLoaded, newRegion);
+				}
+			}
+
+			m_loadedRegions = newRegions;
+		
+			
 			
 			// Fire an event for systems to listen to
 			IEventManager::Invoke(EventTypes::WEM_Resync);
@@ -281,8 +309,8 @@ namespace world {
 	private:
 		//----------------------------------------------------------------
 		// Regions
-		vector<vector<shared_ptr<Region<CompTypes...>>>> m_regions;
-		unordered_set<shared_ptr<Region<CompTypes...>>> m_loadedRegions;
+		vector<vector<shared_ptr<RegionType>>> m_regions;
+		unordered_set<shared_ptr<RegionType>> m_loadedRegions;
 
 		
 		//----------------------------------------------------------------
@@ -290,7 +318,8 @@ namespace world {
 		const unsigned int m_worldWidth;
 		const unsigned int m_regionWidth;
 		const unsigned int m_regionDimension;
-		std::mutex m_mutex;
+		const float m_loadRange;
+		std::recursive_mutex m_mutex;
 		tuple<pair<MaskType, CompTypes>...> m_maskIndex;
 
 		//----------------------------------------------------------------

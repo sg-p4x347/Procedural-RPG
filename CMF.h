@@ -5,6 +5,7 @@
 #include "ISerialization.h"
 #include <fbxsdk.h>
 #include "CollisionModel.h"
+#include "CollisionVolume.h"
 class AssetEntityManager;
 namespace geometry {
 	class CMF :
@@ -16,7 +17,8 @@ namespace geometry {
 		//----------------------------------------------------------------
 		// Accessors
 		string GetName() const;
-		const CollisionModel GetCollision() const;
+		shared_ptr<CollisionModel> GetCollision();
+		bool IsAlpha() const;
 		//----------------------------------------------------------------
 		// Modifiers
 		void AddMesh(shared_ptr<Mesh> mesh);
@@ -43,9 +45,10 @@ namespace geometry {
 		shared_ptr<Mesh> CreateMesh(fbxsdk::FbxMesh * fbxMesh);
 		//----------------------------------------------------------------
 		// Collision Model import
-		void ProcessCollisionNode(fbxsdk::FbxNode * node, CollisionModel & collision);
-		void ProcessCollisionNodeChildren(fbxsdk::FbxNode * node, CollisionModel & collision);
-		ConvexHull CreateConvexHull(fbxsdk::FbxMesh * fbxMesh);
+		void ProcessCollisionNode(fbxsdk::FbxNode * node, shared_ptr<CollisionModel> & collision);
+		void ProcessCollisionNodeChildren(fbxsdk::FbxNode * node, shared_ptr<CollisionModel> & collision);
+		shared_ptr<CollisionVolume> CreateConvexHull(fbxsdk::FbxMesh * fbxMesh);
+		shared_ptr<CollisionVolume> CreateCylinder(fbxsdk::FbxNode * fbxNode);
 		//----------------------------------------------------------------
 		// Material import
 		void ImportMaterials(fbxsdk::FbxScene * scene);
@@ -55,13 +58,15 @@ namespace geometry {
 
 		//----------------------------------------------------------------
 		// Helpers
-		XMFLOAT3 Convert(fbxsdk::FbxDouble3 & double3);
+		static XMFLOAT3 Convert(fbxsdk::FbxDouble3 & double3);
+		static XMFLOAT4 Convert(fbxsdk::FbxDouble4 & double4);
 		vector<string> GetTextureConnections(FbxProperty & property);
+		static Matrix Convert(fbxsdk::FbxMatrix & matrix);
 	private:
 		string m_name;
 		vector<shared_ptr<Mesh>> m_meshes;
 		vector<LodGroup> m_lodGroups;
 		map<string,shared_ptr<Material>> m_materials;
-		CollisionModel m_collision;
+		shared_ptr<CollisionModel> m_collision;
 	};
 }

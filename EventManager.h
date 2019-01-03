@@ -3,9 +3,10 @@
 #include "EventHandler.h"
 enum EventTypes {
 	WEM_Resync,
+	WEM_RegionLoaded,
+	WEM_RegionUnloaded,
 
-	Entity_ComponentAdded,
-	Entity_Deleted,
+	Entity_SignatureChanged,
 
 	Game_Suspend,
 	Game_Resume,
