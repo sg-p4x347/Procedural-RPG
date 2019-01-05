@@ -7,5 +7,7 @@ namespace geometry {
 		int x;
 		int y;
 		int z;
+		Int3 operator-(Int3 & other);
+		Int3 operator+(Int3 & other);
 	};
 }

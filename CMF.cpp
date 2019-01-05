@@ -9,7 +9,7 @@
 
 namespace geometry {
 
-
+	std::mutex CMF::m_mutex;
 	CMF::CMF(string name) : m_name(name)
 	{
 	}
@@ -149,6 +149,10 @@ namespace geometry {
 	}
 	shared_ptr<CMF> CMF::CreateFromFBX(Filesystem::path path, AssetEntityManager * entityManager)
 	{
+		std::lock_guard<std::mutex> guard(m_mutex);
+		if (!Filesystem::exists(path)) {
+			path = path.parent_path() / "error.fbx";
+		}
 		string pathString = path.string();
 		// Change the following filename to a suitable filename value.
 		const char* lFilename = pathString.c_str();

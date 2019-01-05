@@ -34,8 +34,8 @@ namespace world {
 
 	void BuildingSystem::CreateAdobe(Vector3 position, DirectX::SimpleMath::Rectangle footprint)
 	{
-		const int height = 20;
-		VoxelGrid<ModelVoxel> grid(footprint.width + 1, height + 1, footprint.height + 1);
+		const int height = 3;
+		VoxelGrid<ModelVoxel> grid(footprint.width + 1, height + 2, footprint.height + 1);
 		EntityPtr floor;
 		EntityPtr wall;
 		EntityPtr corner;
@@ -45,22 +45,39 @@ namespace world {
 		EntityPtr doorFrameTop;
 		if (AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_wall",wall)
 			&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_corner", corner)
-			//&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_wall_cap", wallCap)
-			//&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_corner_cap", cornerCap)
-			//&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_door_frame_bottom", doorFrameBottom)
-			//&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_door_frame_top", doorFrameTop)
-			//&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_floor", floor)) 
+			&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_wall_cap", wallCap)
+			&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_corner_cap", cornerCap)
+			&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_door_frame_bottom", doorFrameBottom)
+			&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_door_frame_top", doorFrameTop)
+			&& AssetManager::Get()->GetStaticEM()->TryFindByPathID("adobe_floor", floor)
 		) {
-			Int3 start(0, 0, 0);
-			Int3 end(footprint.width, 0, footprint.height);
-			// Floor
-			//AddUniform(grid, floor->ID(), Transforms::None, start, end);
+			Int3 start(0, 1, 0);
+			Int3 end(footprint.width, 1, footprint.height);
+			Int3 startTop = start; startTop.y = height+1;
+			Int3 endTop = end; endTop.y = height+1;
 			// Walls
-			AddPerimeter(grid, wall->ID(), corner->ID(), Int3(start.x,0,start.z), Int3(end.x,height-1,end.z));
+			AddPerimeter(grid, wall->ID(), corner->ID(), Int3(start.x,0,start.z), Int3(end.x,height,end.z));
 			// Wall Caps
-			//AddPerimeter(grid, wallCap->ID(), cornerCap->ID(), Int3(start.x, height, start.z), Int3(end.x, height, end.z));
-		
-			EM->CreateEntity(world::Position(position), world::VoxelGridModel(grid));
+			AddPerimeter(grid, wallCap->ID(), cornerCap->ID(), Int3(start.x, height+1, start.z), Int3(end.x, height+1, end.z));
+			// Door
+			auto & bottom = grid[1][1][0];
+			bottom.Clear();
+			bottom.AddComponent(doorFrameBottom->ID(), Transforms::None);
+			auto & top = grid[1][2][0];
+			top.Clear();
+			top.AddComponent(doorFrameTop->ID(), Transforms::None);
+			// Floor
+			AddUniform(grid, floor->ID(), Transforms::None, start, end - Int3(1, 0, 1));
+			AddUniform(grid, floor->ID(), Transforms::TranslateQ2, start + Int3(0, 0, 1), end - Int3(1, 0, 0));
+			AddUniform(grid, floor->ID(), Transforms::TranslateQ3, start + Int3(1, 0, 1), end);
+			AddUniform(grid, floor->ID(), Transforms::TranslateQ4, start + Int3(1, 0, 0), end - Int3(0, 0, 1));
+			// Ceiling
+			AddUniform(grid, floor->ID(), Transforms::None, startTop, endTop - Int3(1, 0, 1));
+			AddUniform(grid, floor->ID(), Transforms::TranslateQ2, startTop + Int3(0, 0, 1), endTop - Int3(1, 0, 0));
+			AddUniform(grid, floor->ID(), Transforms::TranslateQ3, startTop + Int3(1, 0, 1), endTop);
+			AddUniform(grid, floor->ID(), Transforms::TranslateQ4, startTop + Int3(1, 0, 0), endTop - Int3(0, 0, 1));
+
+			EM->CreateEntity(world::Position(Vector3(position.x,position.y - 1.f, position.z)), world::VoxelGridModel(grid));
 		}
 		
 	}
@@ -80,7 +97,7 @@ namespace world {
 	void BuildingSystem::AddPerimeter(Grid & grid, AssetID sideAsset,AssetID cornerAsset, Int3 start, Int3 end)
 	{
 		for (int x = start.x; x <= end.x; x++) {
-			for (int z = start.y; z <= end.z; z++) {
+			for (int z = start.z; z <= end.z; z++) {
 				int zLength = end.z - start.z;
 				int unitZ = z == start.z ? -1 : (z - start.z) / zLength;
 				int xLength = end.x - start.z;

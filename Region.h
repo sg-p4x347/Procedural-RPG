@@ -95,10 +95,11 @@ namespace world {
 			auto & componentMap = std::get<std::map<MaskType, shared_ptr<ComponentCache<HeadType>>>>(m_componentCache);
 			auto compCache = std::make_shared<ComponentCache<HeadType>>(signature, m_files[componentMask]);
 			compCache->Import();
-			componentMap.insert(std::make_pair(signature, compCache));
-			cache.Insert(signature, compCache);
+			if (compCache->Get().size() > 0) {
+				componentMap.insert(std::make_pair(signature, compCache));
+				cache.Insert(signature, compCache);
+			}
 			ImportComponents<EntityCacheType, MaskTypes...>(signature, componentMask, cache);
-
 		}
 		template<typename EntityCacheType>
 		inline void ImportComponents(MaskType signature, MaskType componentMask, EntityCacheType & cache) {}

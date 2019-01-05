@@ -8,4 +8,12 @@ namespace geometry {
 	Int3::Int3(int pX, int pY, int pZ) : x(pX), y(pY), z(pZ)
 	{
 	}
+	Int3 Int3::operator-(Int3 & other)
+	{
+		return Int3(x - other.x, y - other.y, z - other.z);
+	}
+	Int3 Int3::operator+(Int3 & other)
+	{
+		return Int3(x + other.x, y + other.y, z + other.z);
+	}
 }

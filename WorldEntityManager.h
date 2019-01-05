@@ -268,20 +268,22 @@ namespace world {
 					newRegions.insert(m_regions[x][z]);
 				}
 			}
+			auto oldRegions = m_loadedRegions;
+			m_loadedRegions = newRegions;
 			// Fire unload event for regions going out of scope
-			for (auto & oldRegion : m_loadedRegions) {
+			for (auto & oldRegion : oldRegions) {
 				if (!newRegions.count(oldRegion)) {
 					IEventManager::Invoke(EventTypes::WEM_RegionUnloaded, oldRegion);
 				}
 			}
 			// Fire load event for regions coming into scope
 			for (auto & newRegion : newRegions) {
-				if (!m_loadedRegions.count(newRegion)) {
+				if (!oldRegions.count(newRegion)) {
 					IEventManager::Invoke(EventTypes::WEM_RegionLoaded, newRegion);
 				}
 			}
 
-			m_loadedRegions = newRegions;
+			
 		
 			
 			

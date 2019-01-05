@@ -5,7 +5,7 @@ ModelVoxel::ModelVoxel() {}
 
 void ModelVoxel::AddComponent(AssetID asset, TransformID transform)
 {
-	m_components.push_back(std::pair<AssetID, TransformID>(asset, transform));
+	m_components.insert(std::pair<AssetID, TransformID>(asset, transform));
 }
 
 void ModelVoxel::AddComponent(AssetID asset, Transforms transform)
@@ -13,7 +13,12 @@ void ModelVoxel::AddComponent(AssetID asset, Transforms transform)
 	AddComponent(asset, (TransformID)transform);
 }
 
-const std::vector<std::pair<AssetID, TransformID>>& ModelVoxel::GetComponents() const
+void ModelVoxel::Clear()
+{
+	m_components.clear();
+}
+
+const std::set<std::pair<AssetID, TransformID>>& ModelVoxel::GetComponents() const
 {
 	return m_components;
 }
@@ -36,7 +41,7 @@ void ModelVoxel::Import(std::istream & ifs)
 		std::pair<AssetID, TransformID> component;
 		DeSerialize(component.first, ifs);
 		DeSerialize(component.second, ifs);
-		m_components.push_back(component);
+		m_components.insert(component);
 	}
 }
 

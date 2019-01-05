@@ -118,10 +118,12 @@ void RenderSystem::Render()
 		m_frustum.Transform(m_frustum, InvViewMatrixLH);
 		// Update the set of visible regions
 
-		m_mutex.lock();
+		//m_mutex.lock();
+		// Cull non-visible regions
 		UpdateVisibleRegions(cameraPos, cameraRot);
 		vector<shared_ptr<world::WEM::RegionType>> regions(m_visibleRegions.begin(),m_visibleRegions.end());
 		JobCaches && dynamicJobs = CreateDynamicJobs();
+		JobCaches && gridJobs = CreateGridJobs(cameraPos,m_frustum);
 		// Sort the regions front to back
 		DepthSort(regions, Vector2(cameraPos.x,cameraPos.z));
 		// Iterate front to back
@@ -130,6 +132,10 @@ void RenderSystem::Render()
 			auto it = dynamicJobs.find(region);
 			if (it != dynamicJobs.end()) {
 				opaque.insert(opaque.end(), it->second.opaque.begin(), it->second.opaque.end());
+			}
+			auto gridIt = gridJobs.find(region);
+			if (gridIt != gridJobs.end()) {
+				opaque.insert(opaque.end(), gridIt->second.opaque.begin(), gridIt->second.opaque.end());
 			}
 			// Render all visible opaque jobs
 			RenderJobs(m_terrainJobs[region].opaque, cameraPos, false);
@@ -144,12 +150,16 @@ void RenderSystem::Render()
 			if (it != dynamicJobs.end()) {
 				alpha.insert(alpha.end(), it->second.alpha.begin(), it->second.alpha.end());
 			}
-			// Render all visible transparent jobs
+			auto gridIt = gridJobs.find(region);
+			if (gridIt != gridJobs.end()) {
+				alpha.insert(alpha.end(), gridIt->second.alpha.begin(), gridIt->second.alpha.end());
+			}
+			// Render all visible alpha jobs
 			RenderJobs(m_terrainJobs[region].alpha, cameraPos, true);
 			RenderJobs(alpha, cameraPos,true);
 			
 		}
-		m_mutex.unlock();
+		//m_mutex.unlock();
 	
 		
 		// Draw opaque terrain mesh parts
@@ -448,22 +458,45 @@ void RenderSystem::RegisterHandlers()
 	}));
 	const auto excludeMask = EM->GetMask<world::Movement,world::Terrain>();
 	IEventManager::RegisterHandler(EventTypes::WEM_RegionLoaded, std::function<void(shared_ptr<world::WEM::RegionType>)>([=](shared_ptr<world::WEM::RegionType> region) {
-		auto staticModels = EM->NewEntityCache<world::Position,world::Model>();
-		world::MaskType modelMask = staticModels.GetComponentMask();
-		EM->UpdateCache(staticModels, [=](world::MaskType sig) {
-			return !(sig & excludeMask) && (sig & modelMask) == modelMask;
-		});
+		//----------------------------------------------------------------
+		// Static models
+		world::MaskType modelMask = EM->GetMask<world::Position, world::Model>();
+		TaskManager::Get().Push(Task([=]{
+			world::EntityCache<world::Position,world::Model> staticModels;
+			region->LoadEntities(staticModels, [=](world::MaskType sig) {
+				return !(sig & excludeMask) && (sig & modelMask) == modelMask;
+			});
 		
-		for (auto & regionCache : staticModels.GetCaches()) {
-			for (auto & entity : regionCache.second) {
+			for (auto & entity : staticModels) {
 				auto & position = entity.Get<world::Position>();
 				auto & model = entity.Get<world::Model>();
 				
-				CreateJob(m_jobs[regionCache.first].opaque,entity.GetID(),position.Pos,position.Rot,model.Asset, model.Type);
-				bool alpha = AssetManager::Get()->GetCMF(model.Asset)->IsAlpha();
-				if (alpha) CreateJob(m_jobs[regionCache.first].alpha, entity.GetID(), position.Pos, position.Rot, model.Asset, model.Type);
+				CreateJob(m_jobs[region].opaque,entity.GetID(),position.Pos,position.Rot,model.Asset, model.Type);
+				bool alpha = false;
+				try {
+					AssetManager::Get()->GetCMF(model.Asset, model.Type)->IsAlpha();
+				}
+				catch (std::exception & ex) {
+				}
+				if (alpha) CreateJob(m_jobs[region].alpha, entity.GetID(), position.Pos, position.Rot, model.Asset, model.Type);
 			}
-		}
+		}, modelMask, modelMask));
+		//----------------------------------------------------------------
+		// Grids
+		
+		world::MaskType gridMask = EM->GetMask<world::Position, world::VoxelGridModel>();
+		TaskManager::Get().Push(Task([=] {
+			world::EntityCache<world::Position, world::VoxelGridModel> grids;
+			region->LoadEntities(grids,[=](world::MaskType sig) {
+				return !(sig & excludeMask) && (sig & gridMask) == gridMask;
+			});
+			for (auto & entity : grids) {
+				auto & position = entity.Get<world::Position>();
+				auto & gridModel = entity.Get<world::VoxelGridModel>();
+
+				m_gridJobs[region].push_back(RenderGridJob(gridModel, position.Pos, position.Rot));
+			}
+		}, gridMask, gridMask));
 	}));
 	IEventManager::RegisterHandler(EventTypes::WEM_RegionUnloaded, std::function<void(shared_ptr<world::WEM::RegionType>)>([=](shared_ptr<world::WEM::RegionType> region) {
 		// clear caches
@@ -1305,6 +1338,7 @@ void RenderSystem::CreateJob(
 	AssetID modelAsset,
 	AssetType assetType
 ) {
+	std::lock_guard<std::mutex> guard(m_mutex);
 	jobs.push_back(RenderJob(entity, position, rotation, modelAsset,assetType));
 }
 
@@ -1323,10 +1357,31 @@ RenderSystem::JobCaches RenderSystem::CreateDynamicJobs()
 				auto & model = entity.Get<world::Model>();
 				
 				RegionJobCache cache;
-				caches.insert(std::make_pair(regionCache.first, cache));
 				CreateJob(cache.opaque, entity.GetID(), position.Pos, position.Rot, model.Asset, model.Type);
 				bool alpha = AssetManager::Get()->GetCMF(model.Asset)->IsAlpha();
 				if (alpha) CreateJob(cache.alpha, entity.GetID(), position.Pos, position.Rot, model.Asset, model.Type);
+				caches.insert(std::make_pair(regionCache.first, cache));
+			}
+		}
+	}
+	return caches;
+}
+
+RenderSystem::JobCaches RenderSystem::CreateGridJobs(Vector3 & center, BoundingFrustum & frustum)
+{
+	JobCaches caches;
+	for (auto & pair : m_gridJobs) {
+		for (auto & gridJob : pair.second) {
+			BoundingFrustum gridRelativeFrustum;
+			Matrix inverse = Matrix(gridJob.worldMatrix).Invert();
+			frustum.Transform(gridRelativeFrustum, inverse);
+			// Cull voxels by the frustum
+			auto && intersection = gridJob.voxels.GetIntersection(gridRelativeFrustum);
+			vector<RenderJobVoxel> voxels = vector<RenderJobVoxel>(intersection.begin(), intersection.end());
+			// Depth sort voxels
+			//DepthSort(voxels, center);
+			for (auto & voxel : voxels) {
+				caches[pair.first].Add(voxel.jobs);
 			}
 		}
 	}
@@ -1346,11 +1401,16 @@ void RenderSystem::DepthSort(vector<RenderJob>& jobs, Vector3 center)
 		return Vector3::DistanceSquared(a.position, center) < Vector3::DistanceSquared(b.position, center);
 	});
 }
+void RenderSystem::DepthSort(vector<RenderJobVoxel> & voxels, Vector3 center) {
+	std::sort(voxels.begin(), voxels.end(), [=](RenderJobVoxel & a, RenderJobVoxel & b) {
+		return Vector3::DistanceSquared(a.GetPosition(), center) < Vector3::DistanceSquared(b.GetPosition(), center);
+	});
+}
 
 void RenderSystem::RenderJobs(vector<RenderJob>& jobs,Vector3 cameraPos,bool alpha)
 {
-	DepthSort(jobs, cameraPos);
 	if (alpha) {
+		DepthSort(jobs, cameraPos);
 		for (auto jobIt = jobs.rbegin(); jobIt != jobs.rend(); jobIt++) {
 			RenderRenderJob(*jobIt,cameraPos,alpha);
 		}

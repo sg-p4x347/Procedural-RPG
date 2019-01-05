@@ -68,5 +68,6 @@ namespace geometry {
 		vector<LodGroup> m_lodGroups;
 		map<string,shared_ptr<Material>> m_materials;
 		shared_ptr<CollisionModel> m_collision;
+		static std::mutex m_mutex;
 	};
 }

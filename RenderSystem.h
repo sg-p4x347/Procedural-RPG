@@ -15,7 +15,7 @@ class RenderJobVoxel :
 	public Voxel 
 {
 public:
-	std::vector<RenderJob> jobs;
+	RegionJobCache jobs;
 };
 struct RenderGridJob {
 	RenderGridJob(world::VoxelGridModel & gridModel,Vector3 position, Vector3 rotation) : voxels(
@@ -34,9 +34,9 @@ struct RenderGridJob {
 				Vector3 voxelPos = modelVoxel.GetPosition();
 				RenderJob job = RenderJob(gridModel.ID, voxelPos, Vector3::Zero, component.first);
 				Matrix world = TRANSFORMS[component.second];
-				world.Translation(voxelPos);
+				world *= Matrix::CreateTranslation(voxelPos);
 				job.worldMatrix = world * worldMatrix;
-				rjv.jobs.push_back(job);
+				rjv.jobs.opaque.push_back(job);
 				
 			}
 			voxels.Set(rjv, modelVoxel.GetX(), modelVoxel.GetY(), modelVoxel.GetZ());
@@ -129,6 +129,7 @@ private:
 	typedef std::map<shared_ptr<world::WEM::RegionType>, RegionJobCache> JobCaches;
 	JobCaches m_jobs;
 	JobCaches m_terrainJobs;
+	std::map<shared_ptr<world::WEM::RegionType>, vector<RenderGridJob>> m_gridJobs;
 	void InitializeJobCache();
 	void CreateJob(
 		vector<RenderJob> & jobs,
@@ -139,8 +140,10 @@ private:
 		AssetType assetType = AssetType::Authored
 	);
 	JobCaches CreateDynamicJobs();
+	JobCaches CreateGridJobs(Vector3 & center, BoundingFrustum & frustum);
 	void DepthSort(vector<shared_ptr<world::WEM::RegionType>> & regions,Vector2 center);
 	void DepthSort(vector<RenderJob> & jobs,Vector3 center);
+	void DepthSort(vector<RenderJobVoxel> & voxels, Vector3 center);
 	void RenderJobs(vector<RenderJob> & jobs, Vector3 cameraPos,bool alpha);
 	void RenderRenderJob(RenderJob & job, Vector3 cameraPos, bool alpha);
 	//----------------------------------------------------------------

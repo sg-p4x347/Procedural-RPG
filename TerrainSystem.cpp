@@ -195,7 +195,7 @@ namespace world {
 		});
 		// Terrain done yay!
 		Utility::OutputLine("Generating Buildings...");
-		Rectangle footprint = Rectangle(20, 20, ProUtil::RandWithin(6, 10), ProUtil::RandWithin(6, 10));
+		Rectangle footprint = Rectangle(10, 10, 4,6);
 		Rectangle flattenArea = Rectangle(footprint.x - 1, footprint.y - 1, footprint.width + 2, footprint.height + 2);
 		Rectangle cacheArea = Rectangle(flattenArea.x - 10, flattenArea.y - 10, flattenArea.width + 20, flattenArea.height + 20);
 		//HeightMap cache = HeightMap(cacheArea);

@@ -98,7 +98,6 @@ private:
 	Filesystem::path FullPath(string path, AssetType type,string extension);
 	Filesystem::path FullPath(string path);
 	Filesystem::path AppendPath(string path, string type);
-
 	//----------------------------------------------------------------
 	// Entitities
 	unique_ptr<AssetEntityManager> m_authoredEM;
