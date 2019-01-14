@@ -62,13 +62,33 @@ namespace world {
 	void PlantSystem::UpdateGeneticPlants(std::list<Plant> & plants)
 	{
 		for (auto & plant : plants) {
-			
+			// Get external resources
+			Plant::ExternalResource external;
 			// Get the next action
 			if (plant.DnaCursor < plant.DNA.size()) {
 				auto & action = plant.DNA[plant.DnaCursor];
-				switch (action.type) {
-				case Plant::ActionTypes::GrowAction:
-					plant.NthComponents(action.grow.componentIndex);
+				if (action.type == Plant::ActionTypes::GrowAction) {
+					vector<shared_ptr<Plant::PlantComponent>> components;
+					plant.Base->NthComponents(action.grow.componentIndex, components);
+					for (auto & component : components) {
+						component->Grow(action.grow.radius);
+					}
+				} else if (action.type == Plant::ActionTypes::CreateSugarAction) {
+					plant.CreateSugar(external);
+				}
+				else if (action.type == Plant::ActionTypes::CollectWaterAction) {
+					plant.CollectWater(external);
+				}
+				else if (action.type == Plant::ActionTypes::GrowNewComponentAction) {
+					vector<shared_ptr<Plant::PlantComponent>> components;
+					plant.Base->NthComponents(action.growNewComponent.componentIndex, components);
+					for (auto & component : components) {
+						shared_ptr<Plant::PlantComponent> component;
+						switch (action.growNewComponent.type) {
+						case Plant::ComponentTypes::Leaf:
+							component = shared_ptr<Plant::PlantComponent>(new Plant::Leaf());
+						}
+					}
 				}
 			}
 			// Operational cost

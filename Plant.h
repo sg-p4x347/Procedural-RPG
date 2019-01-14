@@ -14,35 +14,37 @@ namespace world {
 			float CO2;
 		};
 		enum ComponentTypes {
-			Leaf,
-			Stem,
-			Root,
-			Seed
+			LeafComponent,
+			StemComponent,
+			RootComponent
 		};
 		struct PlantComponent {
-			PlantComponent(Plant & plant);
+			PlantComponent(Plant & plant, Matrix & transform);
 			vector<shared_ptr<PlantComponent>> Children;
 			shared_ptr<PlantComponent> Parent;
 			Plant & ParentPlant;
 			Matrix Transform;
-			shared_ptr<geometry::MeshPart> MeshPart;
-			
 
-			virtual void Convert(ExternalResource & external) = 0;
 			void NthComponents(int n, vector<shared_ptr<PlantComponent>> & components);
-			
+			virtual void Grow(float radius) = 0;
+			virtual float GetMass() = 0;
 		};
 		struct Leaf : public PlantComponent {
-			virtual void Update(ExternalResource & external);
+			Leaf(Plant & plant, Matrix & transform);
+			void Grow(float radius) override;
+			float GetMass() override;
 		};
 		struct Stem : public PlantComponent {
-			virtual void Update(ExternalResource & external);
+			Stem(Plant & plant, Matrix & transform, float length, float radius);
+			float Length;
+			float Radius;
+			void Grow(float radius) override;
+			float GetMass() override;
 		};
 		struct Root : public PlantComponent {
-			virtual void Update(ExternalResource & external);
-		};
-		struct Seed : public PlantComponent {
-			virtual void Update(ExternalResource & external);
+			float Radius;
+			void Grow(float radius) override;
+			float GetMass() override;
 		};
 		//----------------------------------------------------------------
 		// Genetic Algorithm Actions
@@ -57,9 +59,11 @@ namespace world {
 			float radius;
 		};
 		struct GrowNewComponent {
+			int componentIndex;
 			ComponentTypes type;
-			Vector3 position;
-			Vector3 rotation;
+			float position;
+			float roll;
+			Vector3 direction;
 		};
 		struct CollectWater {
 			float amount;
@@ -79,6 +83,8 @@ namespace world {
 		Plant();
 		float AvailableCapacity();
 		float Effectiveness(float temperature);
+		void CreateSugar(ExternalResource & external);
+		void CollectWater(ExternalResource & external);
 	public:
 		// Genetic Data
 		vector<Action> DNA;
