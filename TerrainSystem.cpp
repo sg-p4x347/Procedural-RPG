@@ -194,15 +194,6 @@ namespace world {
 			progressCallback(percent * 0.5, "Erosion Simulation ...");
 		});
 		// Terrain done yay!
-		Utility::OutputLine("Generating Buildings...");
-		Rectangle footprint = Rectangle(10, 10, 4,6);
-		Rectangle flattenArea = Rectangle(footprint.x - 1, footprint.y - 1, footprint.width + 2, footprint.height + 2);
-		Rectangle cacheArea = Rectangle(flattenArea.x - 10, flattenArea.y - 10, flattenArea.width + 20, flattenArea.height + 20);
-		//HeightMap cache = HeightMap(cacheArea);
-		//ImportMap(cache);
-		float height = Flatten(*TerrainMap, flattenArea, 10);
-		SM->GetSystem<BuildingSystem>("Building")->CreateAdobe(Vector3(footprint.x, height + 0.2f, footprint.y), Rectangle(0, 0, footprint.width, footprint.height));
-
 		AssetManager::Get()->CreateHeightMapModel("terrain", TerrainMap.get(), AssetManager::Get()->CreateNormalMap(TerrainMap.get()), 10.f, m_regionWidth, "Terrain");
 		CreateTerrainEntities();
 		//SaveTerrain(*TerrainMap,biome);
@@ -287,17 +278,34 @@ namespace world {
 
 	float TerrainSystem::Height(const int & x, const int & z)
 	{
-		ifstream terrainStream(m_directory / "terrain.dat", ios::binary);
-		if (terrainStream.is_open()) {
-			int index = Utility::posToIndex(x, z, m_width + 1);
-			return InternalHeight(terrainStream, index, 10.f);
-		}
-		return 0.0;
+		return Height(Vector2(x,z));
 	}
-
+	void TerrainSystem::SetHeight(const int x, const int z, float value)
+	{
+		Vector2 point(x, z);
+		for (auto & cache : m_cache) {
+			auto & area = cache.first->GetArea();
+			if (area.Contains(point)) {
+				cache.second->SetHeight(x - area.x, z - area.y,value);
+			}
+		}
+	}
 	float TerrainSystem::Height(float & x, float & z)
 	{
-		return m_cache ? m_cache->Height(x - m_cache->area.x, z - m_cache->area.y) : 0.f;
+		return Height(Vector2 (x, z));
+		
+	}
+
+	float TerrainSystem::Height(Vector2 position)
+	{
+		for (auto & cache : m_cache) {
+			auto & area = cache.first->GetArea();
+			if (area.Contains(position)) {
+				return cache.second->Height(position.x - area.x, position.y - area.y);
+				break;
+			}
+		}
+		return 0.f;
 	}
 
 	int TerrainSystem::Width()
@@ -838,15 +846,6 @@ namespace world {
 		return 0 + std::min((int)std::log2(modelWidth), std::max(0, (int)std::floor(std::log2(distance / (double)modelWidth))));
 	}
 
-	void TerrainSystem::UpdateCache(Vector3 center)
-	{
-
-		static const int gridSize = 64;
-		// sample area
-		Rectangle sampleArea = Rectangle(std::floor(center.x / gridSize) * gridSize, std::floor(center.z / gridSize) * gridSize, gridSize, gridSize);
-		m_cache = AssetManager::Get()->GetHeightMap("terrain", AssetType::Procedural, sampleArea);
-	}
-
 	void TerrainSystem::NewTerrain(DirectX::SimpleMath::Vector3 & position)
 	{
 		EntityPtr terrainAsset;
@@ -857,9 +856,6 @@ namespace world {
 				Model(terrainAsset->ID(), AssetType::Procedural)
 				);
 		}
-		//Components::PositionNormalTextureTangentColorVBO * vbo = new Components::PositionNormalTextureTangentColorVBO();
-		//vbo->Effect = "Terrain";
-		//entity->AddComponent(vbo);
 	}
 
 	Vector3 TerrainSystem::Normal(std::ifstream & ifs, const int & index)
@@ -873,23 +869,12 @@ namespace world {
 		return normal;
 	}
 
-	void TerrainSystem::ImportMap(HeightMap & map)
-	{
-
-		/*ifstream terrainStream(m_directory / "terrain.dat", ios::binary);
-		for (int i = 0; i <=  map.width; i++) {
-			for (int j = 0; j <= map.length; j++) {
-				map.map[i][j] = InternalHeight(terrainStream, Utility::posToIndex(map.area.x + i, map.area.y + j, m_width + 1), 10.f);
-			}
-		}*/
-	}
-
-	float TerrainSystem::Average(HeightMap & map, Rectangle area)
+	float TerrainSystem::Average(Rectangle area)
 	{
 		float sum = 0.f;
 		for (int x = area.x; x <= area.x + area.width; x++) {
 			for (int z = area.y; z <= area.y + area.height; z++) {
-				sum += map.ValueAt(x, z);
+				sum += Height(x, z);
 			}
 		}
 		return sum / ((area.width + 1) * (area.height + 1));
@@ -913,24 +898,28 @@ namespace world {
 
 	void TerrainSystem::RegisterHandlers()
 	{
-		IEventManager::RegisterHandler(EventTypes::Movement_PlayerMoved, std::function<void(float, float)>([&](float x, float z) {
-			UpdateCache(Vector3(x,0.f,z));
+		IEventManager::RegisterHandler(EventTypes::WEM_RegionLoaded, std::function<void(shared_ptr<WEM::RegionType>)>([&](shared_ptr<WEM::RegionType> region) {
+			// Load terrain from disk into cache
+			m_cache[region] = AssetManager::Get()->GetHeightMap("terrain", AssetType::Procedural, region->GetArea());
+		}));
+		IEventManager::RegisterHandler(EventTypes::WEM_RegionUnloaded, std::function<void(shared_ptr<WEM::RegionType>)>([&](shared_ptr<WEM::RegionType> region) {
+			// Save cache to disk
+			AssetManager::Get()->UpdateHeightMap("terrain", AssetType::Procedural, m_cache[region], region->GetArea());
+			// Erase the cache
+			m_cache.erase(region);
 		}));
 	}
 
-	float TerrainSystem::Flatten(HeightMap & cache, Rectangle area, const int margin)
+	float TerrainSystem::Flatten(Rectangle area, const int margin)
 	{
 		Rectangle footprint = Rectangle(area.x - margin, area.y - margin, area.width + 2 * margin, area.height + 2 * margin);
 
-		float targetHeight = Average(cache, footprint);
+		float targetHeight = Average(footprint);
 		for (int x = footprint.x; x <= footprint.x + footprint.width;x++) {
 			for (int z = footprint.y; z <= footprint.y + footprint.height;z++) {
-				if (x == footprint.x + footprint.width - margin && z == footprint.y + footprint.height) {
-					auto test = 9;
-				}
 				Vector2 location = Vector2(x, z);
 				if (area.Contains(location)) {
-					cache.ValueAt(location.x, location.y) = targetHeight;
+					SetHeight(location.x, location.y, targetHeight);
 				}
 				else {
 					Vector2 inner = geometry::Clamp(area, location);
@@ -941,34 +930,16 @@ namespace world {
 						tangent.Normalize();
 						Vector2 outer = inner + tangent * margin;
 
-						cache.ValueAt(location.x, location.y) = Utility::Lerp(targetHeight, cache.HeightAbsPos(outer), t / float(margin));
+						SetHeight(location.x, location.y,Utility::Lerp(targetHeight, Height(outer), t / float(margin)));
 
 					}
-					/*if (location.x < area.x) {
-						cache.ValueAt(location.x,location.y) = Utility::Lerp(targetHeight, cache.ValueAt(area.x - margin,location.y), float(area.x - location.x)/(float)margin);
-					}
-					else if (location.x > area.x + area.width) {
-						cache.ValueAt(location.x, location.y) = Utility::Lerp(targetHeight, cache.ValueAt(area.x + area.width + margin,location.y), float(location.x-(area.x + area.width)) / (float)margin);
-					} else {
-
-					}
-
-					if (location.y < area.y) {
-						cache.ValueAt(location.x, location.y) = Utility::Lerp(targetHeight, cache.ValueAt(location.x, area.y - margin), float(area.y - location.y) / (float)margin);
-					}
-					else if (location.y > area.y + area.height) {
-						cache.ValueAt(location.x, location.y) = Utility::Lerp(targetHeight, cache.ValueAt(location.x, area.y + area.height + margin), float(location.y - (area.y + area.height)) / (float)margin);
-					}*/
 				}
 			}
 		}
 		return Utility::Floor(targetHeight, 0.1f);
 	}
 
-	float TerrainSystem::Height(HeightMap & map, int x, int z)
-	{
-		return 0.0f;
-	}
+	
 
 	float TerrainSystem::InternalHeight(std::ifstream & ifs, const int & index, float precision)
 	{

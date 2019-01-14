@@ -6,10 +6,6 @@ namespace world {
 	class Player :
 		public WorldComponent {
 	public:
-		enum MovementStates {
-			Normal,
-			Spectator
-		};
 		enum InteractionStates {
 			FirstPerson,
 			ThirdPerson,
@@ -19,7 +15,6 @@ namespace world {
 		};
 		Player();
 		// Data
-		MovementStates MovementState;
 		InteractionStates InteractionState;
 		float CameraPitch;
 		//string InventoryCategory;

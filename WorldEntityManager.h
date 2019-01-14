@@ -5,6 +5,7 @@
 #include "WorldEntityCache.h"
 #include "EntityIndex.h"
 #include "WorldEntityProxy.h"
+#include "IEventManager.h"
 namespace world {
 	template<typename ... CompTypes>
 	class WorldEntityManager
@@ -36,6 +37,7 @@ namespace world {
 
 		}
 		~WorldEntityManager() {
+			Shutdown();
 			Save();
 		}
 
@@ -79,9 +81,10 @@ namespace world {
 			int regionX;
 			int regionZ;
 			RegionCoords(position.Pos, regionX, regionZ);
-			auto & region = *m_regions[regionX][regionZ];
+			auto & region = m_regions[regionX][regionZ];
 			EntityID id = m_entityIndex.New(EntityInfo(signature, regionX, regionZ));
-			InsertComponent(region, id, signature, position, components...);
+			InsertComponent(*region, id, signature, position, components...);
+			IEventManager::Invoke(EventTypes::Entity_SignatureChanged, region, id, signature);
 			return id;
 		}
 		template<typename ... SigTypes>
@@ -112,6 +115,7 @@ namespace world {
 						// entity is deleted
 						m_entityIndex.Delete(id);
 					}
+					IEventManager::Invoke(EventTypes::Entity_SignatureChanged, region, id, signature);
 				}
 			}
 		}
@@ -139,6 +143,10 @@ namespace world {
 					if (id == m_player) {
 						IEventManager::Invoke(EventTypes::Movement_PlayerMoved, position.x, position.z);
 					}
+					// Signature changed to 0 (removed) for old region
+					IEventManager::Invoke(EventTypes::Entity_SignatureChanged, oldRegion, id, 0);
+					// Signature changed to current (added) for new region
+					IEventManager::Invoke(EventTypes::Entity_SignatureChanged, newRegion, id, info->signature);
 				}
 				
 			}
@@ -255,6 +263,11 @@ namespace world {
 				}
 			}
 			m_entityIndex.Save();
+		}
+		void Shutdown() {
+			for (auto & region : m_loadedRegions) {
+				IEventManager::Invoke(EventTypes::WEM_RegionUnloaded, region);
+			}
 		}
 		void ReCenter(float x, float z, float range) {
 			int minX = ClampRegion((int)floor((x - range) / m_regionWidth));

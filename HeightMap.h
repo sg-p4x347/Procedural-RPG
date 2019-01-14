@@ -14,6 +14,7 @@ public:
 	float GradientAngle(int x, int z);
 	float Height(float x, float z);
 	float Height(int x, int z);
+	void SetHeight(int x, int z, float value);
 	float HeightAbsPos(Vector2 position);
 };
 

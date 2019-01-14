@@ -20,6 +20,14 @@ public:
 		m_zSize(zSize),
 		m_voxels(xSize, std::vector<std::vector<VoxelType>>(ySize, std::vector<VoxelType>(zSize)))
 	{
+		// initialize voxel positions
+		for (Voxel::Ordinal x = 0; x < xSize; x++) {
+			for (Voxel::Ordinal y = 0; y < ySize; y++) {
+				for (Voxel::Ordinal z = 0; z < zSize; z++) {
+					m_voxels[x][y][z].SetPosition(x, y, z);
+				}
+			}
+		}
 	};
 	~VoxelGrid() {};
 	

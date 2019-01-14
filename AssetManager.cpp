@@ -545,6 +545,40 @@ shared_ptr<HeightMap> AssetManager::GetHeightMap(
 	return nullptr;
 }
 
+void AssetManager::UpdateHeightMap(string path, AssetType type, shared_ptr<HeightMap> map, DirectX::SimpleMath::Rectangle domain)
+{
+	// Get the heightmap asset entity
+	EntityPtr entity;
+	if (map && Find(type == AssetType::Authored ? m_authoredEM.get() : m_proceduralEM.get(), path, entity)) {
+		// Get the heightmap component
+		auto heightMapComp = entity->GetComponent<HeightMapAsset>("HeightMapAsset");
+		if (heightMapComp) {
+			std::fstream stream(FullPath(path, type, ".dat"), std::ios::binary | std::ios::out | std::ios::in);
+			if (stream.is_open()) {
+				// stores the exact bytes from memory into the file
+				for (int vertY = 0; vertY <= domain.height; vertY++) {
+					// Compress the vertices into shorts, packed into a char array
+					size_t rowSize = (domain.width + 1) * sizeof(short);
+					char * rowBuffer = new char[rowSize];
+					int index = Utility::posToIndex(domain.x, vertY + domain.y, heightMapComp->Xsize + 1);
+					for (int vertX = 0; vertX <= domain.width; vertX++) {
+						
+						float vertex = map->map[vertX][vertY];
+						short vertexShort = (short)(vertex * heightMapComp->ScaleFactor);
+						std::memcpy(&(rowBuffer[vertX * sizeof(short)]), &vertexShort, sizeof(short));
+					}
+					// write the row buffer to file
+					stream.seekp(index * sizeof(short));
+					stream.write(rowBuffer, rowSize);
+					delete[] rowBuffer;
+				}
+
+				stream.close();
+			}
+		}
+	}
+}
+
 shared_ptr<Map<Vector3>> AssetManager::GetNormalMap(int mapWidth,string path, AssetType type, Rectangle sampleArea, int sampleSpacing)
 {
 	// Get the heightmap component

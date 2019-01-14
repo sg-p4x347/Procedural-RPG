@@ -471,6 +471,13 @@
     </ClInclude>
     <ClInclude Include="RegionJobCache.h" />
     <ClInclude Include="RenderJob.h" />
+    <ClInclude Include="MovementControllerSystem.h">
+      <Filter>World\System</Filter>
+    </ClInclude>
+    <ClInclude Include="MovementController.h">
+      <Filter>World\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Plant.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -784,6 +791,13 @@
     </ClCompile>
     <ClCompile Include="RegionJobCache.cpp" />
     <ClCompile Include="RenderJob.cpp" />
+    <ClCompile Include="MovementControllerSystem.cpp">
+      <Filter>World\System</Filter>
+    </ClCompile>
+    <ClCompile Include="MovementController.cpp">
+      <Filter>World\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Plant.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
@@ -813,6 +827,9 @@
       <Filter>Config</Filter>
     </None>
     <None Include="Config\game.json">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="plants.json">
       <Filter>Config</Filter>
     </None>
   </ItemGroup>

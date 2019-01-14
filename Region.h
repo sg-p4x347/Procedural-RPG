@@ -53,6 +53,14 @@ namespace world {
 			entityCache.Clear();
 			LoadEntitiesRecursive<EntityCache<HeadType, MaskTypes...>, HeadType, MaskTypes...>(entityCache, std::move(predicate));
 		}
+		template<typename HeadType, typename ... MaskTypes>
+		inline void LoadEntities(EntityCache<HeadType, MaskTypes...> & entityCache) {
+			entityCache.Clear();
+			world::MaskType mask = GetMask<HeadType, MaskTypes...>();
+			LoadEntitiesRecursive<EntityCache<HeadType, MaskTypes...>, HeadType, MaskTypes...>(entityCache, [=] (world::MaskType & signature) {
+				return (signature & mask) == mask;
+			});
+		}
 		template<typename CacheType, typename HeadType, typename NextType, typename ... MaskTypes>
 		inline void LoadEntitiesRecursive(CacheType & entityCache, std::function<bool(world::MaskType &)> && predicate) {
 			LoadEntitiesRecursive<CacheType, HeadType>(entityCache, std::move(predicate));
@@ -132,6 +140,7 @@ namespace world {
 				sigMap.insert(make_pair(signature, cache));
 			}*/
 		}
+
 		void Save() {
 			Save<CompTypes...>();
 		}
@@ -145,6 +154,10 @@ namespace world {
 		tuple<pair<MaskType, CompTypes>...> & m_maskIndex;
 		std::tuple<std::map<MaskType, shared_ptr<ComponentCache<CompTypes>>>...> m_componentCache;
 	private:
+		template <typename HeadType, typename Next, typename ... MaskTypes>
+		MaskType GetMask() {
+			return GetMask<HeadType>() | GetMask<Next>() | GetMask<MaskTypes...>();
+		}
 		template <typename HeadType>
 		MaskType GetMask() {
 			return std::get<pair<MaskType, HeadType>>(m_maskIndex).first;

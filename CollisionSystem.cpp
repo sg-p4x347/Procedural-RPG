@@ -62,14 +62,14 @@ namespace world {
 			auto terrainSystem = SM->GetSystem<TerrainSystem>("Terrain");
 			for (auto & entity : m_dynamic) {
 				auto & collision = entity.Get<Collision>();
+				auto & movement = entity.Get<Movement>();
 				collision.Colliding = 0;
-
 				if (collision.Enabled) {
 					auto & position = entity.Get<Position>();
 					// Bound X and Z to the world area
 					position.Pos.x = std::max(0.f, std::min((float)terrainSystem->Width(), position.Pos.x));
 					position.Pos.z = std::max(0.f, std::min((float)terrainSystem->Width(), position.Pos.z));
-
+					vector<ContactInfo> contacts;
 					for (auto & volume : GetCollisionAsset(collision.Asset)->volumes) {
 						// Get the center bottom of the box for terrain collison
 						Vector3 bottomCenter = position.Pos;
@@ -78,19 +78,21 @@ namespace world {
 
 						float terrainHeight = terrainSystem->Height(bottomCenter.x, bottomCenter.z);
 
-						auto & movement = entity.Get<Movement>();
+						
 						if (movement.Velocity.LengthSquared() > 0.f) {
-							collision.CollisionNormals.clear();
+							
 							// Pop the y back to the terrain
 							if (terrainHeight > bottomCenter.y) {
 								if (std::abs(movement.Velocity.y) > 5.f) {
 									IEventManager::Invoke(EventTypes::Sound_PlayEffect, string("Hit0"));
 								}
 								// small fudge factor to keep in contact with the ground
-								position.Pos.y = -0.01f + terrainHeight - yRadius;
+								position.Pos.y = terrainHeight - yRadius;
 
-								movement.Velocity.y = 0.f;
-								collision.CollisionNormals.push_back(Vector3::Up);
+								movement.Velocity.y = std::max(0.f,movement.Velocity.y);
+								ContactInfo contact;
+								contact.contactNormal = Vector3::Up;
+								contacts.push_back(contact);
 							}
 
 							//----------------------------------------------------------------
@@ -108,14 +110,13 @@ namespace world {
 								auto & staticCollision = other.Get<Collision>();
 								auto staticCollisionModel = GetCollisionAsset(staticCollision.Asset);
 								if (staticCollisionModel) {
-									HandleCollision(
+									CheckCollision(
 										position,
-										collision,
-										movement,
 										dynamicVolume,
 										dynamicVolumePrime,
 										staticPos,
-										staticCollisionModel);
+										staticCollisionModel,
+										contacts);
 								}
 							}
 							// Static grids
@@ -126,30 +127,19 @@ namespace world {
 								dynamicBounds.Transform(dynamicBounds, MovementSystem::GetWorldMatrix(staticPos.Pos, staticPos.Rot).Invert());
 								for (ModelVoxel & voxel : gridModel.Voxels.GetIntersection(dynamicBounds)) {
 									auto staticCollisionModel = GetCollisionAsset(voxel);
-									HandleCollision(
+									CheckCollision(
 										position,
-										collision,
-										movement,
 										dynamicVolume,
 										dynamicVolumePrime,
 										staticPos,
-										staticCollisionModel);
+										staticCollisionModel,
+										contacts);
 								}
 							}
 						}
-						if (entity.GetSignature() == EM->PlayerSignature()) {
-							// Jump if there is a collision normal facing up-ish to push off of
-
-							if (Game::Get().KeyboardTracker.IsKeyPressed(DirectX::Keyboard::Keys::Space)) {
-								for (auto & normal : collision.CollisionNormals) {
-									if (std::abs(normal.Dot(Vector3::Up)) >= 0.5f) {
-										movement.Velocity.y += 5.f;
-										break;
-									}
-								}
-							}
-						}
+						
 					}
+					CollisionResponse(contacts, collision, movement);
 				}
 			}
 		},
@@ -222,13 +212,13 @@ namespace world {
 		}
 		return voxel.GetCollision();
 	}
-	ContactInfo CollisionSystem::CheckCollision(
+	bool CollisionSystem::CheckCollision(
+		ContactInfo & contact,
 		shared_ptr<geometry::CollisionVolume> volumeA,
 		shared_ptr<geometry::CollisionVolume> volumeAprime, 
 		shared_ptr<geometry::CollisionVolume> volumeB
 	)
 	{
-		ContactInfo result;
 		// AABB Broad Phase
 		if (volumeAprime->Bounds().Intersects(volumeB->Bounds())) {
 			geometry::GjkIntersection intersection;
@@ -240,44 +230,55 @@ namespace world {
 			}*/
 			if (geometry::SatIntersection(volumeAprime,volumeB, satResult)) {
 			//if (geometry::GJK(volumeAprime, volumeB, intersection)) {
-				result.colliding = true;
 
 				// determine the seperating axis from the current position
 				geometry::SatResult satResult;
 
 				if (!geometry::SatIntersection(volumeA, volumeB, satResult)) {
-					result.contactNormal = satResult.Axis;
+					contact.contactNormal = satResult.Axis;
 				}
 				else {
 					// Could not detect a separating axis
+					contact.contactNormal = Vector3::Zero;
 				}
+				return true;
 			}
 			else {
 				// culled by narrow phase
+				return false;
 			}
 		}
 		else {
 			// culled by broad phase
+			return false;
 		}
-		return result;
 	}
-	void CollisionSystem::HandleCollision(
+	void CollisionSystem::CollisionResponse(
+		vector<ContactInfo>& contacts,
+		Collision & collision,
+		Movement & movement)
+	{
+		collision.Contacts = contacts;
+		for (auto & contact : contacts) {
+			movement.Velocity -= contact.contactNormal * contact.contactNormal.Dot(movement.Velocity);
+		}
+			
+	}
+	void CollisionSystem::CheckCollision(
 		Position & position,
-		Collision & dynamicCollision,
-		Movement & dynamicMovement,
 		shared_ptr<geometry::CollisionVolume> & dynamicCollisionVolume,
 		shared_ptr<geometry::CollisionVolume> & dynamicCollisionVolumePrime,
 		Position & staticPosition,
-		shared_ptr<geometry::CollisionModel> & staticCollisionModel)
+		shared_ptr<geometry::CollisionModel> & staticCollisionModel,
+		vector<ContactInfo> & contacts)
 	{
 		for (auto & volume : staticCollisionModel->volumes) {
 			auto staticWorld = MovementSystem::GetWorldMatrix(staticPosition.Pos, staticPosition.Rot);
 			auto staticVolume = volume->Transform(staticWorld);
 
-			ContactInfo contact = CheckCollision(dynamicCollisionVolume, dynamicCollisionVolumePrime, staticVolume);
-			if (contact.colliding) {
-				dynamicMovement.Velocity -= contact.contactNormal * contact.contactNormal.Dot(dynamicMovement.Velocity);
-				dynamicCollision.CollisionNormals.push_back(contact.contactNormal);
+			ContactInfo contact;
+			if (CheckCollision(contact, dynamicCollisionVolume, dynamicCollisionVolumePrime, staticVolume)) {
+				contacts.push_back(contact);
 			}
 		}
 	}

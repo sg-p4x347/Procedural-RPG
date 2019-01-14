@@ -61,7 +61,7 @@ namespace world {
 			if (size > 0) {
 				if (is_base_of<ISerialization,CompType>()) {
 					// CompType is variable size, so stream each one in sequentially
-					istringstream ss(string(data, size));
+					istringstream ss = istringstream(string(data, size));
 					size_t size;
 					ss >> size;
 					for (int i = 0; i < size; i++) {

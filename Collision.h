@@ -2,12 +2,18 @@
 #include "WorldComponent.h"
 #include "ISerialization.h"
 #include "AssetTypes.h"
+
 namespace world {
+	struct ContactInfo {
+		ContactInfo() : contactNormal(Vector3::Zero) {}
+		Vector3 contactNormal;
+	};
 	class Collision :
 		public WorldComponent,
 		public ISerialization
 	{
 	public:
+		
 		Collision();
 		Collision(EntityID asset, AssetType type);
 		// Persisted Data
@@ -17,7 +23,7 @@ namespace world {
 		int Colliding;
 
 		// Runtime Data
-		std::vector<Vector3> CollisionNormals;
+		std::vector<ContactInfo> Contacts;
 
 		// Inherited via ISerialization
 		virtual void Import(std::istream & ifs) override;

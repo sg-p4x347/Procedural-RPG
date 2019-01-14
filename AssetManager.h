@@ -53,6 +53,7 @@ public:
 	shared_ptr<Map<Vector3>> CreateNormalMap(int width, int length, std::function<float(int x, int y)> && getHeight);
 	EntityPtr CreateNormalMap(string path, shared_ptr<Map<Vector3>> normalMap);
 	shared_ptr<HeightMap> GetHeightMap(string path, AssetType type, DirectX::SimpleMath::Rectangle sampleArea, int sampleSpacing = 1);
+	void UpdateHeightMap(string path, AssetType type, shared_ptr<HeightMap> map, DirectX::SimpleMath::Rectangle domain);
 	shared_ptr<Map<Vector3>> GetNormalMap(int mapWidth,string path, AssetType type, DirectX::SimpleMath::Rectangle sampleArea, int sampleSpacing = 1);
 	int LOD(double distance, unsigned int regionWidth);
 	std::shared_ptr<Model> CreateModelFromHeightMap(

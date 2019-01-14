@@ -37,13 +37,13 @@ namespace world {
 		string GetBiomeName(float sample);
 		float Height(const int & x, const int & z);
 		float Height(float & x, float & z);
+		float Height(Vector2 position);
 		float Biome(const int & x, const int & z);
 		int Width();
 		DirectX::SimpleMath::Rectangle Area();
-		void ImportMap(HeightMap & map);
-		float Flatten(HeightMap & map, Rectangle area, const int margin = 10);
-		float Height(HeightMap & map, int x, int z);
-		float Average(HeightMap & map, Rectangle area);
+		float Flatten(Rectangle area, const int margin = 10);
+		void SetHeight(const int x, const int z, float value);
+		float Average(Rectangle area);
 		void Save(HeightMap & map);
 		void RegisterHandlers();
 		// terrain manipulation (TEMP currently only updates the VBO)
@@ -65,9 +65,7 @@ namespace world {
 		int LOD(double distance, unsigned int modelWidth);
 		//----------------------------------------------------------------
 		// Terrain cache
-		shared_ptr<HeightMap> m_cache;
-		Vector2 m_cachePos;
-		void UpdateCache(Vector3 center);
+		map<shared_ptr<WEM::RegionType>,shared_ptr<HeightMap>> m_cache;
 		// 2 dimensional maps -------------------------------------------
 		int m_width;				// The total width of the continent (in meters)
 		const int m_regionWidth;	// Width of region divisions (in meters)

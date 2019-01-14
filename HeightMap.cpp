@@ -113,6 +113,13 @@ float HeightMap::Height(int x, int z)
 	return 0.0f;
 }
 
+void HeightMap::SetHeight(int x, int z, float value)
+{
+	if (Bounded(x, z)) {
+		map[x][z] = value;
+	}
+}
+
 float HeightMap::HeightAbsPos(Vector2 position)
 {
 	return Height(position.x - (float)area.x, position.y - (float)area.y);

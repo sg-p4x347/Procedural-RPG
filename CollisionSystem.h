@@ -5,11 +5,7 @@
 
 class SystemManager;
 namespace world {
-	struct ContactInfo {
-		ContactInfo() : colliding(false), contactNormal(Vector3::Zero) {}
-		bool colliding;
-		Vector3 contactNormal;
-	};
+	
 	class CollisionSystem :
 		public WorldSystem
 	{
@@ -31,19 +27,21 @@ namespace world {
 		shared_ptr<geometry::CollisionModel> GetCollisionAsset(AssetID asset);
 		// Bakes individual collision assets together within Grid space and caches the result on the voxel
 		shared_ptr<geometry::CollisionModel> GetCollisionAsset(ModelVoxel & voxel);
-		ContactInfo CheckCollision(
+		bool CheckCollision(
+			ContactInfo & contact,
 			shared_ptr<geometry::CollisionVolume> volumeA,
 			shared_ptr<geometry::CollisionVolume> volumeAprime,
 			shared_ptr<geometry::CollisionVolume> volumeB
 		);
-		void HandleCollision(
+		void CheckCollision(
 			Position & position,
-			Collision & dynamicCollision,
-			Movement & dynamicMovement,
 			shared_ptr<geometry::CollisionVolume> & dynamicCollisionVolume,
 			shared_ptr<geometry::CollisionVolume> & dynamicCollisionVolumePrime,
 			Position & staticPosition,
-			shared_ptr<geometry::CollisionModel> & staticCollisionModel
+			shared_ptr<geometry::CollisionModel> & staticCollisionModel,
+			vector<ContactInfo> & contacts
 		);
+		void CollisionResponse(vector<ContactInfo> & contacts, Collision & dynamicCollision,
+			Movement & dynamicMovement);
 	};
 }

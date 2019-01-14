@@ -43,11 +43,11 @@ public:
 	EventManager() {
 		
 	}
-	static inline void RegisterHandler(KeyType type, std::function<void(Signature...)> handler,unsigned int version,bool isStatic) {
+	static inline void RegisterHandler(KeyType type, std::function<void(Signature...)> && handler,unsigned int version,bool isStatic) {
 		if (m_handlers.find(type) == m_handlers.end()) {
 			m_handlers.insert(std::make_pair(type, vector<GlobalEventHandler<Signature...>>()));
 		}
-		m_handlers[type].push_back(GlobalEventHandler<Signature...>(handler,version,isStatic));
+		m_handlers[type].push_back(GlobalEventHandler<Signature...>(std::move(handler),version,isStatic));
 	}
 	static inline void Invoke(KeyType type, Signature... parameters, unsigned int version) {
 		if (m_handlers.find(type) != m_handlers.end()) {

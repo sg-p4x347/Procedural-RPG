@@ -12,7 +12,22 @@
 #include "Terrain.h"
 #include "Water.h"
 #include "Global.h"
+#include "Plant.h"
+#include "MovementController.h"
 #include "WorldEntityManager.h"
 namespace world {
-	typedef WorldEntityManager<Position, Movement, Player, Action, VoxelGridModel, Collision, Model, Terrain,Water,Global> WEM;
+	typedef WorldEntityManager<
+		Position, 
+		Movement, 
+		Player, 
+		Action, 
+		VoxelGridModel, 
+		Collision, 
+		Model,
+		Terrain,
+		Water,
+		Global,
+		MovementController,
+		Plant
+	> WEM;
 }

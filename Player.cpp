@@ -5,7 +5,6 @@ using namespace DirectX::SimpleMath;
 
 namespace world {
 	Player::Player() : 
-		MovementState(MovementStates::Spectator), 
 		InteractionState(InteractionStates::FirstPerson),
 		OpenContainer(0)
 	{

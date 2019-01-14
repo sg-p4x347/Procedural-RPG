@@ -6,6 +6,9 @@
 #include "GuiSystem.h"
 #include "AssetManager.h"
 #include "TaskManager.h"
+// TEMP
+#include "BuildingSystem.h"
+#include "TerrainSystem.h"
 namespace world {
 	PlayerSystem::PlayerSystem(
 		SystemManager * systemManager,
@@ -33,13 +36,14 @@ namespace world {
 	void PlayerSystem::Update(double & elapsed)
 	{
 		MaskType queryMask = EM->PlayerSignature();
-		MaskType readMask = EM->GetMask<Position, Movement, Collision, Player>();
-		MaskType writeMask = EM->GetMask<Movement, Collision, Player>();
+		MaskType readMask = EM->GetMask<Position, Movement, Collision, Player,MovementController>();
+		MaskType writeMask = EM->GetMask<Movement, Collision, Player, MovementController>();
 		TaskManager::Get().RunSynchronous(Task([=] {
-			auto player = EM->GetEntity<Position, Movement, Player>(EM->PlayerID());
+			auto player = EM->GetEntity<Position, Movement, Player,MovementController>(EM->PlayerID());
 			Position & position = player->Get<Position>();
 			Movement & movement = player->Get<Movement>();
 			Player & playerComp = player->Get<Player>();
+			MovementController & movementController = player->Get<MovementController>();
 			// mouse
 			auto mouseState = Game::MouseState;
 			auto keyboardState = Game::KeyboardState;
@@ -79,44 +83,23 @@ namespace world {
 			// Directional input
 			m_direction = Vector3::Zero;
 
-
 			UpdateActions();
 
-			/*SimpleMath::Vector3 input = SimpleMath::Vector3::Zero;
-			if (keyboardState.Up || keyboardState.W)
-				input.z += 1.f;
-
-			if (keyboardState.Down || keyboardState.S)
-				input.z -= 1.f;
-
-			if (keyboardState.Left || keyboardState.A)
-				input.x += 1.f;
-
-			if (keyboardState.Right || keyboardState.D)
-				input.x -= 1.f;*/
 
 
-
-
-				// adjust the velocity according to orientation
-			Vector3 velocity;
-			switch (playerComp.MovementState) {
-			case Player::MovementStates::Normal:
-				m_direction.y = 0.f;
-				m_direction.Normalize();
-				velocity = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(playerComp, position, true)) * (keyboardState.LeftControl ? 0.2f : keyboardState.LeftShift ? 8.f : 5.f);
-				velocity.y = movement.Velocity.y;
-
-				movement.Velocity = velocity;
+			// adjust the velocity according to orientation
+			Vector3 heading;
+			switch (movementController.Type) {
+			case MovementController::MovementTypes::Normal:
+				movementController.Heading = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(playerComp, position, true));
+				movementController.Heading.Normalize();
+				movementController.Jump = m_direction.y > 0.f;
+				movementController.Speed = (keyboardState.LeftControl ? 0.2f : keyboardState.LeftShift ? 8.f : 5.f);
 				break;
-			case Player::MovementStates::Spectator:
-				/*if (keyboardState.PageUp || keyboardState.Space)
-					input.y += 1.f;
-
-				if (keyboardState.PageDown || keyboardState.LeftShift)
-					input.y -= 1.f;*/
-				m_direction.Normalize();
-				movement.Velocity = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(playerComp, position)) * (keyboardState.LeftControl ? 1.f : keyboardState.LeftShift ? 1000 : 20);
+			case MovementController::MovementTypes::Spectator:
+				movementController.Heading = SimpleMath::Vector3::Transform(m_direction, GetPlayerQuaternion(playerComp, position));
+				movementController.Heading.Normalize();
+				movementController.Speed = (keyboardState.LeftControl ? 1.f : keyboardState.LeftShift ? 1000 : 20);
 				break;
 			}
 
@@ -129,14 +112,22 @@ namespace world {
 				//SM->GetEventManager().Invoke("InvokeAction");
 				IEventManager::Invoke(EventTypes::Action_Check);
 			}
+			if (Game::Get().KeyboardTracker.IsKeyPressed(DirectX::Keyboard::Keys::B)) {
+				Utility::OutputLine("Generating Buildings...");
+				Rectangle footprint = Rectangle(position.Pos.x,position.Pos.z, 4, 6);
+				Rectangle flattenArea = Rectangle(footprint.x - 1, footprint.y - 1, footprint.width + 2, footprint.height + 2);
+
+				float height = SM->GetSystem<TerrainSystem>("Terrain")->Flatten(flattenArea, 10);
+				SM->GetSystem<BuildingSystem>("Building")->CreateAdobe(Vector3(footprint.x, height + 0.2f, footprint.y), Rectangle(0, 0, footprint.width, footprint.height));
+			}
 
 			// Toggle movement state
 			if (Game::Get().KeyboardTracker.IsKeyPressed(DirectX::Keyboard::Keys::R)) {
-				switch (playerComp.MovementState) {
-				case Player::MovementStates::Normal:
+				switch (movementController.Type) {
+				case MovementController::MovementTypes::Normal:
 					SetMovementToSpectator();
 					break;
-				case Player::MovementStates::Spectator:
+				case MovementController::MovementTypes::Spectator:
 					SetMovementToNormal();
 					break;
 				}
@@ -180,6 +171,7 @@ namespace world {
 				Position(),
 				Player(),
 				Movement(),
+				MovementController(),
 				Model(asset->ID(), AssetType::Authored),
 				Collision(asset->ID(), AssetType::Authored)
 			);
@@ -220,18 +212,18 @@ namespace world {
 
 	void PlayerSystem::SetMovementToNormal()
 	{
-		auto player = EM->GetEntity<Collision, Movement, Player>(EM->PlayerID());
+		auto player = EM->GetEntity<Collision, Movement, MovementController>(EM->PlayerID());
 		player->Get<Collision>().Enabled = true;
 		player->Get<Movement>().Acceleration.y = -9.8f;
-		player->Get<Player>().MovementState = Player::MovementStates::Normal;
+		player->Get<MovementController>().Type = MovementController::MovementTypes::Normal;
 	}
 
 	void PlayerSystem::SetMovementToSpectator()
 	{
-		auto player = EM->GetEntity<Collision, Movement, Player>(EM->PlayerID());
+		auto player = EM->GetEntity<Collision, Movement, MovementController>(EM->PlayerID());
 		player->Get<Collision>().Enabled = false;
 		player->Get<Movement>().Acceleration.y = 0.f;
-		player->Get<Player>().MovementState = Player::MovementStates::Spectator;
+		player->Get<MovementController>().Type = MovementController::MovementTypes::Spectator;
 	}
 
 	void PlayerSystem::SetInteractionState(Player::InteractionStates state)

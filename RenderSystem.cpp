@@ -447,60 +447,17 @@ void RenderSystem::InitializeWorldRendering(world::WEM * entityManager)
 void RenderSystem::RegisterHandlers()
 {
 	
-	/*IEventManager::RegisterHandler(EventTypes::WEM_Resync, std::function<void(void)>([=]() {
-		
-		
-	}));*/
-	IEventManager::RegisterHandler(EventTypes::Entity_SignatureChanged, std::function<void(EntityPtr)>([&](EntityPtr entity) {
-		/*if (entity->HasComponents(EM->ComponentMask("Model"))) {
-			m_tracked.erase(entity);
-		}*/
+	IEventManager::RegisterHandler(EventTypes::Entity_SignatureChanged, std::function<void(shared_ptr<world::WEM::RegionType>, world::EntityID, world::MaskType)>([=](shared_ptr<world::WEM::RegionType> region, world::EntityID id, world::MaskType signature) {
+		if (signature) {
+			UnloadRegion(region);
+			LoadRegion(region);
+		}
 	}));
-	const auto excludeMask = EM->GetMask<world::Movement,world::Terrain>();
 	IEventManager::RegisterHandler(EventTypes::WEM_RegionLoaded, std::function<void(shared_ptr<world::WEM::RegionType>)>([=](shared_ptr<world::WEM::RegionType> region) {
-		//----------------------------------------------------------------
-		// Static models
-		world::MaskType modelMask = EM->GetMask<world::Position, world::Model>();
-		TaskManager::Get().Push(Task([=]{
-			world::EntityCache<world::Position,world::Model> staticModels;
-			region->LoadEntities(staticModels, [=](world::MaskType sig) {
-				return !(sig & excludeMask) && (sig & modelMask) == modelMask;
-			});
-		
-			for (auto & entity : staticModels) {
-				auto & position = entity.Get<world::Position>();
-				auto & model = entity.Get<world::Model>();
-				
-				CreateJob(m_jobs[region].opaque,entity.GetID(),position.Pos,position.Rot,model.Asset, model.Type);
-				bool alpha = false;
-				try {
-					AssetManager::Get()->GetCMF(model.Asset, model.Type)->IsAlpha();
-				}
-				catch (std::exception & ex) {
-				}
-				if (alpha) CreateJob(m_jobs[region].alpha, entity.GetID(), position.Pos, position.Rot, model.Asset, model.Type);
-			}
-		}, modelMask, modelMask));
-		//----------------------------------------------------------------
-		// Grids
-		
-		world::MaskType gridMask = EM->GetMask<world::Position, world::VoxelGridModel>();
-		TaskManager::Get().Push(Task([=] {
-			world::EntityCache<world::Position, world::VoxelGridModel> grids;
-			region->LoadEntities(grids,[=](world::MaskType sig) {
-				return !(sig & excludeMask) && (sig & gridMask) == gridMask;
-			});
-			for (auto & entity : grids) {
-				auto & position = entity.Get<world::Position>();
-				auto & gridModel = entity.Get<world::VoxelGridModel>();
-
-				m_gridJobs[region].push_back(RenderGridJob(gridModel, position.Pos, position.Rot));
-			}
-		}, gridMask, gridMask));
+		LoadRegion(region);
 	}));
 	IEventManager::RegisterHandler(EventTypes::WEM_RegionUnloaded, std::function<void(shared_ptr<world::WEM::RegionType>)>([=](shared_ptr<world::WEM::RegionType> region) {
-		// clear caches
-		m_jobs[region].Clear();
+		UnloadRegion(region);
 	}));
 }
 
@@ -1321,6 +1278,57 @@ void RenderSystem::RenderVBO(shared_ptr<Components::PositionNormalTextureTangent
 		m_d3dContext->DrawIndexed(vbo->Indices.size(), 0, 0);
 	}
 	
+}
+
+void RenderSystem::LoadRegion(shared_ptr<world::WEM::RegionType> region)
+{
+	const auto excludeMask = EM->GetMask<world::Movement, world::Terrain>();
+	//----------------------------------------------------------------
+	// Static models
+	world::MaskType modelMask = EM->GetMask<world::Position, world::Model>();
+	TaskManager::Get().Push(Task([=] {
+		world::EntityCache<world::Position, world::Model> staticModels;
+		region->LoadEntities(staticModels, [=](world::MaskType sig) {
+			return !(sig & excludeMask) && (sig & modelMask) == modelMask;
+		});
+
+		for (auto & entity : staticModels) {
+			auto & position = entity.Get<world::Position>();
+			auto & model = entity.Get<world::Model>();
+
+			CreateJob(m_jobs[region].opaque, entity.GetID(), position.Pos, position.Rot, model.Asset, model.Type);
+			bool alpha = false;
+			try {
+				AssetManager::Get()->GetCMF(model.Asset, model.Type)->IsAlpha();
+			}
+			catch (std::exception & ex) {
+			}
+			if (alpha) CreateJob(m_jobs[region].alpha, entity.GetID(), position.Pos, position.Rot, model.Asset, model.Type);
+		}
+	}, modelMask, modelMask));
+	//----------------------------------------------------------------
+	// Grids
+
+	world::MaskType gridMask = EM->GetMask<world::Position, world::VoxelGridModel>();
+	TaskManager::Get().Push(Task([=] {
+		std::lock_guard<std::mutex> guard(m_mutex);
+		world::EntityCache<world::Position, world::VoxelGridModel> grids;
+		region->LoadEntities(grids, [=](world::MaskType sig) {
+			return !(sig & excludeMask) && (sig & gridMask) == gridMask;
+		});
+		for (auto & entity : grids) {
+			auto & position = entity.Get<world::Position>();
+			auto & gridModel = entity.Get<world::VoxelGridModel>();
+			
+			m_gridJobs[region].push_back(RenderGridJob(gridModel, position.Pos, position.Rot));
+		}
+	}, gridMask, gridMask));
+}
+
+void RenderSystem::UnloadRegion(shared_ptr<world::WEM::RegionType> region)
+{
+	// clear caches
+	m_jobs[region].Clear();
 }
 
 void RenderSystem::InitializeJobCache()

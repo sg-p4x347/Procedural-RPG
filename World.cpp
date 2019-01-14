@@ -16,6 +16,7 @@
 #include "BuildingSystem.h"
 //#include "ItemSystem.h"
 #include "PlantSystem.h"
+#include "MovementControllerSystem.h"
 //#include "ResourceSystem.h"
 // Resources
 #include "WorldDomain.h"
@@ -163,8 +164,9 @@ namespace world {
 		m_systemManager.AddSystem(std::shared_ptr<System>(new PlayerSystem(&m_systemManager, m_entityManager.get(), 1)));
 		m_systemManager.AddSystem(std::shared_ptr<System>(new TerrainSystem(&m_systemManager, m_entityManager.get(), 1, m_width, m_regionWidth, m_directory / "System")));
 		m_systemManager.AddSystem(std::shared_ptr<System>(new BuildingSystem(m_entityManager.get(), 0)));
-
+		m_systemManager.AddSystem(std::shared_ptr<System>(new MovementControllerSystem(m_entityManager.get())));
 		m_systemManager.AddSystem(std::shared_ptr<System>(new CollisionSystem(&m_systemManager, m_entityManager.get(), 1)));
+		
 		m_systemManager.AddSystem(std::shared_ptr<System>(new MovementSystem(m_entityManager.get(), 1)));
 		
 

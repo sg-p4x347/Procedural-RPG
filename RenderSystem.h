@@ -124,6 +124,8 @@ private:
 	std::map<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>> m_VBOs;
 	
 	void RenderVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo);
+	void LoadRegion(shared_ptr<world::WEM::RegionType> region);
+	void UnloadRegion(shared_ptr<world::WEM::RegionType> region);
 	//----------------------------------------------------------------
 	// Render Jobs
 	typedef std::map<shared_ptr<world::WEM::RegionType>, RegionJobCache> JobCaches;

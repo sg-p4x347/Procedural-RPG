@@ -3,7 +3,7 @@
 class SystemManager;
 namespace world {
 	struct InputAction {
-		InputAction() : InputAction::InputAction("", "", [] {}) {}
+		InputAction() : InputAction::InputAction("", "", [=] {}) {}
 		InputAction(string name, string description, function<void()> action, bool edgeTrigger = false, bool worldOnly = true) {
 			Name = name;
 			Description = description;

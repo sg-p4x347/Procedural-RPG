@@ -6,8 +6,11 @@
 #include "TerrainSystem.h"
 #include "Inventory.h"
 #include "ItemSystem.h"
+#include <list>
 namespace world {
-	PlantSystem::PlantSystem(SystemManager * systemManager, WEM * entityManager, unsigned short updatePeriod) : WorldSystem::WorldSystem(entityManager, updatePeriod),
+	PlantSystem::PlantSystem(SystemManager * systemManager, WEM * entityManager, unsigned short updatePeriod) : 
+		WorldSystem::WorldSystem(entityManager, updatePeriod),
+		m_entities(EM->NewEntityCache<Position,Plant>()),
 		SM(systemManager)
 	{
 
@@ -20,6 +23,9 @@ namespace world {
 
 	void PlantSystem::Update(double & elapsed)
 	{
+		for (auto & entity : m_entities) {
+
+		}
 	}
 
 	void PlantSystem::Generate()
@@ -30,6 +36,43 @@ namespace world {
 		JsonParser config(std::ifstream("config/continent.json"));
 		if (config["grass"].To<bool>()) {
 			GenerateGrassEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
+		}
+	}
+
+	void PlantSystem::GenerateGeneticPlants()
+	{
+		JsonParser config(ifstream("config/plants.json"));
+		int iterations = config["iterations"].To<int>();
+		int minPopulation = config["minPopulation"].To<int>();
+		std::list<Plant> plants;
+		for (int i = 0; i < iterations; i++) {
+			// generate offspring from current plants
+			GenerateOffspring(plants);
+			// ensure that there are at least minPopulation plants
+			
+			// update plants according to their dna
+			UpdateGeneticPlants(plants);
+		}
+	}
+
+	void PlantSystem::GenerateOffspring(std::list<Plant>& plants)
+	{
+	}
+
+	void PlantSystem::UpdateGeneticPlants(std::list<Plant> & plants)
+	{
+		for (auto & plant : plants) {
+			
+			// Get the next action
+			if (plant.DnaCursor < plant.DNA.size()) {
+				auto & action = plant.DNA[plant.DnaCursor];
+				switch (action.type) {
+				case Plant::ActionTypes::GrowAction:
+					plant.NthComponents(action.grow.componentIndex);
+				}
+			}
+			// Operational cost
+			plant.Sugar -= 0.1f;
 		}
 	}
 

@@ -3,6 +3,7 @@
 #include "HeightMap.h"
 #include "WaterCell.h"
 #include "WorldDomain.h"
+#include "TerrainSystem.h"
 class SystemManager;
 namespace world {
 	class PlantSystem :
@@ -17,8 +18,13 @@ namespace world {
 		// Public Interface
 		void Generate();
 	private:
+		WorldEntityCache<WEM::RegionType, Position, Plant> m_entities;
 		SystemManager * SM;
-
+		//----------------------------------------------------------------
+		// Genetic Evolution
+		void GenerateGeneticPlants();
+		void GenerateOffspring(std::list<Plant> & plants);
+		void UpdateGeneticPlants(std::list<Plant> & plants);
 		//----------------------------------------------------------------
 		// Trees
 		void GenerateTreeModels();
