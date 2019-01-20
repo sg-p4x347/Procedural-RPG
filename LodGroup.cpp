@@ -2,7 +2,7 @@
 #include "LodGroup.h"
 #include "CustomModelLoadVBO.h"
 namespace geometry {
-	LodGroup::LodGroup() : m_threshold(0.f)
+	LodGroup::LodGroup(float threshold) : m_threshold(threshold)
 	{
 	}
 

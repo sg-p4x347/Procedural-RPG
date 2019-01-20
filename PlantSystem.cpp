@@ -6,6 +6,8 @@
 #include "TerrainSystem.h"
 #include "Inventory.h"
 #include "ItemSystem.h"
+#include "Geometry.h"
+#include "CMF.h"
 #include <list>
 namespace world {
 	PlantSystem::PlantSystem(SystemManager * systemManager, WEM * entityManager, unsigned short updatePeriod) : 
@@ -37,63 +39,186 @@ namespace world {
 		if (config["grass"].To<bool>()) {
 			GenerateGrassEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
 		}
+		GenerateGeneticPlants();
 	}
 
 	void PlantSystem::GenerateGeneticPlants()
 	{
-		JsonParser config(ifstream("config/plants.json"));
+		JsonParser config(std::ifstream("config/plants.json"));
 		int iterations = config["iterations"].To<int>();
 		int minPopulation = config["minPopulation"].To<int>();
-		std::list<Plant> plants;
+		std::list<shared_ptr<Plant>> plants;
+		{
+			auto plant = std::make_shared<Plant>(100.f,100.f);
+			plant->seed = std::make_shared<Plant::Seed>(*plant, Matrix::Identity, 0.01f);
+			Plant::Action addRoot;
+			addRoot.growNewComponent.type = Plant::ComponentTypes::RootComponent;
+			addRoot.growNewComponent.componentIndex = 0;
+			plant->DNA.push_back(addRoot);
+			Plant::Action growRoot;
+			growRoot.grow.componentIndex = 1;
+			growRoot.grow.radius = 0.5f;
+			plant->DNA.push_back(growRoot);
+			Plant::Action addStem;
+			addStem.growNewComponent.type = Plant::ComponentTypes::StemComponent;
+			addStem.growNewComponent.componentIndex = 1;
+			addStem.growNewComponent.yawPitchRoll.y = 0.5f;
+			plant->DNA.push_back(addStem);
+			Plant::Action growStem;
+			growStem.grow.componentIndex = 2;
+			growStem.grow.radius = 0.25f;
+			plant->DNA.push_back(growStem);
+
+			plants.push_back(plant);
+
+		}
 		for (int i = 0; i < iterations; i++) {
 			// generate offspring from current plants
 			GenerateOffspring(plants);
 			// ensure that there are at least minPopulation plants
 			
 			// update plants according to their dna
-			UpdateGeneticPlants(plants);
+			UpdateGeneticPlants(Vector3::Down,plants);
 		}
 	}
 
-	void PlantSystem::GenerateOffspring(std::list<Plant>& plants)
+	void PlantSystem::GenerateOffspring(std::list<shared_ptr<Plant>> & plants)
 	{
 	}
 
-	void PlantSystem::UpdateGeneticPlants(std::list<Plant> & plants)
+	void PlantSystem::UpdateGeneticPlants(Vector3 lightDirection, std::list<shared_ptr<Plant>> & plants)
 	{
+		vector<shared_ptr<Plant>> dead;
 		for (auto & plant : plants) {
 			// Get external resources
 			Plant::ExternalResource external;
+			external.Temperature = 20.f;
 			// Get the next action
-			if (plant.DnaCursor < plant.DNA.size()) {
-				auto & action = plant.DNA[plant.DnaCursor];
+			if (plant->DnaCursor < plant->DNA.size()) {
+				auto & action = plant->DNA[plant->DnaCursor];
 				if (action.type == Plant::ActionTypes::GrowAction) {
 					vector<shared_ptr<Plant::PlantComponent>> components;
-					plant.Base->NthComponents(action.grow.componentIndex, components);
+					plant->seed->NthComponents(action.grow.componentIndex, components);
 					for (auto & component : components) {
 						component->Grow(action.grow.radius);
 					}
 				} else if (action.type == Plant::ActionTypes::CreateSugarAction) {
-					plant.CreateSugar(external);
+					external.CO2 = 100.f;
+					// calculate how much external light is available
+					external.Light = CalculateLight(lightDirection,*plant);
+					plant->CreateSugar(external);
 				}
 				else if (action.type == Plant::ActionTypes::CollectWaterAction) {
-					plant.CollectWater(external);
+					// calculate how much external water is available
+					// Based on a half sphere volume
+					for (auto & root : plant->Roots) {
+						external.Water += root->GetMass() * 1.f;
+					}
+					plant->CollectWater(external);
 				}
 				else if (action.type == Plant::ActionTypes::GrowNewComponentAction) {
 					vector<shared_ptr<Plant::PlantComponent>> components;
-					plant.Base->NthComponents(action.growNewComponent.componentIndex, components);
+					plant->seed->NthComponents(action.growNewComponent.componentIndex, components);
 					for (auto & component : components) {
 						shared_ptr<Plant::PlantComponent> component;
+						Matrix transform = Matrix::CreateFromYawPitchRoll(
+							action.growNewComponent.yawPitchRoll.x,
+							action.growNewComponent.yawPitchRoll.y,
+							action.growNewComponent.yawPitchRoll.x
+						);
+
 						switch (action.growNewComponent.type) {
-						case Plant::ComponentTypes::Leaf:
-							component = shared_ptr<Plant::PlantComponent>(new Plant::Leaf());
+						case Plant::ComponentTypes::LeafComponent:
+							component = shared_ptr<Plant::PlantComponent>(new Plant::Leaf(*plant,transform));
+							plant->Leaves.push_back(dynamic_pointer_cast<Plant::Leaf>(component));
+							break;
+						case Plant::ComponentTypes::StemComponent:
+							component = shared_ptr<Plant::PlantComponent>(new Plant::Stem(*plant, transform,1.f,0.001f));
+							plant->Stems.push_back(dynamic_pointer_cast<Plant::Stem>(component));
+							break;
+						case Plant::ComponentTypes::RootComponent:
+							component = shared_ptr<Plant::PlantComponent>(new Plant::Root(*plant, transform, 0.001f));
+							plant->Roots.push_back(dynamic_pointer_cast<Plant::Root>(component));
+							break;
 						}
 					}
 				}
 			}
 			// Operational cost
-			plant.Sugar -= 0.1f;
+			plant->Sugar -= 0.1f;
+
+			// Check for death status
+			if (plant->Sugar < 0.f) {
+				dead.push_back(plant);
+			}
+			else {
+				plant->DnaCursor++;
+			}
 		}
+		// remove the dead plants
+		for (auto & plant : dead) {
+			plants.remove(plant);
+		}
+	}
+
+	float PlantSystem::CalculateLight(Vector3 lightDirection, Plant & plant)
+	{
+		static const float leafRadius = 0.1f;
+		float light = 0.f;
+		for (auto & leaf : plant.Leaves) {
+			float effectiveness = Vector3::Transform(Vector3::Up, leaf->Transform).Dot(-lightDirection) / 3.f;
+			if (effectiveness > 0.f) {
+				// Create a grid of rays to cast out from the leaf
+				vector<Vector3> raySources = leaf->GetVertices();
+				for (auto & raySource : raySources) {
+					for (auto & otherLeaf : plant.Leaves) {
+						if (otherLeaf != leaf && geometry::RayIntersectTriangle(raySource, -lightDirection, raySources[0], raySources[1], raySources[2]))
+							goto nextRay;
+					}
+					for (auto & stem : plant.Stems) {
+						auto start = stem->GetStart();
+						auto axis = stem->GetEnd() - start;
+						if (geometry::RayIntersectCylinder(raySource, -lightDirection, start, axis, stem->Radius))
+							goto nextRay;
+					}
+					for (auto & root : plant.Roots) {
+						auto center = root->GetCenter();
+						auto normal = root->GetNormal();
+						if (geometry::RayIntersectHalfSphere(raySource, -lightDirection, center, root->Radius, normal))
+							goto nextRay;
+					}
+					// No collisions detected, count this ray
+					light += effectiveness;
+
+					nextRay:;
+				}
+			}
+		}
+		return light;
+	}
+
+	shared_ptr<DirectX::Model> PlantSystem::GenerateModel(Plant & plant)
+	{
+		shared_ptr<geometry::CMF> model;
+		shared_ptr<geometry::Mesh> mesh;
+		TopologyCruncher tc;
+		for (auto & stem : plant.Stems) {
+			GenerateTopologyRecursive(stem, tc);
+			mesh->AddPart(tc.CreateMeshPart());
+			
+		}
+		model->AddMesh(mesh);
+		return model->GetModel(AssetManager::Get()->GetDevice(),AssetManager::Get()->GetFxFactory());
+	}
+
+	void PlantSystem::GenerateTopologyRecursive(shared_ptr<Plant::Stem> stem, TopologyCruncher & tc)
+	{
+		vector<Vector3> path{ stem->GetStart(),stem->GetEnd() };
+		tc.Tube(path, [=](float & t) {
+			return stem->Radius * 2.f;
+		},
+			PathType::LinearPath
+			);
 	}
 
 	void PlantSystem::GenerateTreeModels()

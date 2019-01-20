@@ -27,17 +27,20 @@ namespace geometry {
 	}
 	bool CMF::IsAlpha() const
 	{
-		for (auto & mesh : m_meshes) {
-			for (auto & part : mesh->GetParts()) {
-				if (part.alpha)
-					return true;
-			}
-		}
-		return false;
+		return m_alpha;
 	}
-	void CMF::AddMesh(shared_ptr<Mesh> mesh)
+	int CMF::AddLOD(float threshold)
 	{
-		m_meshes.push_back(mesh);
+		m_lodGroups.push_back(LodGroup(threshold));
+	}
+	void CMF::AddMesh(shared_ptr<Mesh> mesh, int lod)
+	{
+		assert(lod >= m_lodGroups.size());
+		m_lodGroups[lod].AddMesh(mesh);
+		if (!m_alpha)
+			for (auto & part : mesh->GetParts())
+				if (part.alpha)
+					m_alpha = true;
 	}
 	void CMF::SetName(string name)
 	{
@@ -337,6 +340,7 @@ namespace geometry {
 			auto isAlpha = fbxMaterial->FindProperty("isalpha",false);
 			if (isAlpha.IsValid() && isAlpha.Get<FbxBool>()) {
 				part.alpha = true;
+				m_alpha = true;
 			}
 		}
 		
@@ -623,7 +627,11 @@ namespace geometry {
 		ImportMaterials(scene);
 
 		// import meshes recursively
-		ProcessNode(scene->GetRootNode(), m_meshes);
+		vector<shared_ptr<Mesh>> meshes;
+		ProcessNode(scene->GetRootNode(), meshes);
+		// Create a default LOD group if none specified
+		if (m_lodGroups.size() == 0)
+			m_lodGroups.push_back(LodGroup(meshes));
 	}
 	void CMF::Export(Filesystem::path directory)
 	{

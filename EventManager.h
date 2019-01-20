@@ -33,7 +33,8 @@ enum EventTypes {
 
 	Movement_PlayerMoved,
 
-	Render_Synced
+	Render_Synced,
+	Render_QueueModel
 };
 template <typename KeyType, typename ... Signature>
 class EventManager

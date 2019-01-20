@@ -471,6 +471,16 @@ void AssetManager::CleanupProceduralAssets()
 	m_proceduralEM.reset(nullptr);
 }
 
+IEffectFactory * AssetManager::GetFxFactory()
+{
+	return m_DGSLfxFactory.get();
+}
+
+ID3D11Device * AssetManager::GetDevice()
+{
+	return m_d3dDevice.Get();
+}
+
 void AssetManager::SetDevice(Microsoft::WRL::ComPtr<ID3D11Device> device)
 {
 	m_d3dDevice = device;

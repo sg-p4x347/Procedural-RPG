@@ -1,5 +1,6 @@
 #pragma once
 #include "PositionNormalTextureTangentColorVBO.h"
+#include "MeshPart.h"
 enum PathType {
 	BezierPath,
 	CubicPath,
@@ -13,6 +14,9 @@ public:
 	//----------------------------------------------------------------
 	// Returns a Vertex Buffer Object (VBO) representing all sub meshes
 	Components::PositionNormalTextureTangentColorVBO CreateVBO();
+	//----------------------------------------------------------------
+	// Returns a geometry::MeshPart instance
+	geometry::MeshPart CreateMeshPart();
 
 	//----------------------------------------------------------------
 	// One dimensional

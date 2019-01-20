@@ -13,7 +13,10 @@ public:
 	void SetAssetDir(Filesystem::path assets);
 	void SetProceduralAssetDir(Filesystem::path procedural);
 	void CleanupProceduralAssets();
+	IEffectFactory * GetFxFactory();
+	ID3D11Device * GetDevice();
 	void SetDevice(Microsoft::WRL::ComPtr<ID3D11Device> device);
+
 	void CollectGarbage();
 	//----------------------------------------------------------------
 	// Entity manager

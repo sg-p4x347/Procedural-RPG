@@ -560,9 +560,9 @@
     <None Include="config\continent.json" />
     <None Include="Config\game.json" />
     <None Include="config\history.json" />
+    <None Include="config\plants.json" />
     <None Include="config\world.json" />
     <None Include="packages.config" />
-    <None Include="plants.json" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shaders\Terrain.hlsl">

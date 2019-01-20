@@ -21,7 +21,8 @@ namespace geometry {
 		bool IsAlpha() const;
 		//----------------------------------------------------------------
 		// Modifiers
-		void AddMesh(shared_ptr<Mesh> mesh);
+		int AddLOD(float threshold = 0.f);
+		void AddMesh(shared_ptr<Mesh> mesh,int lod = 0);
 		void SetName(string name);
 		//----------------------------------------------------------------
 		// IO
@@ -64,7 +65,7 @@ namespace geometry {
 		static Matrix Convert(fbxsdk::FbxMatrix & matrix);
 	private:
 		string m_name;
-		vector<shared_ptr<Mesh>> m_meshes;
+		bool m_alpha;
 		vector<LodGroup> m_lodGroups;
 		map<string,shared_ptr<Material>> m_materials;
 		shared_ptr<CollisionModel> m_collision;

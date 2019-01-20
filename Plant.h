@@ -19,30 +19,47 @@ namespace world {
 			RootComponent
 		};
 		struct PlantComponent {
-			PlantComponent(Plant & plant, Matrix & transform);
+			PlantComponent(Plant & plant, Matrix transform);
 			vector<shared_ptr<PlantComponent>> Children;
 			shared_ptr<PlantComponent> Parent;
 			Plant & ParentPlant;
 			Matrix Transform;
+			Matrix WorldMatrix;
 
 			void NthComponents(int n, vector<shared_ptr<PlantComponent>> & components);
 			virtual void Grow(float radius) = 0;
 			virtual float GetMass() = 0;
 		};
 		struct Leaf : public PlantComponent {
-			Leaf(Plant & plant, Matrix & transform);
+			Leaf(Plant & plant, Matrix transform);
+			
+			vector<Vector3> GetVertices();
 			void Grow(float radius) override;
 			float GetMass() override;
 		};
 		struct Stem : public PlantComponent {
-			Stem(Plant & plant, Matrix & transform, float length, float radius);
+			Stem(Plant & plant, Matrix transform, float length, float radius);
 			float Length;
 			float Radius;
+			
+			Vector3 GetStart();
+			Vector3 GetEnd();
 			void Grow(float radius) override;
 			float GetMass() override;
 		};
 		struct Root : public PlantComponent {
+			Root(Plant & plant, Matrix transform, float radius);
 			float Radius;
+
+			Vector3 GetCenter();
+			Vector3 GetNormal();
+			void Grow(float radius) override;
+			float GetMass() override;
+		};
+		struct Seed : public PlantComponent {
+			Seed(Plant & plant, Matrix transform, float radius);
+			float Radius;
+
 			void Grow(float radius) override;
 			float GetMass() override;
 		};
@@ -62,8 +79,7 @@ namespace world {
 			int componentIndex;
 			ComponentTypes type;
 			float position;
-			float roll;
-			Vector3 direction;
+			Vector3 yawPitchRoll;
 		};
 		struct CollectWater {
 			float amount;
@@ -72,6 +88,7 @@ namespace world {
 			float amount;
 		};
 		union Action {
+			Action(){}
 			ActionTypes type;
 			Grow grow;
 			GrowNewComponent growNewComponent;
@@ -79,8 +96,7 @@ namespace world {
 			CreateSugar createSugar;
 		};
 	public:
-
-		Plant();
+		Plant(float sugar = 0.f, float water = 0.f);
 		float AvailableCapacity();
 		float Effectiveness(float temperature);
 		void CreateSugar(ExternalResource & external);
@@ -94,8 +110,11 @@ namespace world {
 		// Internal resources
 		float Sugar;	// Acts as action currency
 		float Water;	// Environmental
-		float Volume;	// Acts as a limit to how much sugar and water can be held
+		float Mass;
 		// Physical model
-		shared_ptr<PlantComponent> Base;
+		shared_ptr<Seed> seed;
+		vector<shared_ptr<Leaf>> Leaves;
+		vector<shared_ptr<Stem>> Stems;
+		vector<shared_ptr<Root>> Roots;
 	};
 }

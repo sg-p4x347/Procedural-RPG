@@ -20,6 +20,14 @@ Components::PositionNormalTextureTangentColorVBO TopologyCruncher::CreateVBO()
 	return vbo;
 }
 
+geometry::MeshPart TopologyCruncher::CreateMeshPart()
+{
+	geometry::MeshPart part;
+	part.indices = m_IB;
+	part.vertices = m_VB;
+	return part;
+}
+
 
 
 void TopologyCruncher::Strip(vector<Vector3>& path, std::function<float(float&t)> roll, std::function<float(float&t)> width, int divisions)

@@ -5,7 +5,7 @@ namespace geometry {
 	class LodGroup
 	{
 	public:
-		LodGroup();
+		LodGroup(float threshold = 0.f);
 		LodGroup(std::vector<shared_ptr<Mesh>> & meshes, float threshold = 0.f);
 		const std::vector<shared_ptr<Mesh>> & GetMeshes() const;
 		const float GetThreshold() const;
