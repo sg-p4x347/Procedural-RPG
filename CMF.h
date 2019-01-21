@@ -12,17 +12,19 @@ namespace geometry {
 		public ISerialization
 	{
 	public:
-		CMF(string name);
+		CMF(string name = "");
 		~CMF();
 		//----------------------------------------------------------------
 		// Accessors
 		string GetName() const;
 		shared_ptr<CollisionModel> GetCollision();
 		bool IsAlpha() const;
+		shared_ptr<LodGroup> GetLOD(int lod = 0);
 		//----------------------------------------------------------------
 		// Modifiers
 		int AddLOD(float threshold = 0.f);
 		void AddMesh(shared_ptr<Mesh> mesh,int lod = 0);
+		void AddMaterial(shared_ptr<Material> material);
 		void SetName(string name);
 		//----------------------------------------------------------------
 		// IO
@@ -66,7 +68,7 @@ namespace geometry {
 	private:
 		string m_name;
 		bool m_alpha;
-		vector<LodGroup> m_lodGroups;
+		vector<shared_ptr<LodGroup>> m_lodGroups;
 		map<string,shared_ptr<Material>> m_materials;
 		shared_ptr<CollisionModel> m_collision;
 		static std::mutex m_mutex;

@@ -54,4 +54,42 @@ namespace geometry {
 		}
 		return nullptr;
 	}
+	void Material::Import(std::istream & ifs)
+	{
+		DeSerialize(name, ifs);
+		DeSerialize(specularPower, ifs);
+		DeSerialize(perVertexColor, ifs);
+		DeSerialize(enableSkinning, ifs);
+		DeSerialize(alpha, ifs);
+		DeSerialize(ambientColor, ifs);
+		DeSerialize(diffuseColor, ifs);
+		DeSerialize(specularColor, ifs);
+		DeSerialize(emissiveColor, ifs);
+		size_t textureCount = 0;
+		DeSerialize(textureCount, ifs);
+		for (size_t textureIndex = 0; textureIndex < textureCount; textureIndex++) {
+			string texture;
+			DeSerialize(texture, ifs);
+			textures.push_back(texture);
+		}
+		DeSerialize(pixelShader, ifs);
+	}
+	void Material::Export(std::ostream & ofs)
+	{
+		Serialize(name, ofs);
+		Serialize(specularPower, ofs);
+		Serialize(perVertexColor, ofs);
+		Serialize(enableSkinning, ofs);
+		Serialize(alpha, ofs);
+		Serialize(ambientColor, ofs);
+		Serialize(diffuseColor, ofs);
+		Serialize(specularColor, ofs);
+		Serialize(emissiveColor, ofs);
+		Serialize(textures.size(), ofs);
+		for (auto & texture : textures) {
+			Serialize(texture, ofs);
+		}
+
+		Serialize(pixelShader, ofs);
+	}
 }

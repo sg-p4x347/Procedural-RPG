@@ -6,8 +6,8 @@ namespace geometry {
 	public:
 		ConvexHull();
 		ConvexHull(DirectX::BoundingBox && box);
-		void AddVertex(Vector3 && vertex);
-		void AddAxis(Vector3 & normal);
+		void AddVertex(Vector3 vertex);
+		void AddAxis(Vector3 normal);
 		virtual std::pair<Vector3, Vector3> BiSupport(Vector3 direction) override;
 		bool WithinTolerance(float a, float b);
 		// Inherited via CollisionVolume
@@ -27,6 +27,12 @@ namespace geometry {
 
 		// Inherited via CollisionVolume
 		virtual std::vector<Vector3> Normals() override;
+
+
+		// Inherited via ISerialization
+		virtual void Import(std::istream & ifs) override;
+
+		virtual void Export(std::ostream & ofs) override;
 
 	};
 }

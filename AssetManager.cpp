@@ -336,109 +336,92 @@ Filesystem::path AssetManager::AppendPath(string path, string type)
 }
 
 shared_ptr<CMF> g_cmf = nullptr;
-std::shared_ptr<Model> AssetManager::GetModel(EntityPtr entity, float distance, Vector3 position, AssetType type)
+std::shared_ptr<geometry::CMF> AssetManager::GetModel(EntityPtr entity, AssetType type)
 {
-	std::shared_ptr<Model> model;
 	try {
-		string path = entity->GetComponent<PathID>("PathID")->Path;
-		try {
-			if (m_d3dDevice == nullptr) throw std::exception("AssetManager device not set");
-			// get the components
-			shared_ptr<ModelAsset> modelAsset = entity->GetComponent<ModelAsset>("ModelAsset");
-			shared_ptr<HeightMapAsset> heightMapComp = entity->GetComponent<HeightMapAsset>("HeightMapAsset");
-			if (!heightMapComp) {
-				//----------------------------------------------------------------
-				// Standard models
+		// Try the cache
+		auto cacheKey = std::make_pair(entity->ID(), type);
+		auto it = m_cmfCache.find(cacheKey);
+		if (it != m_cmfCache.end())
+			return it->second;
+		
+		// Get the model from the compiled source file
+		Filesystem::path fullPath = m_authoredDir / (entity->GetComponent<PathID>("PathID")->Path + ".cmf");
+		shared_ptr<geometry::CMF> model = std::make_shared<geometry::CMF>();
+		model->Import(std::ifstream(fullPath, std::ios_base::binary));
 
+		// Cache the model
+		m_cmfCache.insert(std::make_pair(cacheKey, model));
+		return model;
 
-				// TEMP **************************
-				/*if (!g_cmf)
-					g_cmf = CMF::CreateFromFBX("Assets/Models/Building/models-building-floor0.fbx", GetStaticEM());
+		// Load from file
+		//if (type == Procedural) {
+		//	// get the path
+		//	Filesystem::path fullPath = FullPath(path + '_' + std::to_string(lod), type, ".vbo");
+		//	//model.reset(Model::CreateFromVBO(m_d3dDevice.Get(), fullPath.c_str()).release());
+		//	shared_ptr<IEffect> effect;
+		//	GetEffect(modelAsset->Effect, effect);
+		//	model = CustomModelLoadVBO::CreateFromVBO(m_d3dDevice.Get(), fullPath.string(), effect);
+		//				
+		//}
+			
+		//model = CustomModelLoadCMO::CreateFromCMO(m_d3dDevice.Get(), fullPath.c_str(), *m_fxFactory);
 				
-				return g_cmf->GetModel(m_d3dDevice.Get(), distance);*/
+		////----------------------------------------------------------------
+		//// Heightmap models
+		//shared_ptr<HeightMapAsset> heightMapComp = entity->GetComponent<HeightMapAsset>("HeightMapAsset");
+		// get the LOD level
+		//int lod = std::min(modelAsset->LodCount - 1, modelAsset->LodSpacing > 0 ? (int)distance / modelAsset->LodSpacing : 0);
 
-				//****************************
+		//if (modelAsset->RegionModels.map.size() != heightMapComp->Xsize / heightMapComp->RegionWidth) modelAsset->RegionModels.Resize(
+		//	heightMapComp->Xsize / heightMapComp->RegionWidth,
+		//	heightMapComp->Ysize / heightMapComp->RegionWidth);
 
-				// get the LOD level
-				int lod = std::min(modelAsset->LodCount - 1, modelAsset->LodSpacing > 0 ? (int)distance / modelAsset->LodSpacing : 0);
-				// Get the model
-				
-				if (modelAsset->LODs.size() <= lod || !modelAsset->LODs[lod]) {
-					//----------------------------------------------------------------
-					// Cache the LOD
+		//Rectangle sampleArea;
+		//// Get the region coordinates
+		//int x = (int)std::floor(position.x / (double)heightMapComp->RegionWidth);
+		//int z = (int)std::floor(position.z / (double)heightMapComp->RegionWidth);
 
-					
-					// Load from file
-					if (type == Procedural) {
-						// get the path
-						Filesystem::path fullPath = FullPath(path + '_' + std::to_string(lod), type, ".vbo");
-						//model.reset(Model::CreateFromVBO(m_d3dDevice.Get(), fullPath.c_str()).release());
-						shared_ptr<IEffect> effect;
-						GetEffect(modelAsset->Effect, effect);
-						model = CustomModelLoadVBO::CreateFromVBO(m_d3dDevice.Get(), fullPath.string(), effect);
-						
-					}
-					else {
-						// get the path
-						Filesystem::path fullPath = m_authoredDir / "Models" / (path + ".fbx");
-						model = CMF::CreateFromFBX(fullPath, GetStaticEM())->GetModel(m_d3dDevice.Get(), m_DGSLfxFactory.get() ,distance);
-						//model = CustomModelLoadCMO::CreateFromCMO(m_d3dDevice.Get(), fullPath.c_str(), *m_fxFactory);
-					}
-					if (modelAsset->LODs.size() <= lod) {
-						modelAsset->LODs.resize(lod + 1);
-					}
-					modelAsset->LODs.insert(modelAsset->LODs.begin() + lod, model);
-				}
-				else {
-					model = modelAsset->LODs[lod];
-				}
-				
-			}
-			else {
-				//----------------------------------------------------------------
-				// Heightmap models
+		//int lod = LOD(distance, heightMapComp->RegionWidth);
+		//if (modelAsset->RegionModels.map[x][z].second && modelAsset->RegionModels.map[x][z].first == lod) {
+		//	model = modelAsset->RegionModels.map[x][z].second;
+		//}
+		//else {
+		//	unsigned int sampleSpacing = std::pow(2, lod);
+		//	sampleArea = Rectangle(x * heightMapComp->RegionWidth, z * heightMapComp->RegionWidth, heightMapComp->RegionWidth, heightMapComp->RegionWidth);
+		//	auto heightMap = GetHeightMap(path, type, sampleArea, sampleSpacing);
+		//	auto normalMap = GetNormalMap(heightMapComp->Xsize, path + "_normal", type, sampleArea, sampleSpacing);
 
-				if (modelAsset->RegionModels.map.size() != heightMapComp->Xsize / heightMapComp->RegionWidth) modelAsset->RegionModels.Resize(
-					heightMapComp->Xsize / heightMapComp->RegionWidth,
-					heightMapComp->Ysize / heightMapComp->RegionWidth);
-
-				Rectangle sampleArea;
-				// Get the region coordinates
-				int x = (int)std::floor(position.x / (double)heightMapComp->RegionWidth);
-				int z = (int)std::floor(position.z / (double)heightMapComp->RegionWidth);
-
-				int lod = LOD(distance, heightMapComp->RegionWidth);
-				if (modelAsset->RegionModels.map[x][z].second && modelAsset->RegionModels.map[x][z].first == lod) {
-					model = modelAsset->RegionModels.map[x][z].second;
-				}
-				else {
-					unsigned int sampleSpacing = std::pow(2, lod);
-					sampleArea = Rectangle(x * heightMapComp->RegionWidth, z * heightMapComp->RegionWidth, heightMapComp->RegionWidth, heightMapComp->RegionWidth);
-					auto heightMap = GetHeightMap(path, type, sampleArea, sampleSpacing);
-					auto normalMap = GetNormalMap(heightMapComp->Xsize, path + "_normal", type, sampleArea, sampleSpacing);
-
-					shared_ptr<IEffect> effect;
-					GetEffect(modelAsset->Effect, effect);
-					if (path == "terrain") {
-						model = CreateTerrainModel(heightMapComp->Xsize,heightMapComp->RegionWidth, heightMap.get(), normalMap, sampleArea, sampleSpacing, effect);
-					}
-					else {
-						model = CreateModelFromHeightMap(heightMapComp->RegionWidth, heightMap.get(), normalMap, sampleArea, sampleSpacing, effect);
-					}
-					// Cache the model;
-					modelAsset->RegionModels.map[x][z].first = lod;
-					modelAsset->RegionModels.map[x][z].second = model;
-				}
-			}
-		}
-		catch (std::exception ex) {
-			Utility::OutputException(path + ' ' + ex.what());
-		}
+		//	shared_ptr<IEffect> effect;
+		//	GetEffect(modelAsset->Effect, effect);
+		//	if (path == "terrain") {
+		//		model = CreateTerrainModel(heightMapComp->Xsize,heightMapComp->RegionWidth, heightMap.get(), normalMap, sampleArea, sampleSpacing, effect);
+		//	}
+		//	else {
+		//		model = CreateModelFromHeightMap(heightMapComp->RegionWidth, heightMap.get(), normalMap, sampleArea, sampleSpacing, effect);
+		//	}
+		//	// Cache the model;
+		//	modelAsset->RegionModels.map[x][z].first = lod;
+		//	modelAsset->RegionModels.map[x][z].second = model;
+		//}
 	}
 	catch (std::exception ex) {
-		Utility::OutputException("Could not get PathID from model asset");
+		Utility::OutputException(ex.what());
 	}
-	return model;
+}
+
+AssetID AssetManager::AddModel(std::shared_ptr<geometry::CMF> model, AssetType type)
+{
+	Filesystem::path rootDir;
+	switch (type) {
+	case Authored: rootDir = m_authoredDir; break;
+	case Procedural: rootDir = m_proceduralDir;break;
+	}
+	model->Export(rootDir);
+	// Create an asset
+	EntityPtr asset = (type == AssetType::Authored ? m_authoredEM : m_proceduralEM)->CreateAsset(model->GetName());
+	m_cmfCache.insert(std::make_pair(std::make_pair(asset->ID(), type), model));
+	return asset->ID();
 }
 
 
@@ -522,7 +505,7 @@ shared_ptr<HeightMap> AssetManager::GetHeightMap(
 			shared_ptr<HeightMap> heightMap = std::make_shared<HeightMap>(xSize,ySize);
 			heightMap->area.x = sampleArea.x;
 			heightMap->area.y = sampleArea.y;
-			ifstream stream(FullPath(path,type,".dat"), ios::binary);
+			ifstream stream(FullPath(path,type,".dat"), std::ios_base::binary);
 
 
 			if (stream.is_open()) {
@@ -670,7 +653,7 @@ shared_ptr<SpriteFont> AssetManager::GetFont(string name,int size)
 		Filesystem::path fullPath = FullPath(path, Authored, ".spritefont");
 		// Load from file
 		shared_ptr<SpriteFont> font = std::make_shared<SpriteFont>(m_d3dDevice.Get(),fullPath.c_str());
-		m_fonts.insert(std::pair<string, shared_ptr<SpriteFont>>(path, font));
+		m_fonts[path] = font;
 		return font;
 	}
 	catch (std::exception ex) {
@@ -728,42 +711,23 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::GetWicTexture(str
 	}
 }
 
-std::shared_ptr<Model> AssetManager::GetModel(string path, float distance, Vector3 position, AssetType type)
+std::shared_ptr<geometry::CMF> AssetManager::GetModel(string path, AssetType type)
 {
 	EntityPtr entity;
 	switch(type) {
 	case Procedural: m_proceduralEM->TryFindByPathID(path, entity);break;
 	case Authored: m_authoredEM->TryFindByPathID(path, entity); break;
 	}
-	return GetModel(entity, distance,position, type);
+	return GetModel(entity, type);
 }
-std::shared_ptr<Model> AssetManager::GetModel(AssetID id, float distance, Vector3 position, AssetType type)
+std::shared_ptr<geometry::CMF> AssetManager::GetModel(AssetID id, AssetType type)
 {
 	EntityPtr entity;
 	switch (type) {
 	case Procedural: m_proceduralEM->Find(id, entity);break;
 	case Authored: m_authoredEM->Find(id, entity); break;
 	}
-	return GetModel(entity, distance,position, type);
-}
-
-std::shared_ptr<geometry::CMF> AssetManager::GetCMF(AssetID id, AssetType type)
-{
-	auto it = m_cmfCache.find(id);
-	if (it != m_cmfCache.end()) {
-		return it->second;
-	}
-	else {
-		EntityPtr entity;
-		switch (type) {
-		case Procedural: m_proceduralEM->Find(id, entity); break;
-		case Authored: m_authoredEM->Find(id, entity); break;
-		}
-		// get the path
-		Filesystem::path fullPath = m_authoredDir / "Models" / (entity->GetComponent<PathID>("PathID")->Path + ".fbx");
-		m_cmfCache[id] = CMF::CreateFromFBX(fullPath, GetStaticEM());
-		return m_cmfCache[id];
-	}
+	return GetModel(entity, type);
 }
 
 std::shared_ptr<Model> AssetManager::CreateModelFromHeightMap(

@@ -58,4 +58,18 @@ namespace geometry {
 		result[0].Normalize();
 		return result;
 	}
+	void Cylinder::Import(std::istream & ifs)
+	{
+		DeSerialize(radius, ifs);
+		DeSerialize(axis, ifs);
+		DeSerialize(center, ifs);
+	}
+	void Cylinder::Export(std::ostream & ofs)
+	{
+		string type = "Cylinder";
+		Serialize(type, ofs);
+		Serialize(radius, ofs);
+		Serialize(axis, ofs);
+		Serialize(center, ofs);
+	}
 }

@@ -8,6 +8,7 @@
 #include "ItemSystem.h"
 #include "Geometry.h"
 #include "CMF.h"
+#include "Game.h"
 #include <list>
 namespace world {
 	PlantSystem::PlantSystem(SystemManager * systemManager, WEM * entityManager, unsigned short updatePeriod) : 
@@ -15,41 +16,11 @@ namespace world {
 		m_entities(EM->NewEntityCache<Position,Plant>()),
 		SM(systemManager)
 	{
-
-	}
-
-	string PlantSystem::Name()
-	{
-		return "Plant";
-	}
-
-	void PlantSystem::Update(double & elapsed)
-	{
-		for (auto & entity : m_entities) {
-
-		}
-	}
-
-	void PlantSystem::Generate()
-	{
-		GenerateTreeModels();
-		auto terrainSystem = SM->GetSystem<TerrainSystem>("Terrain");
-		GenerateTreeEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
-		JsonParser config(std::ifstream("config/continent.json"));
-		if (config["grass"].To<bool>()) {
-			GenerateGrassEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
-		}
-		GenerateGeneticPlants();
-	}
-
-	void PlantSystem::GenerateGeneticPlants()
-	{
-		JsonParser config(std::ifstream("config/plants.json"));
-		int iterations = config["iterations"].To<int>();
-		int minPopulation = config["minPopulation"].To<int>();
-		std::list<shared_ptr<Plant>> plants;
 		{
-			auto plant = std::make_shared<Plant>(100.f,100.f);
+			auto plant = std::make_shared<Plant>(100.f, 100.f);
+			AssetID asset = AssetManager::Get()->AddModel(plant->model);
+			EM->CreateEntity(Position(Vector3::Zero), Model(asset, AssetType::Procedural));
+
 			plant->seed = std::make_shared<Plant::Seed>(*plant, Matrix::Identity, 0.01f);
 			Plant::Action addRoot;
 			addRoot.growNewComponent.type = Plant::ComponentTypes::RootComponent;
@@ -72,13 +43,51 @@ namespace world {
 			plants.push_back(plant);
 
 		}
+	}
+
+	string PlantSystem::Name()
+	{
+		return "Plant";
+	}
+
+	void PlantSystem::Update(double & elapsed)
+	{
+		// update plants according to their dna
+		if (Game::Get().KeyboardTracker.IsKeyPressed(DirectX::Keyboard::Keys::V)) {
+			UpdateGeneticPlants(Vector3::Down, plants);
+		}
+		for (auto & entity : m_entities) {
+
+		}
+	}
+
+	void PlantSystem::Generate()
+	{
+		GenerateTreeModels();
+		auto terrainSystem = SM->GetSystem<TerrainSystem>("Terrain");
+		GenerateTreeEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
+		JsonParser config(std::ifstream("config/continent.json"));
+		if (config["grass"].To<bool>()) {
+			GenerateGrassEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
+		}
+		//GenerateGeneticPlants();
+	}
+
+	void PlantSystem::GenerateGeneticPlants()
+	{
+		JsonParser config(std::ifstream("config/plants.json"));
+		int iterations = config["iterations"].To<int>();
+		int minPopulation = config["minPopulation"].To<int>();
+		
+		
 		for (int i = 0; i < iterations; i++) {
 			// generate offspring from current plants
 			GenerateOffspring(plants);
 			// ensure that there are at least minPopulation plants
 			
 			// update plants according to their dna
-			UpdateGeneticPlants(Vector3::Down,plants);
+			UpdateGeneticPlants(Vector3::Down, plants);
+			
 		}
 	}
 
@@ -102,6 +111,7 @@ namespace world {
 					for (auto & component : components) {
 						component->Grow(action.grow.radius);
 					}
+					UpdateModel(*plant);
 				} else if (action.type == Plant::ActionTypes::CreateSugarAction) {
 					external.CO2 = 100.f;
 					// calculate how much external light is available
@@ -142,6 +152,7 @@ namespace world {
 							break;
 						}
 					}
+					UpdateModel(*plant);
 				}
 			}
 			// Operational cost
@@ -197,18 +208,19 @@ namespace world {
 		return light;
 	}
 
-	shared_ptr<DirectX::Model> PlantSystem::GenerateModel(Plant & plant)
+	void PlantSystem::UpdateModel(Plant & plant)
 	{
-		shared_ptr<geometry::CMF> model;
-		shared_ptr<geometry::Mesh> mesh;
+		
 		TopologyCruncher tc;
+		auto lod = plant.model->GetLOD();
+		
+		auto & mesh = lod->GetMeshes()[0];
+		mesh->GetParts().clear();
 		for (auto & stem : plant.Stems) {
 			GenerateTopologyRecursive(stem, tc);
 			mesh->AddPart(tc.CreateMeshPart());
-			
 		}
-		model->AddMesh(mesh);
-		return model->GetModel(AssetManager::Get()->GetDevice(),AssetManager::Get()->GetFxFactory());
+		lod->ModelChanged();
 	}
 
 	void PlantSystem::GenerateTopologyRecursive(shared_ptr<Plant::Stem> stem, TopologyCruncher & tc)
@@ -225,19 +237,7 @@ namespace world {
 	{
 
 		TreeGenerator tg;
-		static const int lodCount = 8;
-		static const int lodSpacing = 8;
-		vector<shared_ptr<Components::VBO<VertexPositionNormalTangentColorTexture>>> vbos;
-		for (int lod = 0; lod < lodCount; lod++) {
-
-
-			vbos.push_back(
-				std::make_shared<Components::VBO<VertexPositionNormalTangentColorTexture>>(tg.Generate(TreeType::SingleAxis, lod))
-			);
-			//Components::PositionNormalTextureVBO * vbo = new Components::PositionNormalTextureVBO(tc.CreateVBO());
-
-		}
-		AssetManager::Get()->GetProceduralEM()->CreateModel("tree", vbos, lodSpacing, "Wood");
+		AssetManager::Get()->AddModel(tg.Generate(TreeType::SingleAxis), AssetType::Procedural);
 		//{
 		//	EntityPtr test = EM->NewEntity();
 		//	test->AddComponent(new Components::Model("Tree", "Default", true, false));

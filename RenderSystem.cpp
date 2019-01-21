@@ -11,6 +11,8 @@
 #include "BuildingSystem.h"
 #include "IEventManager.h"
 #include "TaskManager.h"
+#include "TerrainSystem.h"
+
 using namespace DirectX::SimpleMath;
 using Microsoft::WRL::ComPtr;
 
@@ -138,7 +140,7 @@ void RenderSystem::Render()
 				opaque.insert(opaque.end(), gridIt->second.opaque.begin(), gridIt->second.opaque.end());
 			}
 			// Render all visible opaque jobs
-			RenderJobs(m_terrainJobs[region].opaque, cameraPos, false);
+			RenderTerrain(region, false);
 			RenderJobs(opaque, cameraPos,false);
 			
 		}
@@ -155,7 +157,7 @@ void RenderSystem::Render()
 				alpha.insert(alpha.end(), gridIt->second.alpha.begin(), gridIt->second.alpha.end());
 			}
 			// Render all visible alpha jobs
-			RenderJobs(m_terrainJobs[region].alpha, cameraPos, true);
+			RenderTerrain(region, true);
 			RenderJobs(alpha, cameraPos,true);
 			
 		}
@@ -424,7 +426,7 @@ void RenderSystem::InitializeWorldRendering(world::WEM * entityManager)
 		
 		RegisterHandlers();
 		InitializeJobCache();
-		m_terrainEntities = std::unique_ptr<world::WorldEntityCache<world::WEM::RegionType, world::Terrain, world::Model, world::Position>>(
+		/*m_terrainEntities = std::unique_ptr<world::WorldEntityCache<world::WEM::RegionType, world::Terrain, world::Model, world::Position>>(
 			new world::WorldEntityCache<world::WEM::RegionType, world::Terrain, world::Model, world::Position>(entityManager->NewEntityCache<world::Terrain, world::Model, world::Position>()));
 		entityManager->UpdateGlobalCache(*m_terrainEntities);
 		for (auto & regionCache : m_terrainEntities->GetCaches()) {
@@ -434,7 +436,7 @@ void RenderSystem::InitializeWorldRendering(world::WEM * entityManager)
 				CreateJob(m_terrainJobs[regionCache.first].opaque, entity.GetID(), position.Pos, position.Rot, model.Asset, model.Type);
 				CreateJob(m_terrainJobs[regionCache.first].alpha, entity.GetID(), position.Pos, position.Rot, model.Asset, model.Type);
 			}
-		}
+		}*/
 		m_ready = true;
 		IEventManager::Invoke(EventTypes::Render_Synced);
 	}
@@ -1280,6 +1282,13 @@ void RenderSystem::RenderVBO(shared_ptr<Components::PositionNormalTextureTangent
 	
 }
 
+void RenderSystem::RenderTerrain(shared_ptr<world::WEM::RegionType> region, bool alpha)
+{
+	Vector2 location = region->GetCenter();
+	Vector3 position(location.x, 0.f, location.y);
+	RenderModel(SM->GetSystem<world::TerrainSystem>("Terrain")->GetModel(region), Matrix::CreateTranslation(position), alpha);
+}
+
 void RenderSystem::LoadRegion(shared_ptr<world::WEM::RegionType> region)
 {
 	const auto excludeMask = EM->GetMask<world::Movement, world::Terrain>();
@@ -1299,7 +1308,7 @@ void RenderSystem::LoadRegion(shared_ptr<world::WEM::RegionType> region)
 			CreateJob(m_jobs[region].opaque, entity.GetID(), position.Pos, position.Rot, model.Asset, model.Type);
 			bool alpha = false;
 			try {
-				AssetManager::Get()->GetCMF(model.Asset, model.Type)->IsAlpha();
+				AssetManager::Get()->GetModel(model.Asset, model.Type)->IsAlpha();
 			}
 			catch (std::exception & ex) {
 			}
@@ -1366,7 +1375,7 @@ RenderSystem::JobCaches RenderSystem::CreateDynamicJobs()
 				
 				RegionJobCache cache;
 				CreateJob(cache.opaque, entity.GetID(), position.Pos, position.Rot, model.Asset, model.Type);
-				bool alpha = AssetManager::Get()->GetCMF(model.Asset)->IsAlpha();
+				bool alpha = AssetManager::Get()->GetModel(model.Asset,model.Type)->IsAlpha();
 				if (alpha) CreateJob(cache.alpha, entity.GetID(), position.Pos, position.Rot, model.Asset, model.Type);
 				caches.insert(std::make_pair(regionCache.first, cache));
 			}
@@ -1435,9 +1444,12 @@ void RenderSystem::RenderJobs(vector<RenderJob>& jobs,Vector3 cameraPos,bool alp
 void RenderSystem::RenderRenderJob(RenderJob & job, Vector3 cameraPos, bool alpha)
 {
 	// Get the current LOD
-	shared_ptr<DirectX::Model> dxModel = AssetManager::Get()->GetModel(job.modelAsset, Vector3::Distance(job.position, cameraPos), job.position,job.assetType);
-	
-	if (dxModel) RenderModel(dxModel, job.worldMatrix, alpha);
+	auto cmf = AssetManager::Get()->GetModel(job.modelAsset, job.assetType);
+	if (cmf) {
+		shared_ptr<DirectX::Model> dxModel = cmf->GetModel(m_d3dDevice.Get(), AssetManager::Get()->GetFxFactory(), Vector3::Distance(job.position, cameraPos));
+
+		if (dxModel != nullptr) RenderModel(dxModel, job.worldMatrix, alpha);
+	}
 }
 
 

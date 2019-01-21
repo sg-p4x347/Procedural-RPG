@@ -23,9 +23,11 @@ namespace world {
 		TemperatureTolerance(15.f),
 		Sugar(sugar), 
 		Water(water),
-		Mass(0.f)
+		Mass(0.f),
+		model(new geometry::CMF("plant"))
 	{
-
+		model->AddLOD();
+		model->AddMesh(std::make_shared<geometry::Mesh>());
 	}
 	float Plant::AvailableCapacity()
 	{

@@ -29,18 +29,27 @@ namespace geometry {
 	{
 		return m_alpha;
 	}
+	shared_ptr<LodGroup> CMF::GetLOD(int lod)
+	{
+		return m_lodGroups[lod];
+	}
 	int CMF::AddLOD(float threshold)
 	{
-		m_lodGroups.push_back(LodGroup(threshold));
+		m_lodGroups.push_back(std::make_shared<LodGroup>(threshold));
+		return m_lodGroups.size() - 1;
 	}
 	void CMF::AddMesh(shared_ptr<Mesh> mesh, int lod)
 	{
-		assert(lod >= m_lodGroups.size());
-		m_lodGroups[lod].AddMesh(mesh);
+		assert(lod < m_lodGroups.size());
+		m_lodGroups[lod]->AddMesh(mesh);
 		if (!m_alpha)
 			for (auto & part : mesh->GetParts())
 				if (part.alpha)
 					m_alpha = true;
+	}
+	void CMF::AddMaterial(shared_ptr<Material> material)
+	{
+		m_materials.insert(std::make_pair(material->name, material));
 	}
 	void CMF::SetName(string name)
 	{
@@ -229,7 +238,7 @@ namespace geometry {
 					ProcessNodeChildren(node->GetChild(i), lodMeshes);
 					// create a lod group for these meshes
 					auto threshold = attribute->FindPropertyHierarchical(("Thresholds|Level" + to_string(i)).c_str());
-					auto lodGroup = LodGroup(lodMeshes, threshold.IsValid() ? threshold.Get<FbxDistance>().value() : std::numeric_limits<float>::infinity());
+					auto lodGroup = std::make_shared<LodGroup>(lodMeshes, threshold.IsValid() ? threshold.Get<FbxDistance>().value() : std::numeric_limits<float>::infinity());
 					m_lodGroups.push_back(lodGroup);
 					// add these meshes to parent meshes vector
 					meshes.insert(meshes.end(), lodMeshes.begin(), lodMeshes.end());
@@ -336,7 +345,7 @@ namespace geometry {
 		auto elementMaterial = fbxMesh->GetElementMaterial();
 		if (elementMaterial) {
 			fbxsdk::FbxSurfaceMaterial* fbxMaterial = fbxMesh->GetNode()->GetMaterial(elementMaterial->GetIndexArray().GetAt(0));
-			part.material = m_materials[fbxMaterial->GetName()];
+			part.SetMaterial(m_materials[fbxMaterial->GetName()]);
 			auto isAlpha = fbxMaterial->FindProperty("isalpha",false);
 			if (isAlpha.IsValid() && isAlpha.Get<FbxBool>()) {
 				part.alpha = true;
@@ -631,27 +640,76 @@ namespace geometry {
 		ProcessNode(scene->GetRootNode(), meshes);
 		// Create a default LOD group if none specified
 		if (m_lodGroups.size() == 0)
-			m_lodGroups.push_back(LodGroup(meshes));
+			m_lodGroups.push_back(std::make_shared<LodGroup>(meshes));
 	}
 	void CMF::Export(Filesystem::path directory)
 	{
-		std::ofstream ofs(directory / (m_name + ".cmf"));
+		std::ofstream ofs(directory / (m_name + ".cmf"),std::ofstream::binary);
 		Export(ofs);
 	}
 	shared_ptr<DirectX::Model> CMF::GetModel(ID3D11Device * d3dDevice, IEffectFactory * fxFactory, float distance)
 	{
 		// find the first lod group in which this distance fits within the threshhold
-		for (auto & lodGroup : m_lodGroups) {
-			if (distance <= lodGroup.GetThreshold()) {
-				return lodGroup.GetModel(d3dDevice,fxFactory);
+		if (m_lodGroups.size() > 1) {
+			for (auto & lodGroup : m_lodGroups) {
+				if (distance <= lodGroup->GetThreshold()) {
+					return lodGroup->GetModel(d3dDevice, fxFactory);
+				}
 			}
 		}
+		else {
+			return m_lodGroups[0]->GetModel(d3dDevice, fxFactory);
+		}
+		return nullptr;
 	}
 	void CMF::Import(std::istream & ifs)
 	{
+		DeSerialize(m_name, ifs);
+		DeSerialize(m_alpha, ifs);
+		size_t lodCount = 0;
+		DeSerialize(lodCount, ifs);
+		for (size_t lod = 0; lod < lodCount;lod++) {
+			auto group = std::make_shared<LodGroup>();
+			group->Import(ifs);
+			m_lodGroups.push_back(group);
+		}
+		size_t materialCount = 0;
+		DeSerialize(materialCount, ifs);
+		for (size_t materialIndex = 0; materialIndex < materialCount;materialIndex++) {
+			shared_ptr<Material> material = std::make_shared<Material>();
+			material->Import(ifs);
+			m_materials.insert(std::make_pair(material->name,material));
+		}
+		// add material references to MeshParts
+		for (auto & lodGroup : m_lodGroups) {
+			for (auto & mesh : lodGroup->GetMeshes()) {
+				for (auto & meshPart : mesh->GetParts()) {
+					meshPart.SetMaterial(m_materials[meshPart.materialName]);
+				}
+			}
+		}
+
+		uint8_t hasCollision = 0;
+		DeSerialize(hasCollision, ifs);
+		if (hasCollision) {
+			m_collision = std::make_shared<CollisionModel>();
+			m_collision->Import(ifs);
+		}
 	}
 	void CMF::Export(std::ostream & ofs)
 	{
+		Serialize(m_name, ofs);
+		Serialize(m_alpha, ofs);
+		Serialize(m_lodGroups.size(), ofs);
+		for (auto & lodGroup : m_lodGroups)
+			lodGroup->Export(ofs);
+		Serialize(m_materials.size(), ofs);
+		for (auto & material : m_materials)
+			material.second->Export(ofs);
+		Serialize(m_collision != nullptr, ofs);
+		if (m_collision) {
+			m_collision->Export(ofs);
+		}
 	}
 	/*bool CMF::TryGetAttribute(fbxsdk::FbxNode * node, int index, FbxNodeAttribute *& attribute)
 	{

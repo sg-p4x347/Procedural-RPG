@@ -186,7 +186,7 @@ namespace world {
 		if (it != m_collisionAssets.end())
 			return it->second;
 
-		auto model = AssetManager::Get()->GetCMF(asset, AssetType::Authored);
+		auto model = AssetManager::Get()->GetModel(asset, AssetType::Authored);
 		if (model) {
 			m_collisionAssets.insert(std::make_pair(asset, model->GetCollision()));
 			return model->GetCollision();

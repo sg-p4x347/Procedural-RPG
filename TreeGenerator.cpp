@@ -14,17 +14,32 @@ TreeGenerator::~TreeGenerator()
 {
 }
 
-Components::PositionNormalTextureTangentColorVBO TreeGenerator::Generate(TreeType type, int lod)
+shared_ptr<geometry::CMF> TreeGenerator::Generate(TreeType type)
 {
 	Branch trunk = Branch(Vector3::Zero, Vector3::UnitY,0.05f,TerminalDiameter(type,0.05f));
 	//trunk.GrowVertical(4);
 	float height = trunk.TotalLength();
 	GenerateBranches(type, trunk,1,DirectX::XMMatrixIdentity());
-	TopologyCruncher tc;
-	//tc.Tube(vector<Vector3>{Vector3(0, 0, 0), Vector3(10.f, 10.f, 10.f), Vector3(0, 15, 0)}, [](float t) {return t;}, 30, 10, PathType::BezierPath);
 	
-	GenerateTopologyRecursive(trunk, tc,lod);
-	return tc.CreateVBO();
+	//tc.Tube(vector<Vector3>{Vector3(0, 0, 0), Vector3(10.f, 10.f, 10.f), Vector3(0, 15, 0)}, [](float t) {return t;}, 30, 10, PathType::BezierPath);
+	shared_ptr<geometry::CMF> model = std::make_shared<geometry::CMF>("tree");
+	shared_ptr<geometry::Material> material = std::make_shared<geometry::Material>();
+	material->textures.push_back("wood.dds");
+	material->pixelShader = "lambert.cso";
+	material->ambientColor = Vector3::One;
+	model->AddMaterial(material);
+	for (int lod = 0; lod < 4; lod++) {
+		TopologyCruncher tc;
+		GenerateTopologyRecursive(trunk, tc, lod);
+
+		model->AddLOD();
+		auto mesh = std::make_shared<geometry::Mesh>();
+		auto part = tc.CreateMeshPart();
+		part.SetMaterial(material);
+		mesh->AddPart(part);
+		model->AddMesh(mesh,lod);
+	}
+	return model;
 }
 void TreeGenerator::GenerateBranches(TreeType type, Branch & trunk, int iteration, XMMATRIX frame)
 {

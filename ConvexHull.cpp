@@ -16,13 +16,13 @@ namespace geometry {
 		}
 	}
 
-	void ConvexHull::AddVertex(Vector3 && vertex)
+	void ConvexHull::AddVertex(Vector3 vertex)
 	{
 		auto length = vertex.Length();
 		radius = std::max(length, radius);
 		vertices.push_back(vertex);
 	}
-	void ConvexHull::AddAxis(Vector3 & normal)
+	void ConvexHull::AddAxis(Vector3 normal)
 	{
 		normal.Normalize();
 		// check for equivalent (within small tolerance) normals
@@ -85,5 +85,36 @@ namespace geometry {
 	std::vector<Vector3> ConvexHull::Normals()
 	{
 		return axes;
+	}
+	void ConvexHull::Import(std::istream & ifs)
+	{
+		size_t vertexCount = 0;
+		DeSerialize(vertexCount, ifs);
+		vertices.resize(vertexCount);
+		for (size_t vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
+			Vector3 vertex;
+			DeSerialize(vertex, ifs);
+			AddVertex(vertex);
+		}
+		size_t axisCount = 0;
+		DeSerialize(axisCount, ifs);
+		axes.resize(axisCount);
+		for (size_t axisIndex = 0; axisIndex < vertexCount; axisIndex++) {
+			Vector3 axis;
+			DeSerialize(axis, ifs);
+			AddAxis(axis);
+		}
+
+	}
+	void ConvexHull::Export(std::ostream & ofs)
+	{
+		string type = "ConvexHull";
+		Serialize(type, ofs);
+		Serialize(vertices.size(), ofs);
+		if (vertices.size() > 0)
+			ofs.write((const char *)&vertices[0], vertices.size() * sizeof(Vector3));
+		Serialize(axes.size(), ofs);
+		if (axes.size() > 0)
+			ofs.write((const char *)&axes[0], axes.size() * sizeof(Vector3));
 	}
 }

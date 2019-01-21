@@ -33,9 +33,8 @@ public:
 	shared_ptr<SpriteFont> GetFont(string name,int size);
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetTexture(string path,AssetType type = Authored);
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetWicTexture(string path);
-	std::shared_ptr<Model> GetModel(string path, float distance = 0.f,Vector3 position = Vector3::Zero, AssetType type = Authored);
-	std::shared_ptr<Model> GetModel(AssetID id, float distance = 0.f, Vector3 position = Vector3::Zero, AssetType type = Authored);
-	std::shared_ptr<geometry::CMF> GetCMF(AssetID id, AssetType type = Authored);
+	std::shared_ptr<geometry::CMF> GetModel(string path, AssetType type = Authored);
+	std::shared_ptr<geometry::CMF> GetModel(AssetID id, AssetType type = Authored);
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> GetInputLayout(string name);
 	template <typename EffectType>
 	inline bool GetEffect(string name, shared_ptr<EffectType> & effect) {
@@ -87,6 +86,7 @@ public:
 
 	//----------------------------------------------------------------
 	// Asset Creation
+	AssetID AddModel(std::shared_ptr<geometry::CMF> model, AssetType type = AssetType::Procedural);
 	void CreateDgslEffect(string name, vector<string> textures, const D3D11_INPUT_ELEMENT_DESC * inputElements, const UINT elementCount);
 	void CreateCustomEffect(string name, vector<string> textures,const D3D11_INPUT_ELEMENT_DESC * inputElements,const UINT elementCount);
 	void CreateEffects(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context);
@@ -113,8 +113,9 @@ private:
 	
 	//----------------------------------------------------------------
 	// Models
-	map<AssetID,std::shared_ptr<geometry::CMF>> m_cmfCache;
-	std::shared_ptr<Model> GetModel(EntityPtr entity, float distance, Vector3 position, AssetType type);
+	map<std::pair<AssetID,AssetType>,std::shared_ptr<geometry::CMF>> m_cmfCache;
+	std::shared_ptr<geometry::CMF> GetModel(EntityPtr entity, AssetType type);
+	
 	unique_ptr<VboParser> m_vboParser;
 	//----------------------------------------------------------------
 	// Effects

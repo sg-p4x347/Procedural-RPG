@@ -1,6 +1,7 @@
 #pragma once
 #include "WorldComponent.h"
 #include "MeshPart.h"
+#include "CMF.h"
 namespace world {
 	class Plant :
 		public WorldComponent
@@ -116,5 +117,7 @@ namespace world {
 		vector<shared_ptr<Leaf>> Leaves;
 		vector<shared_ptr<Stem>> Stems;
 		vector<shared_ptr<Root>> Roots;
+		// Graphical model
+		shared_ptr<geometry::CMF> model;
 	};
 }

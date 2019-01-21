@@ -1,9 +1,11 @@
 #pragma once
+#include "ISerialization.h"
 /*
 Base class for specific collision volumes
 */
 namespace geometry {
-	class CollisionVolume
+	class CollisionVolume :
+		public ISerialization
 	{
 	public:
 		CollisionVolume();

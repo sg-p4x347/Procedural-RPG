@@ -23,5 +23,9 @@ namespace geometry {
 
 		// Inherited via CollisionVolume
 		virtual std::vector<Vector3> Normals() override;
+
+		// Inherited via CollisionVolume
+		virtual void Import(std::istream & ifs) override;
+		virtual void Export(std::ostream & ofs) override;
 	};
 }

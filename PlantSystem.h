@@ -4,6 +4,7 @@
 #include "WaterCell.h"
 #include "WorldDomain.h"
 #include "TerrainSystem.h"
+#include "TopologyCruncher.h"
 class SystemManager;
 namespace world {
 	class PlantSystem :
@@ -20,13 +21,14 @@ namespace world {
 	private:
 		WorldEntityCache<WEM::RegionType, Position, Plant> m_entities;
 		SystemManager * SM;
+		std::list<shared_ptr<Plant>> plants;
 		//----------------------------------------------------------------
 		// Genetic Evolution
 		void GenerateGeneticPlants();
 		void GenerateOffspring(std::list<shared_ptr<Plant>> & plants);
 		void UpdateGeneticPlants(Vector3 lightDirection, std::list<shared_ptr<Plant>> & plants);
 		float CalculateLight(Vector3 LightDirection, Plant & plant);
-		shared_ptr<DirectX::Model> GenerateModel(Plant & plant);
+		void UpdateModel(Plant & plant);
 		void GenerateTopologyRecursive(shared_ptr<Plant::Stem> stem, TopologyCruncher & tc);
 		//----------------------------------------------------------------
 		// Trees

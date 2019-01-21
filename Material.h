@@ -1,6 +1,7 @@
 #pragma once
+#include "ISerialization.h"
 namespace geometry {
-	struct Material
+	struct Material : public ISerialization
 	{
 		Material();
 		string name;
@@ -16,5 +17,9 @@ namespace geometry {
 		string pixelShader;
 
 		shared_ptr<DirectX::IEffect> GetEffect(IEffectFactory * fxFactory);
+
+		// Inherited via ISerialization
+		virtual void Import(std::istream & ifs) override;
+		virtual void Export(std::ostream & ofs) override;
 	};
 }

@@ -124,6 +124,7 @@ private:
 	std::map<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>> m_VBOs;
 	
 	void RenderVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo);
+	void RenderTerrain(shared_ptr<world::WEM::RegionType> region, bool alpha);
 	void LoadRegion(shared_ptr<world::WEM::RegionType> region);
 	void UnloadRegion(shared_ptr<world::WEM::RegionType> region);
 	//----------------------------------------------------------------

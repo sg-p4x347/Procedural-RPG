@@ -40,20 +40,36 @@ namespace world {
 		: WorldSystem::WorldSystem(entityManager, updatePeriod),
 		SM(systemManager),
 		m_width(worldWidth),
-		m_regionWidth(regionWidth)
+		m_regionWidth(regionWidth),
+		m_chunks(worldWidth / regionWidth),
+		m_normals(worldWidth / regionWidth),
+		m_chunkModels(worldWidth / regionWidth),
+		m_chunkLOD(worldWidth / regionWidth)
 	{
 		m_directory = directory / Name();
 		Filesystem::create_directory(m_directory);
 		RegisterHandlers();
 		//m_workerThread = TaskThread()
 		//m_workers = Map<std::thread>(m_width / m_regionWidth,0,0,0);
-
+		// initialize chunk lods to an unplausible Low lod
+		for (int x = 0; x < m_chunkLOD.width;x++) {
+			for (int z = 0; z < m_chunkLOD.length;z++) {
+				m_chunkLOD[x][z] = 100;
+				m_chunks[x][z] = std::make_shared<HeightMap>();
+			}
+		}
 
 	}
 
 
 	TerrainSystem::~TerrainSystem()
 	{
+	}
+
+	shared_ptr<DirectX::Model> TerrainSystem::GetModel(shared_ptr<world::WEM::RegionType> region)
+	{
+		std::lock_guard<std::mutex> guard(m_mutex);
+		return m_chunkModels[region->GetArea().x / m_regionWidth][region->GetArea().y / m_regionWidth];
 	}
 
 	void TerrainSystem::Generate(std::function<void(float,std::string)> && progressCallback)
@@ -578,127 +594,127 @@ namespace world {
 	//	}
 	//}
 
-	void TerrainSystem::UpdateWaterVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo, shared_ptr<HeightMap> terrain, int  regionX, int  regionZ)
-	{
-		// calculate quad size based off of LOD (Level Of Detail)
-		int quadWidth = std::pow(2, vbo->LOD);
-		int mapWidth = terrain->width;
-		// Load the vertex array with data.
-		HeightMap water(terrain->width, 0.0, 0.0, 0);
-		ifstream waterStream(m_directory / "water.dat", ios::binary);
+	//void TerrainSystem::UpdateWaterVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo, shared_ptr<HeightMap> terrain, int  regionX, int  regionZ)
+	//{
+	//	// calculate quad size based off of LOD (Level Of Detail)
+	//	int quadWidth = std::pow(2, vbo->LOD);
+	//	int mapWidth = terrain->width;
+	//	// Load the vertex array with data.
+	//	HeightMap water(terrain->width, 0.0, 0.0, 0);
+	//	ifstream waterStream(m_directory / "water.dat", ios::binary);
 
-		static const float push = -0.2f;
-		if (waterStream.is_open()) {
-			for (int vertZ = 0; vertZ <= (int)mapWidth; vertZ++) {
-				for (int vertX = 0; vertX <= (int)mapWidth; vertX++) {
-					int worldX = vertX * quadWidth + (int)m_regionWidth * regionX;
-					int worldZ = vertZ * quadWidth + (int)m_regionWidth * regionZ;
-					int index = Utility::posToIndex(worldX, worldZ, m_width + 1);
-					// heightMap
-					water.map[vertX][vertZ] = InternalHeight(waterStream, index, 100.f) + push;
+	//	static const float push = -0.2f;
+	//	if (waterStream.is_open()) {
+	//		for (int vertZ = 0; vertZ <= (int)mapWidth; vertZ++) {
+	//			for (int vertX = 0; vertX <= (int)mapWidth; vertX++) {
+	//				int worldX = vertX * quadWidth + (int)m_regionWidth * regionX;
+	//				int worldZ = vertZ * quadWidth + (int)m_regionWidth * regionZ;
+	//				int index = Utility::posToIndex(worldX, worldZ, m_width + 1);
+	//				// heightMap
+	//				water.map[vertX][vertZ] = InternalHeight(waterStream, index, 100.f) + push;
 
-				}
-			}
+	//			}
+	//		}
 
-			waterStream.close();
-		}
-		vbo->Vertices.clear();
-		vbo->Indices.clear();
+	//		waterStream.close();
+	//	}
+	//	vbo->Vertices.clear();
+	//	vbo->Indices.clear();
 
-		for (int z = 0; z < mapWidth; z++) {
-			for (int x = 0; x < mapWidth; x++) {
-				/*
-				Note:
-				It might be possible to correct unstable erosion processes by limiting the amout of erosion
-				to the lowest point in the immediate quad, e.g. do not allow it to dig holes, only push sediment
-				off of a ledge.
+	//	for (int z = 0; z < mapWidth; z++) {
+	//		for (int x = 0; x < mapWidth; x++) {
+	//			/*
+	//			Note:
+	//			It might be possible to correct unstable erosion processes by limiting the amout of erosion
+	//			to the lowest point in the immediate quad, e.g. do not allow it to dig holes, only push sediment
+	//			off of a ledge.
 
-				*/
-				const float worldX = x * quadWidth + regionX * m_regionWidth;
-				const float worldZ = z * quadWidth + regionZ * m_regionWidth;
-				bool hasWater[4]{
-					water.map[x][z] > push,
-					water.map[x + 1][z] > push,
-					water.map[x][z + 1] > push,
-					water.map[x + 1][z + 1] > push,
-				};
-				Vector3 quad[4]{
-					Vector3(
-						(float)(worldX),
-						terrain->map[x][z] > 0.f ? (water.map[x][z] < 0.f ? LowestNeighbor(water,*terrain, x, z) : water.map[x][z] + terrain->map[x][z]) : 0.f,
-						(float)(z * quadWidth + regionZ * m_regionWidth)
-					),
-					Vector3(
-						(float)(worldX + quadWidth),
-						terrain->map[x + 1][z] > 0.f ? (water.map[x + 1][z] < 0.f ? LowestNeighbor(water,*terrain, x + 1, z) : water.map[x + 1][z] + terrain->map[x + 1][z]) : 0.f,
-						(float)(worldZ)
-					),
+	//			*/
+	//			const float worldX = x * quadWidth + regionX * m_regionWidth;
+	//			const float worldZ = z * quadWidth + regionZ * m_regionWidth;
+	//			bool hasWater[4]{
+	//				water.map[x][z] > push,
+	//				water.map[x + 1][z] > push,
+	//				water.map[x][z + 1] > push,
+	//				water.map[x + 1][z + 1] > push,
+	//			};
+	//			Vector3 quad[4]{
+	//				Vector3(
+	//					(float)(worldX),
+	//					terrain->map[x][z] > 0.f ? (water.map[x][z] < 0.f ? LowestNeighbor(water,*terrain, x, z) : water.map[x][z] + terrain->map[x][z]) : 0.f,
+	//					(float)(z * quadWidth + regionZ * m_regionWidth)
+	//				),
+	//				Vector3(
+	//					(float)(worldX + quadWidth),
+	//					terrain->map[x + 1][z] > 0.f ? (water.map[x + 1][z] < 0.f ? LowestNeighbor(water,*terrain, x + 1, z) : water.map[x + 1][z] + terrain->map[x + 1][z]) : 0.f,
+	//					(float)(worldZ)
+	//				),
 
-					Vector3(
-						(float)(worldX),
-						terrain->map[x][z + 1] > 0.f ? (water.map[x][z + 1] < 0.f ? LowestNeighbor(water,*terrain, x, z + 1) : water.map[x][z + 1] + terrain->map[x][z + 1]) : 0.f,
-						(float)(worldZ + quadWidth)
-					),
-					Vector3(
-						(float)(worldX + quadWidth),
-						terrain->map[x + 1][z + 1] > 0.f ? (water.map[x + 1][z + 1] < 0.f ? LowestNeighbor(water,*terrain, x + 1, z + 1) : water.map[x + 1][z + 1] + terrain->map[x + 1][z + 1]) : 0.f,
-						(float)(worldZ + quadWidth)
-					)
-				};
-				if (x != mapWidth && z != mapWidth) {
-					/*
-					0---1
-					| \ |
-					2---3
-					*/
+	//				Vector3(
+	//					(float)(worldX),
+	//					terrain->map[x][z + 1] > 0.f ? (water.map[x][z + 1] < 0.f ? LowestNeighbor(water,*terrain, x, z + 1) : water.map[x][z + 1] + terrain->map[x][z + 1]) : 0.f,
+	//					(float)(worldZ + quadWidth)
+	//				),
+	//				Vector3(
+	//					(float)(worldX + quadWidth),
+	//					terrain->map[x + 1][z + 1] > 0.f ? (water.map[x + 1][z + 1] < 0.f ? LowestNeighbor(water,*terrain, x + 1, z + 1) : water.map[x + 1][z + 1] + terrain->map[x + 1][z + 1]) : 0.f,
+	//					(float)(worldZ + quadWidth)
+	//				)
+	//			};
+	//			if (x != mapWidth && z != mapWidth) {
+	//				/*
+	//				0---1
+	//				| \ |
+	//				2---3
+	//				*/
 
-					// Left triangle
-					if (hasWater[0] || hasWater[3] || hasWater[2]) {
-						vbo->Indices.push_back(vbo->Vertices.size());
-						vbo->Vertices.push_back(CreateVertex(quad[0], Vector3::UnitY, Vector2::Zero));
-						vbo->Indices.push_back(vbo->Vertices.size());
-						vbo->Vertices.push_back(CreateVertex(quad[2], Vector3::UnitY, Vector2(0.f, 1.f)));
-						vbo->Indices.push_back(vbo->Vertices.size());
-						vbo->Vertices.push_back(CreateVertex(quad[3], Vector3::UnitY, Vector2(1.f, 1.f)));
-					}
-					// Right
-					if (hasWater[0] || hasWater[1] || hasWater[3]) {
-						vbo->Indices.push_back(vbo->Vertices.size());
-						vbo->Vertices.push_back(CreateVertex(quad[0], Vector3::UnitY, Vector2::Zero));
-						vbo->Indices.push_back(vbo->Vertices.size());
-						vbo->Vertices.push_back(CreateVertex(quad[3], Vector3::UnitY, Vector2(1.f, 1.f)));
-						vbo->Indices.push_back(vbo->Vertices.size());
-						vbo->Vertices.push_back(CreateVertex(quad[1], Vector3::UnitY, Vector2(1.f, 0.f)));
-					}
-				}
-				//if (x != 0 && z != 0) {
-				//	if (terrain->map[x][z - 1] > 0.f) {
-				//		float vertex = terrain->map[x][z - 1] + (water.map[x][z - 1] < 0.05 ? pushDepth : 0.f);
-				//		// normals
-				//		float left = signed(x) - 1 >= 0 ? terrain->map[x - 1][z - 1] + water.map[x - 1][z - 1] : vertex;
-				//		float right = signed(x) + 1 <= signed(terrain->width) ? terrain->map[x + 1][z - 1] + water.map[x + 1][z - 1] : vertex;
-				//		float up = signed(z - 1) + 1 <= signed(terrain->width) ? terrain->map[x][z] + water.map[x][z] : vertex;
-				//		float down = signed(z - 1) - 1 >= 0 ? terrain->map[x][z - 2] + water.map[x][z - 2] : vertex;
+	//				// Left triangle
+	//				if (hasWater[0] || hasWater[3] || hasWater[2]) {
+	//					vbo->Indices.push_back(vbo->Vertices.size());
+	//					vbo->Vertices.push_back(CreateVertex(quad[0], Vector3::UnitY, Vector2::Zero));
+	//					vbo->Indices.push_back(vbo->Vertices.size());
+	//					vbo->Vertices.push_back(CreateVertex(quad[2], Vector3::UnitY, Vector2(0.f, 1.f)));
+	//					vbo->Indices.push_back(vbo->Vertices.size());
+	//					vbo->Vertices.push_back(CreateVertex(quad[3], Vector3::UnitY, Vector2(1.f, 1.f)));
+	//				}
+	//				// Right
+	//				if (hasWater[0] || hasWater[1] || hasWater[3]) {
+	//					vbo->Indices.push_back(vbo->Vertices.size());
+	//					vbo->Vertices.push_back(CreateVertex(quad[0], Vector3::UnitY, Vector2::Zero));
+	//					vbo->Indices.push_back(vbo->Vertices.size());
+	//					vbo->Vertices.push_back(CreateVertex(quad[3], Vector3::UnitY, Vector2(1.f, 1.f)));
+	//					vbo->Indices.push_back(vbo->Vertices.size());
+	//					vbo->Vertices.push_back(CreateVertex(quad[1], Vector3::UnitY, Vector2(1.f, 0.f)));
+	//				}
+	//			}
+	//			//if (x != 0 && z != 0) {
+	//			//	if (terrain->map[x][z - 1] > 0.f) {
+	//			//		float vertex = terrain->map[x][z - 1] + (water.map[x][z - 1] < 0.05 ? pushDepth : 0.f);
+	//			//		// normals
+	//			//		float left = signed(x) - 1 >= 0 ? terrain->map[x - 1][z - 1] + water.map[x - 1][z - 1] : vertex;
+	//			//		float right = signed(x) + 1 <= signed(terrain->width) ? terrain->map[x + 1][z - 1] + water.map[x + 1][z - 1] : vertex;
+	//			//		float up = signed(z - 1) + 1 <= signed(terrain->width) ? terrain->map[x][z] + water.map[x][z] : vertex;
+	//			//		float down = signed(z - 1) - 1 >= 0 ? terrain->map[x][z - 2] + water.map[x][z - 2] : vertex;
 
-				//		DirectX::SimpleMath::Vector3 normal = DirectX::SimpleMath::Vector3(left - right, 2.f, down - up);
-				//		normal.Normalize();
-				//		vbo->Vertices[vertexBufferIndex - (water.width + 1)].normal = normal;
-				//	}
-				//	else {
-				//		vbo->Vertices[vertexBufferIndex - (water.width + 1)].normal = DirectX::SimpleMath::Vector3::Up;
-				//	}
-				//}
+	//			//		DirectX::SimpleMath::Vector3 normal = DirectX::SimpleMath::Vector3(left - right, 2.f, down - up);
+	//			//		normal.Normalize();
+	//			//		vbo->Vertices[vertexBufferIndex - (water.width + 1)].normal = normal;
+	//			//	}
+	//			//	else {
+	//			//		vbo->Vertices[vertexBufferIndex - (water.width + 1)].normal = DirectX::SimpleMath::Vector3::Up;
+	//			//	}
+	//			//}
 
-			}
-		}
+	//		}
+	//	}
 
-		vbo->LODchanged = true;
-	}
+	//	vbo->LODchanged = true;
+	//}
 
-	VertexPositionNormalTangentColorTexture TerrainSystem::CreateVertex(Vector3 position, Vector3 normal, Vector2 texture)
-	{
-		return VertexPositionNormalTangentColorTexture(position, normal, Vector4::Zero, Vector4::Zero, texture);
-	}
+	//VertexPositionNormalTangentColorTexture TerrainSystem::CreateVertex(Vector3 position, Vector3 normal, Vector2 texture)
+	//{
+	//	return VertexPositionNormalTangentColorTexture(position, normal, Vector4::Zero, Vector4::Zero, texture);
+	//}
 
 	float TerrainSystem::LowestNeighbor(HeightMap & water, HeightMap & terrain, int x, int z)
 	{
@@ -714,136 +730,230 @@ namespace world {
 		return minY;
 	}
 
-	shared_ptr<HeightMap> TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo, int  regionX, int regionZ)
-	{
-		// calculate quad size based off of LOD (Level Of Detail)
-		int quadWidth = std::pow(2, vbo->LOD);
-		int mapWidth = m_regionWidth / quadWidth;
-		// Load the vertex array with data.
-		shared_ptr<HeightMap> heightMap = std::make_shared<HeightMap>(mapWidth, 0.0, 0.0, 0);
-		Map<Vector3> normalMap(mapWidth, 0.0, 0.0, 0);
-		ifstream terrainStream(m_directory / "terrain.dat", ios::binary);
-		ifstream normalStream(m_directory / "normal.dat", ios::binary);
+	//shared_ptr<HeightMap> TerrainSystem::UpdateTerrainVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo, int  regionX, int regionZ)
+	//{
+	//	// calculate quad size based off of LOD (Level Of Detail)
+	//	int quadWidth = std::pow(2, vbo->LOD);
+	//	int mapWidth = m_regionWidth / quadWidth;
+	//	// Load the vertex array with data.
+	//	shared_ptr<HeightMap> heightMap = std::make_shared<HeightMap>(mapWidth, 0.0, 0.0, 0);
+	//	Map<Vector3> normalMap(mapWidth, 0.0, 0.0, 0);
+	//	ifstream terrainStream(m_directory / "terrain.dat", ios::binary);
+	//	ifstream normalStream(m_directory / "normal.dat", ios::binary);
 
 
-		if (terrainStream.is_open() && normalStream.is_open()) {
-			// stores the exact bytes from the file into memory
-				//char *terrainCharBuffer = new char[regionSize];
-			//char *normalCharBuffer = new char[vertexCount * 3];
-			// move start position to the region, and proceed to read each line into the Char buffers
+	//	if (terrainStream.is_open() && normalStream.is_open()) {
+	//		// stores the exact bytes from the file into memory
+	//			//char *terrainCharBuffer = new char[regionSize];
+	//		//char *normalCharBuffer = new char[vertexCount * 3];
+	//		// move start position to the region, and proceed to read each line into the Char buffers
 
 
-			for (int vertZ = 0; vertZ <= (int)mapWidth; vertZ++) {
-				for (int vertX = 0; vertX <= (int)mapWidth; vertX++) {
-					int worldX = vertX * quadWidth + (int)m_regionWidth * regionX;
-					int worldZ = vertZ * quadWidth + (int)m_regionWidth * regionZ;
-					int index = Utility::posToIndex(worldX, worldZ, m_width + 1);
-					// heightMap
-					heightMap->map[vertX][vertZ] = InternalHeight(terrainStream, index, 10.f);
-					// normalMap
-					normalMap.map[vertX][vertZ] = Normal(normalStream, index);
-				}
-			}
+	//		for (int vertZ = 0; vertZ <= (int)mapWidth; vertZ++) {
+	//			for (int vertX = 0; vertX <= (int)mapWidth; vertX++) {
+	//				int worldX = vertX * quadWidth + (int)m_regionWidth * regionX;
+	//				int worldZ = vertZ * quadWidth + (int)m_regionWidth * regionZ;
+	//				int index = Utility::posToIndex(worldX, worldZ, m_width + 1);
+	//				// heightMap
+	//				heightMap->map[vertX][vertZ] = InternalHeight(terrainStream, index, 10.f);
+	//				// normalMap
+	//				normalMap.map[vertX][vertZ] = Normal(normalStream, index);
+	//			}
+	//		}
 
-			terrainStream.close();
-			normalStream.close();
-		}
-		// create 2 triangles (6 vertices) for every quad in the region
-		vbo->Vertices.resize(6 * mapWidth * mapWidth);
-		vbo->Vertices.shrink_to_fit();
-		vbo->Indices.resize(6 * mapWidth * mapWidth);
-		vbo->Indices.shrink_to_fit();
-		int index = 0;
-		for (int z = 0; z < mapWidth; z++) {
-			for (int x = 0; x < mapWidth; x++) {
-				// Get the indexes to the four points of the quad.
+	//		terrainStream.close();
+	//		normalStream.close();
+	//	}
+	//	// create 2 triangles (6 vertices) for every quad in the region
+	//	vbo->Vertices.resize(6 * mapWidth * mapWidth);
+	//	vbo->Vertices.shrink_to_fit();
+	//	vbo->Indices.resize(6 * mapWidth * mapWidth);
+	//	vbo->Indices.shrink_to_fit();
+	//	int index = 0;
+	//	for (int z = 0; z < mapWidth; z++) {
+	//		for (int x = 0; x < mapWidth; x++) {
+	//			// Get the indexes to the four points of the quad.
 
-				// Upper left.
-				Vector3 vertex1(
-					(float)(x * quadWidth + regionX * m_regionWidth),
-					heightMap->map[x][z],
-					(float)(z * quadWidth + regionZ * m_regionWidth));
-				// Upper right.
-				Vector3 vertex2(
-					(float)((x + 1) * quadWidth + regionX * m_regionWidth),
-					heightMap->map[x + 1][z],
-					(float)(z * quadWidth + regionZ * m_regionWidth));
-				// Bottom left.
-				Vector3 vertex3(
-					(float)(x * quadWidth + regionX * m_regionWidth),
-					heightMap->map[x][z + 1],
-					(float)((z + 1) * quadWidth + regionZ * m_regionWidth));
-				// Bottom right.
-				Vector3 vertex4(
-					(float)((x + 1) * quadWidth + regionX * m_regionWidth),
-					heightMap->map[x + 1][z + 1],
-					(float)((z + 1) * quadWidth + regionZ * m_regionWidth));
+	//			// Upper left.
+	//			Vector3 vertex1(
+	//				(float)(x * quadWidth + regionX * m_regionWidth),
+	//				heightMap->map[x][z],
+	//				(float)(z * quadWidth + regionZ * m_regionWidth));
+	//			// Upper right.
+	//			Vector3 vertex2(
+	//				(float)((x + 1) * quadWidth + regionX * m_regionWidth),
+	//				heightMap->map[x + 1][z],
+	//				(float)(z * quadWidth + regionZ * m_regionWidth));
+	//			// Bottom left.
+	//			Vector3 vertex3(
+	//				(float)(x * quadWidth + regionX * m_regionWidth),
+	//				heightMap->map[x][z + 1],
+	//				(float)((z + 1) * quadWidth + regionZ * m_regionWidth));
+	//			// Bottom right.
+	//			Vector3 vertex4(
+	//				(float)((x + 1) * quadWidth + regionX * m_regionWidth),
+	//				heightMap->map[x + 1][z + 1],
+	//				(float)((z + 1) * quadWidth + regionZ * m_regionWidth));
 
-				/*
-				1---2
-				| \ |
-				3---4
-				*/
+	//			/*
+	//			1---2
+	//			| \ |
+	//			3---4
+	//			*/
 
-				// Triangle 1 - Upper left
-				vbo->Vertices[index] = CreateVertex(
-					XMFLOAT3(vertex1),				// position
-					XMFLOAT3(normalMap.map[x][z]),	// normal
-					XMFLOAT2(0.f, 0.f)				// texture
-				);
-				vbo->Indices[index] = index;
-				index++;
-				// Triangle 1 - Bottom right.
-				vbo->Vertices[index] = CreateVertex(
-					XMFLOAT3(vertex4),										// position
-					XMFLOAT3(normalMap.map[x + 1][z + 1]),	// normal
-					XMFLOAT2(1.f, 1.f)										// texture
-				);
-				vbo->Indices[index] = index;
-				index++;
-				// Triangle 1 - Bottom left.
-				vbo->Vertices[index] = CreateVertex(
-					XMFLOAT3(vertex3),											// position
-					XMFLOAT3(normalMap.map[x][z + 1]),	// normal
-					XMFLOAT2(0.f, 1.f)											// texture
-				);
-				vbo->Indices[index] = index;
-				index++;
-				// Triangle 2 - Upper left.
-				vbo->Vertices[index] = CreateVertex(
-					XMFLOAT3(vertex1),										// position
-					XMFLOAT3(normalMap.map[x][z]),	// normal
-					XMFLOAT2(0.f, 0.f)										// texture
-				);
-				vbo->Indices[index] = index;
-				index++;
-				// Triangle 2 - Upper right.
-				vbo->Vertices[index] = CreateVertex(
-					XMFLOAT3(vertex2),											// position
-					XMFLOAT3(normalMap.map[x + 1][z]),	// normal
-					XMFLOAT2(1.f, 0.f)											// texture
-				);
-				vbo->Indices[index] = index;
-				index++;
-				// Triangle 2 - Bottom right.
-				vbo->Vertices[index] = CreateVertex(
-					XMFLOAT3(vertex4),												// position
-					XMFLOAT3(normalMap.map[x + 1][z + 1]),	// normal
-					XMFLOAT2(1.f, 1.f)												// texture
-				);
-				vbo->Indices[index] = index;
-				index++;
-			}
-		}
+	//			// Triangle 1 - Upper left
+	//			vbo->Vertices[index] = CreateVertex(
+	//				XMFLOAT3(vertex1),				// position
+	//				XMFLOAT3(normalMap.map[x][z]),	// normal
+	//				XMFLOAT2(0.f, 0.f)				// texture
+	//			);
+	//			vbo->Indices[index] = index;
+	//			index++;
+	//			// Triangle 1 - Bottom right.
+	//			vbo->Vertices[index] = CreateVertex(
+	//				XMFLOAT3(vertex4),										// position
+	//				XMFLOAT3(normalMap.map[x + 1][z + 1]),	// normal
+	//				XMFLOAT2(1.f, 1.f)										// texture
+	//			);
+	//			vbo->Indices[index] = index;
+	//			index++;
+	//			// Triangle 1 - Bottom left.
+	//			vbo->Vertices[index] = CreateVertex(
+	//				XMFLOAT3(vertex3),											// position
+	//				XMFLOAT3(normalMap.map[x][z + 1]),	// normal
+	//				XMFLOAT2(0.f, 1.f)											// texture
+	//			);
+	//			vbo->Indices[index] = index;
+	//			index++;
+	//			// Triangle 2 - Upper left.
+	//			vbo->Vertices[index] = CreateVertex(
+	//				XMFLOAT3(vertex1),										// position
+	//				XMFLOAT3(normalMap.map[x][z]),	// normal
+	//				XMFLOAT2(0.f, 0.f)										// texture
+	//			);
+	//			vbo->Indices[index] = index;
+	//			index++;
+	//			// Triangle 2 - Upper right.
+	//			vbo->Vertices[index] = CreateVertex(
+	//				XMFLOAT3(vertex2),											// position
+	//				XMFLOAT3(normalMap.map[x + 1][z]),	// normal
+	//				XMFLOAT2(1.f, 0.f)											// texture
+	//			);
+	//			vbo->Indices[index] = index;
+	//			index++;
+	//			// Triangle 2 - Bottom right.
+	//			vbo->Vertices[index] = CreateVertex(
+	//				XMFLOAT3(vertex4),												// position
+	//				XMFLOAT3(normalMap.map[x + 1][z + 1]),	// normal
+	//				XMFLOAT2(1.f, 1.f)												// texture
+	//			);
+	//			vbo->Indices[index] = index;
+	//			index++;
+	//		}
+	//	}
 
-		vbo->LODchanged = true;
-		return heightMap;
-	}
+	//	vbo->LODchanged = true;
+	//	return heightMap;
+	//}
 
 	int TerrainSystem::LOD(double distance, unsigned int modelWidth)
 	{
 		// add integer to decrease terrain detail
 		return 0 + std::min((int)std::log2(modelWidth), std::max(0, (int)std::floor(std::log2(distance / (double)modelWidth))));
+	}
+
+	void TerrainSystem::UpdateLOD(Vector3 center)
+	{
+		std::thread([=] {
+			std::lock_guard<std::mutex> guard(m_updateLodMutex);
+		
+			const int chunkCount = m_width / m_regionWidth;
+			//----------------------------------------------------------------
+			// Get fresh LOD indices
+			Map<int> lods(chunkCount);
+			Map<bool> lodChanged(chunkCount);
+			for (int x = 0; x < chunkCount; x++) {
+				for (int z = 0; z < chunkCount; z++) {
+					Vector2 chunkCenter(x * m_regionWidth + 0.5f * m_regionWidth, z * m_regionWidth + 0.5f * m_regionWidth);
+					int lod = LOD(Vector2::Distance(chunkCenter, Vector2(center.x, center.z)), m_regionWidth);
+					lods[x][z] = lod;
+					lodChanged[x][z] = lod != m_chunkLOD[x][z];
+				}
+			}
+			//----------------------------------------------------------------
+			// Stream more detail for higher LOD, downsize for lower LOD
+			for (int x = 0; x < chunkCount; x++) {
+				for (int z = 0; z < chunkCount; z++) {
+					if (m_chunkLOD[x][z] > lods[x][z]) {
+						// stream new vertices from the AssetManager
+						unsigned int sampleSpacing = std::pow(2, lods[x][z]);
+						Rectangle sampleArea = Rectangle(x * m_regionWidth, z * m_regionWidth, m_regionWidth,m_regionWidth);
+						m_chunks[x][z] = AssetManager::Get()->GetHeightMap("terrain", AssetType::Procedural, sampleArea, sampleSpacing);
+						m_normals[x][z] = AssetManager::Get()->GetNormalMap(m_width, "terrain_normal", AssetType::Procedural, sampleArea, sampleSpacing);
+
+					
+					}
+					else if (m_chunkLOD[x][z] < lods[x][z]) {
+						auto & chunk = *m_chunks[x][z];
+						// move verticies into compacted space
+						for (int vx = 0; vx <= chunk.width; vx++) {
+							for (int vz = 0; vz <= chunk.length; vz++) {
+								chunk[vx][vz] = chunk[vx * 2][vz * 2];
+							}
+						}
+						chunk.Resize(m_regionWidth / std::pow(2, lods[x][z]));
+					}
+				}
+			}
+			for (int x = 0; x < chunkCount; x++) {
+				for (int z = 0; z < chunkCount; z++) {
+					auto & chunk = *m_chunks[x][z];
+					static const Vector2 cardinal[4]{
+						Vector2(1.f,0.f),
+						Vector2(0.f,1.f),
+						Vector2(-1.f,0.f),
+						Vector2(0.f,-1.f)
+					};
+					Vector2 chunkRadius(chunk.width, chunk.length);
+					bool updateModel = lodChanged[x][z];
+					for (int i = 0; i < 4; i++) {
+						Vector2 direction = cardinal[i];
+						int adjX = x + (int)direction.x;
+						int adjZ = z + (int)direction.y;
+						if (m_chunks.Bounded(adjX, adjZ)) {
+							HeightMap & adjacent = *m_chunks[adjX][adjZ];
+							if ((lodChanged[x][z] || lodChanged[adjX][adjZ]) && lods[x][z] < lods[adjX][adjZ]) {
+								updateModel = true;
+								// Assume that the difference in LOD is a factor of 2 spacing
+								if (i % 2 == 0) {
+									int vx = i == 0 ? adjacent.width : 0;
+									for (int vz = 0; vz < adjacent.length; vz++) {
+										chunk[vx * 2][vz * 2 + 1] = (adjacent[adjacent.width - vx][vz] + adjacent[adjacent.width - vx][vz + 1]) * 0.5f;
+									}
+								}
+								else {
+									int vz = i == 1 ? adjacent.length : 0;
+									for (int vx = 0; vx < adjacent.width; vx++) {
+										chunk[vx * 2 + 1][vz * 2] = (adjacent[vx][adjacent.length - vz] + adjacent[vx + 1][adjacent.length - vz]) * 0.5f;
+									}
+								}
+							}
+						}
+					}
+
+					if (updateModel) {
+						unsigned int sampleSpacing = std::pow(2, lods[x][z]);
+						Rectangle sampleArea = Rectangle(x * m_regionWidth, z * m_regionWidth, m_regionWidth, m_regionWidth);
+						shared_ptr<IEffect> effect;
+						AssetManager::Get()->GetEffect("Terrain", effect);
+						auto model = AssetManager::Get()->CreateTerrainModel(m_width, m_regionWidth, m_chunks[x][z].get(), m_normals[x][z], sampleArea, sampleSpacing, effect);
+						m_mutex.lock();
+						m_chunkModels[x][z] = model;
+						m_mutex.unlock();
+					}
+				}
+			}
+		}).detach();
 	}
 
 	void TerrainSystem::NewTerrain(DirectX::SimpleMath::Vector3 & position)
@@ -907,6 +1017,9 @@ namespace world {
 			AssetManager::Get()->UpdateHeightMap("terrain", AssetType::Procedural, m_cache[region], region->GetArea());
 			// Erase the cache
 			m_cache.erase(region);
+		}));
+		IEventManager::RegisterHandler(EventTypes::Movement_PlayerMoved, std::function<void(float, float)>([=](float x, float z) {
+			UpdateLOD(Vector3(x, 0.f, z));
 		}));
 	}
 
