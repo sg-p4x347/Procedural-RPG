@@ -36,11 +36,17 @@ struct Map :
 		Resize(w, w);
 	}
 	virtual void Resize(int w, int l) {
-		map.resize(w + 1);
+		if (w+1 > width)
+			map.resize(w + 1);
 		for (int x = 0; x <= w; x++) {
 			map[x].resize(l + 1);
+			map[x].shrink_to_fit();
 		}
-		
+		if (w + 1 < width) {
+			map.resize(w + 1);
+			map.shrink_to_fit();
+		}
+
 		width = w;
 		length = l;
 	}

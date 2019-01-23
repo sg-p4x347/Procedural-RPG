@@ -171,7 +171,7 @@ namespace world {
 		
 
 		//m_systemManager.AddSystem(std::shared_ptr<System>(new ActionSystem(&m_systemManager, m_entityManager.get(), 10)));
-		m_systemManager.AddSystem(std::shared_ptr<System>(new PlantSystem(&m_systemManager, m_entityManager.get(), 0)));
+		m_systemManager.AddSystem(std::shared_ptr<System>(new PlantSystem(&m_systemManager, m_entityManager.get(), 2)));
 		//m_systemManager.AddSystem(std::shared_ptr<System>(new ItemSystem(m_entityManager.get(), 0)));
 		//m_systemManager.AddSystem(std::shared_ptr<System>(new BuildingSystem(m_entityManager.get(), 0)));
 		//m_systemManager.AddSystem(std::shared_ptr<System>(new ResourceSystem(m_entityManager.get(), 0)));

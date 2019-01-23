@@ -68,7 +68,6 @@ namespace world {
 
 	shared_ptr<DirectX::Model> TerrainSystem::GetModel(shared_ptr<world::WEM::RegionType> region)
 	{
-		std::lock_guard<std::mutex> guard(m_mutex);
 		return m_chunkModels[region->GetArea().x / m_regionWidth][region->GetArea().y / m_regionWidth];
 	}
 
@@ -239,7 +238,7 @@ namespace world {
 		//CreateResourceEntities();
 
 		// TEMP
-		EntityPtr asset;
+		/*EntityPtr asset;
 		if (AssetManager::Get()->GetStaticEM()->TryFindByPathID("Crate",asset)) {
 			int offset = 32;
 			int max = 1;
@@ -254,7 +253,7 @@ namespace world {
 				}
 			}
 			
-		}
+		}*/
 		//SM->GetSystem<ItemSystem>("Item")->NewContainer(Vector3(32, TerrainMap->Height(32, 32), 32), Vector3::Zero, "Crate");
 
 		
@@ -298,12 +297,10 @@ namespace world {
 	}
 	void TerrainSystem::SetHeight(const int x, const int z, float value)
 	{
-		Vector2 point(x, z);
-		for (auto & cache : m_cache) {
-			auto & area = cache.first->GetArea();
-			if (area.Contains(point)) {
-				cache.second->SetHeight(x - area.x, z - area.y,value);
-			}
+		int regionX = x / m_regionWidth;
+		int regionZ = z / m_regionWidth;
+		if (regionX >= 0 && regionZ >= 0 && regionX < m_width / m_regionWidth && regionZ < m_width / m_regionWidth) {
+			return m_chunks[regionX][regionZ]->SetHeight(x - regionX * m_regionWidth, z - regionZ * m_regionWidth,value);
 		}
 	}
 	float TerrainSystem::Height(float & x, float & z)
@@ -314,12 +311,10 @@ namespace world {
 
 	float TerrainSystem::Height(Vector2 position)
 	{
-		for (auto & cache : m_cache) {
-			auto & area = cache.first->GetArea();
-			if (area.Contains(position)) {
-				return cache.second->Height(position.x - area.x, position.y - area.y);
-				break;
-			}
+		int x = position.x / m_regionWidth;
+		int z = position.y / m_regionWidth;
+		if (x >= 0 && z >= 0 && x < m_width / m_regionWidth && z < m_width / m_regionWidth) {
+			return m_chunks[x][z]->Height(position.x - x * m_regionWidth, position.y - z * m_regionWidth);
 		}
 		return 0.f;
 	}
@@ -905,6 +900,7 @@ namespace world {
 					}
 				}
 			}
+			m_mutex.lock();
 			for (int x = 0; x < chunkCount; x++) {
 				for (int z = 0; z < chunkCount; z++) {
 					auto & chunk = *m_chunks[x][z];
@@ -915,7 +911,6 @@ namespace world {
 						Vector2(0.f,-1.f)
 					};
 					Vector2 chunkRadius(chunk.width, chunk.length);
-					bool updateModel = lodChanged[x][z];
 					for (int i = 0; i < 4; i++) {
 						Vector2 direction = cardinal[i];
 						int adjX = x + (int)direction.x;
@@ -923,7 +918,7 @@ namespace world {
 						if (m_chunks.Bounded(adjX, adjZ)) {
 							HeightMap & adjacent = *m_chunks[adjX][adjZ];
 							if ((lodChanged[x][z] || lodChanged[adjX][adjZ]) && lods[x][z] < lods[adjX][adjZ]) {
-								updateModel = true;
+								lodChanged[x][z] = true;
 								// Assume that the difference in LOD is a factor of 2 spacing
 								if (i % 2 == 0) {
 									int vx = i == 0 ? adjacent.width : 0;
@@ -940,19 +935,23 @@ namespace world {
 							}
 						}
 					}
-
-					if (updateModel) {
+				}
+			}
+			for (int x = 0; x < chunkCount; x++) {
+				for (int z = 0; z < chunkCount; z++) {
+					if (lodChanged[x][z]) {
 						unsigned int sampleSpacing = std::pow(2, lods[x][z]);
 						Rectangle sampleArea = Rectangle(x * m_regionWidth, z * m_regionWidth, m_regionWidth, m_regionWidth);
 						shared_ptr<IEffect> effect;
 						AssetManager::Get()->GetEffect("Terrain", effect);
 						auto model = AssetManager::Get()->CreateTerrainModel(m_width, m_regionWidth, m_chunks[x][z].get(), m_normals[x][z], sampleArea, sampleSpacing, effect);
-						m_mutex.lock();
+
 						m_chunkModels[x][z] = model;
-						m_mutex.unlock();
+
 					}
 				}
 			}
+			m_mutex.unlock();
 		}).detach();
 	}
 
@@ -1010,13 +1009,13 @@ namespace world {
 	{
 		IEventManager::RegisterHandler(EventTypes::WEM_RegionLoaded, std::function<void(shared_ptr<WEM::RegionType>)>([&](shared_ptr<WEM::RegionType> region) {
 			// Load terrain from disk into cache
-			m_cache[region] = AssetManager::Get()->GetHeightMap("terrain", AssetType::Procedural, region->GetArea());
+			//m_cache[region] = AssetManager::Get()->GetHeightMap("terrain", AssetType::Procedural, region->GetArea());
 		}));
 		IEventManager::RegisterHandler(EventTypes::WEM_RegionUnloaded, std::function<void(shared_ptr<WEM::RegionType>)>([&](shared_ptr<WEM::RegionType> region) {
 			// Save cache to disk
-			AssetManager::Get()->UpdateHeightMap("terrain", AssetType::Procedural, m_cache[region], region->GetArea());
+			//AssetManager::Get()->UpdateHeightMap("terrain", AssetType::Procedural, m_cache[region], region->GetArea());
 			// Erase the cache
-			m_cache.erase(region);
+			//m_cache.erase(region);
 		}));
 		IEventManager::RegisterHandler(EventTypes::Movement_PlayerMoved, std::function<void(float, float)>([=](float x, float z) {
 			UpdateLOD(Vector3(x, 0.f, z));

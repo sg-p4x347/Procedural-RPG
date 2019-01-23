@@ -24,7 +24,6 @@ namespace world {
 		RegisterInputActions();
 		MapKeys();
 		RegisterHandlers();
-		CreatePlayer();
 	}
 
 

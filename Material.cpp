@@ -2,8 +2,8 @@
 #include "Material.h"
 
 namespace geometry {
-	Material::Material() :
-		name("Default"),
+	Material::Material(string name) :
+		name(name),
 		specularPower(0.f),
 		perVertexColor(false),
 		enableSkinning(false),
@@ -13,7 +13,7 @@ namespace geometry {
 		specularColor(),
 		emissiveColor(),
 		textures(),
-		pixelShader()
+		pixelShader("Lambert.cso")
 	{
 	}
 	shared_ptr<DirectX::IEffect> Material::GetEffect(IEffectFactory * fxFactory)

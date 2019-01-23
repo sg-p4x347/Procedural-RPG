@@ -16,33 +16,7 @@ namespace world {
 		m_entities(EM->NewEntityCache<Position,Plant>()),
 		SM(systemManager)
 	{
-		{
-			auto plant = std::make_shared<Plant>(100.f, 100.f);
-			AssetID asset = AssetManager::Get()->AddModel(plant->model);
-			EM->CreateEntity(Position(Vector3::Zero), Model(asset, AssetType::Procedural));
-
-			plant->seed = std::make_shared<Plant::Seed>(*plant, Matrix::Identity, 0.01f);
-			Plant::Action addRoot;
-			addRoot.growNewComponent.type = Plant::ComponentTypes::RootComponent;
-			addRoot.growNewComponent.componentIndex = 0;
-			plant->DNA.push_back(addRoot);
-			Plant::Action growRoot;
-			growRoot.grow.componentIndex = 1;
-			growRoot.grow.radius = 0.5f;
-			plant->DNA.push_back(growRoot);
-			Plant::Action addStem;
-			addStem.growNewComponent.type = Plant::ComponentTypes::StemComponent;
-			addStem.growNewComponent.componentIndex = 1;
-			addStem.growNewComponent.yawPitchRoll.y = 0.5f;
-			plant->DNA.push_back(addStem);
-			Plant::Action growStem;
-			growStem.grow.componentIndex = 2;
-			growStem.grow.radius = 0.25f;
-			plant->DNA.push_back(growStem);
-
-			plants.push_back(plant);
-
-		}
+		
 	}
 
 	string PlantSystem::Name()
@@ -54,6 +28,41 @@ namespace world {
 	{
 		// update plants according to their dna
 		if (Game::Get().KeyboardTracker.IsKeyPressed(DirectX::Keyboard::Keys::V)) {
+			
+		//}
+		//if (Game::Get().KeyboardTracker.IsKeyPressed(DirectX::Keyboard::Keys::C)) {
+			auto plant = std::make_shared<Plant>(100.f, 100.f);
+			AssetID asset = AssetManager::Get()->AddModel(plant->model);
+			EM->CreateEntity(Position(EM->PlayerPos()), Model(asset, AssetType::Procedural));
+
+			plant->seed = std::make_shared<Plant::Seed>(*plant, Matrix::Identity, 0.01f);
+			Plant::GrowNewComponent addRoot;
+			addRoot.type = Plant::ComponentTypes::RootComponent;
+			addRoot.componentIndex = 0;
+			plant->AddAction(addRoot);
+			Plant::Grow growRoot;
+			growRoot.componentIndex = 1;
+			growRoot.radius = 0.5f;
+			plant->AddAction(growRoot);
+			int levels = 7;
+			for (int i = 0; i < levels; i++) {
+				Plant::GrowNewComponent addStem;
+				addStem.type = Plant::ComponentTypes::StemComponent;
+				addStem.componentIndex = i+1;
+				addStem.yawPitchRoll.y = 0.25f;
+				addStem.yawPitchRoll.x = XM_PI * 0.628f;
+				addStem.position = 1.f;
+				plant->AddAction(addStem);
+				addStem.yawPitchRoll.y = -0.25f;
+				plant->AddAction(addStem);
+
+				Plant::Grow growStem;
+				growStem.componentIndex = i+2;
+				growStem.radius = 0.02f * (levels - i);
+				plant->AddAction(growStem);
+			}
+			plants.push_back(plant);
+
 			UpdateGeneticPlants(Vector3::Down, plants);
 		}
 		for (auto & entity : m_entities) {
@@ -65,8 +74,11 @@ namespace world {
 	{
 		GenerateTreeModels();
 		auto terrainSystem = SM->GetSystem<TerrainSystem>("Terrain");
-		GenerateTreeEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
-		JsonParser config(std::ifstream("config/continent.json"));
+		
+		JsonParser config(std::ifstream("config/plants.json"));
+		if (config["trees"].To<bool>()) {
+			GenerateTreeEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
+		}
 		if (config["grass"].To<bool>()) {
 			GenerateGrassEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
 		}
@@ -103,22 +115,26 @@ namespace world {
 			Plant::ExternalResource external;
 			external.Temperature = 20.f;
 			// Get the next action
-			if (plant->DnaCursor < plant->DNA.size()) {
+			while (plant->DnaCursor < plant->DNA.size()) {
 				auto & action = plant->DNA[plant->DnaCursor];
-				if (action.type == Plant::ActionTypes::GrowAction) {
-					vector<shared_ptr<Plant::PlantComponent>> components;
-					plant->seed->NthComponents(action.grow.componentIndex, components);
+				shared_ptr<Plant::Grow> grow = dynamic_pointer_cast<Plant::Grow>(action);
+				shared_ptr<Plant::GrowNewComponent> growNewComponent = dynamic_pointer_cast<Plant::GrowNewComponent>(action);
+				shared_ptr<Plant::CollectWaterAction> collectWater = dynamic_pointer_cast<Plant::CollectWaterAction>(action);
+				shared_ptr<Plant::CreateSugarAction> createSugar = dynamic_pointer_cast<Plant::CreateSugarAction>(action);
+				if (grow) {
+					vector<Plant::PlantComponent*> components;
+					plant->seed->NthComponents(grow->componentIndex, components);
 					for (auto & component : components) {
-						component->Grow(action.grow.radius);
+						component->Grow(grow->radius);
 					}
 					UpdateModel(*plant);
-				} else if (action.type == Plant::ActionTypes::CreateSugarAction) {
+				} else if (createSugar) {
 					external.CO2 = 100.f;
 					// calculate how much external light is available
 					external.Light = CalculateLight(lightDirection,*plant);
 					plant->CreateSugar(external);
 				}
-				else if (action.type == Plant::ActionTypes::CollectWaterAction) {
+				else if (collectWater) {
 					// calculate how much external water is available
 					// Based on a half sphere volume
 					for (auto & root : plant->Roots) {
@@ -126,34 +142,36 @@ namespace world {
 					}
 					plant->CollectWater(external);
 				}
-				else if (action.type == Plant::ActionTypes::GrowNewComponentAction) {
-					vector<shared_ptr<Plant::PlantComponent>> components;
-					plant->seed->NthComponents(action.growNewComponent.componentIndex, components);
-					for (auto & component : components) {
+				else if (growNewComponent) {
+					vector<Plant::PlantComponent*> components;
+					plant->seed->NthComponents(growNewComponent->componentIndex, components);
+					for (auto & parentComponent : components) {
 						shared_ptr<Plant::PlantComponent> component;
 						Matrix transform = Matrix::CreateFromYawPitchRoll(
-							action.growNewComponent.yawPitchRoll.x,
-							action.growNewComponent.yawPitchRoll.y,
-							action.growNewComponent.yawPitchRoll.x
-						);
+							growNewComponent->yawPitchRoll.x,
+							growNewComponent->yawPitchRoll.y,
+							growNewComponent->yawPitchRoll.z
+						) * Matrix::CreateTranslation(Vector3(0.f,growNewComponent->position,0.f));
 
-						switch (action.growNewComponent.type) {
+						switch (growNewComponent->type) {
 						case Plant::ComponentTypes::LeafComponent:
-							component = shared_ptr<Plant::PlantComponent>(new Plant::Leaf(*plant,transform));
+							component = shared_ptr<Plant::PlantComponent>(new Plant::Leaf(parentComponent,transform));
 							plant->Leaves.push_back(dynamic_pointer_cast<Plant::Leaf>(component));
 							break;
 						case Plant::ComponentTypes::StemComponent:
-							component = shared_ptr<Plant::PlantComponent>(new Plant::Stem(*plant, transform,1.f,0.001f));
+							component = shared_ptr<Plant::PlantComponent>(new Plant::Stem(parentComponent, transform,1.f,0.001f));
 							plant->Stems.push_back(dynamic_pointer_cast<Plant::Stem>(component));
 							break;
 						case Plant::ComponentTypes::RootComponent:
-							component = shared_ptr<Plant::PlantComponent>(new Plant::Root(*plant, transform, 0.001f));
+							component = shared_ptr<Plant::PlantComponent>(new Plant::Root(parentComponent, transform, 0.001f));
 							plant->Roots.push_back(dynamic_pointer_cast<Plant::Root>(component));
 							break;
 						}
+						parentComponent->Children.push_back(component);
 					}
 					UpdateModel(*plant);
 				}
+				plant->DnaCursor++;
 			}
 			// Operational cost
 			plant->Sugar -= 0.1f;
@@ -161,9 +179,6 @@ namespace world {
 			// Check for death status
 			if (plant->Sugar < 0.f) {
 				dead.push_back(plant);
-			}
-			else {
-				plant->DnaCursor++;
 			}
 		}
 		// remove the dead plants
@@ -218,7 +233,9 @@ namespace world {
 		mesh->GetParts().clear();
 		for (auto & stem : plant.Stems) {
 			GenerateTopologyRecursive(stem, tc);
-			mesh->AddPart(tc.CreateMeshPart());
+			auto && part = tc.CreateMeshPart();
+			part.SetMaterial(plant.model->GetMaterial("wood"));
+			mesh->AddPart(part);
 		}
 		lod->ModelChanged();
 	}
@@ -229,6 +246,8 @@ namespace world {
 		tc.Tube(path, [=](float & t) {
 			return stem->Radius * 2.f;
 		},
+			1,
+			10,
 			PathType::LinearPath
 			);
 	}

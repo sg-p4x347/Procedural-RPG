@@ -20,6 +20,7 @@ namespace geometry {
 		shared_ptr<CollisionModel> GetCollision();
 		bool IsAlpha() const;
 		shared_ptr<LodGroup> GetLOD(int lod = 0);
+		shared_ptr<Material> GetMaterial(string name);
 		//----------------------------------------------------------------
 		// Modifiers
 		int AddLOD(float threshold = 0.f);

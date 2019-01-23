@@ -33,6 +33,10 @@ namespace geometry {
 	{
 		return m_lodGroups[lod];
 	}
+	shared_ptr<Material> CMF::GetMaterial(string name)
+	{
+		return m_materials[name];
+	}
 	int CMF::AddLOD(float threshold)
 	{
 		m_lodGroups.push_back(std::make_shared<LodGroup>(threshold));
@@ -440,7 +444,7 @@ namespace geometry {
 			Material material;
 			auto fbxMaterial = scene->GetMaterial(i);
 			material.name = fbxMaterial->GetName();
-			material.pixelShader = "C:\\Gage Omega\\Programming\\Procedural-RPG\\Assets\\" + fbxMaterial->ShadingModel.Get() + ".cso";
+			material.pixelShader = fbxMaterial->ShadingModel.Get() + ".cso";
 			
 			//Get the implementation to see if it's a hardware shader.
 			const fbxsdk::FbxImplementation* lImplementation = GetImplementation(fbxMaterial, FBXSDK_IMPLEMENTATION_HLSL);
@@ -657,7 +661,7 @@ namespace geometry {
 				}
 			}
 		}
-		else {
+		else if (m_lodGroups.size() == 1) {
 			return m_lodGroups[0]->GetModel(d3dDevice, fxFactory);
 		}
 		return nullptr;

@@ -7,6 +7,10 @@ HeightMap::HeightMap() : Map<float>::Map()
 {
 }
 
+HeightMap::~HeightMap()
+{
+}
+
 HeightMap::HeightMap(int w, float i, float d, int z) : Map<float>::Map(w,i,d,z)
 {
 }

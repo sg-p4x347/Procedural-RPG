@@ -14,6 +14,7 @@ namespace geometry {
 		string materialName;
 		shared_ptr<Material> material;
 		void SetMaterial(shared_ptr<Material> mat);
+		
 		// Inherited via ISerialization
 		virtual void Import(std::istream & ifs) override;
 		virtual void Export(std::ostream & ofs) override;

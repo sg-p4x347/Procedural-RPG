@@ -3,7 +3,7 @@
 namespace geometry {
 	struct Material : public ISerialization
 	{
-		Material();
+		Material(string name = "material");
 		string name;
 		float specularPower;
 		bool perVertexColor;

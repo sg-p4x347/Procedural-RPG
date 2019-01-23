@@ -20,26 +20,27 @@ namespace world {
 			RootComponent
 		};
 		struct PlantComponent {
+			PlantComponent(PlantComponent* parent, Matrix transform);
 			PlantComponent(Plant & plant, Matrix transform);
 			vector<shared_ptr<PlantComponent>> Children;
-			shared_ptr<PlantComponent> Parent;
+			PlantComponent* Parent;
 			Plant & ParentPlant;
 			Matrix Transform;
 			Matrix WorldMatrix;
 
-			void NthComponents(int n, vector<shared_ptr<PlantComponent>> & components);
+			void NthComponents(int n, vector<PlantComponent*> & components);
 			virtual void Grow(float radius) = 0;
 			virtual float GetMass() = 0;
 		};
 		struct Leaf : public PlantComponent {
-			Leaf(Plant & plant, Matrix transform);
+			Leaf(PlantComponent * parent, Matrix transform);
 			
 			vector<Vector3> GetVertices();
 			void Grow(float radius) override;
 			float GetMass() override;
 		};
 		struct Stem : public PlantComponent {
-			Stem(Plant & plant, Matrix transform, float length, float radius);
+			Stem(PlantComponent * parent, Matrix transform, float length, float radius);
 			float Length;
 			float Radius;
 			
@@ -49,7 +50,7 @@ namespace world {
 			float GetMass() override;
 		};
 		struct Root : public PlantComponent {
-			Root(Plant & plant, Matrix transform, float radius);
+			Root(PlantComponent * parent, Matrix transform, float radius);
 			float Radius;
 
 			Vector3 GetCenter();
@@ -66,45 +67,42 @@ namespace world {
 		};
 		//----------------------------------------------------------------
 		// Genetic Algorithm Actions
-		enum ActionTypes {
-			GrowAction,
-			GrowNewComponentAction,
-			CollectWaterAction,
-			CreateSugarAction
+		struct Action {
+			Action() {}
+			virtual ~Action() {}
 		};
-		struct Grow {
+		struct Grow : public Action {
 			int componentIndex;
 			float radius;
 		};
-		struct GrowNewComponent {
+		struct GrowNewComponent : public Action {
+			GrowNewComponent();
 			int componentIndex;
 			ComponentTypes type;
 			float position;
 			Vector3 yawPitchRoll;
 		};
-		struct CollectWater {
+		struct CollectWaterAction : public Action {
 			float amount;
 		};
-		struct CreateSugar {
+		struct CreateSugarAction : public Action {
 			float amount;
 		};
-		union Action {
-			Action(){}
-			ActionTypes type;
-			Grow grow;
-			GrowNewComponent growNewComponent;
-			CollectWater collectWater;
-			CreateSugar createSugar;
-		};
+		
 	public:
 		Plant(float sugar = 0.f, float water = 0.f);
 		float AvailableCapacity();
 		float Effectiveness(float temperature);
 		void CreateSugar(ExternalResource & external);
 		void CollectWater(ExternalResource & external);
+		template<typename ActionType>
+		void AddAction(ActionType action) {
+			std::shared_ptr<Action> base((Action *)new ActionType(action));
+			DNA.push_back(base);
+		}
 	public:
 		// Genetic Data
-		vector<Action> DNA;
+		vector<std::shared_ptr<Action>> DNA;
 		int DnaCursor;
 		float OptimalTemperature;
 		float TemperatureTolerance;

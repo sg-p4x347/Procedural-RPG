@@ -2,18 +2,25 @@
 #include "Plant.h"
 
 namespace world {
-	Plant::PlantComponent::PlantComponent(Plant & plant,Matrix transform) : ParentPlant(plant), Transform(transform)
+	Plant::PlantComponent::PlantComponent(PlantComponent * parent, Matrix transform) :
+		ParentPlant(parent->ParentPlant),
+		Parent(parent),
+		Transform(transform)
 	{
 		WorldMatrix = (Parent ? Parent->WorldMatrix : Matrix::Identity) * transform;
 	}
-	void Plant::PlantComponent::NthComponents(int n,vector<shared_ptr<PlantComponent>> & components)
+	Plant::PlantComponent::PlantComponent(Plant & plant,Matrix transform) : ParentPlant(plant), Transform(transform), Parent(nullptr)
 	{
-		if (n == 1) {
-			components.insert(components.end(), Children.begin(), Children.end());
+		WorldMatrix = (Parent ? Parent->WorldMatrix : Matrix::Identity) * transform;
+	}
+	void Plant::PlantComponent::NthComponents(int n,vector<PlantComponent*> & components)
+	{
+		if (n == 0) {
+			components.push_back(this);
 		}
 		else {
 			for (auto & child : Children) {
-				NthComponents(n - 1, components);
+				child->NthComponents(n - 1, components);
 			}
 		}
 	}
@@ -26,6 +33,10 @@ namespace world {
 		Mass(0.f),
 		model(new geometry::CMF("plant"))
 	{
+		shared_ptr<geometry::Material> material = std::make_shared<geometry::Material>("wood");
+		material->textures.push_back("wood.dds");
+		material->pixelShader = "Wood.cso";
+		model->AddMaterial(material);
 		model->AddLOD();
 		model->AddMesh(std::make_shared<geometry::Mesh>());
 	}
@@ -64,7 +75,7 @@ namespace world {
 		external.Water -= transferAmount;
 		Water += transferAmount;
 	}
-	Plant::Leaf::Leaf(Plant & plant, Matrix transform) : PlantComponent::PlantComponent(plant,transform)
+	Plant::Leaf::Leaf(PlantComponent * parent, Matrix transform) : PlantComponent::PlantComponent(parent,transform)
 	{
 		ParentPlant.Sugar -= 0.1f;
 	}
@@ -83,9 +94,10 @@ namespace world {
 	{
 		return 0.01f;
 	}
-	Plant::Stem::Stem(Plant & plant, Matrix transform, float length, float radius) : 
-		PlantComponent::PlantComponent(plant, transform),
-		Length(length)
+	Plant::Stem::Stem(PlantComponent * parent, Matrix transform, float length, float radius) :
+		PlantComponent::PlantComponent(parent, transform),
+		Length(length),
+		Radius(0.f)
 	{
 		Grow(radius);
 	}
@@ -111,7 +123,7 @@ namespace world {
 		// Cylinder
 		return XM_PI * Radius * Radius * Length;
 	}
-	Plant::Root::Root(Plant & plant, Matrix transform, float radius) : PlantComponent::PlantComponent(plant, transform)
+	Plant::Root::Root(PlantComponent * parent, Matrix transform, float radius) : PlantComponent::PlantComponent(parent, transform), Radius(0.f)
 	{
 		Grow(radius);
 	}
@@ -147,5 +159,13 @@ namespace world {
 	{
 		// Sphere
 		return (4.f / 3.f) * XM_PI * Radius * Radius * Radius;
+	}
+	Plant::GrowNewComponent::GrowNewComponent() :
+		componentIndex(0),
+		position(0.f),
+		type(StemComponent),
+		yawPitchRoll()
+	{
+		
 	}
 }

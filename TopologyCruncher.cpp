@@ -165,6 +165,10 @@ void TopologyCruncher::Tube(
 			point = cubic->GetPoint(t);
 			forward = cubicDerivative->GetPoint(t);
 			normal = cubicDerivative2->GetPoint(t);
+		} else if (type == PathType::LinearPath) {
+			point = path[i];
+			forward = i == longitudeDivisions ? path[i] - path[i - 1] : path[i + 1] - path[i];
+			normal = Vector3::Zero;
 		}
 		points.push_back(point);
 		forward.Normalize();
@@ -240,14 +244,13 @@ void TopologyCruncher::Tube(
 			Vector3 n4 = (v4 - points[loopIndex]);
 			n4.Normalize();
 
-
-			m_VB.push_back(CreateVertex(v2, n2, Vector2(0, 0))); // 2
 			m_VB.push_back(CreateVertex(v1, n1, Vector2(0.f, 1.f))); // 1
+			m_VB.push_back(CreateVertex(v2, n2, Vector2(0, 0))); // 2
 			m_VB.push_back(CreateVertex(v4,n4, Vector2(1.f, 1.f))); // 4
 			
 
-			m_VB.push_back(CreateVertex(v2, n2, Vector2(0, 0))); // 2
 			m_VB.push_back(CreateVertex(v4, n4, Vector2(1.f, 1.f))); // 4
+			m_VB.push_back(CreateVertex(v2, n2, Vector2(0, 0))); // 2
 			m_VB.push_back(CreateVertex(v3, n3, Vector2(1.f, 0.f))); // 3
 			
 

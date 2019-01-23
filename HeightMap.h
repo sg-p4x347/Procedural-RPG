@@ -5,6 +5,7 @@ class HeightMap :
 {
 public:
 	HeightMap();
+	~HeightMap();
 	HeightMap(int w, float i, float d, int z);
 	HeightMap(int width, int length);
 	HeightMap(Rectangle area);

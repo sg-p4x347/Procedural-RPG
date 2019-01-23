@@ -74,7 +74,7 @@ namespace world {
 		Map<shared_ptr<DirectX::Model>> m_chunkModels;
 		Map<int> m_chunkLOD;
 		void UpdateLOD(Vector3 center);
-		map<shared_ptr<WEM::RegionType>,shared_ptr<HeightMap>> m_cache;
+		//map<shared_ptr<WEM::RegionType>,shared_ptr<HeightMap>> m_cache;
 		// 2 dimensional maps -------------------------------------------
 		int m_width;				// The total width of the continent (in meters)
 		const int m_regionWidth;	// Width of region divisions (in meters)
