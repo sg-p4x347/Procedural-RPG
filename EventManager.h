@@ -17,6 +17,7 @@ enum EventTypes {
 	GUI_HideHint,
 	GUI_OpenMenu,
 	GUI_CloseMenu,
+	GUI_DebugInfo,
 
 	Sound_PlayEffect,
 	Sound_PlayMusic,

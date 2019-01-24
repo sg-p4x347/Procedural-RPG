@@ -78,6 +78,7 @@ private:
 	bool m_ready;
 	std::mutex m_mutex;
 	std::mutex m_syncMutex;
+	
 	std::deque<int> m_frameDeltas;
 	// DirectX
 	

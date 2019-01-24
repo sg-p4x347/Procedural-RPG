@@ -539,6 +539,26 @@ void GuiSystem::BindHandlers()
 	IEventManager::RegisterHandler(GUI_CloseMenu, std::function<void()>([this] {
 		CloseMenu();
 	}));
+	IEventManager::RegisterHandler(EventTypes::GUI_DebugInfo, std::function<void(string, string)>([=](string key, string value) {
+		std::lock_guard<std::mutex> guard(m_debugUpdate);
+		EntityPtr container = GetElementByID("DebugInfo");
+		if (container) {
+			EntityPtr listing = FindElementByIdRecursive(container, key);
+			string text = key + " : " + value;
+			if (listing) {
+				listing->GetComponent<Text>("Text")->String = text;
+			}
+			else {
+				GuiEM.AddChild(container, GuiEM.NewTextPanel(text, [=]() {
+					Style * style = new Style();
+					style->FontColor = "rgb(1,1,1)";
+					style->FontSize = "16px";
+					style->Height = "24px";
+					return style;
+				}(), key));
+			}
+		}
+	}));
 }
 
 void GuiSystem::CharTyped(char ch)

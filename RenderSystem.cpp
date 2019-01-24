@@ -461,6 +461,7 @@ void RenderSystem::RegisterHandlers()
 	IEventManager::RegisterHandler(EventTypes::WEM_RegionUnloaded, std::function<void(shared_ptr<world::WEM::RegionType>)>([=](shared_ptr<world::WEM::RegionType> region) {
 		UnloadRegion(region);
 	}));
+	
 }
 
 
@@ -1473,6 +1474,6 @@ void RenderSystem::UpdateFramerate()
 	avg /= m_frameDeltas.size();
 	avg = 1.0 / ((double)avg / 1000);
 	// convert average milliseconds to frames per second
-	m_guiSystem->SetTextByID("Framerate","FPS: " + to_string(avg));
+	IEventManager::Invoke(EventTypes::GUI_DebugInfo,string("Framerate"),to_string(avg));
 	last = now;
 }

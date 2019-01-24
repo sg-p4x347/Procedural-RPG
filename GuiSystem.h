@@ -49,6 +49,7 @@ private:
 	SystemManager * SM;
 	GUI::GuiEntityManager GuiEM;
 	Rectangle m_outputRect;
+	std::mutex m_debugUpdate;
 	//----------------------------------------------------------------
 	// Menus
 	EntityPtr m_currentMenu;

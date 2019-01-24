@@ -146,6 +146,7 @@ namespace world {
 			gui->UpdateUI();
 		});
 		
+		
 		gui->SetTextByID("Message", "Generating Plants ...");
 		m_systemManager.GetSystem<PlantSystem>("Plant")->Generate();
 		gui->SetTextByID("Message", "Generation Done");

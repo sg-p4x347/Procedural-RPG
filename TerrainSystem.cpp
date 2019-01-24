@@ -49,8 +49,6 @@ namespace world {
 		m_directory = directory / Name();
 		Filesystem::create_directory(m_directory);
 		RegisterHandlers();
-		//m_workerThread = TaskThread()
-		//m_workers = Map<std::thread>(m_width / m_regionWidth,0,0,0);
 		// initialize chunk lods to an unplausible Low lod
 		for (int x = 0; x < m_chunkLOD.width;x++) {
 			for (int z = 0; z < m_chunkLOD.length;z++) {
@@ -211,6 +209,7 @@ namespace world {
 		// Terrain done yay!
 		AssetManager::Get()->CreateHeightMapModel("terrain", TerrainMap.get(), AssetManager::Get()->CreateNormalMap(TerrainMap.get()), 10.f, m_regionWidth, "Terrain");
 		CreateTerrainEntities();
+		
 		//SaveTerrain(*TerrainMap,biome);
 
 
@@ -233,7 +232,9 @@ namespace world {
 		}), 10.f, m_regionWidth, "Water");
 		//CreateWaterEntities();
 		//SaveWater(*WaterMap);
-
+		auto position = Vector3(m_width / 2, TerrainMap->Height(m_width / 2, m_width / 2), m_width / 2);
+		EM->GetEntity<Position>(EM->PlayerID())->Get<Position>().Pos = position;
+		EM->UpdatePosition(EM->PlayerID(), position);
 		// Resources
 		//CreateResourceEntities();
 
