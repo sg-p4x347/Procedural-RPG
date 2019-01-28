@@ -26,8 +26,8 @@ namespace world {
 
 			m_regions = vector<vector<shared_ptr<Region<CompTypes...>>>>(m_regionDimension, vector<shared_ptr<Region<CompTypes...>>>(m_regionDimension));
 
-			for (int x = 0; x < m_regionDimension; x++) {
-				for (int z = 0; z < m_regionDimension; z++) {
+			for (unsigned int x = 0; x < m_regionDimension; x++) {
+				for (unsigned int z = 0; z < m_regionDimension; z++) {
 					m_regions[x][z] = make_shared<Region<CompTypes...>>(directory / (std::to_string(x) + ',' + std::to_string(z)), m_maskIndex,DirectX::SimpleMath::Rectangle(x * m_regionWidth,z * m_regionWidth,m_regionWidth,m_regionWidth));
 					//m_loadedRegions.insert(m_regions[x][z]);
 				}
@@ -74,7 +74,9 @@ namespace world {
 		unsigned int GetRegionWidth() {
 			return m_regionWidth;
 		}
-
+		const unsigned int GetWorldWidth() {
+			return m_worldWidth;
+		}
 		template<typename ... SigTypes>
 		EntityID CreateEntity(Position && position, SigTypes && ... components) {
 			MaskType signature = GetMask<Position, SigTypes...>();
@@ -276,8 +278,8 @@ namespace world {
 			int maxZ = ClampRegion((int)ceil((z + range) / m_regionWidth));
 
 			unordered_set<shared_ptr<RegionType>> newRegions;
-			for (x = minX; x < maxX; x++) {
-				for (z = minZ; z < maxZ; z++) {
+			for (x = (float)minX; x < (float)maxX; x++) {
+				for (z = (float)minZ; z < (float)maxZ; z++) {
 					newRegions.insert(m_regions[x][z]);
 				}
 			}

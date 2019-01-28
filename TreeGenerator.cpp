@@ -2,7 +2,7 @@
 #include "TreeGenerator.h"
 #include "TreeBranch.h"
 #include "TopologyCruncher.h"
-
+#include "Cylinder.h"
 using namespace Tree;
 TreeGenerator::TreeGenerator()
 {
@@ -18,27 +18,32 @@ shared_ptr<geometry::CMF> TreeGenerator::Generate(TreeType type)
 {
 	Branch trunk = Branch(Vector3::Zero, Vector3::UnitY,0.05f,TerminalDiameter(type,0.05f));
 	//trunk.GrowVertical(4);
-	float height = trunk.TotalLength();
+	float height = 7.f;
 	GenerateBranches(type, trunk,1,DirectX::XMMatrixIdentity());
 	
 	//tc.Tube(vector<Vector3>{Vector3(0, 0, 0), Vector3(10.f, 10.f, 10.f), Vector3(0, 15, 0)}, [](float t) {return t;}, 30, 10, PathType::BezierPath);
 	shared_ptr<geometry::CMF> model = std::make_shared<geometry::CMF>("tree");
 	shared_ptr<geometry::Material> material = std::make_shared<geometry::Material>();
+	material->name = "wood";
 	material->textures.push_back("wood.dds");
-	material->pixelShader = "lambert.cso";
+	material->pixelShader = "Lambert.cso";
 	material->ambientColor = Vector3::One;
 	model->AddMaterial(material);
-	for (int lod = 0; lod < 4; lod++) {
+	for (int lod = 0; lod < 8; lod++) {
 		TopologyCruncher tc;
-		GenerateTopologyRecursive(trunk, tc, lod);
+		GenerateTopologyRecursive(trunk, tc, lod, height);
 
-		model->AddLOD();
+		model->AddLOD((lod + 1) * 16.f);
 		auto mesh = std::make_shared<geometry::Mesh>();
 		auto part = tc.CreateMeshPart();
+		part.alpha = false;
 		part.SetMaterial(material);
 		mesh->AddPart(part);
 		model->AddMesh(mesh,lod);
 	}
+	auto collision = std::make_shared<geometry::CollisionModel>();
+	collision->volumes.push_back(std::shared_ptr<geometry::CollisionVolume>(new geometry::Cylinder(0.025f, Vector3::UnitY * height, Vector3::UnitY * height * 0.5f)));
+	model->SetCollision(collision);
 	return model;
 }
 void TreeGenerator::GenerateBranches(TreeType type, Branch & trunk, int iteration, XMMATRIX frame)
@@ -97,15 +102,14 @@ void TreeGenerator::GenerateBranches(TreeType type, Branch & trunk, int iteratio
 	//}
 }
 
-void TreeGenerator::GenerateTopologyRecursive(Tree::Branch & branch, TopologyCruncher & tc, int lod)
+void TreeGenerator::GenerateTopologyRecursive(Tree::Branch & branch, TopologyCruncher & tc, int lod, float scale)
 {
-	static const float scalingFactor = 7.f;
 	static const float polygonWidth = 0.2f * (lod + 1);
-	int radialDivisions = std::max(3, int((PI * branch.StartDiameter * scalingFactor) / polygonWidth));
-	int longitudeDivisions = std::max(1, int((branch.Length() * scalingFactor) / polygonWidth));
+	int radialDivisions = std::max(3, int((PI * branch.StartDiameter * scale) / polygonWidth));
+	int longitudeDivisions = std::max(1, int((branch.Length() * scale) / polygonWidth));
 	// Add variance between the branching points
 	//static const float maxVariance = 0.01f;
-	vector<Vector3> path{ branch.Start * scalingFactor };
+	vector<Vector3> path{ branch.Start * scale };
 	//Vector3 lastPoint = branch.Start;
 	//for (auto & child : branch.Branches) {
 	//	path.push_back(child.Start * scalingFactor);
@@ -114,15 +118,15 @@ void TreeGenerator::GenerateTopologyRecursive(Tree::Branch & branch, TopologyCru
 
 	//	lastPoint = child.Start;
 	//}
-	path.push_back(branch.End * scalingFactor);
+	path.push_back(branch.End * scale);
 	// Generate the topology
-	tc.Tube(path, [&branch](float & t) {
-		return Utility::Lerp(branch.StartDiameter * scalingFactor, branch.EndDiameter * scalingFactor, t);
+	tc.Tube(path, [&branch,scale](float & t) {
+		return Utility::Lerp(branch.StartDiameter * scale, branch.EndDiameter * scale, t);
 	}, longitudeDivisions, radialDivisions, PathType::BezierPath);
 	// recurse over children
 	for (auto & child : branch.Branches) {
 		if (child.Length() > 0.05 * lod) {
-			GenerateTopologyRecursive(child, tc,lod);
+			GenerateTopologyRecursive(child, tc,lod, scale);
 		}
 	}
 

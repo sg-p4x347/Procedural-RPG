@@ -12,7 +12,5 @@
      width:200px;
      background:rgba(0,0,0,0.5);
      ">
-		<div id="Output1" style="font-color:rgb(1,1,1);font-size:16px;height:32px;" text=""></div>
-		<div id="CullCount" style="font-color:rgb(1,1,1);font-size:16px;height:32px;" text=""></div>
   </div>
 </div>

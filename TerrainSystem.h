@@ -8,6 +8,7 @@
 #include "Droplet.h"
 #include "ThermalCell.h"
 #include "WorldDomain.h"
+#include <atomic>
 class SystemManager;
 
 using DirectX::SimpleMath::Vector3;
@@ -47,22 +48,16 @@ namespace world {
 		float Average(Rectangle area);
 		void Save(HeightMap & map);
 		void RegisterHandlers();
-		// terrain manipulation (TEMP currently only updates the VBO)
-		void SetVertex(const int & x, const int & z, const float value);
 	public:
 		// TEMP
 		unique_ptr<Map<WaterCell>> WaterMap;
 		unique_ptr<HeightMap> TerrainMap;
 	protected:
 		SystemManager * SM;
-		std::mutex m_mutex;
+		std::atomic_bool m_writingModel;
+		std::pair<int, int> m_mutexRegion;
+		shared_ptr<DirectX::Model> m_chunkBuffer;
 		std::mutex m_updateLodMutex;
-		//----------------------------------------------------------------
-		// Entities
-		//----------------------------------------------------------------
-		// Threading
-		//Map<std::thread> m_workers;
-		//std::thread m_workers[64][64];
 		//----------------------------------------------------------------
 		// Loading and Updating Regions
 		int LOD(double distance, unsigned int modelWidth);
@@ -74,7 +69,6 @@ namespace world {
 		Map<shared_ptr<DirectX::Model>> m_chunkModels;
 		Map<int> m_chunkLOD;
 		void UpdateLOD(Vector3 center);
-		//map<shared_ptr<WEM::RegionType>,shared_ptr<HeightMap>> m_cache;
 		// 2 dimensional maps -------------------------------------------
 		int m_width;				// The total width of the continent (in meters)
 		const int m_regionWidth;	// Width of region divisions (in meters)
@@ -110,26 +104,20 @@ namespace world {
 		void UpdateWater(HeightMap & terrain, Map<WaterCell> & water, std::function<void(float)> && progressCallback);
 		//----------------------------------------------------------------
 		// Updating meshes
-		//void UpdateRegions(DirectX::SimpleMath::Vector3 center);
-		//shared_ptr<HeightMap> UpdateTerrainVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo, int  x, int  z);
-		//void UpdateWaterVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo, shared_ptr<HeightMap> terrain, int  x, int z);
-		//VertexPositionNormalTangentColorTexture CreateVertex(Vector3 position, Vector3 normal, Vector2 texture);
 		float LowestNeighbor(HeightMap & water, HeightMap & terrain, int x, int z);
 		//----------------------------------------------------------------
 		// Terrain
 		void CreateTerrainEntities();
 		void NewTerrain(DirectX::SimpleMath::Vector3 & position);
-		void SaveTerrain(HeightMap & terrain, HeightMap & biome);
 		//----------------------------------------------------------------
 		// Water
 		void CreateWaterEntities();
 		void NewWater(DirectX::SimpleMath::Vector3 & position);
-		void SaveWater(Map<WaterCell> & water);
 		//----------------------------------------------------------------
 		// Resources
 		//void CreateResourceEntities();
 		//void NewResourceNode(Vector3 & position, Vector3 & rotation, string model, std::map<string, int> inventoryItems);
 		float ResourceGradientProbability(float gradient);
-	};
+};
 
 }

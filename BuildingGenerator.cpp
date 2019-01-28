@@ -216,25 +216,6 @@ namespace world {
 		vector<Architecture::Rectangle> divided = DivideRect(parentRect, 0.5, true);
 		Architecture::Rectangle subRectA = divided[0];
 		Architecture::Rectangle subRectB = divided[1];
-		//// pick a spot to divide the rectangle
-		//long largeSide = max(parentRect.width, parentRect.height);
-		//long smallSize = min(parentRect.width, parentRect.height);
-
-		//long divisionSideA = (long)Utility::randWithin((float(largeSide) / 2.f) - (float(largeSide)*m_divisionDeviation), float(largeSide) / 2.f);
-		//long divisionSideB = largeSide - divisionSideA;
-
-		//Rectangle subRectA = Rectangle(
-		//	parentRect.x,
-		//	parentRect.y,
-		//	divisionSideA,
-		//	smallSize
-		//);
-		//Rectangle subRectB = Rectangle(
-		//	parentRect.x + (largeSide == parentRect.width ? divisionSideA : 0),
-		//	parentRect.y + (largeSide == parentRect.height ? divisionSideA : 0),
-		//	divisionSideB,
-		//	smallSize
-		//);
 
 		/* if the average fitness of the two subRects is better
 		than the original rect*/
@@ -246,7 +227,7 @@ namespace world {
 
 			// try to add some randomness to the mix
 			// divides the rect on the long side, deviating by "divisionDeviation" away from half way (0.5)
-			vector<Architecture::Rectangle> unequalRects = DivideRect(parentRect, Utility::Deviation(m_divisionDeviation, 0.5), true);
+			vector<Architecture::Rectangle> unequalRects = DivideRect(parentRect, Utility::Deviation(m_divisionDeviation, 0.5f), true);
 			double fitnessUneqA = RoomFitness(unequalRects[0], roomCfg);
 			double fitnessUneqB = RoomFitness(unequalRects[1], roomCfg);
 			if ((fitnessUneqA + fitnessUneqB) / 2.0 > parentFitness) {
@@ -261,9 +242,9 @@ namespace world {
 			int indexB = -1;
 			if (subRectA.Area() > 0 && subRectB.Area() > 0) {
 				rects.push_back(subRectA);
-				indexA = rects.size() - 1;
+				indexA = (int)rects.size() - 1;
 				rects.push_back(subRectB);
-				indexB = rects.size() - 1;
+				indexB = (int)rects.size() - 1;
 
 				// recursively break down the best rect until a room is created
 				if (recursive) {

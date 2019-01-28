@@ -58,7 +58,6 @@ public:
 	);
 	// Inherited via System
 	virtual void Update(double & elapsed) override;
-	virtual void SyncEntities() override;
 	void SetViewport(int width, int height);
 	Rectangle GetViewport();
 	void InitializeWorldRendering(world::WEM * entityManager);
@@ -75,6 +74,7 @@ private:
 	const float m_clipNear;
 	const float m_clipFar;
 	float m_aspectRatio;
+	bool m_wireframe;
 	bool m_ready;
 	std::mutex m_mutex;
 	std::mutex m_syncMutex;

@@ -88,7 +88,7 @@ TaskManager::TaskManager() : m_active(0), m_canPeek(true), m_waitingSync(false)
 {
 	m_threadCount = std::thread::hardware_concurrency() * 8;
 	// Initialize the threads
-	for (int i = 0; i < m_threadCount; i++) {
+	for (uint32_t i = 0; i < m_threadCount; i++) {
 		m_threads.push_back(std::make_shared<WorkerThread>(this));
 	}
 }
@@ -97,7 +97,7 @@ TaskManager::TaskManager() : m_active(0), m_canPeek(true), m_waitingSync(false)
 TaskManager::~TaskManager()
 {
 	// Stop the threads
-	for (int i = 0; i < m_threadCount; i++) {
+	for (uint32_t i = 0; i < m_threadCount; i++) {
 		m_threads[i]->Stop();
 	}
 	m_peekCondition.notify_all();

@@ -49,7 +49,7 @@ vector<EntityPtr> PersistenceEntityManager::LoadEntities(unsigned long & compone
 	for (int i = 0; i < m_maskSize; i++) {
 		if (mask[i]) {
 			unordered_set<unsigned int> nextMatching;
-			Filesystem::path directory = m_directory / NameOf(std::pow(2, i));
+			Filesystem::path directory = m_directory / NameOf((unsigned long)std::pow(2, i));
 			if (Filesystem::exists(directory)) {
 				for (auto & dir : Filesystem::directory_iterator(directory)) {
 					string fileName = FileSystemHelpers::FilenameWithoutExtension(dir.path());

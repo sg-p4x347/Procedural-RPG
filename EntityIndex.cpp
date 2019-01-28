@@ -91,7 +91,7 @@ namespace world {
 		}
 		else {
 			// Claim the next unused ID
-			id = m_index.size() + 1;
+			id = (EntityID)m_index.size() + 1;
 		}
 		Add(id, info);
 		return id;

@@ -34,8 +34,8 @@ namespace world {
 		MaskType m_componentMask;
 		RegionEntityCaches m_regionCaches;
 	private:
-		int GetSize() {
-			int size = 0;
+		size_t GetSize() {
+			size_t size = 0;
 			for (auto & regionCache : m_regionCaches) {
 				size += regionCache.second.GetSize();
 			}

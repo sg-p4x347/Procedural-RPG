@@ -177,15 +177,13 @@ namespace world {
 		//m_systemManager.AddSystem(std::shared_ptr<System>(new BuildingSystem(m_entityManager.get(), 0)));
 		//m_systemManager.AddSystem(std::shared_ptr<System>(new ResourceSystem(m_entityManager.get(), 0)));
 
-		//m_systemManager.Initialize();
-
-		//----------------------------------------------------------------
-		// Assets
-		/*IEventManager::RegisterHandler(EventTypes::WEM_Resync, std::function<void(void)>([]() {
-			AssetManager::Get()->CollectGarbage();
-		}));*/
-
 		IEventManager::RegisterHandler(EventTypes::Render_Synced, std::function<void(void)>([=] {
+			ResumeGame();
+		}));
+		IEventManager::RegisterHandler(EventTypes::Game_Pause, std::function<void(void)>([=] {
+			PauseGame();
+		}));
+		IEventManager::RegisterHandler(EventTypes::Game_Resume, std::function<void(void)>([=] {
 			ResumeGame();
 		}));
 		auto position = m_entityManager->PlayerPos();

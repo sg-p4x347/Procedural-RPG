@@ -28,7 +28,7 @@ namespace world {
 
 	Vector3 MovementSystem::UpdatedPosition(Vector3 & position, Vector3 & velocity, const double & elapsed)
 	{
-		return position + velocity * elapsed;
+		return position + velocity * (float)elapsed;
 	}
 
 	Matrix MovementSystem::GetWorldMatrix(Vector3 & position, Vector3 & rotation)
@@ -57,7 +57,7 @@ namespace world {
 				MovementTracker tracker(EM->GetRegionWidth());
 				tracker.Update(position.Pos);
 				position.Pos = MovementSystem::UpdatedPosition(position.Pos, movement.Velocity,elapsed);
-				movement.Velocity += movement.Acceleration * elapsed;
+				movement.Velocity += movement.Acceleration * (float)elapsed;
 				if (tracker.Update(position.Pos)) {
 					// region boundary crossed
 					regionChanges.push_back(std::make_pair(entity.GetID(), position.Pos));
@@ -65,7 +65,7 @@ namespace world {
 
 
 				// Rotations
-				position.Rot += movement.AngularVelocity * elapsed;
+				position.Rot += movement.AngularVelocity * (float)elapsed;
 				position.Rot.x = std::fmod(position.Rot.x, XM_2PI);
 				position.Rot.y = std::fmod(position.Rot.y, XM_2PI);
 				position.Rot.z = std::fmod(position.Rot.z, XM_2PI);

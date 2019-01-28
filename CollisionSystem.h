@@ -21,10 +21,9 @@ namespace world {
 		WorldEntityCache<WEM::RegionType, Position, Collision,Movement> m_dynamic;
 		WorldEntityCache<WEM::RegionType, Position, Collision> m_static;
 		WorldEntityCache<WEM::RegionType, Position, VoxelGridModel> m_grids;
-		std::map<AssetID, shared_ptr<geometry::CollisionModel>> m_collisionAssets;
 	private:
 		std::vector<Vector3> BoxVertices(BoundingBox & box,Matrix & transform);
-		shared_ptr<geometry::CollisionModel> GetCollisionAsset(AssetID asset);
+		shared_ptr<geometry::CollisionModel> GetCollisionAsset(AssetID asset, AssetType type);
 		// Bakes individual collision assets together within Grid space and caches the result on the voxel
 		shared_ptr<geometry::CollisionModel> GetCollisionAsset(ModelVoxel & voxel);
 		bool CheckCollision(
@@ -35,6 +34,7 @@ namespace world {
 		);
 		void CheckCollision(
 			Position & position,
+			Movement & movement,
 			shared_ptr<geometry::CollisionVolume> & dynamicCollisionVolume,
 			shared_ptr<geometry::CollisionVolume> & dynamicCollisionVolumePrime,
 			Position & staticPosition,

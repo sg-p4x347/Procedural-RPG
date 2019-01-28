@@ -10,7 +10,7 @@
 namespace geometry {
 
 	std::mutex CMF::m_mutex;
-	CMF::CMF(string name) : m_name(name)
+	CMF::CMF(string name) : m_name(name), m_alpha(false)
 	{
 	}
 
@@ -25,6 +25,12 @@ namespace geometry {
 	{
 		return m_collision;
 	}
+
+	void CMF::SetCollision(shared_ptr<CollisionModel> collision)
+	{
+		m_collision = collision;
+	}
+
 	bool CMF::IsAlpha() const
 	{
 		return m_alpha;
@@ -288,9 +294,9 @@ namespace geometry {
 				auto transform = fbxMesh->GetNode()->EvaluateGlobalTransform();
 				auto control = transform.MultT(fbxMesh->GetControlPointAt(fbxMesh->GetPolygonVertex(polyIndex, polyVertIndex)).mData);
 				//auto control = fbxMesh->GetControlPointAt(fbxMesh->GetPolygonVertex(polyIndex, polyVertIndex)).mData;
-				vertex.position.x = control[0];
-				vertex.position.y = control[1];
-				vertex.position.z = control[2];
+				vertex.position.x = (float)control[0];
+				vertex.position.y = (float)control[1];
+				vertex.position.z = (float)control[2];
 				fbxsdk::FbxVector4 normal;
 				if (fbxMesh->GetPolygonVertexNormal(polyIndex, polyVertIndex, normal)) {
 					normal = transform.MultT(normal) - transform.MultT(fbxsdk::FbxZeroVector4);
@@ -314,8 +320,8 @@ namespace geometry {
 						case FbxGeometryElement::eIndexToDirect:
 						{
 							auto uv = uvElement->GetDirectArray().GetAt(lTextureUVIndex);
-							vertex.textureCoordinate.x = uv[0];
-							vertex.textureCoordinate.y = -uv[1];
+							vertex.textureCoordinate.x = (float)uv[0];
+							vertex.textureCoordinate.y = -(float)uv[1];
 						}
 						break;
 						default:
@@ -427,7 +433,7 @@ namespace geometry {
 			Vector3 axisVec3 = Vector3(axis[0], axis[1], axis[2]);
 			Vector3 centerVec3 = Vector3(center[0], center[1], center[2]);
 			return shared_ptr<CollisionVolume>(new geometry::Cylinder(
-				radial.Length(),
+				(float)radial.Length(),
 				axisVec3,
 				centerVec3
 			));
@@ -492,7 +498,7 @@ namespace geometry {
 				{
 					const FbxBindingTableEntry& lEntry = lRootTable->GetEntry(i);
 					const char* lEntrySrcType = lEntry.GetEntryType(true);
-					FbxProperty lFbxProp;
+					fbxsdk::FbxProperty lFbxProp;
 					FbxString lTest = lEntry.GetSource();
 					Utility::OutputLine(string("Entry: ") + lTest.Buffer());
 					if (strcmp(FbxPropertyEntryView::sEntryType, lEntrySrcType) == 0)
@@ -544,9 +550,9 @@ namespace geometry {
 				// Display the Emissive Color
 				material.emissiveColor = Convert(((FbxSurfacePhong *)fbxMaterial)->Emissive.Get());
 				//Opacity is Transparency factor now
-				material.alpha = ((FbxSurfacePhong *)fbxMaterial)->TransparencyFactor.Get();
+				material.alpha = (float)((FbxSurfacePhong *)fbxMaterial)->TransparencyFactor.Get();
 				// Display the Shininess
-				material.specularPower = ((FbxSurfacePhong *)fbxMaterial)->Shininess;
+				material.specularPower = (float)((FbxSurfacePhong *)fbxMaterial)->Shininess;
 				// Display the Reflectivity
 				//((FbxSurfacePhong *)fbxMaterial)->ReflectionFactor;
 			}
@@ -560,7 +566,7 @@ namespace geometry {
 				// Display the Emissive
 				material.emissiveColor = Convert(((FbxSurfaceLambert *)fbxMaterial)->Emissive.Get());
 				// Display the Opacity
-				material.alpha = (((FbxSurfaceLambert *)fbxMaterial)->TransparencyFactor.Get());
+				material.alpha = (float)(((FbxSurfaceLambert *)fbxMaterial)->TransparencyFactor.Get());
 			}
 			else
 				ss << "Unknown type of Material" << std::endl;
@@ -601,11 +607,11 @@ namespace geometry {
 	{
 		return XMFLOAT4(double4[0], double4[1], double4[2], double4[3]);
 	}
-	vector<string> CMF::GetTextureConnections(FbxProperty & property)
+	vector<string> CMF::GetTextureConnections(fbxsdk::FbxProperty & property)
 	{
 		vector<string> textures;
 		//no layered texture simply get on the property
-		int lNbTextures = property.GetSrcObjectCount<FbxTexture>();
+		int lNbTextures = property.GetSrcObjectCount<fbxsdk::FbxTexture>();
 		for (int j = 0; j < lNbTextures; ++j)
 		{
 			FbxFileTexture* lTexture = fbxsdk::FbxCast<FbxFileTexture>(property.GetSrcObject<FbxTexture>(j));

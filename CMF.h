@@ -18,6 +18,7 @@ namespace geometry {
 		// Accessors
 		string GetName() const;
 		shared_ptr<CollisionModel> GetCollision();
+		void SetCollision(shared_ptr<CollisionModel> collision);
 		bool IsAlpha() const;
 		shared_ptr<LodGroup> GetLOD(int lod = 0);
 		shared_ptr<Material> GetMaterial(string name);

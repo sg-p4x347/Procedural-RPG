@@ -376,7 +376,7 @@ void GuiSystem::Update(double & elapsed)
 {
 	if (m_currentMenu) {
 		if (Game::MouseState.positionMode == Mouse::MODE_ABSOLUTE) {
-			Vector2 mousePos(Game::MouseState.x, Game::MouseState.y);
+			Vector2 mousePos((float)Game::MouseState.x, (float)Game::MouseState.y);
 			int scrollTicks = DirectX::Mouse::Get().GetState().scrollWheelValue;
 			char character = '\0';
 			
@@ -427,10 +427,10 @@ void GuiSystem::Update(double & elapsed)
 	}
 	if (m_handMenu) {
 		if (Game::MouseState.positionMode == Mouse::MODE_ABSOLUTE) {
-			Vector2 mousePos(Game::MouseState.x, Game::MouseState.y);
+			Vector2 mousePos((float)Game::MouseState.x, (float)Game::MouseState.y);
 			auto sprite = GetSprite(m_handMenu);
-			sprite->Rect.x = mousePos.x;
-			sprite->Rect.y = mousePos.y;
+			sprite->Rect.x = (long)mousePos.x;
+			sprite->Rect.y = (long)mousePos.y;
 			UpdateFlowRecursive(m_handMenu, 1);
 		}
 	}
@@ -549,13 +549,15 @@ void GuiSystem::BindHandlers()
 				listing->GetComponent<Text>("Text")->String = text;
 			}
 			else {
-				GuiEM.AddChild(container, GuiEM.NewTextPanel(text, [=]() {
+				listing = GuiEM.NewTextPanel(text, [=]() {
 					Style * style = new Style();
 					style->FontColor = "rgb(1,1,1)";
 					style->FontSize = "16px";
 					style->Height = "24px";
 					return style;
-				}(), key));
+				}(), key);
+				GuiEM.AddChild(container, listing);
+				UpdateFlowRecursive(container, 1);
 			}
 		}
 	}));
@@ -1059,11 +1061,11 @@ void GuiSystem::UpdateSprite(EntityPtr entity, shared_ptr<Style> style, shared_p
 void GuiSystem::UpdateText(shared_ptr<Text> text, shared_ptr<Sprite> sprite, shared_ptr<Style> style)
 {
 	text->Font = style->Font;
-	text->Position.x = sprite->Rect.x;
-	text->Position.y = sprite->Rect.y;
+	text->Position.x = (float)sprite->Rect.x;
+	text->Position.y = (float)sprite->Rect.y;
 	text->Color = style->GetFontColor();
 
-	float fontSize = 0.f;
+	int fontSize = 0;
 	switch (style->GetFontSize(fontSize)) {
 	case DimensionType::Percent: text->FontSize = fontSize * sprite->Rect.height; break;
 	case DimensionType::Pixel: text->FontSize = (int)fontSize; break;
@@ -1118,7 +1120,7 @@ void GuiSystem::PositionChildren(EntityPtr parent)
 		int totalChildPrimary = 0;
 		int totalChildSecondary = 0;
 		int i = 0;
-		const int lastChildIndex = children->Entities.size() - 1;
+		const int lastChildIndex = (int)children->Entities.size() - 1;
 		for (auto & childID : children->Entities) {
 			EntityPtr child;
 			if (GuiEM.Find(childID, child)) {
@@ -1169,34 +1171,6 @@ void GuiSystem::PositionChildren(EntityPtr parent)
 			totalChildPrimary = std::max(totalChildPrimary, GetPrimaryPosition(flow,rows[rowIndex]) + GetPrimaryDimension(flow, rows[rowIndex]));
 			totalChildSecondary = std::max(totalChildSecondary, GetSecondaryPosition(flow, rows[rowIndex]) + GetSecondaryDimension(flow, rows[rowIndex]));
 		}
-		////----------------------------------------------------------------
-		//// Get total childen length
-		//int totalChildPrimary = 0;
-		//int totalChildSecondary = 0;
-		//for (auto & childID : children->Entities) {
-		//	EntityPtr child;
-		//	if (GuiEM.Find(childID, child)) {
-		//		auto childSprite = child->GetComponent<Sprite>("Sprite");
-		//		if (childSprite) {
-		//			childSprites.push_back(childSprite);
-		//			childSprite->Rect = CalculateChildRect(parentRect, child->GetComponent<Style>("Style_Default"));
-		//			totalChildPrimary += GetPrimaryDimension(flow, childSprite->Rect);
-		//			int secondary = GetSecondaryDimension(flow, childSprite->Rect);
-		//			if (secondary > totalChildSecondary) {
-		//				totalChildSecondary = secondary;
-		//			}
-		//		}
-		//	}
-		//}
-		//int primary = std::max(GetPrimaryDimension(flow, parentRect), totalChildPrimary);
-		//int primaryBisector = primary / 2;
-		//int secondary = std::max(GetSecondaryDimension(flow, parentRect),totalChildSecondary);
-		//int secondaryBisector = secondary / 2;
-
-		//----------------------------------------------------------------
-		// Get total dimensions of the content
-		//totalChildPrimary = maxChildPrimary;
-		//totalChildSecondary = rowOffset;
 		//----------------------------------------------------------------
 		// Scroll offsets
 		Vector2 contentSize = GetVector(flow, totalChildPrimary, totalChildSecondary);
@@ -1214,30 +1188,12 @@ void GuiSystem::PositionChildren(EntityPtr parent)
 		if (parentStyle->GetOverflowY() == OverflowType::Scroll) {
 			AddRectIfValid(parentRect, parentSprite->ClippingRects);
 		}
-		////----------------------------------------------------------------
-		//// Calculate primary axis offsets
-		//int primaryOffset = GetPrimaryPosition(flow, parentRect);
-		//switch (parentStyle->GetJustify()) {
-		//case AlignmentType::Center: primaryOffset += (primaryBisector - totalChildPrimary / 2); break;
-		//case AlignmentType::End: primaryOffset += (primary - totalChildPrimary); break;
-		//}
-		//int secondaryOffset = GetSecondaryPosition(flow, parentRect);
 		//----------------------------------------------------------------
 		// Apply offsets
 		for (auto & childSprite : allChildSprites) {
-			//Rectangle & childRect = childSprite->Rect;
-			//
-			//// secondary
-			//int childSecondaryOffset = secondaryOffset;
-			//switch (parentStyle->GetAlignItems()) {
-			//case AlignmentType::Center: childSecondaryOffset += (secondaryBisector - GetSecondaryDimension(flow, childRect) / 2);break;
-			//case AlignmentType::End: childSecondaryOffset += (secondary - GetSecondaryDimension(flow, childRect));break;
-			//}
 			// apply scroll offsets
-			childSprite->Rect.x += contentPos.x - parentRect.x;
-			childSprite->Rect.y += contentPos.y - parentRect.y;
-			// move the primary offset past this child
-			//primaryOffset += GetPrimaryDimension(flow, childRect);
+			childSprite->Rect.x += (long)contentPos.x - parentRect.x;
+			childSprite->Rect.y += (long)contentPos.y - parentRect.y;
 		}
 	}
 }
@@ -1363,8 +1319,8 @@ int GuiSystem::GetSecondaryPosition(FlowType flow, Rectangle rect)
 Vector2 GuiSystem::GetVector(FlowType flow, int primary, int secondary)
 {
 	switch (flow) {
-	case FlowType::Column: return Vector2(secondary, primary);
-	case FlowType::Row: return Vector2(primary, secondary);
+	case FlowType::Column: return Vector2((float)secondary, (float)primary);
+	case FlowType::Row: return Vector2((float)primary, (float)secondary);
 	}
 	return Vector2::Zero;
 }

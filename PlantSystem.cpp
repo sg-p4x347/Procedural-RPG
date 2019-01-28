@@ -72,11 +72,12 @@ namespace world {
 
 	void PlantSystem::Generate()
 	{
-		GenerateTreeModels();
+		
 		auto terrainSystem = SM->GetSystem<TerrainSystem>("Terrain");
 		
 		JsonParser config(std::ifstream("config/plants.json"));
 		if (config["trees"].To<bool>()) {
+			GenerateTreeModels();
 			GenerateTreeEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
 		}
 		if (config["grass"].To<bool>()) {
@@ -302,8 +303,8 @@ namespace world {
 		if (AssetManager::Get()->GetProceduralEM()->TryFindByPathID("tree", treeAsset)) {
 			EM->CreateEntity(
 				Position(position,rotation),
-				Model(treeAsset->ID(), AssetType::Procedural)
-				/*Collision(Box(Vector3(0.f,2.5f,0.f),Vector3(0.25f,5.f,0.25f)))*/
+				Model(treeAsset->ID(), AssetType::Procedural),
+				Collision(treeAsset->ID(),AssetType::Procedural)
 			);
 		}
 		

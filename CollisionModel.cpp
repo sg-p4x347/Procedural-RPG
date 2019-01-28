@@ -32,8 +32,13 @@ namespace geometry {
 			} else if (typeName == "ConvexHull") {
 				volume = shared_ptr<CollisionVolume>(new ConvexHull());
 			}
-			volume->Import(ifs);
-			volumes.push_back(volume);
+			if (volume) {
+				volume->Import(ifs);
+				volumes.push_back(volume);
+			}
+			else {
+				auto test = 0;
+			}
 		}
 	}
 	void CollisionModel::Export(std::ostream & ofs)

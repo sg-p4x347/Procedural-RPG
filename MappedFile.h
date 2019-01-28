@@ -86,8 +86,8 @@ public:
 					ofs.seekp(block.position);
 					ofs.write((const char *)(data + offset), transferSize);
 				}
-				block.size = transferSize;
-				block.buffer = blockAllocation - transferSize;
+				block.size = (uint32_t)transferSize;
+				block.buffer = (uint32_t)blockAllocation - block.size;
 				offset += transferSize;
 			}
 			ofs.close();
@@ -210,9 +210,9 @@ private:
 		std::ofstream ofs(m_dataFile, std::ofstream::binary | std::ofstream::app);
 		
 		Block block;
-		block.position = m_size;
-		block.size = size;
-		block.buffer = size * bufferSpace;
+		block.position = (uint32_t)m_size;
+		block.size = (uint32_t)size;
+		block.buffer = (uint32_t)(size * bufferSpace);
 		m_size += block.GetAllocationSize();
 		ofs.write((const char *)data, block.size);
 		ofs.write((const char *)data, block.buffer);

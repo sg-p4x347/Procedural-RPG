@@ -172,13 +172,13 @@ void Game::OnActivated()
 void Game::OnDeactivated()
 {
     // TODO: Game is becoming background window.
-
+	IEventManager::Invoke(EventTypes::Game_Pause);
 }
 
 void Game::OnSuspending()
 {
     // TODO: Game is being power-suspended (or minimized).
-	IEventManager::Invoke(EventTypes::Game_Suspend);
+	IEventManager::Invoke(EventTypes::Game_Pause);
 }
 
 void Game::OnResuming()

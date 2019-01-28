@@ -345,8 +345,7 @@ std::shared_ptr<geometry::CMF> AssetManager::GetModel(EntityPtr entity, AssetTyp
 		if (it != m_cmfCache.end())
 			return it->second;
 		
-		// Get the model from the compiled source file
-		Filesystem::path fullPath = m_authoredDir / (entity->GetComponent<PathID>("PathID")->Path + ".cmf");
+		Filesystem::path fullPath = FullPath(entity->GetComponent<PathID>("PathID")->Path,type,".cmf");
 		shared_ptr<geometry::CMF> model = std::make_shared<geometry::CMF>();
 		model->Import(std::ifstream(fullPath, std::ios_base::binary));
 
@@ -724,10 +723,16 @@ std::shared_ptr<geometry::CMF> AssetManager::GetModel(AssetID id, AssetType type
 {
 	EntityPtr entity;
 	switch (type) {
-	case Procedural: m_proceduralEM->Find(id, entity);break;
-	case Authored: m_authoredEM->Find(id, entity); break;
+	case Procedural: 
+		if (m_proceduralEM->Find(id, entity)) 
+			return GetModel(entity,type);
+		break;
+	case Authored: 
+		if(m_authoredEM->Find(id, entity)) 
+			return GetModel(entity,type); 
+		break;
 	}
-	return GetModel(entity, type);
+	return nullptr;
 }
 
 std::shared_ptr<Model> AssetManager::CreateModelFromHeightMap(

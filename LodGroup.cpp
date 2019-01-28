@@ -29,7 +29,9 @@ namespace geometry {
 				for (auto & part : mesh->GetParts()) {
 					auto effect = part.material->GetEffect(fxFactory);
 					auto temp = CustomModelLoadVBO::CreateFromVBO(d3dDevice, part.vertices, part.indices, effect, true);
-					dxMesh->meshParts.push_back(std::make_unique<DirectX::ModelMeshPart>(*(temp->meshes[0]->meshParts[0])));
+					auto && dxPart = temp->meshes[0]->meshParts[0];
+					dxPart->isAlpha = part.alpha;
+					dxMesh->meshParts.push_back(std::make_unique<DirectX::ModelMeshPart>(*(dxPart)));
 				}
 				m_model->meshes.push_back(dxMesh);
 			}

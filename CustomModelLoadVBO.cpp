@@ -179,8 +179,8 @@ std::shared_ptr<Model> CustomModelLoadVBO::CreateFromVBO(ID3D11Device * d3dDevic
 {
 	// create the meshdata header
 	VBO::header_t header;
-	header.numVertices = vertices.size();
-	header.numIndices = indices.size();
+	header.numVertices = (uint32_t)vertices.size();
+	header.numIndices = (uint32_t)indices.size();
 
 	unsigned long long headerSize = sizeof(VBO::header_t);
 	unsigned long long vertSize = sizeof(VertexPositionNormalTangentColorTexture) * header.numVertices;
@@ -191,5 +191,7 @@ std::shared_ptr<Model> CustomModelLoadVBO::CreateFromVBO(ID3D11Device * d3dDevic
 	memcpy((void *)meshData, &header, headerSize);
 	memcpy((void *)(meshData + headerSize), &vertices[0], vertSize);
 	memcpy((void *)(meshData + headerSize + vertSize), &indices[0], indexSize);
-	return CreateFromVBO(d3dDevice, meshData, headerSize + vertSize + indexSize, ieffect, ccw, pmalpha);
+	auto && model = CreateFromVBO(d3dDevice, meshData, headerSize + vertSize + indexSize, ieffect, ccw, pmalpha);
+	delete[] meshData;
+	return model;
 }

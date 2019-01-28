@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "Game.h"
 #include "RenderSystem.h"
 #include "Position.h"
 #include "Utility.h"
@@ -29,6 +30,7 @@ SM(systemManager),
 m_fov(XMConvertToRadians(70.f)),
 m_clipNear(0.01f),
 m_clipFar(8000.f),
+m_wireframe(false),
 m_ready(false)
 
 {
@@ -46,9 +48,6 @@ m_ready(false)
 		0, 0.f, 0.f, TRUE, TRUE, TRUE, FALSE);
 	m_scissorState = nullptr;
 	m_d3dDevice->CreateRasterizerState(&rsDesc, &m_scissorState);
-	//m_scissorState.reset(scissorState);
-		// error
-	//SetFont("impact");
 	for (int i = 0; i < 20; i++) {
 		m_frameDeltas.push_back(0);
 	}
@@ -60,6 +59,12 @@ RenderSystem::~RenderSystem()
 
 void RenderSystem::Update(double & elapsed)
 {
+	//----------------------------------------------------------------
+	// Update User controlled settings
+	if (Game::Get().KeyboardTracker.IsKeyPressed(Keyboard::Keys::F2)) {
+		m_wireframe = !m_wireframe;
+	}
+
 	// Clear the screen
 	Clear();
 
@@ -105,301 +110,62 @@ void RenderSystem::Render()
 			break;
 		}
 	}, mask, mask));
-		//Vector3 lookAt = position.Pos + Vector3(0.f,1.7f,0.f); // third person
-		// XMMATRIX view = XMMatrixLookAtRH(position.Pos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f)); // first person
-		//XMVECTOR cameraPos = lookAt - Vector3(x, y, z) * 3.f; // third person
+		
+	XMMATRIX view = XMMatrixLookAtRH(cameraPos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
+	m_viewMatrix = view;
+	XMMATRIX ProjectionMatrixLH = XMMatrixPerspectiveFovLH(m_fov, m_aspectRatio, m_clipNear, m_clipFar);
+	XMMATRIX ViewMatrixLH = XMMatrixLookAtLH(cameraPos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
+	XMVECTOR Determinant;
+	XMMATRIX InvViewMatrixLH = XMMatrixInverse(&Determinant, ViewMatrixLH);
+	m_frustum = BoundingFrustum();
+	m_frustum.CreateFromMatrix(m_frustum, ProjectionMatrixLH);
+	m_frustum.Transform(m_frustum, InvViewMatrixLH);
+	// Update the set of visible regions
 
-		XMMATRIX view = XMMatrixLookAtRH(cameraPos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
-		m_viewMatrix = view;
-		XMMATRIX ProjectionMatrixLH = XMMatrixPerspectiveFovLH(m_fov, m_aspectRatio, m_clipNear, m_clipFar);
-		XMMATRIX ViewMatrixLH = XMMatrixLookAtLH(cameraPos, lookAt, SimpleMath::Vector3(0.f, 1.f, 0.f));
-		XMVECTOR Determinant;
-		XMMATRIX InvViewMatrixLH = XMMatrixInverse(&Determinant, ViewMatrixLH);
-		m_frustum = BoundingFrustum();
-		m_frustum.CreateFromMatrix(m_frustum, ProjectionMatrixLH);
-		m_frustum.Transform(m_frustum, InvViewMatrixLH);
-		// Update the set of visible regions
-
-		//m_mutex.lock();
-		// Cull non-visible regions
-		UpdateVisibleRegions(cameraPos, cameraRot);
-		vector<shared_ptr<world::WEM::RegionType>> regions(m_visibleRegions.begin(),m_visibleRegions.end());
-		JobCaches && dynamicJobs = CreateDynamicJobs();
-		JobCaches && gridJobs = CreateGridJobs(cameraPos,m_frustum);
-		// Sort the regions front to back
-		DepthSort(regions, Vector2(cameraPos.x,cameraPos.z));
-		// Iterate front to back
-		for (auto & region : regions) {
-			vector<RenderJob> opaque = m_jobs[region].opaque;
-			auto it = dynamicJobs.find(region);
-			if (it != dynamicJobs.end()) {
-				opaque.insert(opaque.end(), it->second.opaque.begin(), it->second.opaque.end());
-			}
-			auto gridIt = gridJobs.find(region);
-			if (gridIt != gridJobs.end()) {
-				opaque.insert(opaque.end(), gridIt->second.opaque.begin(), gridIt->second.opaque.end());
-			}
-			// Render all visible opaque jobs
-			RenderTerrain(region, false);
-			RenderJobs(opaque, cameraPos,false);
-			
+	// Cull non-visible regions
+	UpdateVisibleRegions(cameraPos, cameraRot);
+	vector<shared_ptr<world::WEM::RegionType>> regions(m_visibleRegions.begin(),m_visibleRegions.end());
+	JobCaches && dynamicJobs = CreateDynamicJobs();
+	JobCaches && gridJobs = CreateGridJobs(cameraPos,m_frustum);
+	// Sort the regions front to back
+	DepthSort(regions, Vector2(cameraPos.x,cameraPos.z));
+	// Iterate front to back
+	for (auto & region : regions) {
+		vector<RenderJob> opaque = m_jobs[region].opaque;
+		auto it = dynamicJobs.find(region);
+		if (it != dynamicJobs.end()) {
+			opaque.insert(opaque.end(), it->second.opaque.begin(), it->second.opaque.end());
 		}
-		// Iterate back to front
-		for (auto & regionIt = regions.rbegin(); regionIt != regions.rend(); regionIt++) {
-			shared_ptr<world::WEM::RegionType> & region = *regionIt;
-			vector<RenderJob> alpha = m_jobs[region].alpha;
-			auto it = dynamicJobs.find(region);
-			if (it != dynamicJobs.end()) {
-				alpha.insert(alpha.end(), it->second.alpha.begin(), it->second.alpha.end());
-			}
-			auto gridIt = gridJobs.find(region);
-			if (gridIt != gridJobs.end()) {
-				alpha.insert(alpha.end(), gridIt->second.alpha.begin(), gridIt->second.alpha.end());
-			}
-			// Render all visible alpha jobs
-			RenderTerrain(region, true);
-			RenderJobs(alpha, cameraPos,true);
-			
+		auto gridIt = gridJobs.find(region);
+		if (gridIt != gridJobs.end()) {
+			opaque.insert(opaque.end(), gridIt->second.opaque.begin(), gridIt->second.opaque.end());
 		}
-		//m_mutex.unlock();
-	
-		
-		// Draw opaque terrain mesh parts
-		//RenderModels(position.Pos,m_terrainEntities->GetComponentMask(), true);
-		// Draw alpha terrain mesh parts
-		//RenderModels(position.Pos, m_terrainEntities->GetComponentMask(), false);
-		//----------------------------------------------------------------
-		// Render the ocean
-		RenderModel(m_oceanModel, XMMatrixMultiply(XMMatrixTranslationFromVector(Vector3(0.f, 0.05f, 0.f)), m_worldMatrix), true);
-		// Draw opaque mesh parts
-		//RenderModels(position.Pos, EM->GetMask<world::Position,world::Model>(), true);
-		// Draw grids
-
-		//for (auto & visibleRegion : m_visibleRegions) {
-		//	for (auto & gridJobs : m_gridInstances[visibleRegion]) {
-		//		for (auto & gridJob : gridJobs.second) {
-		//			
-		//			BoundingFrustum gridRelativeFrustum;
-		//			Matrix inverse = Matrix(gridJob.worldMatrix).Invert();
-		//			m_frustum.Transform(gridRelativeFrustum, inverse);
-		//			for (auto & renderJobVoxel : gridJob.voxels.GetIntersection(gridRelativeFrustum)) {
-		//				for (auto & renderJob : renderJobVoxel.jobs) {
-		//					RenderModel(renderJob.model, renderJob.worldMatrix, true);
-		//					//RenderModelMesh(pair.first.get(), XMMatrixMultiply(pair.second, gridJob.worldMatrix), true);
-		//				}
-		//			}
-		//		}
-		//	}
-		//}
-		
-		// Draw alpha mesh parts
-		//m_d3dContext->RSSetState(m_states->CullNone());
-		//RenderModels(position.Pos, EM->GetMask<world::Position, world::Model>(), false);
-		//m_d3dContext->RSSetState(m_states->CullCounterClockwise());
-
-		
-
-		
-	
-	//for (auto & regionCache : m_modelInstances) {
-	//	if (IsRegionVisible(regionCache.first, position.Pos, position.Rot,m_frustum)) {
-	//		for (auto & instanceCache : regionCache.second) {
-	//			shared_ptr<Model> dxModel = instanceCache.first;
-	//			for (auto & job : instanceCache.second) {
-	//				if (m_tracked.count(job.entity) != 0)
-	//					RenderModel(dxModel, job.worldMatrix, false);
-	//			}
-	//		}
-	//	}
-	//}
-	
-	/*for (auto & instances : m_modelInstances) {
-		shared_ptr<Model> dxModel = instances.first;
-		for (auto & job : instances.second) {
-			if (m_tracked.count(job.entity) != 0)
-				RenderModel(dxModel, job.worldMatrix, false);
-		}
-	}*/
-	// Render all buildings
-	/*for (EntityPtr & building : EM->FindEntities("Building")) {
+		// Render all visible opaque jobs
+		RenderTerrain(region, false);
+		RenderJobs(opaque, cameraPos,false);
 			
-		auto position = building->GetComponent<Components::Position>("Position");
-		auto dxModel = SM->GetSystem<BuildingSystem>("Building")->GetModel(building, Vector3::Distance(EM->PlayerPos()->Pos, position->Pos));
+	}
+	// Iterate back to front
+	for (auto & regionIt = regions.rbegin(); regionIt != regions.rend(); regionIt++) {
+		shared_ptr<world::WEM::RegionType> & region = *regionIt;
+		vector<RenderJob> alpha = m_jobs[region].alpha;
+		auto it = dynamicJobs.find(region);
+		if (it != dynamicJobs.end()) {
+			alpha.insert(alpha.end(), it->second.alpha.begin(), it->second.alpha.end());
+		}
+		auto gridIt = gridJobs.find(region);
+		if (gridIt != gridJobs.end()) {
+			alpha.insert(alpha.end(), gridIt->second.alpha.begin(), gridIt->second.alpha.end());
+		}
+		// Render all visible alpha jobs
+		RenderTerrain(region, true);
+		RenderJobs(alpha, cameraPos,true);
+			
+	}
+	//----------------------------------------------------------------
+	// Render the ocean
+	RenderModel(m_oceanModel, XMMatrixMultiply(XMMatrixTranslationFromVector(Vector3(EM->GetWorldWidth() / 2, 0.05f, EM->GetWorldWidth() / 2)), m_worldMatrix), false);
 
-		RenderCompositeModel(dxModel, position->Pos, position->Rot, true);
-	}*/
-}
-//void RenderSystem::SyncEntities()
-//{
-//	//std::thread([=] {
-//	if (EM && EM->Player()) {
-//		std::map<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>> vbos;
-//		for (auto & entity : EM->FindEntities(m_VBOmask)) {
-//			shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo = entity->GetComponent<Components::PositionNormalTextureTangentColorVBO>("PositionNormalTextureTangentColorVBO");
-//			if (vbos.find(vbo->Effect) == vbos.end()) {
-//				vbos.insert(std::pair<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>>(vbo->Effect, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>()));
-//			}
-//			vbos[vbo->Effect].push_back(vbo);
-//		}
-//		m_mutex.lock();
-//		m_VBOs = vbos;
-//		m_mutex.unlock();
-//		std::map<string, vector<shared_ptr<Components::Model>>> models;
-//		for (auto & entity : EM->FindEntitiesInRange(m_ModelMask, EM->PlayerPos()->Pos, 64)) {
-//			//for (auto & entity : EM->FindEntities(m_ModelMask)) {
-//			shared_ptr<Components::Model> model = entity->GetComponent<Components::Model>("Model");
-//			if (models.find(model->Effect) == models.end()) {
-//				models.insert(std::pair<string, vector<shared_ptr<Components::Model>>>(model->Effect, vector<shared_ptr<Components::Model>>()));
-//			}
-//			models[model->Effect].push_back(model);
-//		}
-//		m_mutex.lock();
-//		m_Models = models;
-//		m_mutex.unlock();
-//
-//		//}).detach();
-//	}
-//}
-void RenderSystem::SyncEntities()
-{
-	//std::thread([=] {
-	//if (EM) {
-	//	/*std::map<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>> vbos;
-	//	for (auto & entity : EM->FindEntities(m_VBOmask)) {
-	//		shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo = entity->GetComponent<Components::PositionNormalTextureTangentColorVBO>("PositionNormalTextureTangentColorVBO");
-	//		if (vbos.find(vbo->Effect) == vbos.end()) {
-	//			vbos.insert(std::pair<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>>(vbo->Effect, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>()));
-	//		}
-	//		vbos[vbo->Effect].push_back(vbo);
-	//	}
-	//	m_mutex.lock();
-	//	m_VBOs = vbos;
-	//	m_mutex.unlock();*/
-	//	
-	//	//std::map<shared_ptr<Model>, vector<XMMATRIX>> modelInstances;
-	//	//std::set<EntityPtr> tracked;
-	//	
-
-	//	/*auto modelEntities = EM->NewEntityCache<world::Model, world::Position>();
-	//	EM->UpdateCache(modelEntities);
-
-	//	for (auto & entity : modelEntities) {
-	//		TrackEntity(m_modelInstances,m_tracked,entity.GetProxy());
-	//	}*/
-	//	
-	//	
-	//	
-	//	world::MaskType buildingMask = EM->GetMask<world::VoxelGridModel, world::Position>();
-	//	world::MaskType terrainMask = EM->GetMask<world::Terrain>();
-	//	world::MaskType movementMask = EM->GetMask<world::Movement>();
-	//	Vector3 camera = EM->PlayerPos();
-	//	// terrain
-	//	TaskManager::Get().Push(Task([=]() {
-
-	//		ModelInstanceCache modelInstancesTemp;
-	//		for (auto & regionCache : m_terrainEntities->GetCaches()) {
-	//			for (auto & terrainEntity : regionCache.second) {
-	//				auto modelEntity = EM->GetEntity<world::Model, world::Position>(terrainEntity.GetID());
-	//				TrackEntity(modelInstancesTemp, regionCache.first, m_terrainEntities->GetComponentMask(), *modelEntity, camera, false, true);
-	//			}
-	//		}
-	//		m_mutex.lock();
-	//		std::swap(modelInstancesTemp, m_terrainInstances);
-	//		m_mutex.unlock();
-	//	}, terrainMask, terrainMask));
-	//	// static models
-	//	world::MaskType modelMask = EM->GetMask<world::Model, world::Position>();
-	//	TaskManager::Get().Push(Task([=]() {
-	//		ModelInstanceCache modelInstancesTemp;
-	//		auto modelEntities = EM->NewEntityCache<world::Model, world::Position>();
-	//		EM->UpdateCache(modelEntities, [=](world::MaskType & signature) {
-	//			return (signature & modelMask) == modelMask && !(signature & (terrainMask | movementMask));
-	//		});
-	//		for (auto & regionCache : modelEntities.GetCaches()) {
-	//			for (auto & modelEntity : regionCache.second) {
-	//				TrackEntity(modelInstancesTemp, regionCache.first, modelEntities.GetComponentMask(), modelEntity.GetProxy(), camera, false);
-	//			}
-	//		}
-	//		m_mutex.lock();
-	//		std::swap(modelInstancesTemp, m_modelInstances);
-	//		m_mutex.unlock();
-	//	}, modelMask, modelMask));
-	//	// dynamic models
-	//	world::MaskType query = modelMask | movementMask;
-	//	TaskManager::Get().RunSynchronous(Task([=] {
-
-	//		ModelInstanceCache modelInstancesTemp;
-	//		auto modelEntities = EM->NewEntityCache<world::Model, world::Position>();
-	//		EM->UpdateCache(modelEntities, [=](world::MaskType & signature) {
-	//			return (signature & query) == query;
-	//		});
-	//		for (auto & regionCache : modelEntities.GetCaches()) {
-	//			for (auto & modelEntity : regionCache.second) {
-	//				TrackEntity(modelInstancesTemp, regionCache.first, modelEntities.GetComponentMask(), modelEntity.GetProxy(), camera, true);
-	//			}
-	//		}
-	//		m_mutex.lock();
-	//		std::swap(modelInstancesTemp, m_dynamicModelInstances);
-	//		m_mutex.unlock();
-	//	}, query, modelMask));
-	//	// grids
-	//	TaskManager::Get().Push(Task([=]() {
-	//		GridInstanceCache gridInstancesTemp;
-	//		auto buildingEntities = EM->NewEntityCache<world::VoxelGridModel, world::Position>();
-	//		EM->UpdateCache(buildingEntities, [=](world::MaskType & signature) {
-	//			return signature == buildingMask;
-	//		});
-	//		for (auto & regionCache : buildingEntities.GetCaches()) {
-	//			for (auto & buildingEntity : regionCache.second) {
-	//				auto & position = buildingEntity.Get<world::Position>();
-	//				TrackGridEntity(gridInstancesTemp, regionCache.first, modelMask, position.Pos, position.Rot, buildingEntity.Get<world::VoxelGridModel>(), camera);
-	//			}
-	//		}
-	//		m_mutex.lock();
-	//		std::swap(gridInstancesTemp, m_gridInstances);
-	//		m_mutex.unlock();
-	//		if (!m_ready) IEventManager::Invoke(EventTypes::Render_Synced);
-	//		m_ready = true;
-	//	},
-	//		buildingMask,
-	//		modelMask | buildingMask));
-	//	
-
-
-	//	// terrain
-	//	/*accessMask = EM->GetMask<world::Terrain, world::Model, world::Position>();
-	//	TaskManager::Get().Push(Task([=]() {
-	//		m_syncMutex.lock();
-	//		std::map<shared_ptr<Model>, vector<RenderEntityJob>> modelInstancesTemp;
-	//		std::set<world::EntityID> trackedTemp;
-	//			auto terrainEntities = EM->NewEntityCache<world::Terrain, world::Model, world::Position>();
-	//			EM->UpdateGlobalCache(terrainEntities);
-
-	//			for (auto & entity : terrainEntities) {
-	//				auto modelEntity = EM->GetEntity<world::Model, world::Position>(entity.GetID());
-	//				TrackEntity(modelInstancesTemp, trackedTemp, modelEntity,true);
-	//			}
-	//			m_mutex.lock();
-	//			std::swap(modelInstancesTemp, m_modelInstances);
-	//			std::swap(trackedTemp, m_tracked);
-	//			m_mutex.unlock();
-	//			m_syncMutex.unlock();
-	//	}, 
-	//		accessMask,
-	//		accessMask));*/
-	//	
-	//	
-	//	//m_mutex.lock();
-	//	//m_modelInstances = modelInstances;
-	//	//m_tracked = tracked;
-	//	//m_mutex.unlock();
-	//	
-	//	//m_models = models;
-	//	
-
-	//	
-	//}
-	//}).detach();
 }
 void RenderSystem::SetViewport(int width, int height)
 {
@@ -419,24 +185,11 @@ void RenderSystem::InitializeWorldRendering(world::WEM * entityManager)
 {
 	EM = entityManager;
 	if (entityManager) {
-		/*EntityPtr ocean;
-		if (AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), "ocean", ocean)) {
-			CreateJob(m_staticJobs.opaque, 0, Vector3::Zero, Vector3::Zero, ocean->ID());
-		}*/
+		auto ocean = AssetManager::Get()->GetModel("ocean");
+		if (ocean) m_oceanModel = ocean->GetModel(AssetManager::Get()->GetDevice(), AssetManager::Get()->GetFxFactory());
 		
 		RegisterHandlers();
 		InitializeJobCache();
-		/*m_terrainEntities = std::unique_ptr<world::WorldEntityCache<world::WEM::RegionType, world::Terrain, world::Model, world::Position>>(
-			new world::WorldEntityCache<world::WEM::RegionType, world::Terrain, world::Model, world::Position>(entityManager->NewEntityCache<world::Terrain, world::Model, world::Position>()));
-		entityManager->UpdateGlobalCache(*m_terrainEntities);
-		for (auto & regionCache : m_terrainEntities->GetCaches()) {
-			for (auto & entity : regionCache.second) {
-				auto & position = entity.Get<world::Position>();
-				auto & model = entity.Get<world::Model>();
-				CreateJob(m_terrainJobs[regionCache.first].opaque, entity.GetID(), position.Pos, position.Rot, model.Asset, model.Type);
-				CreateJob(m_terrainJobs[regionCache.first].alpha, entity.GetID(), position.Pos, position.Rot, model.Asset, model.Type);
-			}
-		}*/
 		m_ready = true;
 		IEventManager::Invoke(EventTypes::Render_Synced);
 	}
@@ -656,7 +409,7 @@ void RenderSystem::UpdateVisibleRegions(Vector3 & cameraPosition, Vector3 & came
 			culledRegionCount++;
 		}
 	}
-	m_guiSystem->SetTextByID("CullCount", "Culled Regions: " + to_string(culledRegionCount));
+	IEventManager::Invoke(EventTypes::GUI_DebugInfo, string("CullCount"), to_string(culledRegionCount));
 }
 
 bool RenderSystem::IsRectVisible(Rectangle & area, Vector2 & observerPos, Vector2 & fovNorm1, Vector2 & fovNorm2)
@@ -749,142 +502,24 @@ void RenderSystem::RenderModels(Vector3 & cameraPos, world::MaskType signatureMa
 
 void RenderSystem::RenderModel(shared_ptr<DirectX::Model> model,XMMATRIX world, bool alpha)
 {
-	//model->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix !opaque)
-	//if (opaque) {
 	if (model) {
 		for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
 		{
 			auto mesh = it->get();
 			assert(mesh != 0);
 
-			mesh->PrepareForRendering(m_d3dContext.Get(), *m_states, alpha);
+			mesh->PrepareForRendering(m_d3dContext.Get(), *m_states, alpha,m_wireframe);
 
 			// Do model-level setCustomState work here
 
 			mesh->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix, alpha);
 		}
 	}
-	//}
-	//else {
-	//	for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
-	//	{
-	//		auto mesh = it->get();
-	//		assert(mesh != 0);
-
-	//		mesh->PrepareForRendering(m_d3dContext.Get(), *m_states, true);
-
-	//		// Do model-level setCustomState work here
-
-	//		mesh->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix, true);
-	//	}
-	//}
-	//model->Draw(m_d3dContext.Get(), *m_states, world, m_viewMatrix, m_projMatrix);
-
-
-	// An example of using a single custom effect when drawing all the parts of a Model
-	//if (effect) {
-	//	// Creating input layouts is expensive, so it shouldn't be done every frame
-	//	//std::vector<Microsoft::WRL::ComPtr<ID3D11InputLayout>> newInputLayouts;
-	//	bool effectsChanged = false;
-	//	for (auto mit = model->meshes.cbegin(); mit != model->meshes.cend(); ++mit)
-	//	{
-	//		auto mesh = mit->get();
-	//		assert(mesh != 0);
-	//		
-	//		for (auto it = mesh->meshParts.cbegin(); it != mesh->meshParts.cend(); ++it)
-	//		{
-	//			auto part = it->get();
-	//			assert(part != 0);
-	//			// Change the effect
-	//			if (part->effect != effect) {
-	//				
-	//				part->effect = effect;
-	//				part->ModifyEffect(m_d3dDevice.Get(), effect, false);
-	//				/*Microsoft::WRL::ComPtr<ID3D11InputLayout> il;
-	//				part->CreateInputLayout(m_d3dDevice.Get(), effect.get(), il.GetAddressOf());
-	//				part->inputLayout = il;*/
-	//				//newInputLayouts.emplace_back(il);
-	//				effectsChanged = true;
-	//			}
-	//		}
-	//	}
-	//	if (effectsChanged) model->Modified();
-
-	//	// Draw Model with custom effect override
-	//	auto imatrices = dynamic_cast<IEffectMatrices*>(effect.get());
-	//	if (imatrices)
-	//	{
-	//		imatrices->SetWorld(world);
-	//		imatrices->SetView(m_viewMatrix);
-	//		imatrices->SetProjection(m_projMatrix);
-	//	}
-
-	//	//size_t count = 0;
-	//	//for (auto mit = model->meshes.cbegin(); mit != model->meshes.cend(); ++mit)
-	//	//{
-	//	//	auto mesh = mit->get();
-	//	//	assert(mesh != 0);
-
-	//	//	for (auto it = mesh->meshParts.cbegin(); it != mesh->meshParts.cend(); ++it)
-	//	//	{
-	//	//		auto part = it->get();
-	//	//		assert(part != 0);
-
-	//	//		// Could call if a custom transformation was desired for each part
-	//	//		// if (imatricies) imatrices->SetWorld( local ) 
-
-	//	//		/*part->Draw(m_d3dContext.Get(), effect,
-	//	//			newInputLayouts[count++].Get());*/
-	//	//		part->Draw(m_d3dContext.Get(), effect.get(),
-	//	//			part->inputLayout.Get());
-	//	//	}
-	//	//}
-	//}
-	
-	//else {
-	/*	for (auto it = model->meshes.cbegin(); it != model->meshes.cend(); ++it)
-		{
-			auto mesh = it->get();
-			assert(mesh != 0);
-			
-			RenderModelMesh(mesh, world);
-			
-		}*/
-	//}
-	
-	//model->Draw(m_d3dContext.Get(), *m_states, final, m_viewMatrix, m_projMatrix);
 }
 
-void RenderSystem::RenderCompositeModel(shared_ptr<CompositeModel> model, Vector3 & position, Vector3 & rotation, bool backfaceCulling)
-{
-	XMMATRIX translation = XMMatrixTranslation(position.x, position.y, position.z);
-	XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(rotation);
-	XMMATRIX world = XMMatrixMultiply(rotMat, translation);
-
-	for (auto & pair : model->meshes) {
-		RenderModelMesh(pair.first.get(), XMMatrixMultiply(pair.second,world), backfaceCulling);
-	}
-
-}
-
-void RenderSystem::RenderModelMesh(DirectX::ModelMesh * mesh, XMMATRIX world, bool backfaceCulling)
-{
-	mesh->PrepareForRendering(m_d3dContext.Get(), *m_states, false);
-	/*if (!backfaceCulling) {
-		m_d3dContext->RSSetState(m_states->CullNone());
-	}
-	else {
-		m_d3dContext->RSSetState(m_states->CullCounterClockwise());
-
-	}*/
-	
-	//// Do model-level setCustomState work here
-	//m_d3dContext->RSSetState(m_states->CullNone());
-	mesh->Draw(m_d3dContext.Get(), world, m_viewMatrix, m_projMatrix, false);
-}
 
 void RenderSystem::Clear()
-{
+{  
 	// Clear the views.
 	m_d3dContext->ClearRenderTargetView(m_renderTargetView.Get(), Colors::CornflowerBlue);
 	m_d3dContext->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
@@ -921,13 +556,6 @@ void RenderSystem::UpdateEffectMatricies(std::shared_ptr<IEffectMatrices> effect
 	m_aspectRatio = float(backBufferWidth) / float(backBufferHeight);
 	m_projMatrix = Matrix::CreatePerspectiveFieldOfView(m_fov,
 		m_aspectRatio, m_clipNear,m_clipFar);
-	
-		/*DGSLEffectFactory::DGSLEffectInfo info;
-	    wchar_t* wide = nullptr;
-		Utility::StringToWchar(effectKey, wide);
-		info.name = wide;
-		shared_ptr<DGSLEffect> effect = std::dynamic_pointer_cast<DGSLEffect>(m_fxFactory->CreateEffect(info, m_d3dContext.Get()));
-		*/
 		
 		
 		effect->SetProjection(m_projMatrix);
@@ -1471,8 +1099,8 @@ void RenderSystem::UpdateFramerate()
 	for (int delta : m_frameDeltas) {
 		avg += delta;
 	}
-	avg /= m_frameDeltas.size();
-	avg = 1.0 / ((double)avg / 1000);
+	avg /= (int)m_frameDeltas.size();
+	avg = (int)(1.0 / ((double)avg / 1000));
 	// convert average milliseconds to frames per second
 	IEventManager::Invoke(EventTypes::GUI_DebugInfo,string("Framerate"),to_string(avg));
 	last = now;

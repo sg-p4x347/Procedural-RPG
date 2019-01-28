@@ -37,10 +37,12 @@ namespace geometry {
 
 	shared_ptr<CollisionVolume> geometry::Cylinder::Transform(DirectX::SimpleMath::Matrix matrix)
 	{
+		Vector3 centerPrime = Vector3::Transform(center, matrix);
+		Vector3 startPrime = Vector3::Transform(center - axis * 0.5f, matrix);
 		return shared_ptr<CollisionVolume>(new Cylinder(
 			radius,
-			axis,
-			Vector3::Transform(center,matrix)
+			(centerPrime - startPrime) * 2,
+			centerPrime
 		));
 	}
 	BoundingBox Cylinder::Bounds()

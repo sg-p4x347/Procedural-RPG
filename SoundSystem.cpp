@@ -17,7 +17,7 @@ SoundSystem::SoundSystem() : System::System(1), m_playMusic(false)
 		m_playMusic = false;
 	}), true);
 	// Handle application level events
-	IEventManager::RegisterHandler(EventTypes::Game_Suspend, std::function<void(void)>([=]() {
+	IEventManager::RegisterHandler(EventTypes::Game_Pause, std::function<void(void)>([=]() {
 		m_audEngine->Suspend();
 	}));
 	IEventManager::RegisterHandler(EventTypes::Game_Resume, std::function<void(void)>([=]() {

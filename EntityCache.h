@@ -45,8 +45,8 @@ namespace world {
 			int size = GetSize();
 			return iterator(this, size, size);
 		}
-		int GetSize() {
-			int size = 0;
+		size_t GetSize() {
+			size_t size = 0;
 			for (auto & sigCache : m_cache) {
 				size += get<0>(sigCache.second)->Get().size();
 			}

@@ -8,7 +8,7 @@ enum EventTypes {
 
 	Entity_SignatureChanged,
 
-	Game_Suspend,
+	Game_Pause,
 	Game_Resume,
 
 	Action_Check,

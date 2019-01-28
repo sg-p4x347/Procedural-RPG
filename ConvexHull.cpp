@@ -90,7 +90,6 @@ namespace geometry {
 	{
 		size_t vertexCount = 0;
 		DeSerialize(vertexCount, ifs);
-		vertices.resize(vertexCount);
 		for (size_t vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
 			Vector3 vertex;
 			DeSerialize(vertex, ifs);
@@ -98,8 +97,7 @@ namespace geometry {
 		}
 		size_t axisCount = 0;
 		DeSerialize(axisCount, ifs);
-		axes.resize(axisCount);
-		for (size_t axisIndex = 0; axisIndex < vertexCount; axisIndex++) {
+		for (size_t axisIndex = 0; axisIndex < axisCount; axisIndex++) {
 			Vector3 axis;
 			DeSerialize(axis, ifs);
 			AddAxis(axis);

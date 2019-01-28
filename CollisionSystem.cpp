@@ -21,7 +21,6 @@ namespace world {
 		IEventManager::RegisterHandler(EventTypes::WEM_Resync, std::function<void(void)> ([=]() {
 			SyncEntities();
 		}));
-
 		//// TEMP
 		//std::vector<Vector3> hullA{ 
 		//	Vector3(0,0,0),
@@ -70,7 +69,7 @@ namespace world {
 					position.Pos.x = std::max(0.f, std::min((float)terrainSystem->Width(), position.Pos.x));
 					position.Pos.z = std::max(0.f, std::min((float)terrainSystem->Width(), position.Pos.z));
 					vector<ContactInfo> contacts;
-					for (auto & volume : GetCollisionAsset(collision.Asset)->volumes) {
+					for (auto & volume : GetCollisionAsset(collision.Asset,collision.Type)->volumes) {
 						// Get the center bottom of the box for terrain collison
 						Vector3 bottomCenter = position.Pos;
 						float yRadius = volume->Support(Vector3::Down).y;
@@ -108,10 +107,11 @@ namespace world {
 							for (auto & other : m_static) { 
 								auto & staticPos = other.Get<Position>();
 								auto & staticCollision = other.Get<Collision>();
-								auto staticCollisionModel = GetCollisionAsset(staticCollision.Asset);
+								auto staticCollisionModel = GetCollisionAsset(staticCollision.Asset,staticCollision.Type);
 								if (staticCollisionModel) {
 									CheckCollision(
 										position,
+										movement,
 										dynamicVolume,
 										dynamicVolumePrime,
 										staticPos,
@@ -129,6 +129,7 @@ namespace world {
 									auto staticCollisionModel = GetCollisionAsset(voxel);
 									CheckCollision(
 										position,
+										movement,
 										dynamicVolume,
 										dynamicVolumePrime,
 										staticPos,
@@ -168,9 +169,9 @@ namespace world {
 			for (float y = 0.f; y <= box.Extents.y; y += box.Extents.y) {
 				for (float z = 0.f; z <= box.Extents.z; z += box.Extents.z) {
 					Vector3 & vertex = vertices[vertexIndex];
-					vertex.x = -box.Extents.x * 0.5 + x;
-					vertex.y = -box.Extents.y * 0.5 + y;
-					vertex.z = -box.Extents.z * 0.5 + z;
+					vertex.x = -float(box.Extents.x * 0.5 + x);
+					vertex.y = -float(box.Extents.y * 0.5 + y);
+					vertex.z = -float(box.Extents.z * 0.5 + z);
 
 					vertex = Vector3::Transform(vertex,transform);
 
@@ -180,18 +181,11 @@ namespace world {
 		}
 		return vertices;
 	}
-	shared_ptr<geometry::CollisionModel> CollisionSystem::GetCollisionAsset(AssetID asset)
+	shared_ptr<geometry::CollisionModel> CollisionSystem::GetCollisionAsset(AssetID asset, AssetType type)
 	{
-		auto it = m_collisionAssets.find(asset);
-		if (it != m_collisionAssets.end())
-			return it->second;
-
-		auto model = AssetManager::Get()->GetModel(asset, AssetType::Authored);
-		if (model) {
-			m_collisionAssets.insert(std::make_pair(asset, model->GetCollision()));
+		auto && model = AssetManager::Get()->GetModel(asset, type);
+		if (model)
 			return model->GetCollision();
-		}
-		// default if asset was not found
 		return nullptr;
 	}
 	shared_ptr<geometry::CollisionModel> CollisionSystem::GetCollisionAsset( ModelVoxel & voxel)
@@ -201,7 +195,7 @@ namespace world {
 		
 			for (auto & component : voxel.GetComponents()) {
 
-				auto compCollision = GetCollisionAsset(component.first);
+				auto compCollision = GetCollisionAsset(component.first,AssetType::Authored);
 				if (compCollision) {
 					// transform the component collision asset within the voxel space
 					collision.Merge(compCollision->Transform(TRANSFORMS[component.second]));
@@ -228,19 +222,19 @@ namespace world {
 				collision.Colliding = 1;
 				otherCollision.Colliding = 1;
 			}*/
-			if (geometry::SatIntersection(volumeAprime,volumeB, satResult)) {
-			//if (geometry::GJK(volumeAprime, volumeB, intersection)) {
+			//if (geometry::SatIntersection(volumeAprime,volumeB, satResult)) {
+			if (geometry::GJK(volumeAprime, volumeB, intersection)) {
 
 				// determine the seperating axis from the current position
 				geometry::SatResult satResult;
 
-				if (!geometry::SatIntersection(volumeA, volumeB, satResult)) {
-					contact.contactNormal = satResult.Axis;
-				}
-				else {
-					// Could not detect a separating axis
-					contact.contactNormal = Vector3::Zero;
-				}
+				//if (!geometry::SatIntersection(volumeA, volumeB, satResult)) {
+				//	contact.contactNormal = satResult.Axis;
+				//}
+				//else {
+				//	// Could not detect a separating axis
+				//	contact.contactNormal = Vector3::Zero;
+				//}
 				return true;
 			}
 			else {
@@ -266,6 +260,7 @@ namespace world {
 	}
 	void CollisionSystem::CheckCollision(
 		Position & position,
+		Movement & movement,
 		shared_ptr<geometry::CollisionVolume> & dynamicCollisionVolume,
 		shared_ptr<geometry::CollisionVolume> & dynamicCollisionVolumePrime,
 		Position & staticPosition,
@@ -278,6 +273,8 @@ namespace world {
 
 			ContactInfo contact;
 			if (CheckCollision(contact, dynamicCollisionVolume, dynamicCollisionVolumePrime, staticVolume)) {
+				contact.contactNormal = -movement.Velocity;
+				contact.contactNormal.Normalize();
 				contacts.push_back(contact);
 			}
 		}

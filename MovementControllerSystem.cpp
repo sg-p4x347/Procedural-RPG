@@ -26,6 +26,9 @@ namespace world {
 			auto & movementController = entity.Get<MovementController>();
 			//----------------------------------------------------------------
 			// Movement
+			if (movementController.Heading.LengthSquared() != 0.f) {
+				auto test = 0;
+			}
 			movement.Velocity.x = movementController.Heading.x * movementController.Speed;
 			if (movementController.Type == MovementController::MovementTypes::Spectator)
 				movement.Velocity.y = movementController.Heading.y * movementController.Speed;

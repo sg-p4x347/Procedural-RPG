@@ -54,11 +54,11 @@ namespace Architecture {
 	Line Rectangle::Touching(Rectangle & B)
 	{
 		Vector3 pA, pB;
-		pA.x = max(x, B.x);
-		pB.x = min(x + width, B.x + B.width);
+		pA.x = (float)max(x, B.x);
+		pB.x = (float)min(x + width, B.x + B.width);
 
-		pA.y = max(y, B.y);
-		pB.y = min(y + height, B.y + B.height);
+		pA.y = (float)max(y, B.y);
+		pB.y = (float)min(y + height, B.y + B.height);
 		return Line(pA, pB);
 
 	}

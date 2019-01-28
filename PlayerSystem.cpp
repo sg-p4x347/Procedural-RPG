@@ -44,6 +44,7 @@ namespace world {
 			Movement & movement = player->Get<Movement>();
 			Player & playerComp = player->Get<Player>();
 			MovementController & movementController = player->Get<MovementController>();
+			
 			// mouse
 			auto mouseState = Game::MouseState;
 			auto keyboardState = Game::KeyboardState;
@@ -64,12 +65,9 @@ namespace world {
 					sampleCounter = 0;
 				}*/
 				Vector2 mousePos = Game::Get().MousePos;
-				float length = mousePos.Length();
-				if (length != 0.f)
-					SM->GetSystem<GuiSystem>("Gui")->SetTextByID("Output1", to_string(length));
 
-				playerComp.CameraPitch -= mousePos.y * elapsed * Y_MOUSE_GAIN;
-				movement.AngularVelocity.y = (movement.AngularVelocity.y - mousePos.x * elapsed * X_MOUSE_GAIN) / 2.f;
+				playerComp.CameraPitch -= float(mousePos.y * elapsed * Y_MOUSE_GAIN);
+				movement.AngularVelocity.y = float(movement.AngularVelocity.y - mousePos.x * elapsed * X_MOUSE_GAIN) / 2.f;
 				//if (std::abs(movement.AngularVelocity.y) < 0.1f) movement.AngularVelocity.y = 0.f;
 				Game::Get().MousePos = Vector2::Zero;
 				//AccumulatedMousePos = Vector2::Zero;
