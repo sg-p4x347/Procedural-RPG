@@ -221,6 +221,7 @@
     <ClInclude Include="Plant.h" />
     <ClInclude Include="RegionJobCache.h" />
     <ClInclude Include="RenderJob.h" />
+    <ClInclude Include="TerrainVertex.h" />
     <ClInclude Include="VoxelGridModel.h" />
     <ClInclude Include="BuildingGenerator.h" />
     <ClInclude Include="BuildingSystem.h">
@@ -350,13 +351,11 @@
     <ClInclude Include="SystemManager.h" />
     <ClInclude Include="Tag.h" />
     <ClInclude Include="TaskThread.h" />
-    <ClInclude Include="Terrain.h" />
     <ClInclude Include="TopologyCruncher.h" />
     <ClInclude Include="TreeGenerator.h" />
     <ClInclude Include="VboParser.h" />
     <ClInclude Include="Voxel.h" />
     <ClInclude Include="VoxelGrid.h" />
-    <ClInclude Include="Water.h" />
     <ClInclude Include="WaterCell.h" />
     <ClInclude Include="TerrainSystem.h" />
     <ClInclude Include="ThermalCell.h" />
@@ -393,6 +392,7 @@
     <ClCompile Include="Plant.cpp" />
     <ClCompile Include="RegionJobCache.cpp" />
     <ClCompile Include="RenderJob.cpp" />
+    <ClCompile Include="TerrainVertex.cpp" />
     <ClCompile Include="VoxelGridModel.cpp" />
     <ClCompile Include="BuildingGenerator.cpp" />
     <ClCompile Include="BuildingSystem.cpp">
@@ -514,12 +514,10 @@
     <ClCompile Include="SystemManager.cpp" />
     <ClCompile Include="Tag.cpp" />
     <ClCompile Include="TaskThread.cpp" />
-    <ClCompile Include="Terrain.cpp" />
     <ClCompile Include="TopologyCruncher.cpp" />
     <ClCompile Include="TreeGenerator.cpp" />
     <ClCompile Include="VboParser.cpp" />
     <ClCompile Include="Voxel.cpp" />
-    <ClCompile Include="Water.cpp" />
     <ClCompile Include="WaterCell.cpp" />
     <ClCompile Include="TerrainSystem.cpp" />
     <ClCompile Include="ThermalCell.cpp" />

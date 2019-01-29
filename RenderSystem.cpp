@@ -920,7 +920,7 @@ void RenderSystem::RenderTerrain(shared_ptr<world::WEM::RegionType> region, bool
 
 void RenderSystem::LoadRegion(shared_ptr<world::WEM::RegionType> region)
 {
-	const auto excludeMask = EM->GetMask<world::Movement, world::Terrain>();
+	const auto excludeMask = EM->GetMask<world::Movement>();
 	//----------------------------------------------------------------
 	// Static models
 	world::MaskType modelMask = EM->GetMask<world::Position, world::Model>();

@@ -78,10 +78,10 @@ namespace world {
 		JsonParser config(std::ifstream("config/plants.json"));
 		if (config["trees"].To<bool>()) {
 			GenerateTreeModels();
-			GenerateTreeEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
+			GenerateTreeEntities(*(terrainSystem->m_terrainMap), *(terrainSystem->m_waterMap));
 		}
 		if (config["grass"].To<bool>()) {
-			GenerateGrassEntities(*(terrainSystem->TerrainMap), *(terrainSystem->WaterMap));
+			GenerateGrassEntities(*(terrainSystem->m_terrainMap), *(terrainSystem->m_waterMap));
 		}
 		//GenerateGeneticPlants();
 	}

@@ -9,8 +9,6 @@
 #include "Movement.h"
 #include "Player.h"
 #include "Position.h"
-#include "Terrain.h"
-#include "Water.h"
 #include "Global.h"
 #include "Plant.h"
 #include "MovementController.h"
@@ -24,8 +22,6 @@ namespace world {
 		VoxelGridModel, 
 		Collision, 
 		Model,
-		Terrain,
-		Water,
 		Global,
 		MovementController,
 		Plant

@@ -108,9 +108,6 @@
     <ClInclude Include="Position.h">
       <Filter>World\Component</Filter>
     </ClInclude>
-    <ClInclude Include="Terrain.h">
-      <Filter>World\Component</Filter>
-    </ClInclude>
     <ClInclude Include="TerrainSystem.h">
       <Filter>World\System</Filter>
     </ClInclude>
@@ -352,7 +349,6 @@
     <ClInclude Include="XmlParser.h">
       <Filter>Utility\Serialization</Filter>
     </ClInclude>
-    <ClInclude Include="CssParser.h" />
     <ClInclude Include="HeightMapAsset.h">
       <Filter>Assets\Component</Filter>
     </ClInclude>
@@ -408,7 +404,6 @@
     <ClInclude Include="Delegate.h">
       <Filter>ECS</Filter>
     </ClInclude>
-    <ClInclude Include="Water.h" />
     <ClInclude Include="Entity.h">
       <Filter>ECS</Filter>
     </ClInclude>
@@ -469,8 +464,6 @@
     <ClInclude Include="Cylinder.h">
       <Filter>Utility\Geometry</Filter>
     </ClInclude>
-    <ClInclude Include="RegionJobCache.h" />
-    <ClInclude Include="RenderJob.h" />
     <ClInclude Include="MovementControllerSystem.h">
       <Filter>World\System</Filter>
     </ClInclude>
@@ -479,6 +472,18 @@
     </ClInclude>
     <ClInclude Include="Plant.h">
       <Filter>World\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="TerrainVertex.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderJob.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="RegionJobCache.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="CssParser.h">
+      <Filter>Utility\Serialization</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -489,9 +494,6 @@
       <Filter>Filesystem</Filter>
     </ClCompile>
     <ClCompile Include="Position.cpp">
-      <Filter>World\Component</Filter>
-    </ClCompile>
-    <ClCompile Include="Terrain.cpp">
       <Filter>World\Component</Filter>
     </ClCompile>
     <ClCompile Include="TerrainSystem.cpp">
@@ -714,7 +716,6 @@
     <ClCompile Include="XmlParser.cpp">
       <Filter>Utility\Serialization</Filter>
     </ClCompile>
-    <ClCompile Include="CssParser.cpp" />
     <ClCompile Include="HeightMapAsset.cpp">
       <Filter>Assets\Component</Filter>
     </ClCompile>
@@ -743,7 +744,6 @@
     <ClCompile Include="Delegate.cpp">
       <Filter>ECS</Filter>
     </ClCompile>
-    <ClCompile Include="Water.cpp" />
     <ClCompile Include="Entity.cpp">
       <Filter>ECS</Filter>
     </ClCompile>
@@ -791,8 +791,6 @@
     <ClCompile Include="Cylinder.cpp">
       <Filter>Utility\Geometry</Filter>
     </ClCompile>
-    <ClCompile Include="RegionJobCache.cpp" />
-    <ClCompile Include="RenderJob.cpp" />
     <ClCompile Include="MovementControllerSystem.cpp">
       <Filter>World\System</Filter>
     </ClCompile>
@@ -801,6 +799,18 @@
     </ClCompile>
     <ClCompile Include="Plant.cpp">
       <Filter>World\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="TerrainVertex.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="RegionJobCache.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderJob.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="CssParser.cpp">
+      <Filter>Utility\Serialization</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -8,6 +8,7 @@
 #include "Droplet.h"
 #include "ThermalCell.h"
 #include "WorldDomain.h"
+#include "TerrainVertex.h"
 #include <atomic>
 class SystemManager;
 
@@ -50,8 +51,8 @@ namespace world {
 		void RegisterHandlers();
 	public:
 		// TEMP
-		unique_ptr<Map<WaterCell>> WaterMap;
-		unique_ptr<HeightMap> TerrainMap;
+		unique_ptr<Map<WaterCell>> m_waterMap;
+		unique_ptr<HeightMap> m_terrainMap;
 	protected:
 		SystemManager * SM;
 		std::atomic_bool m_writingModel;
@@ -105,14 +106,7 @@ namespace world {
 		//----------------------------------------------------------------
 		// Updating meshes
 		float LowestNeighbor(HeightMap & water, HeightMap & terrain, int x, int z);
-		//----------------------------------------------------------------
-		// Terrain
-		void CreateTerrainEntities();
-		void NewTerrain(DirectX::SimpleMath::Vector3 & position);
-		//----------------------------------------------------------------
-		// Water
-		void CreateWaterEntities();
-		void NewWater(DirectX::SimpleMath::Vector3 & position);
+
 		//----------------------------------------------------------------
 		// Resources
 		//void CreateResourceEntities();

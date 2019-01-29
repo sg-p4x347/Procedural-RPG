@@ -47,6 +47,8 @@ public:
 	}
 	int GetFontSize();
 	VboParser * ProVboParser();
+	template<typename T>
+	shared_ptr<Map<T>> GetMap(string name, DirectX::SimpleMath::Rectangle sampleArea, int sampleSpacing = 1);
 	//----------------------------------------------------------------
 	// Heightmaps
 	void CreateHeightMapModel(string path, HeightMap * heightMap, shared_ptr<Map<Vector3>> normalMap, float scaleFactor, int regionWidth, string effect);
@@ -91,7 +93,8 @@ public:
 	void CreateCustomEffect(string name, vector<string> textures,const D3D11_INPUT_ELEMENT_DESC * inputElements,const UINT elementCount);
 	void CreateEffects(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context);
 	void CreateInputLayouts();
-	
+	template<typename T>
+	void CreateMap(string name, Map<T> & map);
 	VertexPositionNormalTangentColorTexture CreateVertex(Vector3 position, Vector3 normal, Vector2 texture);
 private:
 	static AssetManager * m_instance;
@@ -136,3 +139,58 @@ private:
 
 };
 
+template<typename T>
+inline shared_ptr<Map<T>> AssetManager::GetMap(string name, DirectX::SimpleMath::Rectangle sampleArea, int sampleSpacing)
+{
+	EntityPtr entity;
+	if (m_proceduralEM->TryFindByPathID(name, entity)) {
+		// Get the heightmap component
+		auto heightMapComp = entity->GetComponent<HeightMapAsset>("HeightMapAsset");
+		if (heightMapComp) {
+			// Load the vertex array with data.
+			int xSize = sampleArea.width / sampleSpacing;
+			int ySize = sampleArea.height / sampleSpacing;
+			shared_ptr<Map<T>> map = std::make_shared<Map<T>>(xSize, ySize);
+			map->area.x = sampleArea.x;
+			map->area.y = sampleArea.y;
+			ifstream stream(FullPath(path, AssetType::Authored, ".map"), std::ios_base::binary);
+
+
+			if (stream.is_open()) {
+				// stores the exact bytes from the file into memory
+				// move start position to the region, and proceed to read each line into the Char buffers
+
+
+				for (int vertY = 0; vertY <= ySize; vertY++) {
+					for (int vertX = 0; vertX <= xSize; vertX++) {
+						int globalX = vertX * sampleSpacing + sampleArea.x;
+						int globalY = vertY * sampleSpacing + sampleArea.y;
+						int index = Utility::posToIndex(globalX, globalY, heightMapComp->Xsize + 1);
+
+						stream.seekg(index * sizeof(T));
+						stream.read((char *)&(*map)[vertX][vertY], sizeof(T));
+					}
+				}
+
+				stream.close();
+			}
+			return map;
+		}
+	}
+	return nullptr;
+}
+
+template<typename T>
+inline void AssetManager::CreateMap(string name, Map<T>& map)
+{
+	auto entity = m_proceduralEM->CreateAsset(name);
+	entity->AddComponent(new HeightMapAsset(map.width, map.length, 1.f));
+	// save the map to the file
+	ofstream ofs(FullPath(name, Procedural, ".map"), std::ios::binary);
+	for (unsigned short vertY = 0; vertY <= map.length; vertY++) {
+		for (unsigned short vertX = 0; vertX <= map.width; vertX++) {
+			ofs.write((const char *)&map[vertX][vertY], sizeof(T));
+		}
+	}
+	ofs.close();
+}

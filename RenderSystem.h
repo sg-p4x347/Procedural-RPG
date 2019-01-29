@@ -69,7 +69,6 @@ private:
 	SystemManager * SM;
 	EntityPtr m_player;
 	std::shared_ptr<Model> m_oceanModel;
-	std::unique_ptr<world::WorldEntityCache<world::WEM::RegionType, world::Terrain, world::Model, world::Position>> m_terrainEntities;
 	const float m_fov;
 	const float m_clipNear;
 	const float m_clipFar;
