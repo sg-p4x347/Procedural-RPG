@@ -68,6 +68,7 @@ namespace world {
 		Map<shared_ptr<Map<Vector3>>> m_normals;
 		Map<shared_ptr<DirectX::Model>> m_chunkModels;
 		Map<int> m_chunkLOD;
+		Map<std::thread> m_threads;
 		void UpdateLOD(Vector3 center);
 		// 2 dimensional maps -------------------------------------------
 		int m_width;				// The total width of the continent (in meters)

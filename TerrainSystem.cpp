@@ -42,7 +42,8 @@ namespace world {
 		m_chunks(worldWidth / regionWidth),
 		m_normals(worldWidth / regionWidth),
 		m_chunkModels(worldWidth / regionWidth),
-		m_chunkLOD(worldWidth / regionWidth)
+		m_chunkLOD(worldWidth / regionWidth),
+		m_threads(worldWidth / regionWidth)
 	{
 		m_directory = directory / Name();
 		Filesystem::create_directory(m_directory);
@@ -397,66 +398,113 @@ namespace world {
 			// Stream more detail for higher LOD, downsize for lower LOD
 			for (int x = 0; x < chunkCount; x++) {
 				for (int z = 0; z < chunkCount; z++) {
-					vertexCount += std::pow(m_regionWidth / std::pow(2, lods[x][z]), 2);
-					if (m_chunkLOD[x][z] > lods[x][z]) {
-						// stream new vertices from the AssetManager
-						unsigned int sampleSpacing = std::pow(2, lods[x][z]);
-						Rectangle sampleArea = Rectangle(x * m_regionWidth, z * m_regionWidth, m_regionWidth,m_regionWidth);
-						m_chunks[x][z] = AssetManager::Get()->GetHeightMap("terrain", AssetType::Procedural, sampleArea, sampleSpacing);
-						m_normals[x][z] = AssetManager::Get()->GetNormalMap(m_width, "terrain_normal", AssetType::Procedural, sampleArea, sampleSpacing);
-
-						
-					}
-					else if (m_chunkLOD[x][z] < lods[x][z]) {
+					auto & thread = std::thread([=] {
 						auto & chunk = *m_chunks[x][z];
-						// move verticies into compacted space
-						for (int vx = 0; vx <= chunk.width; vx++) {
-							for (int vz = 0; vz <= chunk.length; vz++) {
-								chunk[vx][vz] = chunk[vx * 2][vz * 2];
-							}
+						int & oldLod = m_chunkLOD[x][z];
+						int & lod = lods[x][z];
+						//int vertexCount += std::pow(m_regionWidth / std::pow(2,lod), 2);
+						unsigned int sampleSpacing = std::pow(2, lod);
+						if (oldLod > lod) {
+							// stream new vertices from the AssetManager
+							
+							Rectangle sampleArea = Rectangle(x * m_regionWidth, z * m_regionWidth, m_regionWidth, m_regionWidth);
+							m_chunks[x][z] = AssetManager::Get()->GetHeightMap("terrain", AssetType::Procedural, sampleArea, sampleSpacing);
+							m_normals[x][z] = AssetManager::Get()->GetNormalMap(m_width, "terrain_normal", AssetType::Procedural, sampleArea, sampleSpacing);
 						}
-						chunk.Resize(m_regionWidth / std::pow(2, lods[x][z]));
-					}
-				}
-			}
-			IEventManager::Invoke(EventTypes::GUI_DebugInfo, string("Terrain Vertices:"), to_string(vertexCount));
-			for (int x = 0; x < chunkCount; x++) {
-				for (int z = 0; z < chunkCount; z++) {
-					auto & chunk = *m_chunks[x][z];
-					static const Vector2 cardinal[4]{
-						Vector2(1.f,0.f),
-						Vector2(0.f,1.f),
-						Vector2(-1.f,0.f),
-						Vector2(0.f,-1.f)
-					};
-					Vector2 chunkRadius(chunk.width, chunk.length);
-					for (int i = 0; i < 4; i++) {
-						Vector2 direction = cardinal[i];
-						int adjX = x + (int)direction.x;
-						int adjZ = z + (int)direction.y;
-						if (m_chunks.Bounded(adjX, adjZ)) {
-							HeightMap & adjacent = *m_chunks[adjX][adjZ];
-							if ((lodChanged[x][z] || lodChanged[adjX][adjZ]) && lods[x][z] < lods[adjX][adjZ]) {
-								lodChanged[x][z] = true;
-								// Assume that the difference in LOD is a factor of 2 spacing
-								if (i % 2 == 0) {
-									int vx = i == 0 ? adjacent.width : 0;
-									for (int vz = 0; vz < adjacent.length; vz++) {
-										chunk[vx * 2][vz * 2 + 1] = (adjacent[adjacent.width - vx][vz] + adjacent[adjacent.width - vx][vz + 1]) * 0.5f;
-									}
-								}
-								else {
-									int vz = i == 1 ? adjacent.length : 0;
-									for (int vx = 0; vx < adjacent.width; vx++) {
-										chunk[vx * 2 + 1][vz * 2] = (adjacent[vx][adjacent.length - vz] + adjacent[vx + 1][adjacent.length - vz]) * 0.5f;
-									}
+						else if (oldLod < lod) {
+							auto & chunk = *m_chunks[x][z];
+							// move verticies into compacted space
+							for (int vx = 0; vx <= chunk.width; vx++) {
+								for (int vz = 0; vz <= chunk.length; vz++) {
+									chunk[vx][vz] = chunk[vx * 2][vz * 2];
 								}
 							}
+							chunk.Resize(m_regionWidth / std::pow(2, lods[x][z]));
 						}
-					}
+						static const Vector2 cardinal[4]{
+							Vector2(1.f,0.f),
+							Vector2(0.f,1.f),
+							Vector2(-1.f,0.f),
+							Vector2(0.f,-1.f)
+						};
+						Vector2 chunkRadius(chunk.width, chunk.length);
+						for (int i = 0; i < 4; i++) {
+							Vector2 direction = cardinal[i];
+							int adjX = x + (int)direction.x;
+							int adjZ = z + (int)direction.y;
+							if (m_chunks.Bounded(adjX, adjZ)) {
+								HeightMap & adjacent = *m_chunks[adjX][adjZ];
+								if (lod < lods[adjX][adjZ]) {
+									// Assume that the difference in LOD is a factor of 2 spacing
+									if (i % 2 == 0) {
+										int vx = i == 0 ? adjacent.width : 0;
+										for (int vz = 0; vz < adjacent.length; vz++) {
+											// average the middle of the edge
+											chunk[vx * 2][vz * 2 + 1] = (chunk[vx * 2][vz * 2] + chunk[vx * 2][(vz + 1) * 2]) * 0.5f;
+										}
+									}
+									else {
+										int vz = i == 1 ? adjacent.length : 0;
+										for (int vx = 0; vx < adjacent.width; vx++) {
+											chunk[vx * 2 + 1][vz * 2] = (adjacent[vx][adjacent.length - vz] + adjacent[vx + 1][adjacent.length - vz]) * 0.5f;
+										}
+									}
+								}
+							}
+						}
+						unsigned int sampleSpacing = std::pow(2, lod);
+						Rectangle sampleArea = Rectangle(x * m_regionWidth, z * m_regionWidth, m_regionWidth, m_regionWidth);
+						shared_ptr<IEffect> effect;
+						AssetManager::Get()->GetEffect("Terrain", effect);
+						auto model = AssetManager::Get()->CreateTerrainModel(m_width, m_regionWidth, m_chunks[x][z].get(), m_normals[x][z], sampleArea, sampleSpacing, effect);
+						m_chunkBuffer = m_chunkModels[x][z];
+						m_mutexRegion.first = x;
+						m_mutexRegion.second = z;
+						m_writingModel = true;
+						m_chunkModels[x][z] = model;
+						m_writingModel = false;
+					});
+					m_threads[x][z].swap(thread);
 				}
 			}
-			for (int x = 0; x < chunkCount; x++) {
+			//IEventManager::Invoke(EventTypes::GUI_DebugInfo, string("Terrain Vertices:"), to_string(vertexCount));
+			//for (int x = 0; x < chunkCount; x++) {
+			//	for (int z = 0; z < chunkCount; z++) {
+			//		auto & chunk = *m_chunks[x][z];
+			//		static const Vector2 cardinal[4]{
+			//			Vector2(1.f,0.f),
+			//			Vector2(0.f,1.f),
+			//			Vector2(-1.f,0.f),
+			//			Vector2(0.f,-1.f)
+			//		};
+			//		Vector2 chunkRadius(chunk.width, chunk.length);
+			//		for (int i = 0; i < 4; i++) {
+			//			Vector2 direction = cardinal[i];
+			//			int adjX = x + (int)direction.x;
+			//			int adjZ = z + (int)direction.y;
+			//			if (m_chunks.Bounded(adjX, adjZ)) {
+			//				HeightMap & adjacent = *m_chunks[adjX][adjZ];
+			//				if ((lodChanged[x][z] || lodChanged[adjX][adjZ]) && lods[x][z] < lods[adjX][adjZ]) {
+			//					lodChanged[x][z] = true;
+			//					// Assume that the difference in LOD is a factor of 2 spacing
+			//					if (i % 2 == 0) {
+			//						int vx = i == 0 ? adjacent.width : 0;
+			//						for (int vz = 0; vz < adjacent.length; vz++) {
+			//							chunk[vx * 2][vz * 2 + 1] = (adjacent[adjacent.width - vx][vz] + adjacent[adjacent.width - vx][vz + 1]) * 0.5f;
+			//						}
+			//					}
+			//					else {
+			//						int vz = i == 1 ? adjacent.length : 0;
+			//						for (int vx = 0; vx < adjacent.width; vx++) {
+			//							chunk[vx * 2 + 1][vz * 2] = (adjacent[vx][adjacent.length - vz] + adjacent[vx + 1][adjacent.length - vz]) * 0.5f;
+			//						}
+			//					}
+			//				}
+			//			}
+			//		}
+			//	}
+			//}
+			/*for (int x = 0; x < chunkCount; x++) {
 				for (int z = 0; z < chunkCount; z++) {
 					if (lodChanged[x][z]) {
 						unsigned int sampleSpacing = std::pow(2, lods[x][z]);
@@ -473,7 +521,7 @@ namespace world {
 
 					}
 				}
-			}
+			}*/
 			
 		}).detach();
 	}
