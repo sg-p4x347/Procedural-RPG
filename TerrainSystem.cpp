@@ -39,7 +39,6 @@ namespace world {
 		m_width(worldWidth),
 		m_regionWidth(regionWidth),
 		m_chunks(worldWidth / regionWidth),
-		m_normals(worldWidth / regionWidth),
 		m_chunkModels(worldWidth / regionWidth),
 		m_chunkLOD(worldWidth / regionWidth),
 		m_threads(worldWidth / regionWidth)
@@ -51,7 +50,7 @@ namespace world {
 		for (int x = 0; x < m_chunkLOD.width;x++) {
 			for (int z = 0; z < m_chunkLOD.length;z++) {
 				m_chunkLOD[x][z] = 100;
-				m_chunks[x][z] = std::make_shared<HeightMap>();
+				m_chunks[x][z] = std::make_shared<Map<TerrainVertex>>();
 			}
 		}
 
@@ -226,7 +225,7 @@ namespace world {
 		Map<TerrainVertex> vertices(m_width);
 		for (int x = 0; x < m_waterMap->width;x++) {
 			for (int z = 0; z < m_waterMap->length;z++) {
-				TerrainVertex vertex;
+				TerrainVertex & vertex = vertices[x][z];
 				vertex.terrain = (*m_terrainMap)[x][z];
 				vertex.water = (*m_waterMap)[x][z].Water;
 				{
@@ -298,7 +297,7 @@ namespace world {
 		int regionX = x / m_regionWidth;
 		int regionZ = z / m_regionWidth;
 		if (regionX >= 0 && regionZ >= 0 && regionX < m_width / m_regionWidth && regionZ < m_width / m_regionWidth) {
-			return m_chunks[regionX][regionZ]->SetHeight(x - regionX * m_regionWidth, z - regionZ * m_regionWidth,value);
+			//m_chunks[regionX][regionZ]->SetHeight(x - regionX * m_regionWidth, z - regionZ * m_regionWidth,value);
 		}
 	}
 	float TerrainSystem::Height(float & x, float & z)
@@ -312,7 +311,7 @@ namespace world {
 		int x = position.x / m_regionWidth;
 		int z = position.y / m_regionWidth;
 		if (x >= 0 && z >= 0 && x < m_width / m_regionWidth && z < m_width / m_regionWidth) {
-			return m_chunks[x][z]->Height(position.x - x * m_regionWidth, position.y - z * m_regionWidth);
+			return (*m_chunks[x][z])[position.x][position.y].terrain;//->Height(position.x - x * m_regionWidth, position.y - z * m_regionWidth);
 		}
 		return 0.f;
 	}
@@ -338,14 +337,14 @@ namespace world {
 	}
 
 
-	float TerrainSystem::LowestNeighbor(HeightMap & water, HeightMap & terrain, int x, int z)
+	float TerrainSystem::LowestNeighbor(Map<TerrainVertex> & map, int x, int z)
 	{
 		float minY = std::numeric_limits<float>::infinity();
 		for (int i = 0; i < 8; i++) {
 			int adjX = (i == 0 || i == 1 || i == 7 ? x + 1 : (i >= 3 && i <= 5 ? x - 1 : x));
 			int adjZ = (i >= 1 && i <= 3 ? z + 1 : (i >= 5 && i <= 7 ? z - 1 : z));
-			if (water.Bounded(adjX, adjZ)) {
-				float worldY = water.map[adjX][adjZ] + terrain.map[adjX][adjZ];
+			if (map.Bounded(adjX, adjZ)) {
+				float worldY = map[adjX][adjZ].terrain + map[adjX][adjZ].water;
 				if (worldY < minY) minY = worldY;
 			}
 		}
@@ -380,20 +379,39 @@ namespace world {
 			// Stream more detail for higher LOD, downsize for lower LOD
 			for (int x = 0; x < chunkCount; x++) {
 				for (int z = 0; z < chunkCount; z++) {
-					auto & thread = std::thread([=] {
-						auto & chunk = *m_chunks[x][z];
-						int & oldLod = m_chunkLOD[x][z];
-						int & lod = lods[x][z];
+					
+					int & oldLod = m_chunkLOD[x][z];
+					int & lod = lods[x][z];
+					static const Vector2 cardinal[4]{
+						Vector2(1.f,0.f),
+						Vector2(0.f,1.f),
+						Vector2(-1.f,0.f),
+						Vector2(0.f,-1.f)
+					};
+					int adjLod[4];
+					for (int i = 0; i < 4; i++) {
+						Vector2 direction = cardinal[i];
+						int adjX = x + (int)direction.x;
+						int adjZ = z + (int)direction.y;
+						if (m_chunks.Bounded(adjX, adjZ)) {
+							adjLod[i] = lods[adjX][adjZ];
+						}
+						else {
+							adjLod[i] = -1;
+						}
+					}
+					std::thread([=] {
+						bool modelChanged = false;
 						//int vertexCount += std::pow(m_regionWidth / std::pow(2,lod), 2);
 						unsigned int sampleSpacing = std::pow(2, lod);
+						Rectangle sampleArea = Rectangle(x * m_regionWidth, z * m_regionWidth, m_regionWidth, m_regionWidth);
 						if (oldLod > lod) {
 							// stream new vertices from the AssetManager
 							
-							Rectangle sampleArea = Rectangle(x * m_regionWidth, z * m_regionWidth, m_regionWidth, m_regionWidth);
-							m_chunks[x][z] = AssetManager::Get()->GetHeightMap("terrain", AssetType::Procedural, sampleArea, sampleSpacing);
-							m_normals[x][z] = AssetManager::Get()->GetNormalMap(m_width, "terrain_normal", AssetType::Procedural, sampleArea, sampleSpacing);
-						}
-						else if (oldLod < lod) {
+							
+							m_chunks[x][z] = AssetManager::Get()->GetMap<TerrainVertex>("terrain",sampleArea, sampleSpacing);
+							modelChanged = true;
+						} else if (oldLod < lod) {
 							auto & chunk = *m_chunks[x][z];
 							// move verticies into compacted space
 							for (int vx = 0; vx <= chunk.width; vx++) {
@@ -401,52 +419,42 @@ namespace world {
 									chunk[vx][vz] = chunk[vx * 2][vz * 2];
 								}
 							}
-							chunk.Resize(m_regionWidth / std::pow(2, lods[x][z]));
+							chunk.Resize(m_regionWidth / std::pow(2, lod));
+							modelChanged = true;
 						}
-						static const Vector2 cardinal[4]{
-							Vector2(1.f,0.f),
-							Vector2(0.f,1.f),
-							Vector2(-1.f,0.f),
-							Vector2(0.f,-1.f)
-						};
-						Vector2 chunkRadius(chunk.width, chunk.length);
+						auto chunk = m_chunks[x][z];
+						Vector2 chunkRadius(chunk->width, chunk->length);
 						for (int i = 0; i < 4; i++) {
-							Vector2 direction = cardinal[i];
-							int adjX = x + (int)direction.x;
-							int adjZ = z + (int)direction.y;
-							if (m_chunks.Bounded(adjX, adjZ)) {
-								HeightMap & adjacent = *m_chunks[adjX][adjZ];
-								if (lod < lods[adjX][adjZ]) {
-									// Assume that the difference in LOD is a factor of 2 spacing
-									if (i % 2 == 0) {
-										int vx = i == 0 ? adjacent.width : 0;
-										for (int vz = 0; vz < adjacent.length; vz++) {
-											// average the middle of the edge
-											chunk[vx * 2][vz * 2 + 1] = (chunk[vx * 2][vz * 2] + chunk[vx * 2][(vz + 1) * 2]) * 0.5f;
-										}
-									}
-									else {
-										int vz = i == 1 ? adjacent.length : 0;
-										for (int vx = 0; vx < adjacent.width; vx++) {
-											chunk[vx * 2 + 1][vz * 2] = (adjacent[vx][adjacent.length - vz] + adjacent[vx + 1][adjacent.length - vz]) * 0.5f;
-										}
+							if (lod < adjLod[i]) {
+								// Assume that the difference in LOD is a factor of 2 spacing
+								if (i % 2 == 0) {
+									int vx = i == 0 ? chunk->width : 0;
+									for (int vz = 0; vz < chunk->length; vz+=2) {
+										// average the middle of the edge
+										(*chunk)[vx][vz + 1].terrain = ((*chunk)[vx][vz].terrain + (*chunk)[vx][vz + 2].terrain) * 0.5f;
 									}
 								}
+								else {
+									int vz = i == 1 ? chunk->length : 0;
+									for (int vx = 0; vx < chunk->width; vx += 2) {
+										(*chunk)[vx + 1][vz].terrain = ((*chunk)[vx][vz].terrain + (*chunk)[vx + 2][vz].terrain) * 0.5f;
+									}
+								}
+								modelChanged = true;
 							}
 						}
-						unsigned int sampleSpacing = std::pow(2, lod);
-						Rectangle sampleArea = Rectangle(x * m_regionWidth, z * m_regionWidth, m_regionWidth, m_regionWidth);
-						shared_ptr<IEffect> effect;
-						AssetManager::Get()->GetEffect("Terrain", effect);
-						auto model = AssetManager::Get()->CreateTerrainModel(m_width, m_regionWidth, m_chunks[x][z].get(), m_normals[x][z], sampleArea, sampleSpacing, effect);
-						m_chunkBuffer = m_chunkModels[x][z];
-						m_mutexRegion.first = x;
-						m_mutexRegion.second = z;
-						m_writingModel = true;
-						m_chunkModels[x][z] = model;
-						m_writingModel = false;
-					});
-					m_threads[x][z].swap(thread);
+						if (modelChanged) {
+							auto model = CreateModel(*chunk, sampleArea)->GetModel(AssetManager::Get()->GetDevice(),AssetManager::Get()->GetFxFactory());
+							//auto model = AssetManager::Get()->GetModel("error")->GetModel(AssetManager::Get()->GetDevice(), AssetManager::Get()->GetFxFactory());
+							m_chunkBuffer = m_chunkModels[x][z];
+							m_mutexRegion.first = x;
+							m_mutexRegion.second = z;
+							m_writingModel = true;
+							m_chunkModels[x][z] = model;
+							m_writingModel = false;
+						}
+					}).detach();
+					//m_threads[x][z].swap(thread);
 				}
 			}
 			//IEventManager::Invoke(EventTypes::GUI_DebugInfo, string("Terrain Vertices:"), to_string(vertexCount));
@@ -517,6 +525,151 @@ namespace world {
 		Vector3 normal = Vector3(float(normalBuffer[0]), float(normalBuffer[1]), float(normalBuffer[2]));
 		normal.Normalize();
 		return normal;
+	}
+
+	shared_ptr<geometry::CMF> TerrainSystem::CreateModel(Map<TerrainVertex>& map, Rectangle area)
+	{
+		int sampleSpacing = area.width / map.width;
+		auto model = std::make_shared<geometry::CMF>();
+		model->AddLOD();
+		//----------------------------------------------------------------
+		// Terrain
+		auto terrainMaterial = std::make_shared<geometry::Material>("terrain");
+		terrainMaterial->pixelShader = "Terrain.cso";
+		terrainMaterial->textures.push_back("dirt.dds");
+		terrainMaterial->textures.push_back("grass.dds");
+		terrainMaterial->textures.push_back("stone.dds");
+		terrainMaterial->textures.push_back("snow.dds");
+		model->AddMaterial(terrainMaterial);
+
+		auto terrainPart = std::make_shared<geometry::MeshPart>();
+		terrainPart->SetMaterial(terrainMaterial);
+		// create 2 triangles (6 vertices) for every quad in the region
+
+		int index = 0;
+		for (int z = 0; z < map.length; z++) {
+			for (int x = 0; x < map.width; x++) {
+				DirectX::VertexPositionNormalTangentColorTexture quad[4]{
+					CreateTerrainVertex(map,sampleSpacing,x,z,Vector2::Zero),
+					CreateTerrainVertex(map,sampleSpacing,x + 1,z,Vector2(1.f,0.f)),
+					CreateTerrainVertex(map,sampleSpacing,x,z + 1,Vector2(0.f,1.f)),
+					CreateTerrainVertex(map,sampleSpacing,x + 1,z + 1,Vector2(1.f,1.f))
+				};
+				/*
+				0---1
+				| \ |
+				2---3
+				*/
+
+				// Left triangle
+				terrainPart->indices.push_back(terrainPart->vertices.size());
+				terrainPart->vertices.push_back(quad[2]);
+				terrainPart->indices.push_back(terrainPart->vertices.size());
+				terrainPart->vertices.push_back(quad[0]);
+				
+				terrainPart->indices.push_back(terrainPart->vertices.size());
+				terrainPart->vertices.push_back(quad[3]);
+				// Right
+				terrainPart->indices.push_back(terrainPart->vertices.size());
+				terrainPart->vertices.push_back(quad[3]);
+				terrainPart->indices.push_back(terrainPart->vertices.size());
+				terrainPart->vertices.push_back(quad[0]);
+				
+				terrainPart->indices.push_back(terrainPart->vertices.size());
+				terrainPart->vertices.push_back(quad[1]);
+
+			}
+		}
+		//----------------------------------------------------------------
+		// Water
+		auto waterMaterial = std::make_shared<geometry::Material>("water");
+		waterMaterial->pixelShader = "Water.cso";
+		waterMaterial->textures.push_back("water.dds");
+		waterMaterial->alpha = 0.5f;
+		model->AddMaterial(waterMaterial);
+		auto waterPart = std::make_shared<geometry::MeshPart>();
+		waterPart->SetMaterial(waterMaterial);
+
+		
+		for (int z = 0; z < map.length; z++) {
+			for (int x = 0; x < map.width; x++) {
+				DirectX::VertexPositionNormalTangentColorTexture quad[4]{
+					CreateWaterVertex(map,sampleSpacing,x,z,Vector2::Zero),
+					CreateWaterVertex(map,sampleSpacing,x+1,z,Vector2(1.f,0.f)),
+					CreateWaterVertex(map,sampleSpacing,x,z+1,Vector2(0.f,1.f)),
+					CreateWaterVertex(map,sampleSpacing,x+1,z+1,Vector2(1.f,1.f))
+				};
+				const float threshold = 0.1f;
+				const bool hasWater[4]{
+					map[x][z].water > threshold,
+					map[x + 1][z].water > threshold,
+					map[x][z + 1].water > threshold,
+					map[x + 1][z + 1].water > threshold
+				};
+				/*
+				0---1
+				| \ |
+				2---3
+				*/
+
+				// Left triangle
+				if (hasWater[0] || hasWater[3] || hasWater[2]) {
+					waterPart->indices.push_back(waterPart->vertices.size());
+					waterPart->vertices.push_back(quad[2]);
+					waterPart->indices.push_back(waterPart->vertices.size());
+					waterPart->vertices.push_back(quad[0]);
+					
+					waterPart->indices.push_back(waterPart->vertices.size());
+					waterPart->vertices.push_back(quad[3]);
+				}
+				// Right
+				if (hasWater[0] || hasWater[1] || hasWater[3]) {
+					waterPart->indices.push_back(waterPart->vertices.size());
+					waterPart->vertices.push_back(quad[3]);
+					waterPart->indices.push_back(waterPart->vertices.size());
+					waterPart->vertices.push_back(quad[0]);
+					
+					waterPart->indices.push_back(waterPart->vertices.size());
+					waterPart->vertices.push_back(quad[1]);
+				}
+			}
+		}
+
+		auto mesh = std::make_shared<geometry::Mesh>();
+		mesh->AddPart(*terrainPart);
+		mesh->AddPart(*waterPart);
+		model->AddMesh(mesh);
+		return model;
+	}
+
+	DirectX::VertexPositionNormalTangentColorTexture TerrainSystem::CreateWaterVertex(
+		Map<TerrainVertex>& map, 
+		int sampleSpacing,
+		int x,
+		int z,
+		Vector2 uv
+	)
+	{
+		return AssetManager::Get()->CreateVertex(Vector3(
+			(float)(map.area.x + x * sampleSpacing),
+			map[x][z].terrain > 0.f ? (map[x][z].water == 0.f ? LowestNeighbor(map, x, z) : map[x][z].terrain + map[x][z].water) : 0.f,
+			(float)(map.area.y + z * sampleSpacing)
+		), map[x][z].waterNormal, uv);
+	}
+
+	DirectX::VertexPositionNormalTangentColorTexture TerrainSystem::CreateTerrainVertex(
+		Map<TerrainVertex>& map, 
+		int sampleSpacing,
+		int x, 
+		int z, 
+		Vector2 uv
+	)
+	{
+		return AssetManager::Get()->CreateVertex(Vector3(
+			(float)(map.area.x + x * sampleSpacing),
+			map[x][z].terrain,
+			(float)(map.area.y + z * sampleSpacing)
+		), map[x][z].terrainNormal, uv);
 	}
 
 	float TerrainSystem::Average(Rectangle area)

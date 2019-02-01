@@ -22,6 +22,7 @@ struct Map :
 	vector< vector<DataType> > map;
 	int width;
 	int length;
+	int size;
 	Rectangle area;
 	float initialDeviation;
 	float diamondDeviation;
@@ -49,6 +50,7 @@ struct Map :
 
 		width = w;
 		length = l;
+		size = width * length;
 	}
 	// Inherited via ISerialization
 	virtual void Import(std::istream & ifs) override

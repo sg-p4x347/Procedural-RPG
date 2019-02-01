@@ -65,8 +65,7 @@ namespace world {
 		//----------------------------------------------------------------
 		// Terrain cache
 		
-		Map<shared_ptr<HeightMap>> m_chunks;
-		Map<shared_ptr<Map<Vector3>>> m_normals;
+		Map<shared_ptr<Map<TerrainVertex>>> m_chunks;
 		Map<shared_ptr<DirectX::Model>> m_chunkModels;
 		Map<int> m_chunkLOD;
 		Map<std::thread> m_threads;
@@ -77,7 +76,21 @@ namespace world {
 		Filesystem::path m_directory;
 		float InternalHeight(std::ifstream & ifs, const int & index, float precision);
 		Vector3 Normal(std::ifstream & ifs, const int & index);
-
+		shared_ptr<geometry::CMF> CreateModel(Map<TerrainVertex> & map,Rectangle area);
+		DirectX::VertexPositionNormalTangentColorTexture CreateWaterVertex(
+			Map<TerrainVertex> & map,
+			int sampleSpacing,
+			int x, 
+			int z,
+			Vector2 uv
+		);
+		DirectX::VertexPositionNormalTangentColorTexture CreateTerrainVertex(
+			Map<TerrainVertex> & map,
+			int sampleSpacing,
+			int x,
+			int z,
+			Vector2 uv
+		);
 		//----------------------------------------------------------------
 		// Generation parameters
 		int m_sampleSpacing;
@@ -106,7 +119,7 @@ namespace world {
 		void UpdateWater(HeightMap & terrain, Map<WaterCell> & water, std::function<void(float)> && progressCallback);
 		//----------------------------------------------------------------
 		// Updating meshes
-		float LowestNeighbor(HeightMap & water, HeightMap & terrain, int x, int z);
+		float LowestNeighbor(Map<TerrainVertex> & map, int x, int z);
 
 		//----------------------------------------------------------------
 		// Resources

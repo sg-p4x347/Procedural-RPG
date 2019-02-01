@@ -914,7 +914,7 @@ void RenderSystem::RenderVBO(shared_ptr<Components::PositionNormalTextureTangent
 void RenderSystem::RenderTerrain(shared_ptr<world::WEM::RegionType> region, bool alpha)
 {
 	Vector2 location = region->GetCenter();
-	Vector3 position(location.x, 0.f, location.y);
+	Vector3 position = Vector3::Zero;
 	RenderModel(SM->GetSystem<world::TerrainSystem>("Terrain")->GetModel(region), Matrix::CreateTranslation(position), alpha);
 }
 

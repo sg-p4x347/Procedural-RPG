@@ -12,6 +12,7 @@ namespace geometry {
 	{
 		materialName = mat->name;
 		material = mat;
+		alpha |= mat->alpha != 1.f;
 	}
 	void MeshPart::Import(std::istream & ifs)
 	{

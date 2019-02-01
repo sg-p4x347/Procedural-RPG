@@ -27,11 +27,13 @@ namespace geometry {
 			for (auto & mesh : m_meshes) {
 				shared_ptr<DirectX::ModelMesh> dxMesh = std::make_shared<DirectX::ModelMesh>();
 				for (auto & part : mesh->GetParts()) {
-					auto effect = part.material->GetEffect(fxFactory);
-					auto temp = CustomModelLoadVBO::CreateFromVBO(d3dDevice, part.vertices, part.indices, effect, true);
-					auto && dxPart = temp->meshes[0]->meshParts[0];
-					dxPart->isAlpha = part.alpha;
-					dxMesh->meshParts.push_back(std::make_unique<DirectX::ModelMeshPart>(*(dxPart)));
+					if (part.vertices.size() > 0) {
+						auto effect = part.material->GetEffect(fxFactory);
+						auto temp = CustomModelLoadVBO::CreateFromVBO(d3dDevice, part.vertices, part.indices, effect, true);
+						auto && dxPart = temp->meshes[0]->meshParts[0];
+						dxPart->isAlpha = part.alpha;
+						dxMesh->meshParts.push_back(std::make_unique<DirectX::ModelMeshPart>(*(dxPart)));
+					}
 				}
 				m_model->meshes.push_back(dxMesh);
 			}

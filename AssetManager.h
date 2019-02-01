@@ -151,9 +151,8 @@ inline shared_ptr<Map<T>> AssetManager::GetMap(string name, DirectX::SimpleMath:
 			int xSize = sampleArea.width / sampleSpacing;
 			int ySize = sampleArea.height / sampleSpacing;
 			shared_ptr<Map<T>> map = std::make_shared<Map<T>>(xSize, ySize);
-			map->area.x = sampleArea.x;
-			map->area.y = sampleArea.y;
-			ifstream stream(FullPath(path, AssetType::Authored, ".map"), std::ios_base::binary);
+			map->area = sampleArea;
+			ifstream stream(FullPath(name, AssetType::Procedural, ".map"), std::ios_base::binary);
 
 
 			if (stream.is_open()) {
