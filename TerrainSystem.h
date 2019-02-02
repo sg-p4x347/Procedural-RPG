@@ -66,9 +66,11 @@ namespace world {
 		// Terrain cache
 		
 		Map<shared_ptr<Map<TerrainVertex>>> m_chunks;
+
 		Map<shared_ptr<DirectX::Model>> m_chunkModels;
 		Map<int> m_chunkLOD;
-		Map<std::thread> m_threads;
+		Map<shared_ptr<std::thread>> m_threads;
+		Map<bool> m_cancel;
 		void UpdateLOD(Vector3 center);
 		// 2 dimensional maps -------------------------------------------
 		int m_width;				// The total width of the continent (in meters)

@@ -127,11 +127,6 @@ namespace Utility {
 		return result;
 	}
 
-	float Clamp(float x, float min, float max)
-	{
-		return std::min(max, std::max(min, x));
-	}
-
 	float Floor(float x, float precision)
 	{
 		return std::floor((1.f / precision) * x) * precision;

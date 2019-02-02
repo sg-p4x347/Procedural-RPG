@@ -50,8 +50,8 @@ namespace Utility {
 	float Inverse(float x, float a, float b, float c); // a controls amplituide; b controls x displacement; c controls width
 	
 	float BinomialCoefficient(int n, int k);
-
-	float Clamp(float x, float min, float max);
+	template <typename T>
+	T Clamp(T x, T min, T max);
 	float Floor(float x, float precision);
 	//----------------------------------------------------------------
 	// Interpolation functions
@@ -69,5 +69,10 @@ namespace Utility {
 	float DegToRad(float degree);
 	// Tests
 	bool IsNumeric(const std::string& s);
+	template<typename T>
+	T Clamp(T x, T min, T max)
+	{
+		return std::min(max, std::max(min, x));
+	}
 }
 

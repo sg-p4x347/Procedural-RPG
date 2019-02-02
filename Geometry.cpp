@@ -3,7 +3,7 @@
 namespace geometry {
 	Vector2 Clamp(Rectangle rect, Vector2 point)
 	{
-		return Vector2(Utility::Clamp(point.x, rect.x, rect.x + rect.width), Utility::Clamp(point.y, rect.y, rect.y + rect.height));
+		return Vector2(Utility::Clamp((long)point.x, rect.x, rect.x + rect.width), Utility::Clamp((long)point.y, rect.y, rect.y + rect.height));
 	}
 	float ClosestPointOnLine(Vector3 linePoint, Vector3 lineDir, Vector3 point)
 	{

@@ -38,10 +38,11 @@ namespace world {
 		SM(systemManager),
 		m_width(worldWidth),
 		m_regionWidth(regionWidth),
-		m_chunks(worldWidth / regionWidth),
+		m_chunks(worldWidth / regionWidth - 1),
 		m_chunkModels(worldWidth / regionWidth),
 		m_chunkLOD(worldWidth / regionWidth),
-		m_threads(worldWidth / regionWidth)
+		m_threads(worldWidth / regionWidth),
+		m_cancel(worldWidth / regionWidth)
 	{
 		m_directory = directory / Name();
 		Filesystem::create_directory(m_directory);
@@ -223,34 +224,20 @@ namespace world {
 		
 		// package everything into a unified terrain vertex
 		Map<TerrainVertex> vertices(m_width);
-		for (int x = 0; x < m_waterMap->width;x++) {
-			for (int z = 0; z < m_waterMap->length;z++) {
+		for (int x = 0; x <= m_waterMap->width;x++) {
+			for (int z = 0; z <= m_waterMap->length;z++) {
 				TerrainVertex & vertex = vertices[x][z];
 				vertex.terrain = (*m_terrainMap)[x][z];
 				vertex.water = (*m_waterMap)[x][z].Water;
 				{
-					float center = vertex.terrain;
-					// adjacent vertices, if on the edge, this vertex is used
-					float left = x - 1 >= 0 ? m_terrainMap->Height(x - 1, z) : center;
-					float right = x + 1 <= m_width ? m_terrainMap->Height(x + 1, z) : center;
-					float up = z + 1 <= m_width ? m_terrainMap->Height(x, z + 1) : center;
-					float down = z - 1 >= 0 ? m_terrainMap->Height(x, z - 1) : center;
-
-					Vector3 normal = DirectX::SimpleMath::Vector3(left - right, 2.f, down - up);
-					normal.Normalize();
-					vertex.terrainNormal = normal;
+					vertex.terrainNormal = HeightMap::Normal(x, z, [&](int x, int z) {
+						return m_terrainMap->Height(x, z);
+					});
 				}
 				{
-					float center = vertex.water;
-					// adjacent vertices, if on the edge, this vertex is used
-					float left = x - 1 >= 0 ? (*m_waterMap)[x - 1][z].Water : center;
-					float right = x + 1 <= m_width ? (*m_waterMap)[x + 1][ z].Water : center;
-					float up = z + 1 <= m_width ? (*m_waterMap)[x][ z + 1].Water : center;
-					float down = z - 1 >= 0 ? (*m_waterMap)[x][z - 1].Water : center;
-
-					Vector3 normal = DirectX::SimpleMath::Vector3(left - right, 2.f, down - up);
-					normal.Normalize();
-					vertex.waterNormal = normal;
+					vertex.waterNormal = HeightMap::Normal(x, z, [&](int x, int z) {
+						return m_terrainMap->Height(x, z) + (*m_waterMap)[Utility::Clamp(x,0,m_waterMap->width)][Utility::Clamp(x, 0, m_waterMap->length)].Water;
+					});;
 				}
 			}
 		}
@@ -260,8 +247,8 @@ namespace world {
 		}), 10.f, m_regionWidth, "Water");*/
 
 		auto position = Vector3(m_width / 2, m_terrainMap->Height(m_width / 2, m_width / 2), m_width / 2);
-		EM->GetEntity<Position>(EM->PlayerID())->Get<Position>().Pos = position;
-		EM->UpdatePosition(EM->PlayerID(), position);
+		//EM->GetEntity<Position>(EM->PlayerID())->Get<Position>().Pos = position;
+		//EM->UpdatePosition(EM->PlayerID(), position);
 		// Resources
 		//CreateResourceEntities();
 		AssetManager::Get()->GetProceduralEM()->Save();
@@ -308,12 +295,19 @@ namespace world {
 
 	float TerrainSystem::Height(Vector2 position)
 	{
-		int x = position.x / m_regionWidth;
-		int z = position.y / m_regionWidth;
-		if (x >= 0 && z >= 0 && x < m_width / m_regionWidth && z < m_width / m_regionWidth) {
-			return (*m_chunks[x][z])[position.x][position.y].terrain;//->Height(position.x - x * m_regionWidth, position.y - z * m_regionWidth);
+		int regionX = std::floor(position.x / m_regionWidth);
+		int regionZ = std::floor(position.y / m_regionWidth);
+		if (m_chunks.Bounded(regionX, regionZ)) {
+			auto & chunk = *m_chunks[regionX][regionZ];
+			float sampleX = position.x - chunk.area.x;
+			float sampleZ = position.y - chunk.area.y;
+			if (chunk.Bounded(sampleX, sampleZ)) {
+				return HeightMap::Height(sampleX, sampleZ, [&chunk](int x, int z) {
+					return chunk[x][z].terrain;
+				});
+			}
+			return 0.f;
 		}
-		return 0.f;
 	}
 
 	int TerrainSystem::Width()
@@ -360,7 +354,7 @@ namespace world {
 	void TerrainSystem::UpdateLOD(Vector3 center)
 	{
 		std::thread([=] {
-			std::lock_guard<std::mutex> guard(m_updateLodMutex);
+			//std::lock_guard<std::mutex> guard(m_updateLodMutex);
 			int vertexCount = 0;
 			const int chunkCount = m_width / m_regionWidth;
 			//----------------------------------------------------------------
@@ -400,7 +394,14 @@ namespace world {
 							adjLod[i] = -1;
 						}
 					}
-					std::thread([=] {
+					
+					/*if (m_threads[x][z] && m_threads[x][z]->joinable()) {
+						m_cancel[x][z] = true;
+						m_threads[x][z]->join();
+						m_cancel[x][z] = false;
+					}*/
+					//shared_ptr<std::thread> thread;
+					//std::thread([=] {
 						bool modelChanged = false;
 						//int vertexCount += std::pow(m_regionWidth / std::pow(2,lod), 2);
 						unsigned int sampleSpacing = std::pow(2, lod);
@@ -422,6 +423,8 @@ namespace world {
 							chunk.Resize(m_regionWidth / std::pow(2, lod));
 							modelChanged = true;
 						}
+						if (m_cancel[x][z])
+							return;
 						auto chunk = m_chunks[x][z];
 						Vector2 chunkRadius(chunk->width, chunk->length);
 						for (int i = 0; i < 4; i++) {
@@ -445,7 +448,6 @@ namespace world {
 						}
 						if (modelChanged) {
 							auto model = CreateModel(*chunk, sampleArea)->GetModel(AssetManager::Get()->GetDevice(),AssetManager::Get()->GetFxFactory());
-							//auto model = AssetManager::Get()->GetModel("error")->GetModel(AssetManager::Get()->GetDevice(), AssetManager::Get()->GetFxFactory());
 							m_chunkBuffer = m_chunkModels[x][z];
 							m_mutexRegion.first = x;
 							m_mutexRegion.second = z;
@@ -453,8 +455,9 @@ namespace world {
 							m_chunkModels[x][z] = model;
 							m_writingModel = false;
 						}
-					}).detach();
-					//m_threads[x][z].swap(thread);
+					//}).detach();
+					//m_threads[x][z] = thread;
+					//thread->detach();
 				}
 			}
 			//IEventManager::Invoke(EventTypes::GUI_DebugInfo, string("Terrain Vertices:"), to_string(vertexCount));
@@ -585,7 +588,7 @@ namespace world {
 		auto waterMaterial = std::make_shared<geometry::Material>("water");
 		waterMaterial->pixelShader = "Water.cso";
 		waterMaterial->textures.push_back("water.dds");
-		waterMaterial->alpha = 0.5f;
+		//waterMaterial->alpha = 0.5f;
 		model->AddMaterial(waterMaterial);
 		auto waterPart = std::make_shared<geometry::MeshPart>();
 		waterPart->SetMaterial(waterMaterial);

@@ -50,6 +50,9 @@ namespace world {
 
 	World::~World()
 	{
+		//----------------------------------------------------------------
+		// Reset event handlers
+		IEventManager::NewVersion();
 		auto gui = m_systemManager.GetSystem<GuiSystem>("Gui");
 		gui->OpenMenu("loading");
 		//----------------------------------------------------------------
@@ -209,9 +212,7 @@ namespace world {
 	}*/
 	void World::InitializeResources()
 	{
-		//----------------------------------------------------------------
-		// Reset event handlers
-		IEventManager::NewVersion();
+		
 		//----------------------------------------------------------------
 		// World configuration
 		JsonParser worldConfig = JsonParser(std::ifstream("config/world.json"));

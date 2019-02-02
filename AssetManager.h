@@ -159,17 +159,22 @@ inline shared_ptr<Map<T>> AssetManager::GetMap(string name, DirectX::SimpleMath:
 				// stores the exact bytes from the file into memory
 				// move start position to the region, and proceed to read each line into the Char buffers
 
-
-				for (int vertY = 0; vertY <= ySize; vertY++) {
-					for (int vertX = 0; vertX <= xSize; vertX++) {
-						int globalX = vertX * sampleSpacing + sampleArea.x;
-						int globalY = vertY * sampleSpacing + sampleArea.y;
-						int index = Utility::posToIndex(globalX, globalY, heightMapComp->Xsize + 1);
-
-						stream.seekg(index * sizeof(T));
-						stream.read((char *)&(*map)[vertX][vertY], sizeof(T));
+				size_t bufferSize = sampleArea.height + 1;
+				T * colBuffer = new T[bufferSize];
+				int globalY = sampleArea.y;
+				for (int vertX = 0; vertX <= xSize; vertX++) {
+					int globalX = vertX * sampleSpacing + sampleArea.x;
+					int columnIndex = Utility::posToIndex(globalY, globalX, heightMapComp->Ysize + 1);
+					
+					
+					stream.seekg(columnIndex * sizeof(T));
+					stream.read((char *)colBuffer, bufferSize * sizeof(T));
+					// pull vertices out of the buffer
+					for (int vertY = 0; vertY <= ySize; vertY++) {
+						(*map)[vertX][vertY] = colBuffer[vertY * sampleSpacing];
 					}
 				}
+				delete[] colBuffer;
 
 				stream.close();
 			}
@@ -186,10 +191,8 @@ inline void AssetManager::CreateMap(string name, Map<T>& map)
 	entity->AddComponent(new HeightMapAsset(map.width, map.length, 1.f));
 	// save the map to the file
 	ofstream ofs(FullPath(name, Procedural, ".map"), std::ios::binary);
-	for (unsigned short vertY = 0; vertY <= map.length; vertY++) {
-		for (unsigned short vertX = 0; vertX <= map.width; vertX++) {
-			ofs.write((const char *)&map[vertX][vertY], sizeof(T));
-		}
+	for (unsigned short vertX = 0; vertX <= map.width; vertX++) {
+		ofs.write((const char *)&map[vertX][0], sizeof(T) * (map.length + 1));
 	}
 	ofs.close();
 }
