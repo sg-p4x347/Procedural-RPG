@@ -18,8 +18,8 @@ public:
 	Map<std::pair<int,shared_ptr<Model>>> RegionModels; // For heightmaps
 	// Inherited via Component
 	virtual string GetName() override;
-	virtual void Import(std::ifstream & ifs) override;
-	virtual void Export(std::ofstream & ofs) override;
+	virtual void Import(std::istream & ifs) override;
+	virtual void Export(std::ostream & ofs) override;
 	// JSON
 	virtual void Import(JsonParser & jp) override;
 	virtual JsonParser Export() override;

@@ -6,21 +6,17 @@
 #include "Room.h"
 #include "BuildingGenerator.h"
 #include "Rectangle.h"
-#include "BuildingVoxel.h"
+#include "ModelVoxel.h"
 #include "AssetManager.h"
 using namespace Architecture;
 using RoomPtr = std::shared_ptr<Room>;
 using RoomPtrs = vector<shared_ptr<Room>>;
-BuildingGenerator::BuildingGenerator()
-{
-}
+namespace world {
+	BuildingGenerator::BuildingGenerator()
+	{
+	}
 
-
-
-using namespace std;
-using namespace Utility;
-
-	Components::Building BuildingGenerator::Create(SimpleMath::Rectangle footprint, JsonParser & config)
+	VoxelGridModel BuildingGenerator::Create(SimpleMath::Rectangle footprint, JsonParser & config)
 	{
 		m_config = config;
 		// initialize configuration settings
@@ -42,7 +38,7 @@ using namespace Utility;
 					roomIndex++;
 					if (roomIndex >= config["rooms"].Count()) roomIndex = 0;
 					roomCfg = config["rooms"][roomIndex];
-				} while (!roomCfg["required"].To<bool>() || RoomCount(roomCfg["type"].To<string>(),rooms) >= m_config["rooms"][roomIndex]["count"].To<int>());
+				} while (!roomCfg["required"].To<bool>() || RoomCount(roomCfg["type"].To<string>(), rooms) >= m_config["rooms"][roomIndex]["count"].To<int>());
 
 				// search for the best rect out of all current rects
 				double bestFitness = 0.0;
@@ -55,14 +51,14 @@ using namespace Utility;
 					}
 				}
 				// recursively divide this rect until a room is established
-				CreateRoom(bestRect, roomCfg,rooms,m_rects);
+				CreateRoom(bestRect, roomCfg, rooms, m_rects);
 
 			}
 			else {
 				// search for the best rectangle-room match
-				pair<int, JsonParser> bestFit = BestFit(m_rects,rooms);
+				pair<int, JsonParser> bestFit = BestFit(m_rects, rooms);
 				if (std::get<0>(bestFit) >= 0) {
-					CreateRoom(std::get<0>(bestFit), std::get<1>(bestFit),rooms,m_rects);
+					CreateRoom(std::get<0>(bestFit), std::get<1>(bestFit), rooms, m_rects);
 				}
 				else {
 					break;
@@ -72,14 +68,14 @@ using namespace Utility;
 		// Network the rooms
 		NetworkRooms(rooms);
 		// Voxelize
-		auto voxels = Voxelize(rooms,SimpleMath::Rectangle(0,0,footprint.width,footprint.height));
-		
+		auto voxels = Voxelize(rooms, SimpleMath::Rectangle(0, 0, footprint.width, footprint.height));
+
 		vector<Room> finalRooms;
 		for (RoomPtr & room : rooms) {
 			finalRooms.push_back(*room);
 		}
 		// Return the building
-		return Components::Building(finalRooms, voxels);
+		return VoxelGridModel(voxels);
 	}
 	int BuildingGenerator::RoomCount(string type, RoomPtrs & rooms)
 	{
@@ -126,7 +122,7 @@ using namespace Utility;
 		int bestRect = -1;
 		JsonParser bestRoomCfg;
 		for (JsonParser roomCfg : m_config["rooms"].GetElements()) {
-			if (roomCfg["count"].To<int>() == -1 || RoomCount(roomCfg["type"].To<string>(),rooms) < roomCfg["count"].To<int>()) {
+			if (roomCfg["count"].To<int>() == -1 || RoomCount(roomCfg["type"].To<string>(), rooms) < roomCfg["count"].To<int>()) {
 				for (int rectIndex = 0; rectIndex < rects.size(); rectIndex++) {
 					double fitness = RoomFitness(rects[rectIndex], roomCfg);
 					if (fitness > bestFitness) {
@@ -220,25 +216,6 @@ using namespace Utility;
 		vector<Architecture::Rectangle> divided = DivideRect(parentRect, 0.5, true);
 		Architecture::Rectangle subRectA = divided[0];
 		Architecture::Rectangle subRectB = divided[1];
-		//// pick a spot to divide the rectangle
-		//long largeSide = max(parentRect.width, parentRect.height);
-		//long smallSize = min(parentRect.width, parentRect.height);
-
-		//long divisionSideA = (long)Utility::randWithin((float(largeSide) / 2.f) - (float(largeSide)*m_divisionDeviation), float(largeSide) / 2.f);
-		//long divisionSideB = largeSide - divisionSideA;
-
-		//Rectangle subRectA = Rectangle(
-		//	parentRect.x,
-		//	parentRect.y,
-		//	divisionSideA,
-		//	smallSize
-		//);
-		//Rectangle subRectB = Rectangle(
-		//	parentRect.x + (largeSide == parentRect.width ? divisionSideA : 0),
-		//	parentRect.y + (largeSide == parentRect.height ? divisionSideA : 0),
-		//	divisionSideB,
-		//	smallSize
-		//);
 
 		/* if the average fitness of the two subRects is better
 		than the original rect*/
@@ -250,7 +227,7 @@ using namespace Utility;
 
 			// try to add some randomness to the mix
 			// divides the rect on the long side, deviating by "divisionDeviation" away from half way (0.5)
-			vector<Architecture::Rectangle> unequalRects = DivideRect(parentRect, Deviation(m_divisionDeviation, 0.5), true);
+			vector<Architecture::Rectangle> unequalRects = DivideRect(parentRect, Utility::Deviation(m_divisionDeviation, 0.5f), true);
 			double fitnessUneqA = RoomFitness(unequalRects[0], roomCfg);
 			double fitnessUneqB = RoomFitness(unequalRects[1], roomCfg);
 			if ((fitnessUneqA + fitnessUneqB) / 2.0 > parentFitness) {
@@ -265,17 +242,17 @@ using namespace Utility;
 			int indexB = -1;
 			if (subRectA.Area() > 0 && subRectB.Area() > 0) {
 				rects.push_back(subRectA);
-				indexA = rects.size() - 1;
+				indexA = (int)rects.size() - 1;
 				rects.push_back(subRectB);
-				indexB = rects.size() - 1;
+				indexB = (int)rects.size() - 1;
 
 				// recursively break down the best rect until a room is created
 				if (recursive) {
 					if (fitnessA >= fitnessB) {
-						CreateRoom(indexA, roomCfg,rooms, rects); // subRectA
+						CreateRoom(indexA, roomCfg, rooms, rects); // subRectA
 					}
 					else if (fitnessB > fitnessA) {
-						CreateRoom(indexB, roomCfg,rooms,rects); // subRectB
+						CreateRoom(indexB, roomCfg, rooms, rects); // subRectB
 					}
 				}
 			}
@@ -289,7 +266,7 @@ using namespace Utility;
 			// re-assign this room if it is just ludicrous 
 			if (parentFitness <= m_minFitness) {
 				//newRoom.Initialize(self.BestFit([parentRect]).config.name);
-				CreateRoom(parentIndex, std::get<1>(BestFit(vector<Architecture::Rectangle>{parentRect},rooms)),rooms,rects);
+				CreateRoom(parentIndex, std::get<1>(BestFit(vector<Architecture::Rectangle>{parentRect}, rooms)), rooms, rects);
 
 			}
 			else {
@@ -306,7 +283,7 @@ using namespace Utility;
 		int i = 0;
 		do {
 			// make a hallway to connect separate networks
-			if (networks.size() > 0) LinkNetworks(rooms,networks);
+			if (networks.size() > 0) LinkNetworks(rooms, networks);
 			// link the rooms
 			LinkRooms(rooms);
 			// group connected rooms in to networks
@@ -359,7 +336,7 @@ using namespace Utility;
 		// initialize the array of room networks
 		vector<RoomPtrs> networks;
 		for (RoomPtr & room : rooms) {
-			networks.push_back(RoomPtrs{room});
+			networks.push_back(RoomPtrs{ room });
 		}
 		bool linkFound = true;
 		while (linkFound) {
@@ -412,7 +389,7 @@ using namespace Utility;
 			}
 		}
 		// travel from A to B
-		CreateHallway(rooms,nullptr, shared_ptr<Room>(std::get<0>(bestPair)), shared_ptr<Room>(std::get<1>(bestPair)));
+		CreateHallway(rooms, nullptr, shared_ptr<Room>(std::get<0>(bestPair)), shared_ptr<Room>(std::get<1>(bestPair)));
 	}
 	tuple<shared_ptr<Room>, shared_ptr<Room>, double> BuildingGenerator::FindClosest(RoomPtrs A, RoomPtrs B, bool linkable, bool touching)
 	{
@@ -448,11 +425,11 @@ using namespace Utility;
 	{
 		// find the next room in the chain
 		RoomPtr nextRoom = nullptr;
-		RoomPtrs roomsTouching = RoomsTouching(rooms,current);
+		RoomPtrs roomsTouching = RoomsTouching(rooms, current);
 		for (RoomPtr room : roomsTouching) {
 			if (room == target) nextRoom = target;
 		}
-		if (nextRoom == nullptr) nextRoom = get<0>(FindClosest(roomsTouching, RoomPtrs{target}));
+		if (nextRoom == nullptr) nextRoom = get<0>(FindClosest(roomsTouching, RoomPtrs{ target }));
 		// find which sides to make the hallway on
 		if (previous) {
 			// connection between current and previous room// edges of the current room that would be viable for a hallway
@@ -477,7 +454,7 @@ using namespace Utility;
 			for (Edge edgePrev : edgesPrev) {
 				for (Edge edgeNext : edgesNext) {
 					if (edgePrev == edgeNext) {
-						CreateHallwayFromEdge(rooms,current, edgePrev);
+						CreateHallwayFromEdge(rooms, current, edgePrev);
 						common = true;
 						break;
 					}
@@ -491,8 +468,8 @@ using namespace Utility;
 				for (Edge edgePrev : edgesPrev) {
 					for (Edge edgeNext : edgesNext) {
 						if (EdgesAdjacent(edgePrev, edgeNext)) {
-							CreateHallwayFromEdge(rooms,current, edgePrev);
-							CreateHallwayFromEdge(rooms,current, edgeNext);
+							CreateHallwayFromEdge(rooms, current, edgePrev);
+							CreateHallwayFromEdge(rooms, current, edgeNext);
 							adjacent = true;
 							break;
 						}
@@ -501,12 +478,12 @@ using namespace Utility;
 				}
 				// if edges are opposite
 				if (!adjacent) {
-					CreateHallwayFromEdge(rooms,current, edgesPrev[0]);
-					CreateHallwayFromEdge(rooms,current, edgesNext[0]);
+					CreateHallwayFromEdge(rooms, current, edgesPrev[0]);
+					CreateHallwayFromEdge(rooms, current, edgesNext[0]);
 					Edge other;
 					if (edgesPrev[0] == Left || edgesPrev[0] == Right) other = Top;
 					if (edgesPrev[0] == Bottom || edgesPrev[0] == Top) other = Left;
-					CreateHallwayFromEdge(rooms,current, other);
+					CreateHallwayFromEdge(rooms, current, other);
 				}
 			}
 		}
@@ -515,7 +492,7 @@ using namespace Utility;
 		}
 		else {
 			// recursively create hallways until the target is reached
-			CreateHallway(rooms,current, nextRoom, target);
+			CreateHallway(rooms, current, nextRoom, target);
 		}
 	}
 	bool BuildingGenerator::EdgesAdjacent(Edge & A, Edge & B)
@@ -534,7 +511,7 @@ using namespace Utility;
 		}
 		switch (edge) {
 		case Left:
-			if (m_hallWidth <  room->rect.width) {
+			if (m_hallWidth < room->rect.width) {
 				hallway = shared_ptr<Room>(new Room(Architecture::Rectangle(room->rect.x, room->rect.y, m_hallWidth, room->rect.height), hallConfig));
 				room->rect.width -= m_hallWidth;
 				room->rect.x += m_hallWidth;
@@ -593,31 +570,35 @@ using namespace Utility;
 			rooms.push_back(hallway);
 		}
 	}
-	Map<BuildingVoxel> BuildingGenerator::Voxelize(RoomPtrs & rooms, SimpleMath::Rectangle footprint)
+	VoxelGrid<ModelVoxel> BuildingGenerator::Voxelize(RoomPtrs & rooms, SimpleMath::Rectangle footprint)
 	{
-		// 2d voxel array
-		Map<BuildingVoxel> voxels = Map<BuildingVoxel>(footprint.width+1,footprint.height+1);
+		// 3D voxel array
+		VoxelGrid<ModelVoxel> voxels(footprint.width + 2, 2, footprint.height + 2);
 		// building level assets
-		EntityPtr exteriorWallAsset;
-		EntityPtr exteriorCornerAsset;
-		AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(),(string)m_config["exteriorWallType"], exteriorWallAsset);
-		AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorCornerType"], exteriorCornerAsset);
+		//EntityPtr exteriorWallBottomAsset;
+		//EntityPtr exteriorWallMiddleAsset;
+		//EntityPtr exteriorCornerAsset;
+		//AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorWallType"] + "_bottom", exteriorWallBottomAsset);
+		//AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorWallType"] + "_middle", exteriorWallMiddleAsset);
+		//AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)m_config["exteriorCornerType"], exteriorCornerAsset);
 		// iterate & voxelize each room
 		for (RoomPtr & room : rooms) {
 			EntityPtr floorAsset;
-			EntityPtr wallAsset;
-			EntityPtr cornerAsset;
+			//EntityPtr wallBottomAsset;
+			//EntityPtr wallMiddleAsset;
+			//EntityPtr cornerAsset;
 			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["floorType"], floorAsset);
-			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["wallType"], wallAsset);
-			AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["cornerType"], cornerAsset);
+			//AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["wallType"] + "_bottom", wallBottomAsset);
+			//AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["wallType"] + "_middle", wallMiddleAsset);
+			//AssetManager::Get()->Find(AssetManager::Get()->GetStaticEM(), (string)room->config["cornerType"], cornerAsset);
 			//AssetManager::Get()->Find((string)room->config["cornerType"], cornerAsset);
 
-			for (int x = room->rect.x-1; x <= room->rect.x + room->rect.width+1; x++) {
-				for (int z = room->rect.y-1; z <= room->rect.y + room->rect.height+1; z++) {
+			for (int x = room->rect.x; x <= room->rect.x + room->rect.width; x++) {
+				for (int z = room->rect.y; z <= room->rect.y + room->rect.height; z++) {
 					if (x >= room->rect.x && x <= room->rect.x + room->rect.width && z >= room->rect.y && z <= room->rect.y + room->rect.height) {
 						//----------------------------------------------------------------
 						// Interiror
-						
+
 						// Unit square used for determining where interior walls go
 						/*
 						(-1,1)-------(1,1)
@@ -626,57 +607,132 @@ using namespace Utility;
 						|				|
 						(-1,-1)------(1,-1)
 						*/
-						int unitX = (x == room->rect.x ? -1 : (x == room->rect.x + room->rect.width ? 1 : 0));
+						int unitX = (x == room->rect.x ? -1 : (x == (room->rect.x + room->rect.width) ? 1 : 0));
 
-						int unitZ = (z == room->rect.y ? -1 : (z == room->rect.y + room->rect.height ? 1 : 0));
+						int unitZ = (z == room->rect.y ? -1 : (z == (room->rect.y + room->rect.height) ? 1 : 0));
 
-						int voxelX = std::min(room->rect.x + room->rect.width, x + 1) ;
-						int voxelZ = std::min(room->rect.y + room->rect.height, z + 1) ;
+						int voxelX = std::min(room->rect.x + room->rect.width, x + 1);
+						int voxelZ = std::min(room->rect.y + room->rect.height, z + 1);
+						ModelVoxel bottom;
+						AddFloor(bottom,floorAsset->ID());
+						//AddWall(bottom,wallBottomAsset->ID(),unitX,unitZ);
+						voxels.Set(bottom, voxelX, 0, voxelZ);
 
-						voxels.map[voxelX][voxelZ].Floor(
-							unitX,
-							unitZ,
-							floorAsset->ID()
-						);
-						voxels.map[voxelX][voxelZ].Wall(
-							unitX,
-							unitZ,
-							wallAsset->ID()
-						);
+						ModelVoxel middle;
+						//AddWall(middle, wallMiddleAsset->ID(), unitX, unitZ);
+						//voxels.Set(middle, voxelX, 1, voxelZ);
 					}
 				}
 			}
 		}
 		//----------------------------------------------------------------
 		// Exterior
-		for (int x = 0; x <= footprint.width + 1; x++) {
-			for (int z = 0; z <= footprint.height+1; z++) {
-				if (x == 0 || x == footprint.width + 1 || z == 0 || z == footprint.height+1) {
-					//----------------------------------------------------------------
-					// Exterior
-					int unitX = (x == 0 ? 1 : (x == footprint.width + 1 ? -1 : 0));
-					int unitZ = (z == 0 ? 1 : (z == footprint.height + 1 ? -1 : 0));
+		//for (int x = 0; x <= footprint.width + 1; x++) {
+		//	for (int z = 0; z <= footprint.height + 1; z++) {
+		//		if (x == 0 || x == footprint.width + 1 || z == 0 || z == footprint.height + 1) {
+		//			//----------------------------------------------------------------
+		//			// Exterior
+		//			int unitX = (x == 0 ? 1 : (x == footprint.width + 1 ? -1 : 0));
+		//			int unitZ = (z == 0 ? 1 : (z == footprint.height + 1 ? -1 : 0));
 
-					/*int voxelX = std::min(room->rect.x + room->rect.width + 1, x);
-					int voxelZ = std::min(room->rect.y + room->rect.height + 1, z);*/
-					if (std::abs(unitX) == 1 && std::abs(unitZ) == 1) {
-						voxels.map[x][z].Corner(
-							unitX,
-							unitZ,
-							exteriorCornerAsset->ID()
-						);
-					}
-					else {
-						voxels.map[x][z].Wall(
-							unitX,
-							unitZ,
-							exteriorWallAsset->ID()
-						);
-					}
-				}
+		//			/*int voxelX = std::min(room->rect.x + room->rect.width + 1, x);
+		//			int voxelZ = std::min(room->rect.y + room->rect.height + 1, z);*/
+		//			ModelVoxel bottomVoxel;
+		//			if (std::abs(unitX) == 1 && std::abs(unitZ) == 1) {
+		//				AddCorner(bottomVoxel, exteriorCornerAsset->ID(), unitX, unitZ);
+		//			}
+		//			else {
+		//				AddWall(bottomVoxel, exteriorWallBottomAsset->ID(), unitX, unitZ);
+		//			}
+		//			voxels.Set(bottomVoxel, x, 0, z);
+
+		//			ModelVoxel middleVoxel;
+		//			if (std::abs(unitX) == 1 && std::abs(unitZ) == 1) {
+		//			}
+		//			else {
+		//				AddWall(middleVoxel, exteriorWallMiddleAsset->ID(), unitX, unitZ);
+		//			}
+		//			voxels.Set(middleVoxel, x, 1, z);
+		//		}
+		//	}
+		//}
+		return voxels;
+	}
+
+	void BuildingGenerator::AddWall(ModelVoxel & voxel, AssetID wallAsset, int unitX, int unitZ)
+	{
+		/*
+		^
+		|
+		+X
+				  1
+		 +--------+--------+
+		 |		  |		   |
+		 |		  |		   |
+		 |		  |		   |
+		2+--------*--------+0
+		 |		  |		   |
+		 |		  |		   |
+		 |		  |		   |
+		 +--------+--------+
+				  3
+		+Z --->
+
+		The '*' in the above diagram represents the local
+		origin of this voxel
+
+		Each '+' in the above diagram represents a valid
+		Unit square position; the two interior walls that
+		intersect this point are selected
+		*/
+		if (abs(unitZ) == 1)
+			voxel.AddComponent(wallAsset,2 - (unitZ + 1));
+
+		if (abs(unitX) == 1) {
+			voxel.AddComponent(wallAsset,3 - (unitX + 1));
+		}
+	}
+
+	void BuildingGenerator::AddCorner(ModelVoxel & voxel, AssetID cornerAsset, int unitX, int unitZ)
+	{
+		/*
+		^
+		|
+		+X
+		1				  0
+		+-----------------+
+		|		 |		  |
+		|		 |		  |
+		|		 |		  |
+		|--------*--------|
+		|		 |		  |
+		|		 |		  |
+		|		 |		  |
+		+-----------------+
+		2				  3
+		+Z --->
+		*/
+		if (unitZ == 1) {
+			if (unitX == 1) {
+				voxel.AddComponent(cornerAsset, Transforms::None);
+			}
+			else {
+				voxel.AddComponent(cornerAsset, Transforms::Rotate270);
 			}
 		}
-		return voxels;
+		else {
+			if (unitX == 1) {
+				voxel.AddComponent(cornerAsset, Transforms::Rotate90);
+			}
+			else {
+				voxel.AddComponent(cornerAsset, Transforms::Rotate180);
+			}
+		}
+	}
+
+	void BuildingGenerator::AddFloor(ModelVoxel & voxel, AssetID floorAsset)
+	{
+		voxel.AddComponent(floorAsset, Transforms::None);
 	}
 
 	bool BuildingGenerator::HasRequiredRooms(RoomPtrs & rooms)
@@ -698,3 +754,4 @@ using namespace Utility;
 		return totalCreated >= totalRequired;
 	}
 
+}

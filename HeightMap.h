@@ -5,6 +5,7 @@ class HeightMap :
 {
 public:
 	HeightMap();
+	~HeightMap();
 	HeightMap(int w, float i, float d, int z);
 	HeightMap(int width, int length);
 	HeightMap(Rectangle area);
@@ -13,7 +14,10 @@ public:
 	float GradientAngle(float x, float z);
 	float GradientAngle(int x, int z);
 	float Height(float x, float z);
+	static float Height(float x, float z, std::function<float(int, int)> && controlSelector);
+	static Vector3 Normal(int x, int z, std::function<float(int, int)> && controlSelector);
 	float Height(int x, int z);
+	void SetHeight(int x, int z, float value);
 	float HeightAbsPos(Vector2 position);
 };
 

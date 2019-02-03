@@ -1,0 +1,10 @@
+{
+	"iterations": 100,
+	"minPopulation": 40,
+	"seed": {
+		"sugar": 1.0,
+		"water": 1.0
+	},
+	"grass": false,
+	"trees":  false
+}

@@ -1,5 +1,4 @@
 #pragma once
-using namespace std;
 namespace FileSystemHelpers {
 	// Create a directory
 	string CreateFolder(string path);
@@ -8,7 +7,8 @@ namespace FileSystemHelpers {
 	bool GetInput(string path, ifstream & ifs);
 	// Get list of file names in directory
 	vector<string> FilesIn(string dir);
-	string StripExtension(string filename);
+	//string StripExtension(string filename);
 	// Path operations
 	string CombinePath(string A, string B);
+	string FilenameWithoutExtension(Filesystem::path path);
 }

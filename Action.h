@@ -1,9 +1,9 @@
 #pragma once
-#include "Component.h"
+#include "WorldComponent.h"
 #include "EventManager.h"
-namespace Components {
+namespace world {
 	class Action :
-		public Component
+		public WorldComponent
 	{
 	public:
 		Action();
@@ -13,9 +13,8 @@ namespace Components {
 		EventTypes Event;
 		unsigned int TargetEntity;
 		// Inherited via Component
-		virtual string GetName() override;
 
-		void Import(ifstream & ifs) override;
-		void Export(ofstream & ofs) override;
+		//void Import(std::istream & ifs) override;
+		//void Export(std::ostream & ofs) override;
 	};
 }

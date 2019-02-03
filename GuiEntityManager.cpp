@@ -51,9 +51,9 @@ namespace GUI {
 		return entity;
 	}
 
-	EntityPtr GuiEntityManager::NewTextPanel(string text, Style * style)
+	EntityPtr GuiEntityManager::NewTextPanel(string text, Style * style, string id)
 	{
-		EntityPtr panel = NewPanel(style);
+		EntityPtr panel = NewPanel(style,std::vector<EntityPtr>(),id);
 		panel->AddComponent(new Text(text));
 		return panel;
 	}

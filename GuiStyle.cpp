@@ -130,7 +130,7 @@ namespace GUI {
 		return GetColor(FontColor);
 	}
 
-	DimensionType Style::GetFontSize(float & size)
+	DimensionType Style::GetFontSize(int & size)
 	{
 		return GetDimension(FontSize,size);
 	}
@@ -220,26 +220,7 @@ namespace GUI {
 			return AlignmentType(0);
 		}
 	}
-	DimensionType Style::GetDimension(string value, float & dimension)
-	{
-		std::stringstream stream(value);
-		if (!stream.eof()) {
-			stream >> dimension;
-			if (!stream.eof()) {
-				string suffix = "";
-				stream >> suffix;
-				if (suffix == "px") {
-					return DimensionType::Pixel;
-				}
-				else if (suffix == "%") {
-					dimension /= 100;
-					return DimensionType::Percent;
-				}
-			}
-		}
-		dimension = 0.f;
-		return DimensionType(0);
-	}
+	
 	DirectX::SimpleMath::Color Style::GetColor(string value)
 	{
 		if (value != "") {

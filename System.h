@@ -1,11 +1,8 @@
 #pragma once
-#include "WorldEntityManager.h"
-#include "Component.h"
-#include "Entity.h"
 class System
 {
 public:
-	System(unsigned short updatePeriod);
+	System(unsigned short updatePeriod, bool halted = true);
 	virtual ~System() {}
 	void Tick(double & elapsed);
 	virtual void Initialize();

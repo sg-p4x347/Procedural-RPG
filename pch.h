@@ -36,6 +36,8 @@
 #include <DirectXColors.h>
 #include <stdio.h>
 #include <io.h>
+#include <sstream>
+#include <streambuf>
 #include <algorithm>
 #include <exception>
 #include <memory>
@@ -50,15 +52,17 @@
 #include <stdio.h>
 #include <mutex>
 #include <shared_mutex>
+#include <deque>
 using std::string;
 using std::vector;
 using std::map;
 using std::unordered_map;
 using std::unordered_set;
 
-#include <experimental/filesystem>
+//#include <experimental/filesystem>
 #include <filesystem>
-namespace Filesystem = std::experimental::filesystem::v1;
+
+namespace Filesystem = std::filesystem;
 namespace DX
 {
     inline void ThrowIfFailed(HRESULT hr)

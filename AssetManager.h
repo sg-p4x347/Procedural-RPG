@@ -3,7 +3,9 @@
 #include "AssetEntityManager.h"
 #include "XmlParser.h"
 #include "AssetTypes.h"
+#include "AssetTypedefs.h"
 #include "HeightMap.h"
+#include "CMF.h"
 class AssetManager
 {
 public:
@@ -11,10 +13,19 @@ public:
 	void SetAssetDir(Filesystem::path assets);
 	void SetProceduralAssetDir(Filesystem::path procedural);
 	void CleanupProceduralAssets();
+	IEffectFactory * GetFxFactory();
+	ID3D11Device * GetDevice();
 	void SetDevice(Microsoft::WRL::ComPtr<ID3D11Device> device);
+
+	void CollectGarbage();
 	//----------------------------------------------------------------
 	// Entity manager
 	AssetEntityManager * GetStaticEM();
+	AssetEntityManager * GetProceduralEM();
+	//----------------------------------------------------------------
+	// Asset compilation
+	void CompileFbxAssets();
+	void CompileFbxAsset(Filesystem::path path);
 	//----------------------------------------------------------------
 	// Asset Retrieval
 	
@@ -22,8 +33,8 @@ public:
 	shared_ptr<SpriteFont> GetFont(string name,int size);
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetTexture(string path,AssetType type = Authored);
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetWicTexture(string path);
-	std::shared_ptr<Model> GetModel(string path, float distance = 0.f,Vector3 position = Vector3::Zero, AssetType type = Authored);
-	std::shared_ptr<Model> GetModel(unsigned int id, float distance = 0.f, Vector3 position = Vector3::Zero, AssetType type = Authored);
+	std::shared_ptr<geometry::CMF> GetModel(string path, AssetType type = Authored);
+	std::shared_ptr<geometry::CMF> GetModel(AssetID id, AssetType type = Authored);
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> GetInputLayout(string name);
 	template <typename EffectType>
 	inline bool GetEffect(string name, shared_ptr<EffectType> & effect) {
@@ -36,6 +47,8 @@ public:
 	}
 	int GetFontSize();
 	VboParser * ProVboParser();
+	template<typename T>
+	shared_ptr<Map<T>> GetMap(string name, DirectX::SimpleMath::Rectangle sampleArea, int sampleSpacing = 1);
 	//----------------------------------------------------------------
 	// Heightmaps
 	void CreateHeightMapModel(string path, HeightMap * heightMap, shared_ptr<Map<Vector3>> normalMap, float scaleFactor, int regionWidth, string effect);
@@ -43,14 +56,15 @@ public:
 	shared_ptr<Map<Vector3>> CreateNormalMap(HeightMap * heightMap);
 	shared_ptr<Map<Vector3>> CreateNormalMap(int width, int length, std::function<float(int x, int y)> && getHeight);
 	EntityPtr CreateNormalMap(string path, shared_ptr<Map<Vector3>> normalMap);
-	shared_ptr<HeightMap> GetHeightMap(string path, AssetType type, Rectangle sampleArea, int sampleSpacing = 1);
-	shared_ptr<Map<Vector3>> GetNormalMap(int mapWidth,string path, AssetType type, Rectangle sampleArea, int sampleSpacing = 1);
+	shared_ptr<HeightMap> GetHeightMap(string path, AssetType type, DirectX::SimpleMath::Rectangle sampleArea, int sampleSpacing = 1);
+	void UpdateHeightMap(string path, AssetType type, shared_ptr<HeightMap> map, DirectX::SimpleMath::Rectangle domain);
+	shared_ptr<Map<Vector3>> GetNormalMap(int mapWidth,string path, AssetType type, DirectX::SimpleMath::Rectangle sampleArea, int sampleSpacing = 1);
 	int LOD(double distance, unsigned int regionWidth);
 	std::shared_ptr<Model> CreateModelFromHeightMap(
 		int regionWidth,
 		HeightMap * heightMap,
 		shared_ptr<Map<Vector3>> normalMap, 
-		Rectangle sampleArea, 
+		DirectX::SimpleMath::Rectangle sampleArea,
 		int sampleSpacing,
 		shared_ptr<IEffect> effect);
 	
@@ -59,11 +73,13 @@ public:
 		int regionWidth,
 		HeightMap * heightMap,
 		shared_ptr<Map<Vector3>> normalMap,
-		Rectangle sampleArea,
+		DirectX::SimpleMath::Rectangle sampleArea,
 		int sampleSpacing,
 		shared_ptr<IEffect> effect);
 	float LowestNeighbor(HeightMap & water, HeightMap & terrain, int x, int z);
 	
+	// Query an asset entity by id
+	bool Find(const unsigned int & id, AssetType & type, EntityPtr & entity);
 	// Query an asset entity by path
 	bool Find(AssetEntityManager * assetManager,string path, EntityPtr & entity);
 	//----------------------------------------------------------------
@@ -72,13 +88,14 @@ public:
 
 	//----------------------------------------------------------------
 	// Asset Creation
+	AssetID AddModel(std::shared_ptr<geometry::CMF> model, AssetType type = AssetType::Procedural);
 	void CreateDgslEffect(string name, vector<string> textures, const D3D11_INPUT_ELEMENT_DESC * inputElements, const UINT elementCount);
 	void CreateCustomEffect(string name, vector<string> textures,const D3D11_INPUT_ELEMENT_DESC * inputElements,const UINT elementCount);
 	void CreateEffects(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context);
 	void CreateInputLayouts();
-	
+	template<typename T>
+	void CreateMap(string name, Map<T> & map);
 	VertexPositionNormalTangentColorTexture CreateVertex(Vector3 position, Vector3 normal, Vector2 texture);
-	AssetEntityManager * GetProceduralEM();
 private:
 	static AssetManager * m_instance;
 	AssetManager();
@@ -88,7 +105,6 @@ private:
 	Filesystem::path FullPath(string path, AssetType type,string extension);
 	Filesystem::path FullPath(string path);
 	Filesystem::path AppendPath(string path, string type);
-
 	//----------------------------------------------------------------
 	// Entitities
 	unique_ptr<AssetEntityManager> m_authoredEM;
@@ -97,9 +113,12 @@ private:
 	// Textures
 	map<string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> m_textures;
 	map<string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> m_WicTextures;
+	
 	//----------------------------------------------------------------
 	// Models
-	std::shared_ptr<Model> GetModel(EntityPtr entity, float distance, Vector3 position, AssetType type);
+	map<std::pair<AssetID,AssetType>,std::shared_ptr<geometry::CMF>> m_cmfCache;
+	std::shared_ptr<geometry::CMF> GetModel(EntityPtr entity, AssetType type);
+	
 	unique_ptr<VboParser> m_vboParser;
 	//----------------------------------------------------------------
 	// Effects
@@ -120,3 +139,60 @@ private:
 
 };
 
+template<typename T>
+inline shared_ptr<Map<T>> AssetManager::GetMap(string name, DirectX::SimpleMath::Rectangle sampleArea, int sampleSpacing)
+{
+	EntityPtr entity;
+	if (m_proceduralEM->TryFindByPathID(name, entity)) {
+		// Get the heightmap component
+		auto heightMapComp = entity->GetComponent<HeightMapAsset>("HeightMapAsset");
+		if (heightMapComp) {
+			// Load the vertex array with data.
+			int xSize = sampleArea.width / sampleSpacing;
+			int ySize = sampleArea.height / sampleSpacing;
+			shared_ptr<Map<T>> map = std::make_shared<Map<T>>(xSize, ySize);
+			map->area = sampleArea;
+			ifstream stream(FullPath(name, AssetType::Procedural, ".map"), std::ios_base::binary);
+
+
+			if (stream.is_open()) {
+				// stores the exact bytes from the file into memory
+				// move start position to the region, and proceed to read each line into the Char buffers
+
+				size_t bufferSize = sampleArea.height + 1;
+				T * colBuffer = new T[bufferSize];
+				int globalY = sampleArea.y;
+				for (int vertX = 0; vertX <= xSize; vertX++) {
+					int globalX = vertX * sampleSpacing + sampleArea.x;
+					int columnIndex = Utility::posToIndex(globalY, globalX, heightMapComp->Ysize + 1);
+					
+					
+					stream.seekg(columnIndex * sizeof(T));
+					stream.read((char *)colBuffer, bufferSize * sizeof(T));
+					// pull vertices out of the buffer
+					for (int vertY = 0; vertY <= ySize; vertY++) {
+						(*map)[vertX][vertY] = colBuffer[vertY * sampleSpacing];
+					}
+				}
+				delete[] colBuffer;
+
+				stream.close();
+			}
+			return map;
+		}
+	}
+	return nullptr;
+}
+
+template<typename T>
+inline void AssetManager::CreateMap(string name, Map<T>& map)
+{
+	auto entity = m_proceduralEM->CreateAsset(name);
+	entity->AddComponent(new HeightMapAsset(map.width, map.length, 1.f));
+	// save the map to the file
+	ofstream ofs(FullPath(name, Procedural, ".map"), std::ios::binary);
+	for (unsigned short vertX = 0; vertX <= map.width; vertX++) {
+		ofs.write((const char *)&map[vertX][0], sizeof(T) * (map.length + 1));
+	}
+	ofs.close();
+}

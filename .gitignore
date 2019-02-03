@@ -1,7 +1,11 @@
-# Procedural-RPG
+# Directories
 Saves/
 Unused/
 DirectXTK/
+Assets/
+Misc/
+FBX SDK/
+# Assets
 *.fbx
 *.wav
 *.xwb
@@ -73,146 +77,4 @@ Release/
 *.opensdf
 *.tlog
 *.log
-Version.h
-Version.cpp
-/Misc/youtube background.png
-/Misc/UI Prototype/js/inventory.js
-/Misc/UI Prototype/js
-/Misc/UI Prototype/inventory.html
-/Misc/UI Prototype/img/primitive_pot.png
-/Misc/UI Prototype/img/primitive_basket.png
-/Misc/UI Prototype/img/logs.png
-/Misc/UI Prototype/img/iron_ore.png
-/Misc/UI Prototype/img/cut_stone.png
-/Misc/UI Prototype/img/coal.png
-/Misc/UI Prototype/img/charcoal.png
-/Misc/UI Prototype/img/background.png
-/Misc/UI Prototype/img
-/Misc/UI Prototype/css/inventory.css
-/Misc/UI Prototype/css/common.css
-/Misc/UI Prototype/css
-/Misc/UI Prototype
-/Misc/thumbnail/YTO7F6IC4M.png
-/Misc/thumbnail/YBBYHQNQLK-385.png
-/Misc/thumbnail/YBBYHQNQLK-159.png
-/Misc/thumbnail/YBBYHQNQLK-154.png
-/Misc/thumbnail/YBBYHQNQLK-1.png
-/Misc/thumbnail/Y0R3TQ2VH5-654.png
-/Misc/thumbnail/Y0R3TQ2VH5-1052.png
-/Misc/thumbnail/Y0R3TQ2VH5-1.png
-/Misc/thumbnail/XMIUMKZJ31.png
-/Misc/thumbnail/XGVUOA7T19.png
-/Misc/thumbnail/T03B76LJ9U-1019.png
-/Misc/thumbnail/R64L7B0U8E.png
-/Misc/thumbnail/Q437KCS6BB.png
-/Misc/thumbnail/PZW29ZA1M2.png
-/Misc/thumbnail/PKOCO5JTI0.png
-/Misc/thumbnail/P0FYW0AR74.png
-/Misc/thumbnail/NVC1ERYUJ5.png
-/Misc/thumbnail/NGHV7H9OIJ.png
-/Misc/thumbnail/LDEG6LLMO2.png
-/Misc/thumbnail/KKQG39OY4S.png
-/Misc/thumbnail/JPTUR93IPZ.png
-/Misc/thumbnail/GJBHHUR77K.png
-/Misc/thumbnail/EH8IJLF1F2-587.png
-/Misc/thumbnail/EH8IJLF1F2-1.png
-/Misc/thumbnail/E3I78P7EGE.png
-/Misc/thumbnail/DYSJE5G622.png
-/Misc/thumbnail/DTIPA578OZ.png
-/Misc/thumbnail/AZXLUY6QKL.png
-/Misc/thumbnail/AANKHC0DGN.png
-/Misc/thumbnail/9NRDN988PC.png
-/Misc/thumbnail/8ZJ6F8TENW.png
-/Misc/thumbnail/5BBRLC14XE.png
-/Misc/thumbnail/3KM4P7LQD4.png
-/Misc/thumbnail/31TQSMJFWR.png
-/Misc/thumbnail/1FTUMDO4ZH.png
-/Misc/thumbnail
-/Misc/System Diagram.png
-/Misc/Project Dependencies.pub
-/Misc/Project Dependencies.png
-/Misc/Plant GA Model.png
-/Misc/Plant GA Model 2.png
-/Misc/Omega Project Logo_small (1).xcf
-/Misc/Omega Project Logo (1).xcf
-/Misc/MSU Organization Notes.txt
-/Misc/Model AI Player.pub
-/Misc/lagoon - Copy.png
-/Misc/inventory html prototype - Copy.png
-/Misc/Inheritance Diagram.png
-/Misc/Entity Diagram.png
-/Misc/Entity Component System.osp
-/Misc/Entity component system.mp4
-/Misc/Elevator Pitch.txt
-/Misc/ECS.pub
-/Misc/ECS Diagram.png
-/Misc/Design and Goals.pptx
-/Misc/Design and Goals.osp
-/Misc/Design and goals.mp4
-/Misc/Composition Diagram.png
-/Misc/Composition Diagram Systems.png
-/Misc/Component Diagram.png
-/Misc
-/MappedFile.h
-/Assets/Tree.cmf
-/Assets/Textures/wood_floor.png
-/Assets/Textures/thatch.png
-/Assets/Textures/adobe_smooth.png
-/Assets/Textures/adobe.png
-/Assets/Textures/.mayaSwatches/wood_floor.png_hcm.swatch
-/Assets/Textures/.mayaSwatches/adobe_smooth.png_hcm.swatch
-/Assets/Textures/.mayaSwatches/adobe.png_hcm.swatch
-/Assets/Textures/.mayaSwatches
-/Assets/Textures
-/Assets/Test.cmf
-/Assets/PathID/30.dat
-/Assets/PathID/29.dat
-/Assets/PathID/28.dat
-/Assets/PathID/27.dat
-/Assets/PathID/26.dat
-/Assets/PathID/25.dat
-/Assets/PathID/24.dat
-/Assets/PathID/23.dat
-/Assets/PathID/22.dat
-/Assets/PathID/21.dat
-/Assets/PathID
-/Assets/ocean.cmf
-/Assets/models-building-wall0_middle.cmf
-/Assets/models-building-wall0_bottom.cmf
-/Assets/models-building-wall0.cmf
-/Assets/models-building-floor0.cmf
-/Assets/models-building-door-frame0.cmf
-/Assets/models-building-corner0.cmf
-/Assets/Models/workspace.mel
-/Assets/Models
-/Assets/ModelAsset/29.dat
-/Assets/ModelAsset/28.dat
-/Assets/ModelAsset/27.dat
-/Assets/ModelAsset/26.dat
-/Assets/ModelAsset/25.dat
-/Assets/ModelAsset/24.dat
-/Assets/ModelAsset/23.dat
-/Assets/ModelAsset/22.dat
-/Assets/ModelAsset/21.dat
-/Assets/ModelAsset/20.dat
-/Assets/ModelAsset
-/Assets/Iron_Boulder_0.cmf
-/Assets/Hut.cmf
-/Assets/Grass_0.cmf
-/Assets/Grass.cmf
-/Assets/error.cmf
-/Assets/cylinderTest.cmf
-/Assets/Cube.cmf
-/Assets/Crate_0.cmf
-/Assets/Crate.cmf
-/Assets/Boulder_0.cmf
-/Assets/Boulder.cmf
-/Assets/Biped_Placeholder.cmf
-/Assets/adobe_wall_cap.cmf
-/Assets/adobe_wall.cmf
-/Assets/adobe_floor.cmf
-/Assets/adobe_door_frame_top.cmf
-/Assets/adobe_door_frame_bottom.cmf
-/Assets/adobe_corner_cap.cmf
-/Assets/adobe_corner.cmf
-/Assets
+

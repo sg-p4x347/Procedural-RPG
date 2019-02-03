@@ -28,15 +28,21 @@ using namespace std::experimental::filesystem::v1;
 		}
 		return paths;
 	}
-	string FileSystemHelpers::StripExtension(string path) {
+	/*string FileSystemHelpers::StripExtension(string path) {
 		for (int i = path.size() - 1; i >= 0; i--) {
 			if (path[i] == '.') {
 				return path.substr(0,i);
 			}
 		}
 		return "";
-	}
+	}*/
 	string FileSystemHelpers::CombinePath(string A, string B)
 	{
 		return A + '/' + B;
+	}
+
+	string FileSystemHelpers::FilenameWithoutExtension(Filesystem::path path)
+	{
+		string stringPath = path.filename().string();
+		return stringPath.substr(0,stringPath.find('.'));
 	}

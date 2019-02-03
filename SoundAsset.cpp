@@ -12,13 +12,13 @@ string SoundAsset::GetName()
 	return "SoundAsset";
 }
 
-void SoundAsset::Import(std::ifstream & ifs)
+void SoundAsset::Import(std::istream & ifs)
 {
 	JsonParser jp(ifs);
 	Import(jp);
 }
 
-void SoundAsset::Export(std::ofstream & ofs)
+void SoundAsset::Export(std::ostream & ofs)
 {
 	Export().Export(ofs);
 }

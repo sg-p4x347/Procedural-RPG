@@ -15,10 +15,10 @@ public:
 	unsigned int RegionWidth;
 	// Inherited via Component
 	virtual string GetName() override;
-	virtual void Import(ifstream & ifs) override;
-	virtual void Export(ofstream & ofs) override;
+	virtual void Import(std::istream & ifs) override;
+	virtual void Export(std::ostream & ofs) override;
 	// Inherited via JSON
-	virtual void Import(JsonParser & jp) override;
+	virtual void Import(JsonParser & json) override;
 	virtual JsonParser Export() override;
 };
 

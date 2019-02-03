@@ -4,6 +4,7 @@
 AssetEntityManager::AssetEntityManager(Filesystem::path directory) : PersistenceEntityManager::PersistenceEntityManager(directory), m_vboParser(directory)
 {
 	RegisterComponent([] {return new ModelAsset();});
+	RegisterComponent([] {return new CollisionAsset();});
 	RegisterComponent([] {return new PathID();});
 	RegisterComponent([] {return new Item();});
 	RegisterComponent([] {return new HeightMapAsset();});
@@ -48,4 +49,10 @@ bool AssetEntityManager::TryFindByPathID(string path, EntityPtr & entity)
 		}
 	}
 	return false;
+}
+
+void AssetEntityManager::CollectGarbage()
+{
+	m_assets.clear();
+	BaseEntityManager::CollectGarbage();
 }

@@ -75,7 +75,7 @@ namespace Utility {
 	int pnpoly(vector<Vector2> polygon, Vector2 test)
 	{
 		int i, j, c = 0;
-		for (i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
+		for (i = 0, j = (int)polygon.size() - 1; i < (int)polygon.size(); j = i++) {
 			if (((polygon[i].y>test.y) != (polygon[j].y>test.y)) &&
 				(test.x < (polygon[j].x - polygon[i].x) * (test.y - polygon[i].y) / (polygon[j].y - polygon[i].y) + polygon[i].x))
 				c = !c;
@@ -125,11 +125,6 @@ namespace Utility {
 			result *= (float)(n + 1 - i) / (float)i;
 		}
 		return result;
-	}
-
-	float Clamp(float x, float min, float max)
-	{
-		return std::min(max, std::max(min, x));
 	}
 
 	float Floor(float x, float precision)

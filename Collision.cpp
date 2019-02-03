@@ -1,20 +1,34 @@
 #include "pch.h"
 #include "Collision.h"
 
-namespace Components {
+namespace world {
 	Collision::Collision() : Enabled(true)
 	{
 	}
 
-	Collision::Collision(Box box) : BoundingBox(box), Enabled(true)
+	Collision::Collision(EntityID asset, AssetType type): Asset(asset), Type(type), Enabled(true), Colliding(0)
 	{
 	}
 
-	string Collision::GetName()
+	void Collision::Import(std::istream & ifs)
 	{
-		return "Collision";
+		DeSerialize(ID, ifs);
+		DeSerialize(Asset, ifs);
+		DeSerialize(Type, ifs);
+		DeSerialize(Enabled, ifs);
+		DeSerialize(Colliding, ifs);
 	}
-	void Collision::Import(ifstream & ifs)
+
+	void Collision::Export(std::ostream & ofs)
+	{
+		Serialize(ID, ofs);
+		Serialize(Asset, ofs);
+		Serialize(Type, ofs);
+		Serialize(Enabled, ofs);
+		Serialize(Colliding, ofs);
+	}
+
+	/*void Collision::Import(std::istream & ifs)
 	{
 		DeSerialize(Enabled, ifs);
 
@@ -26,7 +40,7 @@ namespace Components {
 		DeSerialize(BoundingBox.Size.y, ifs);
 		DeSerialize(BoundingBox.Size.z, ifs);
 	}
-	void Collision::Export(ofstream & ofs)
+	void Collision::Export(std::ostream & ofs)
 	{
 		Serialize(Enabled, ofs);
 
@@ -38,5 +52,5 @@ namespace Components {
 		Serialize(BoundingBox.Size.y, ofs);
 		Serialize(BoundingBox.Size.z, ofs);
 
-	}
+	}*/
 }

@@ -107,7 +107,7 @@ namespace GUI {
 		AlignmentType GetAlignItems();
 
 		DirectX::SimpleMath::Color GetFontColor();
-		DimensionType GetFontSize(float & size);
+		DimensionType GetFontSize(int & size);
 		AlignmentType GetTextAlign();
 		AlignmentType GetVerticalTextAlign();
 
@@ -121,7 +121,8 @@ namespace GUI {
 		void operator=(Style & other);
 	private:
 		AlignmentType GetAlignmentType(string value);
-		DimensionType GetDimension(string value, float & dimension);
+		template<typename T>
+		DimensionType GetDimension(string value, T & dimension);
 		DirectX::SimpleMath::Color GetColor(string value);
 		OverflowType GetOverflow(string value);
 		// Inherited via Delegate
@@ -130,5 +131,26 @@ namespace GUI {
 		// Inherited via Delegate
 		virtual shared_ptr<Components::Component> Copy(shared_ptr<Components::Component> source) override;
 	};
+	template<typename T>
+	inline DimensionType Style::GetDimension(string value, T & dimension)
+	{
+		std::stringstream stream(value);
+		if (!stream.eof()) {
+			stream >> dimension;
+			if (!stream.eof()) {
+				string suffix = "";
+				stream >> suffix;
+				if (suffix == "px") {
+					return DimensionType::Pixel;
+				}
+				else if (suffix == "%") {
+					dimension /= 100;
+					return DimensionType::Percent;
+				}
+			}
+		}
+		dimension = T();
+		return DimensionType(0);
+	}
 }
 

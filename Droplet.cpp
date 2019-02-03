@@ -5,7 +5,7 @@
 static const float g_inertia = 0.4f;
 static const float g_minSlope = 0.1f;
 static const float g_capacity = 16.f;
-static const float g_deposition = 0.1f;
+static const float g_deposition = 0.15f;
 static const float g_erosion = 0.01f;
 static const float g_gravity = 3.f;
 static const float g_evaporation = 0.01f;

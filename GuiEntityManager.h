@@ -12,7 +12,7 @@ namespace GUI {
 		//----------------------------------------------------------------
 		// Entity Factories
 		EntityPtr NewPanel(Style * style, vector<EntityPtr> children = vector<EntityPtr>(),string id = "");
-		EntityPtr NewTextPanel(string text, Style * style);
+		EntityPtr NewTextPanel(string text, Style * style, string id = "");
 		EntityPtr NewButton(string text, std::function<void(Event evt)>&& clickCallback, 
 			string defaultBackground = "widget.png:button", 
 			string hoverBackground = "widget.png:button_hover", 

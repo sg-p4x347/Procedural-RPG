@@ -1,32 +1,28 @@
 #include "pch.h"
 #include "Model.h"
-namespace Components {
+namespace world {
 	Model::Model()
 	{
 	}
 	Model::Model(
-		string path, 
+		EntityID asset, 
 		AssetType type) :
-		Path(path),
+		Asset(asset),
 		Type(type)
 	{
 
 	}
 
-	string Model::GetName()
-	{
-		return "Model";
-	}
-	void Model::Export(std::ofstream & ofs)
+	/*void Model::Export(std::ostream & ofs)
 	{
 		Component::Export(ofs);
 		Serialize(Path, ofs);
 		Serialize(Type, ofs);
 	}
-	void Model::Import(std::ifstream & ifs)
+	void Model::Import(std::istream & ifs)
 	{
 		Component::Import(ifs);
 		DeSerialize(Path, ifs);
 		DeSerialize(Type, ifs);
-	}
+	}*/
 }

@@ -11,6 +11,8 @@
 #include "AssetManager.h"
 #include "GuiSystem.h"
 #include "IEventManager.h"
+#include "TaskManager.h"
+#include "CMF.h"
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
@@ -22,12 +24,12 @@ DirectX::Mouse::ButtonStateTracker Game::MouseTracker = DirectX::Mouse::ButtonSt
 DirectX::Keyboard::KeyboardStateTracker Game::KeyboardTracker = DirectX::Keyboard::KeyboardStateTracker();
 Vector2 Game::MousePos = Vector2::Zero;
 
-void Game::SetMousePos(Vector2 pos)
-{
-	if (m_world) {
-		m_world->SetMousePos(pos);
-	}
-}
+//void Game::SetMousePos(Vector2 pos)
+//{
+//	if (m_world) {
+//		m_world->SetMousePos(pos);
+//	}
+//}
 
 Game::Game()
 {
@@ -53,8 +55,9 @@ void Game::Initialize(HWND window, int width, int height)
 	m_mouse->SetWindow(window);
 	//----------------------------------------------------------------
 	// Game timer
-    m_timer.SetFixedTimeStep(true);
-    m_timer.SetTargetElapsedSeconds(1.0 / 60);
+    m_timer.SetFixedTimeStep(false);
+    //m_timer.SetTargetElapsedSeconds(1.0 / 60);
+	
     //----------------------------------------------------------------
 	// Open the main menu
 	m_systemManager->GetSystem<GuiSystem>("Gui")->OpenMenu("main");
@@ -63,18 +66,24 @@ void Game::Initialize(HWND window, int width, int height)
 // Executes the basic game loop.
 void Game::Tick()
 {
-    m_timer.Tick([&]()
-    {
-        Update(m_timer);
-    });
+	try {
+		m_timer.Tick([&]()
+		{
+			Update(m_timer.GetElapsedSeconds());
+		});
+
+	}
+	catch (...) {
+		// try to save the world
+		m_world.reset();
+	}
 }
 
 
 
 // Updates the world.
-void Game::Update(DX::StepTimer const& timer)
+void Game::Update(double elapsed)
 {
-    double elapsed = timer.GetElapsedSeconds();
 
     // TODO: Add your game logic here.
 	// DX Input
@@ -95,7 +104,7 @@ Filesystem::path Game::GetSavesDirectory()
 	return Filesystem::path("Saves");
 }
 
-bool Game::TryGetWorld(World *& world)
+bool Game::TryGetWorld(world::World *& world)
 {
 	if (m_world) {
 		world = m_world.get();
@@ -113,9 +122,12 @@ void Game::GenerateWorld(string name, int seed)
 	catch (std::exception ex) {
 		Utility::OutputException(ex.what());
 	}
-	m_world = std::make_unique<World>(*m_systemManager, GetSavesDirectory(),name, seed);
+	std::thread([=]{
+		m_world = std::make_unique<world::World>(*m_systemManager, GetSavesDirectory(), name, seed);
+		CloseWorld();
+		LoadWorld(name);
+	}).detach();
 }
-
 bool Game::LoadWorld(string name)
 {
 	try {
@@ -127,14 +139,21 @@ bool Game::LoadWorld(string name)
 		}
 		else {
 			m_config.Set("CurrentWorld", name);
-			m_world = std::make_unique<World>(*m_systemManager, GetSavesDirectory(), name);
-			//m_world->Load();
-			m_world->ResumeGame();
+			
+			std::thread([=] {
+				m_world = std::make_unique<world::World>(*m_systemManager, GetSavesDirectory(), name);
+				m_world->Load();
+			}).detach();
+
+
+			
 			return true;
 		}
 	}
-	catch (std::exception e) {
-		m_systemManager->GetSystem<GuiSystem>("Gui")->DisplayException(e);
+	catch (const std::exception & ex) {
+		m_systemManager->GetSystem<RenderSystem>("Render")->InitializeWorldRendering(nullptr);
+		m_world.reset();
+		m_systemManager->GetSystem<GuiSystem>("Gui")->DisplayException(ex.what());
 	}
 	return false;
 }
@@ -153,13 +172,13 @@ void Game::OnActivated()
 void Game::OnDeactivated()
 {
     // TODO: Game is becoming background window.
-
+	IEventManager::Invoke(EventTypes::Game_Pause);
 }
 
 void Game::OnSuspending()
 {
     // TODO: Game is being power-suspended (or minimized).
-	IEventManager::Invoke(EventTypes::Game_Suspend);
+	IEventManager::Invoke(EventTypes::Game_Pause);
 }
 
 void Game::OnResuming()

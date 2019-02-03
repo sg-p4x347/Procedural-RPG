@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "Inventory.h"
-namespace Components {
+namespace world {
 
 	Inventory::Inventory() : Inventory::Inventory(0.f, 0.f)
 	{
@@ -10,11 +10,7 @@ namespace Components {
 	{
 	}
 
-	string Inventory::GetName()
-	{
-		return "Inventory";
-	}
-	void Inventory::Import(std::ifstream & ifs)
+	void Inventory::Import(std::istream & ifs)
 	{
 		int itemCount = 0;
 		DeSerialize(itemCount, ifs);
@@ -29,7 +25,7 @@ namespace Components {
 		DeSerialize(MaxWeight, ifs);
 		DeSerialize(Open, ifs);
 	}
-	void Inventory::Export(std::ofstream & ofs)
+	void Inventory::Export(std::ostream & ofs)
 	{
 		int itemCount = Items.size();
 		Serialize(itemCount, ofs);

@@ -1,5 +1,5 @@
 #pragma once
-#include "PositionNormalTextureVBO.h"
+#include "CMF.h"
 #include "TreeBranch.h"
 #include "TopologyCruncher.h"
 enum TreeType {
@@ -11,10 +11,10 @@ class TreeGenerator
 public:
 	TreeGenerator();
 	~TreeGenerator();
-	Components::PositionNormalTextureTangentColorVBO Generate(TreeType type, int lod);
+	shared_ptr<geometry::CMF> Generate(TreeType type);
 private:
 	void GenerateBranches(TreeType  type, Tree::Branch & trunk,int iterations,XMMATRIX frame);
-	void GenerateTopologyRecursive(Tree::Branch & branch, TopologyCruncher & tc, int lod);
+	void GenerateTopologyRecursive(Tree::Branch & branch, TopologyCruncher & tc, int lod, float scale);
 	// Returns a translation as a function of t and tree type
 	Vector3 BranchTranslation(TreeType & type, float t);
 	// Returns a scaling vector as a function of t and tree type

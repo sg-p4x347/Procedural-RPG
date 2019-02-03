@@ -13,6 +13,10 @@ public:
 
 	// Gets the secified component for the entity
 	shared_ptr<Components::Component> GetComponent(unsigned long & mask, Entity * entity);
+
+	// returns a new component
+	shared_ptr<Components::Component> GetPrototype(unsigned long & mask);
+
 	//----------------------------------------------------------------
 	// Mask helpers
 	unsigned long ComponentMask(vector<string> components);
@@ -20,6 +24,8 @@ public:
 	vector<unsigned long> ExtractMasks(unsigned long mask);
 	virtual unsigned long ComponentMaskOf(const unsigned int & id);
 	string NameOf(const unsigned long & mask);
+	std::map<string, unsigned long> GetMasks();
+	std::map<unsigned long, string> GetNames();
 	//----------------------------------------------------------------
 	// Entity creation
 	EntityPtr NewEntity();
@@ -50,8 +56,7 @@ protected:
 	// If not retrieved from the cache, this is called
 	virtual shared_ptr<Components::Component> LoadComponent(unsigned long & mask, Entity * entity);
 	
-	// returns a new component
-	shared_ptr<Components::Component> GetPrototype(unsigned long & mask);
+	
 
 	//----------------------------------------------------------------
 	// Entity management

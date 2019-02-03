@@ -15,13 +15,13 @@ string PathID::GetName()
 	return "PathID";
 }
 
-void PathID::Import(std::ifstream & ifs)
+void PathID::Import(std::istream & ifs)
 {
 	JsonParser jp(ifs);
 	Import(jp);
 }
 
-void PathID::Export(std::ofstream & ofs)
+void PathID::Export(std::ostream & ofs)
 {
 	Export().Export(ofs);
 }

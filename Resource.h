@@ -1,13 +1,13 @@
-#include "Component.h"
+#include "WorldComponent.h"
 #include "Inventory.h"
+namespace world{
 class Resource :
-	public Components::Component
+	public WorldComponent
 {
 public:
 	Resource();
-	Resource(vector<Components::InventoryItem> drops);
+	Resource(vector<InventoryItem> drops);
 	// Data
-	vector<Components::InventoryItem> Drops;
-	// Inherited via Component
-	virtual string GetName() override;
+	vector<InventoryItem> Drops;
 };
+}

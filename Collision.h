@@ -1,20 +1,36 @@
 #pragma once
-#include "Component.h"
-#include "Box.h"
-namespace Components {
+#include "WorldComponent.h"
+#include "ISerialization.h"
+#include "AssetTypes.h"
+
+namespace world {
+	struct ContactInfo {
+		ContactInfo() : contactNormal(Vector3::Zero) {}
+		Vector3 contactNormal;
+	};
 	class Collision :
-		public Component
+		public WorldComponent,
+		public ISerialization
 	{
 	public:
+		
 		Collision();
-		Collision(Box box);
-		// Data
-		Box BoundingBox;
+		Collision(EntityID asset, AssetType type);
+		// Persisted Data
+		EntityID Asset;
+		AssetType Type;
 		bool Enabled;
+		int Colliding;
+
+		// Runtime Data
+		std::vector<ContactInfo> Contacts;
+
+		// Inherited via ISerialization
+		virtual void Import(std::istream & ifs) override;
+		virtual void Export(std::ostream & ofs) override;
 		// Inherited via Component
-		virtual string GetName() override;
-		virtual void Import(ifstream & ifs) override;
-		virtual void Export(ofstream & ofs) override;
+		//virtual void Import(std::istream & ifs) override;
+		//virtual void Export(std::ostream & ofs) override;
 	};
 }
 

@@ -17,7 +17,6 @@ WorldEntityManager::WorldEntityManager(Filesystem::path directory, int worldWidt
 	RegisterComponent([] {return new Components::PositionNormalTextureTangentColorVBO(); });
 	RegisterComponent([] {return new Components::Model();});
 	RegisterComponent([] {return new Components::Action();});
-	RegisterComponent([] {return new Components::EntityRegion();});
 	RegisterComponent([] {return new Components::Building();});
 	RegisterComponent([] {return new Components::Inventory();});
 	//----------------------------------------------------------------
@@ -100,42 +99,37 @@ vector<EntityPtr> WorldEntityManager::Filter(vector<EntityPtr>&& entities, unsig
 	return results;
 }
 
-void WorldEntityManager::AddEntityToRegion(EntityPtr entity)
-{
-	AddEntityToRegion(entity->ID());
-}
 
-void WorldEntityManager::GenerateEntityRegions()
-{
-	const unsigned int dimension = m_worldWidth / m_entityRegionWidth;
-	for (int regionX = 0; regionX < dimension; regionX++) {
-		for (int regionZ = 0; regionZ < dimension; regionZ++) {
-			EntityPtr region = NewEntity();
-			region->AddComponent(new Components::Position(Vector3(((float)regionX + 0.5) * (float)m_entityRegionWidth, 0.f, ((float)regionZ + 0.5) * (float)m_entityRegionWidth)));
-			region->AddComponent(new Components::EntityRegion(m_entityRegionWidth));
-			m_entityRegions.insert(region);
-		}
-	}
-}
+//void WorldEntityManager::GenerateEntityRegions()
+//{
+//	const unsigned int dimension = m_worldWidth / m_entityRegionWidth;
+//	for (int regionX = 0; regionX < dimension; regionX++) {
+//		for (int regionZ = 0; regionZ < dimension; regionZ++) {
+//			EntityPtr region = NewEntity();
+//			region->AddComponent(new Components::Position(Vector3(((float)regionX + 0.5) * (float)m_entityRegionWidth, 0.f, ((float)regionZ + 0.5) * (float)m_entityRegionWidth)));
+//			region->AddComponent(new Components::EntityRegion(m_entityRegionWidth));
+//			m_entityRegions.insert(region);
+//		}
+//	}
+//}
 
-void WorldEntityManager::AddEntityToRegion(unsigned int entity)
-{
-	EntityPtr target;
-	if (Find(entity, target)) {
-		Vector3 entityPosition = target->GetComponent<Components::Position>("Position")->Pos;
-		for (const EntityPtr & region : m_entityRegions) {
-			Rectangle regionArea = RegionArea(region);
-			if (regionArea.Contains(entityPosition.x,entityPosition.z)) {
-				region->GetComponent<Components::EntityRegion>("EntityRegion")->AddEntity(entity);
-			}
-		}
-	}
-}
+//void WorldEntityManager::AddEntityToRegion(unsigned int entity)
+//{
+//	EntityPtr target;
+//	if (Find(entity, target)) {
+//		Vector3 entityPosition = target->GetComponent<Components::Position>("Position")->Pos;
+//		for (const EntityPtr & region : m_entityRegions) {
+//			Rectangle regionArea = RegionArea(region);
+//			if (regionArea.Contains(entityPosition.x,entityPosition.z)) {
+//				region->GetComponent<Components::EntityRegion>("EntityRegion")->AddEntity(entity);
+//			}
+//		}
+//	}
+//}
 
 void WorldEntityManager::SyncRegions(Vector3 center, float range)
 {
 	Rectangle selectionRect = Rectangle(center.x - range, center.z - range, range * 2, range * 2);
-	
 	
 	set<EntityPtr> newRegions;
 	for (const EntityPtr & region : m_entityRegions) {
@@ -172,13 +166,13 @@ void WorldEntityManager::SyncRegions(Vector3 center, float range)
 	}
 }
 
-Rectangle WorldEntityManager::RegionArea(EntityPtr region)
-{
-	Vector3 regionPosition = region->GetComponent<Components::Position>("Position")->Pos;
-	shared_ptr<Components::EntityRegion> entityRegion = region->GetComponent<Components::EntityRegion>("EntityRegion");
-	int halfWidth = entityRegion->RegionWidth * 0.5f;
-	return Rectangle(regionPosition.x - halfWidth,regionPosition.z - halfWidth, entityRegion->RegionWidth, entityRegion->RegionWidth);
-}
+//Rectangle WorldEntityManager::RegionArea(EntityPtr region)
+//{
+//	Vector3 regionPosition = region->GetComponent<Components::Position>("Position")->Pos;
+//	shared_ptr<Components::EntityRegion> entityRegion = region->GetComponent<Components::EntityRegion>("EntityRegion");
+//	int halfWidth = entityRegion->RegionWidth * 0.5f;
+//	return Rectangle(regionPosition.x - halfWidth,regionPosition.z - halfWidth, entityRegion->RegionWidth, entityRegion->RegionWidth);
+//}
 
 EntityPtr WorldEntityManager::Player()
 {

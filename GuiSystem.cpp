@@ -16,7 +16,7 @@
 #include "World.h"
 #include "XmlParser.h"
 #include "CssParser.h"
-#include "InventoryGuiHandler.h"
+//#include "InventoryGuiHandler.h"
 
 using namespace GUI;
 using namespace DirectX;
@@ -25,7 +25,7 @@ using ButtonState = DirectX::Mouse::ButtonStateTracker::ButtonState;
 GuiSystem::GuiSystem(
 	SystemManager * systemManager,
 	unsigned short updatePeriod
-) : System::System(updatePeriod),
+) : System::System(updatePeriod,false),
 m_scrollTicks(1200),
 SM(systemManager)
 {
@@ -80,9 +80,7 @@ SM(systemManager)
 			return style;
 		}(), vector<EntityPtr>{
 			GuiEM.NewButton("Continue", [=](Event evt) {
-				if (!Game::Get().LoadWorld()) {
-					OpenMenu("load_world");
-				}
+				Game::Get().LoadWorld();
 			}),
 			GuiEM.NewButton("New World", [=](Event evt) {
 				OpenMenu("new_world");
@@ -126,15 +124,12 @@ SM(systemManager)
 			return style;
 		}(), vector<EntityPtr>{
 			GuiEM.NewButton("Resume Game", [=](Event evt) {
-				World * world = nullptr;
+				world::World * world = nullptr;
 				if (Game::Get().TryGetWorld(world)) {
 					world->ResumeGame();
 				}
 			}),
-			GuiEM.NewButton("Main Menu", [=](Event evt) {
-				Game::Get().CloseWorld();
-				OpenMenu("main");
-			})
+			MainMenuBtn()
 		})
 	}));
 #pragma endregion
@@ -158,7 +153,7 @@ SM(systemManager)
 	//----------------------------------------------------------------
 	// Inventory
 #pragma region Inventory
-	AddDynamicMenu("inventory", [this] {return CreateInventory();});
+	//AddDynamicMenu("inventory", [this] {return CreateInventory();});
 #pragma endregion
 	//----------------------------------------------------------------
 	// Options
@@ -251,10 +246,9 @@ SM(systemManager)
 							// parse seed
 							string seedText = seedTextbox->GetComponent<Text>("Text")->String;
 							// valid
+
 							Game::Get().GenerateWorld(name->String,ProUtil::ToRandom(seedText));
-							Game::Get().CloseWorld();
-							// load up the new world
-							Game::Get().LoadWorld(name->String);
+							
 						}
 						else {
 							// invalid name
@@ -349,6 +343,9 @@ SM(systemManager)
 		})
 	}));
 #pragma endregion
+#pragma region loading
+	AddMenu("loading", ImportMarkup("UI/loading.xml"));
+#pragma endregion
 }
 
 
@@ -360,9 +357,9 @@ void GuiSystem::RegisterSubsystems()
 {
 	//----------------------------------------------------------------
 	// Initialize sub-systems
-	auto inventory = new InventoryGuiHandler(SM, GetEM());
+	/*auto inventory = new InventoryGuiHandler(SM, GetEM());
 	inventory->RegisterHandlers();
-	SM->AddSystem(std::shared_ptr<System>(inventory));
+	SM->AddSystem(std::shared_ptr<System>(inventory));*/
 }
 
 void GuiSystem::SyncEntities()
@@ -379,7 +376,7 @@ void GuiSystem::Update(double & elapsed)
 {
 	if (m_currentMenu) {
 		if (Game::MouseState.positionMode == Mouse::MODE_ABSOLUTE) {
-			Vector2 mousePos(Game::MouseState.x, Game::MouseState.y);
+			Vector2 mousePos((float)Game::MouseState.x, (float)Game::MouseState.y);
 			int scrollTicks = DirectX::Mouse::Get().GetState().scrollWheelValue;
 			char character = '\0';
 			
@@ -430,10 +427,10 @@ void GuiSystem::Update(double & elapsed)
 	}
 	if (m_handMenu) {
 		if (Game::MouseState.positionMode == Mouse::MODE_ABSOLUTE) {
-			Vector2 mousePos(Game::MouseState.x, Game::MouseState.y);
+			Vector2 mousePos((float)Game::MouseState.x, (float)Game::MouseState.y);
 			auto sprite = GetSprite(m_handMenu);
-			sprite->Rect.x = mousePos.x;
-			sprite->Rect.y = mousePos.y;
+			sprite->Rect.x = (long)mousePos.x;
+			sprite->Rect.y = (long)mousePos.y;
 			UpdateFlowRecursive(m_handMenu, 1);
 		}
 	}
@@ -442,11 +439,16 @@ void GuiSystem::Update(double & elapsed)
 void GuiSystem::UpdateUI(int outputWidth, int outputHeight)
 {
 	m_outputRect = Rectangle(0, 0, outputWidth, outputHeight);
+	UpdateUI();
+}
+
+void GuiSystem::UpdateUI()
+{
 	if (m_currentMenu) {
 		// Set the menu to full-screen
-		GetSprite(m_currentMenu)->Rect = Rectangle(0, 0, outputWidth, outputHeight);
+		GetSprite(m_currentMenu)->Rect = m_outputRect;
 		// Update the flow
-		UpdateFlowRecursive(m_currentMenu,1);
+		UpdateFlowRecursive(m_currentMenu, 1);
 	}
 }
 
@@ -483,7 +485,7 @@ GuiEntityManager & GuiSystem::GetEM()
 	return GuiEM;
 }
 
-void GuiSystem::DisplayException(std::exception e)
+void GuiSystem::DisplayException(string message)
 {
 	OpenMenu(GuiEM.NewPanel([] {
 		Style * style = new Style();
@@ -500,7 +502,7 @@ void GuiSystem::DisplayException(std::exception e)
 				style->Height = "20%";
 				return style;
 			}());
-			GuiEM.AddText(panel, "An exception occured");
+			GuiEM.AddText(panel, message);
 			return panel;
 		}(),
 			MainMenuBtn(48)
@@ -517,6 +519,11 @@ void GuiSystem::ShowHint(string hint)
 	SetTextByID("HUD", hint);
 }
 
+shared_ptr<Style> GuiSystem::GetStyle(string id)
+{
+	return GetStyle(GetElementByID(id));
+}
+
 void GuiSystem::BindHandlers()
 {
 	IEventManager::RegisterHandler(GUI_ShowHint, std::function<void(string)>([=](string text) {
@@ -531,6 +538,28 @@ void GuiSystem::BindHandlers()
 	}));
 	IEventManager::RegisterHandler(GUI_CloseMenu, std::function<void()>([this] {
 		CloseMenu();
+	}));
+	IEventManager::RegisterHandler(EventTypes::GUI_DebugInfo, std::function<void(string, string)>([=](string key, string value) {
+		std::lock_guard<std::mutex> guard(m_debugUpdate);
+		EntityPtr container = GetElementByID("DebugInfo");
+		if (container) {
+			EntityPtr listing = FindElementByIdRecursive(container, key);
+			string text = key + " : " + value;
+			if (listing) {
+				listing->GetComponent<Text>("Text")->String = text;
+			}
+			else {
+				listing = GuiEM.NewTextPanel(text, [=]() {
+					Style * style = new Style();
+					style->FontColor = "rgb(1,1,1)";
+					style->FontSize = "16px";
+					style->Height = "24px";
+					return style;
+				}(), key);
+				GuiEM.AddChild(container, listing);
+				UpdateFlowRecursive(container, 1);
+			}
+		}
 	}));
 }
 
@@ -695,18 +724,19 @@ EntityPtr GuiSystem::GetMenu(string name)
 	if (m_menus.find(name) != m_menus.end()) {
 		return m_menus[name];
 	}
+	else if (m_dynamicMenus.find(name) != m_dynamicMenus.end()) {
+		auto menu = m_dynamicMenus[name]();
+		// Add scrollbars as necessary
+		AddScrollbarsRecursive(menu);
+		return menu;
+	}
 	else {
 		auto system = SM->GetSystem<GuiHandler>(name);
 		if (system) {
 			return system->GetElement();
 		}
 	}
-	//else if (m_dynamicMenus.find(name) != m_dynamicMenus.end()) {
-	//	auto menu = m_dynamicMenus[name]();
-	//	// Add scrollbars as necessary
-	//	AddScrollbarsRecursive(menu);
-	//	return menu;
-	//}
+	
 	return nullptr;
 }
 
@@ -724,100 +754,100 @@ bool GuiSystem::IsMenuOpen(string name)
 	return m_currentMenuName == name;
 }
 
-EntityPtr GuiSystem::CreateInventory()
-{
-	
-	EntityPtr inv = ImportMarkup("UI/inv.xml");
-	EntityPtr header = FindElementByIdRecursive(inv, "header");
-	EntityPtr body = FindElementByIdRecursive(inv, "body");
+//EntityPtr GuiSystem::CreateInventory()
+//{
+//	
+//	EntityPtr inv = ImportMarkup("UI/inv.xml");
+//	EntityPtr header = FindElementByIdRecursive(inv, "header");
+//	EntityPtr body = FindElementByIdRecursive(inv, "body");
+//
+//	vector<EntityPtr> tabs;
+//	EntityPtr tabTemplate = ImportMarkup("UI/inv_tab.xml");
+//
+//	
+//	static string currentCategory = "All";
+//	auto categories = SM->GetSystem<world::ItemSystem>("Item")->GetItemCatagories();
+//	categories.insert("craft");
+//	for (string category : categories) {
+//		tabs.push_back([=] {
+//			EntityPtr tab = GuiEM.Copy(tabTemplate);
+//			GuiEM.AddText(tab, category);
+//			GuiEM.AddEventHandler(tab,new GUI::EventHandler("Click", [=](GUI::Event evt) {
+//				currentCategory = category;
+//				SelectInventoryTab(body, category);
+//			}));
+//			return tab;
+//		}());
+//	}
+//	
+//	// Initialize the current tab
+//	SelectInventoryTab(body, currentCategory);
+//	// Add the tabs to the header
+//	GuiEM.AddChildren(header, tabs);
+//	return inv;
+//}
+//
+//EntityPtr GuiSystem::CreateInventoryGrid(string gridTemplate,vector<world::InventoryItem> items)
+//{
+//	auto invGrid = ImportMarkup(gridTemplate);
+//	auto cellTemplate = ImportMarkup("UI/inv_item.xml");
+//	vector<EntityPtr> rows;
+//	for (auto & item : items) {
+//		auto itemType = SM->GetSystem<world::ItemSystem>("Item")->TypeOf(item)->GetComponent<Item>("Item");
+//		// Add a grid cell
+//		auto cell = GuiEM.Copy(cellTemplate);
+//		GuiEM.AddEventHandler(cell, new GUI::EventHandler("Click", [=](Event evt) {
+//			m_handMenu = GuiEM.Copy(cell);
+//		}));
+//		// label
+//		auto label = FindElementByIdRecursive(cell, "label");
+//		if (label) GuiEM.AddText(label, itemType->Name);
+//
+//		GuiEM.AddText(cell, to_string(item.Quantity));
+//		GetStyle(cell)->Background = itemType->Sprite;
+//
+//		GuiEM.AddChild(invGrid, cell);
+//	}
+//	return invGrid;
+//}
 
-	vector<EntityPtr> tabs;
-	EntityPtr tabTemplate = ImportMarkup("UI/inv_tab.xml");
-
-	
-	static string currentCategory = "All";
-	auto categories = SM->GetSystem<ItemSystem>("Item")->GetItemCatagories();
-	categories.insert("craft");
-	for (string category : categories) {
-		tabs.push_back([=] {
-			EntityPtr tab = GuiEM.Copy(tabTemplate);
-			GuiEM.AddText(tab, category);
-			GuiEM.AddEventHandler(tab,new GUI::EventHandler("Click", [=](GUI::Event evt) {
-				currentCategory = category;
-				SelectInventoryTab(body, category);
-			}));
-			return tab;
-		}());
-	}
-	
-	// Initialize the current tab
-	SelectInventoryTab(body, currentCategory);
-	// Add the tabs to the header
-	GuiEM.AddChildren(header, tabs);
-	return inv;
-}
-
-EntityPtr GuiSystem::CreateInventoryGrid(string gridTemplate,vector<Components::InventoryItem> items)
-{
-	auto invGrid = ImportMarkup(gridTemplate);
-	auto cellTemplate = ImportMarkup("UI/inv_item.xml");
-	vector<EntityPtr> rows;
-	for (auto & item : items) {
-		auto itemType = SM->GetSystem<ItemSystem>("Item")->TypeOf(item)->GetComponent<Item>("Item");
-		// Add a grid cell
-		auto cell = GuiEM.Copy(cellTemplate);
-		GuiEM.AddEventHandler(cell, new GUI::EventHandler("Click", [=](Event evt) {
-			m_handMenu = GuiEM.Copy(cell);
-		}));
-		// label
-		auto label = FindElementByIdRecursive(cell, "label");
-		if (label) GuiEM.AddText(label, itemType->Name);
-
-		GuiEM.AddText(cell, to_string(item.Quantity));
-		GetStyle(cell)->Background = itemType->Sprite;
-
-		GuiEM.AddChild(invGrid, cell);
-	}
-	return invGrid;
-}
-
-void GuiSystem::SelectInventoryTab(EntityPtr gridContainer, string category)
-{
-	auto & itemSystem = SM->GetSystem<ItemSystem>("Item");
-	DeleteChildren(gridContainer);
-	EntityPtr openContainer = itemSystem->GetOpenContainer();
-	if (openContainer && openContainer != itemSystem->GetPlayer()) {
-		EntityPtr playerGrid = CreateInventoryGrid(
-			"UI/half_inv_grid.xml",
-			itemSystem->ItemsInCategory(
-				itemSystem->GetPlayerInventory(),
-				category
-			)
-		);
-		GuiEM.AddChild(gridContainer, playerGrid);
-		GuiEM.AddChild(gridContainer, ImportMarkup("UI/inv_divider.xml"));
-		EntityPtr containerGrid = CreateInventoryGrid(
-			"UI/half_inv_grid.xml",
-			itemSystem->ItemsInCategory(
-				itemSystem->GetInventoryOf(openContainer),
-				category
-			)
-		);
-		GuiEM.AddChild(gridContainer, containerGrid);
-	}
-	else {
-		EntityPtr grid = CreateInventoryGrid(
-			"UI/inv_grid.xml",
-			SM->GetSystem<ItemSystem>("Item")->ItemsInCategory(
-				SM->GetSystem<ItemSystem>("Item")->GetPlayerInventory(),
-				category
-			)
-		);
-		GuiEM.AddChild(gridContainer, grid);
-	}
-	
-	UpdateFlowRecursive(gridContainer, 1);
-}
+//void GuiSystem::SelectInventoryTab(EntityPtr gridContainer, string category)
+//{
+//	auto & itemSystem = SM->GetSystem<world::ItemSystem>("Item");
+//	DeleteChildren(gridContainer);
+//	EntityPtr openContainer = itemSystem->GetOpenContainer();
+//	if (openContainer && openContainer != itemSystem->GetPlayer()) {
+//		EntityPtr playerGrid = CreateInventoryGrid(
+//			"UI/half_inv_grid.xml",
+//			itemSystem->ItemsInCategory(
+//				itemSystem->GetPlayerInventory(),
+//				category
+//			)
+//		);
+//		GuiEM.AddChild(gridContainer, playerGrid);
+//		GuiEM.AddChild(gridContainer, ImportMarkup("UI/inv_divider.xml"));
+//		EntityPtr containerGrid = CreateInventoryGrid(
+//			"UI/half_inv_grid.xml",
+//			itemSystem->ItemsInCategory(
+//				itemSystem->GetInventoryOf(openContainer),
+//				category
+//			)
+//		);
+//		GuiEM.AddChild(gridContainer, containerGrid);
+//	}
+//	else {
+//		EntityPtr grid = CreateInventoryGrid(
+//			"UI/inv_grid.xml",
+//			SM->GetSystem<ItemSystem>("Item")->ItemsInCategory(
+//				SM->GetSystem<ItemSystem>("Item")->GetPlayerInventory(),
+//				category
+//			)
+//		);
+//		GuiEM.AddChild(gridContainer, grid);
+//	}
+//	
+//	UpdateFlowRecursive(gridContainer, 1);
+//}
 
 void GuiSystem::AddSpriteSheet(string path, map<string, Rectangle> mapping)
 {
@@ -1031,11 +1061,11 @@ void GuiSystem::UpdateSprite(EntityPtr entity, shared_ptr<Style> style, shared_p
 void GuiSystem::UpdateText(shared_ptr<Text> text, shared_ptr<Sprite> sprite, shared_ptr<Style> style)
 {
 	text->Font = style->Font;
-	text->Position.x = sprite->Rect.x;
-	text->Position.y = sprite->Rect.y;
+	text->Position.x = (float)sprite->Rect.x;
+	text->Position.y = (float)sprite->Rect.y;
 	text->Color = style->GetFontColor();
 
-	float fontSize = 0.f;
+	int fontSize = 0;
 	switch (style->GetFontSize(fontSize)) {
 	case DimensionType::Percent: text->FontSize = fontSize * sprite->Rect.height; break;
 	case DimensionType::Pixel: text->FontSize = (int)fontSize; break;
@@ -1090,7 +1120,7 @@ void GuiSystem::PositionChildren(EntityPtr parent)
 		int totalChildPrimary = 0;
 		int totalChildSecondary = 0;
 		int i = 0;
-		const int lastChildIndex = children->Entities.size() - 1;
+		const int lastChildIndex = (int)children->Entities.size() - 1;
 		for (auto & childID : children->Entities) {
 			EntityPtr child;
 			if (GuiEM.Find(childID, child)) {
@@ -1141,34 +1171,6 @@ void GuiSystem::PositionChildren(EntityPtr parent)
 			totalChildPrimary = std::max(totalChildPrimary, GetPrimaryPosition(flow,rows[rowIndex]) + GetPrimaryDimension(flow, rows[rowIndex]));
 			totalChildSecondary = std::max(totalChildSecondary, GetSecondaryPosition(flow, rows[rowIndex]) + GetSecondaryDimension(flow, rows[rowIndex]));
 		}
-		////----------------------------------------------------------------
-		//// Get total childen length
-		//int totalChildPrimary = 0;
-		//int totalChildSecondary = 0;
-		//for (auto & childID : children->Entities) {
-		//	EntityPtr child;
-		//	if (GuiEM.Find(childID, child)) {
-		//		auto childSprite = child->GetComponent<Sprite>("Sprite");
-		//		if (childSprite) {
-		//			childSprites.push_back(childSprite);
-		//			childSprite->Rect = CalculateChildRect(parentRect, child->GetComponent<Style>("Style_Default"));
-		//			totalChildPrimary += GetPrimaryDimension(flow, childSprite->Rect);
-		//			int secondary = GetSecondaryDimension(flow, childSprite->Rect);
-		//			if (secondary > totalChildSecondary) {
-		//				totalChildSecondary = secondary;
-		//			}
-		//		}
-		//	}
-		//}
-		//int primary = std::max(GetPrimaryDimension(flow, parentRect), totalChildPrimary);
-		//int primaryBisector = primary / 2;
-		//int secondary = std::max(GetSecondaryDimension(flow, parentRect),totalChildSecondary);
-		//int secondaryBisector = secondary / 2;
-
-		//----------------------------------------------------------------
-		// Get total dimensions of the content
-		//totalChildPrimary = maxChildPrimary;
-		//totalChildSecondary = rowOffset;
 		//----------------------------------------------------------------
 		// Scroll offsets
 		Vector2 contentSize = GetVector(flow, totalChildPrimary, totalChildSecondary);
@@ -1186,30 +1188,12 @@ void GuiSystem::PositionChildren(EntityPtr parent)
 		if (parentStyle->GetOverflowY() == OverflowType::Scroll) {
 			AddRectIfValid(parentRect, parentSprite->ClippingRects);
 		}
-		////----------------------------------------------------------------
-		//// Calculate primary axis offsets
-		//int primaryOffset = GetPrimaryPosition(flow, parentRect);
-		//switch (parentStyle->GetJustify()) {
-		//case AlignmentType::Center: primaryOffset += (primaryBisector - totalChildPrimary / 2); break;
-		//case AlignmentType::End: primaryOffset += (primary - totalChildPrimary); break;
-		//}
-		//int secondaryOffset = GetSecondaryPosition(flow, parentRect);
 		//----------------------------------------------------------------
 		// Apply offsets
 		for (auto & childSprite : allChildSprites) {
-			//Rectangle & childRect = childSprite->Rect;
-			//
-			//// secondary
-			//int childSecondaryOffset = secondaryOffset;
-			//switch (parentStyle->GetAlignItems()) {
-			//case AlignmentType::Center: childSecondaryOffset += (secondaryBisector - GetSecondaryDimension(flow, childRect) / 2);break;
-			//case AlignmentType::End: childSecondaryOffset += (secondary - GetSecondaryDimension(flow, childRect));break;
-			//}
 			// apply scroll offsets
-			childSprite->Rect.x += contentPos.x - parentRect.x;
-			childSprite->Rect.y += contentPos.y - parentRect.y;
-			// move the primary offset past this child
-			//primaryOffset += GetPrimaryDimension(flow, childRect);
+			childSprite->Rect.x += (long)contentPos.x - parentRect.x;
+			childSprite->Rect.y += (long)contentPos.y - parentRect.y;
 		}
 	}
 }
@@ -1335,8 +1319,8 @@ int GuiSystem::GetSecondaryPosition(FlowType flow, Rectangle rect)
 Vector2 GuiSystem::GetVector(FlowType flow, int primary, int secondary)
 {
 	switch (flow) {
-	case FlowType::Column: return Vector2(secondary, primary);
-	case FlowType::Row: return Vector2(primary, secondary);
+	case FlowType::Column: return Vector2((float)secondary, (float)primary);
+	case FlowType::Row: return Vector2((float)primary, (float)secondary);
 	}
 	return Vector2::Zero;
 }

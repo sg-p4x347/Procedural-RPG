@@ -27,6 +27,7 @@ SystemManager::SystemManager(
 	auto guiSystem = GetSystem<GuiSystem>("Gui");
 	guiSystem->RegisterSubsystems();
 	AddSystem(std::shared_ptr<System>(new RenderSystem(this,1, window, width, height, guiSystem)), true);
+
 	//AddSystem(std::shared_ptr<System>(new SoundSystem()));
 	//AddSystem(std::shared_ptr<System>(new InfrastructureSystem(m_entityManager, vector<string>{"Infrastructure"}, 0)));
 

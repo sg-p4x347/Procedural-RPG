@@ -2,6 +2,7 @@
 #include "SystemManager.h"
 #include "StepTimer.h"
 #include "World.h"
+#include "JsonParser.h"
 class Game
 {
 public:
@@ -14,7 +15,7 @@ public:
 	Filesystem::path GetSavesDirectory();
 	//----------------------------------------------------------------
 	// World
-	bool TryGetWorld(World *& world);
+	bool TryGetWorld(world::World *& world);
 	void GenerateWorld(string name, int seed);
 	bool LoadWorld(string name = "");
 	void CloseWorld();
@@ -36,7 +37,7 @@ public:
 	static DirectX::Mouse::ButtonStateTracker MouseTracker;
 	static DirectX::Keyboard::State KeyboardState;
 	static DirectX::Keyboard::KeyboardStateTracker KeyboardTracker;
-	void SetMousePos(Vector2 pos);
+	//void SetMousePos(Vector2 pos);
 	static Vector2 MousePos;
 private:
 	Game();
@@ -50,8 +51,8 @@ private:
 
 	//----------------------------------------------------------------
 	// World
-	unique_ptr<World> m_world;
-    void Update(DX::StepTimer const& timer);
+	unique_ptr<world::World> m_world;
+    void Update(double elapsed);
 
 	//----------------------------------------------------------------
 	// Input

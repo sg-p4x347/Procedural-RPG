@@ -25,6 +25,7 @@ public:
 	virtual void Update(double & elapsed) override;
 	// Window resize update
 	void UpdateUI(int outputWidth, int outputHeight);
+	void UpdateUI();
 
 	void OpenMenu(string name);
 	EntityPtr GetCurrentMenu();
@@ -32,11 +33,12 @@ public:
 	void SetHandMenu(EntityPtr element);
 	void CloseMenu();
 	GuiEntityManager & GetEM();
-	void DisplayException(std::exception e);
+	void DisplayException(string message = "An exception occured");
 	//----------------------------------------------------------------
-	// HUD Control
+	// External Control
 	void SetTextByID(string id, string text);
 	void ShowHint(string hint);
+	shared_ptr<Style> GetStyle(string id);
 	//----------------------------------------------------------------
 	// Events
 	void BindHandlers();
@@ -47,6 +49,7 @@ private:
 	SystemManager * SM;
 	GUI::GuiEntityManager GuiEM;
 	Rectangle m_outputRect;
+	std::mutex m_debugUpdate;
 	//----------------------------------------------------------------
 	// Menus
 	EntityPtr m_currentMenu;
@@ -62,9 +65,9 @@ private:
 	bool IsMenuOpen(string name);
 	//----------------------------------------------------------------
 	// Inventory
-	EntityPtr CreateInventory();
-	EntityPtr CreateInventoryGrid(string gridTemplate, vector<Components::InventoryItem> inventory);
-	void SelectInventoryTab(EntityPtr gridContainer, string category);
+	//EntityPtr CreateInventory();
+	//EntityPtr CreateInventoryGrid(string gridTemplate, vector<world::InventoryItem> inventory);
+	//void SelectInventoryTab(EntityPtr gridContainer, string category);
 
 	//----------------------------------------------------------------
 	// HUD

@@ -1,6 +1,7 @@
 #pragma once
 #include "PersistenceEntityManager.h"
 #include "ModelAsset.h"
+#include "CollisionAsset.h"
 #include "PathID.h"
 #include "VboParser.h"
 #include "VBO.h"
@@ -20,16 +21,12 @@ public:
 	
 	//----------------------------------------------------------------
 	// Factories
-	template <typename VertexType>
-	EntityPtr CreateModel(string path, vector<shared_ptr<Components::VBO<VertexType>>> vbos, int lodSpacing,string effect) {
+	EntityPtr CreateAsset(string path) {
 		EntityPtr entity = NewEntity();
-		entity->AddComponent(new ModelAsset(lodSpacing,vbos.size(), effect));
 		entity->AddComponent(new PathID(path));
-		for (int lod = 0; lod < vbos.size(); lod++) {
-			m_vboParser.ExportVBO<VertexType>(path + '_' + to_string(lod), *(vbos[lod]));
-		}
 		return entity;
 	}
+	virtual void CollectGarbage() override;
 private:
 	
 	// Asset lookup

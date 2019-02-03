@@ -4,11 +4,46 @@
 #include "PositionNormalTextureVBO.h"
 #include "PositionNormalTextureTangentColorVBO.h"
 #include "Model.h"
-#include "CompositeModel.h";
+#include "CompositeModel.h"
+#include "VoxelGridModel.h"
+#include "ModelVoxel.h"
 #include "AssetManager.h"
+#include "RegionJobCache.h"
 class SystemManager;
-struct RenderEntityJob {
-	EntityPtr entity;
+
+class RenderJobVoxel :
+	public Voxel 
+{
+public:
+	RegionJobCache jobs;
+};
+struct RenderGridJob {
+	RenderGridJob(world::VoxelGridModel & gridModel,Vector3 position, Vector3 rotation) : voxels(
+		gridModel.Voxels.GetXsize(),
+		gridModel.Voxels.GetYsize(),
+		gridModel.Voxels.GetZsize()
+	) {
+		position = position;
+		worldMatrix = XMMatrixAffineTransformation(Vector3::One, Vector3::Zero,Quaternion::CreateFromYawPitchRoll(rotation.y,rotation.x,rotation.z), position + Vector3(0.5f,0.5f,0.5f));
+		// create a RenderJobVoxel for each ModelVoxel
+		for (ModelVoxel & modelVoxel : gridModel.Voxels) {
+			RenderJobVoxel rjv;
+			// create a RenderJob for each component
+			for (auto & component : modelVoxel.GetComponents()) {
+				
+				Vector3 voxelPos = modelVoxel.GetPosition();
+				RenderJob job = RenderJob(gridModel.ID, voxelPos, Vector3::Zero, component.first);
+				Matrix world = TRANSFORMS[component.second];
+				world *= Matrix::CreateTranslation(voxelPos);
+				job.worldMatrix = world * worldMatrix;
+				rjv.jobs.opaque.push_back(job);
+				
+			}
+			voxels.Set(rjv, modelVoxel.GetX(), modelVoxel.GetY(), modelVoxel.GetZ());
+		}
+	}
+	VoxelGrid<RenderJobVoxel> voxels;
+	Vector3 position;
 	XMMATRIX worldMatrix;
 };
 class RenderSystem :
@@ -23,18 +58,26 @@ public:
 	);
 	// Inherited via System
 	virtual void Update(double & elapsed) override;
-	virtual void SyncEntities() override;
 	void SetViewport(int width, int height);
 	Rectangle GetViewport();
-	void InitializeWorldRendering(WorldEntityManager * entityManager);
+	void InitializeWorldRendering(world::WEM * entityManager);
 	void RegisterHandlers();
 	~RenderSystem();
 private:
-	WorldEntityManager * EM;
+	world::WEM * EM;
 	shared_ptr<GuiSystem> m_guiSystem;
 	SystemManager * SM;
 	EntityPtr m_player;
+	std::shared_ptr<Model> m_oceanModel;
+	const float m_fov;
+	const float m_clipNear;
+	const float m_clipFar;
+	float m_aspectRatio;
+	bool m_wireframe;
+	bool m_ready;
 	std::mutex m_mutex;
+	std::mutex m_syncMutex;
+	
 	std::deque<int> m_frameDeltas;
 	// DirectX
 	
@@ -66,6 +109,7 @@ private:
 	SimpleMath::Matrix	m_worldMatrix;
 	SimpleMath::Matrix 	m_viewMatrix;
 	SimpleMath::Matrix  m_projMatrix;
+	BoundingFrustum m_frustum;
 	void UpdateEffectMatricies(std::shared_ptr<IEffectMatrices> effect, int backBufferWidth, int backBufferHeight);
 	// Initializes window-dependent resources
 	void CreateResources();
@@ -77,22 +121,72 @@ private:
 	DirectX::XMMATRIX GetViewMatrix();
 	//----------------------------------------------------------------
 	// Components::VBO
-	unsigned long m_VBOmask;
 	std::map<string, vector<shared_ptr<Components::PositionNormalTextureTangentColorVBO>>> m_VBOs;
 	
 	void RenderVBO(shared_ptr<Components::PositionNormalTextureTangentColorVBO> vbo);
+	void RenderTerrain(shared_ptr<world::WEM::RegionType> region, bool alpha);
+	void LoadRegion(shared_ptr<world::WEM::RegionType> region);
+	void UnloadRegion(shared_ptr<world::WEM::RegionType> region);
+	//----------------------------------------------------------------
+	// Render Jobs
+	typedef std::map<shared_ptr<world::WEM::RegionType>, RegionJobCache> JobCaches;
+	JobCaches m_jobs;
+	JobCaches m_terrainJobs;
+	std::map<shared_ptr<world::WEM::RegionType>, vector<RenderGridJob>> m_gridJobs;
+	void InitializeJobCache();
+	void CreateJob(
+		vector<RenderJob> & jobs,
+		world::EntityID entity,
+		Vector3 position, 
+		Vector3 rotation, 
+		AssetID modelAsset,
+		AssetType assetType = AssetType::Authored
+	);
+	JobCaches CreateDynamicJobs();
+	JobCaches CreateGridJobs(Vector3 & center, BoundingFrustum & frustum);
+	void DepthSort(vector<shared_ptr<world::WEM::RegionType>> & regions,Vector2 center);
+	void DepthSort(vector<RenderJob> & jobs,Vector3 center);
+	void DepthSort(vector<RenderJobVoxel> & voxels, Vector3 center);
+	void RenderJobs(vector<RenderJob> & jobs, Vector3 cameraPos,bool alpha);
+	void RenderRenderJob(RenderJob & job, Vector3 cameraPos, bool alpha);
 	//----------------------------------------------------------------
 	// Components::Model using DirectX::Model
-	unsigned long m_ModelMask;
-	std::map<shared_ptr<Model>, vector<RenderEntityJob>> m_modelInstances;
-	std::set<EntityPtr> m_tracked;
-	std::set<unsigned long> m_forceRenderMasks;
-	void TrackEntity(std::map<shared_ptr<Model>, vector<RenderEntityJob>> & modelInstances, std::set<EntityPtr> & tracked,EntityPtr entity);
+	typedef std::map<shared_ptr<world::WEM::RegionType>, std::map<world::MaskType,vector<RenderJob>>> ModelInstanceCache;
+	ModelInstanceCache m_terrainInstances;
+	ModelInstanceCache m_modelInstances;
+	ModelInstanceCache m_dynamicModelInstances;
+	typedef std::map<shared_ptr<world::WEM::RegionType>, std::map<world::MaskType, vector<RenderGridJob>>> GridInstanceCache;
+	GridInstanceCache m_gridInstances;
+	set<shared_ptr<world::WEM::RegionType>> m_visibleRegions;
+	
+	void TrackEntity(
+		ModelInstanceCache & modelInstances,
+		shared_ptr<world::WEM::RegionType> region,
+		world::MaskType signature,
+		world::WorldEntityProxy<world::Model, world::Position> & entity,
+		Vector3 camera,
+		bool moves,
+		bool ignoreVerticalDistance = false);
+	void TrackGridEntity(
+		GridInstanceCache & gridInstances, 
+		shared_ptr<world::WEM::RegionType> region, 
+		world::MaskType signature,
+		Vector3 position, 
+		Vector3 rotation,
+		world::VoxelGridModel & gridComp,
+		Vector3 camera, 
+		bool ignoreVerticalDistance = false
+	);
+	void UpdateVisibleRegions(Vector3 & cameraPosition, Vector3 & cameraRotation);
+	bool IsRectVisible(Rectangle & area,Vector2 & observerPos,Vector2 & fovNorm1, Vector2 & fovNorm2);
+	bool IsRegionVisible(shared_ptr<world::WEM::RegionType> region, Vector3 & position, Vector3 & rotation, BoundingFrustum & frustum);
+	void CreateFromMatrixRH(BoundingFrustum& Out, CXMMATRIX Projection);
 	//----------------------------------------------------------------
 	// DX::Model
 
+	void RenderModels(Vector3 & cameraPos,world::MaskType signatureMask, bool opaque);
 	// Render all opaque or alpha meshes within the model 
-	void RenderModel(shared_ptr<DirectX::Model> model, XMMATRIX world,bool opaque);
+	void RenderModel(shared_ptr<DirectX::Model> model, XMMATRIX world,bool alpha);
 	void RenderCompositeModel(shared_ptr<CompositeModel> model, Vector3 & position, Vector3 & rotation, bool backfaceCulling);
 	void RenderModelMesh(DirectX::ModelMesh * mesh, XMMATRIX world, bool backfaceCulling);
 	//----------------------------------------------------------------

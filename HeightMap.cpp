@@ -7,6 +7,10 @@ HeightMap::HeightMap() : Map<float>::Map()
 {
 }
 
+HeightMap::~HeightMap()
+{
+}
+
 HeightMap::HeightMap(int w, float i, float d, int z) : Map<float>::Map(w,i,d,z)
 {
 }
@@ -105,12 +109,45 @@ float HeightMap::Height(float x, float z)
 	}
 }
 
+float HeightMap::Height(float x, float z, std::function<float(int, int)>&& controlSelector)
+{
+	if (std::floorf(x) == x && std::floorf(z) == z) {
+		return controlSelector((int)x, (int)z);
+	}
+	else {
+		float quad[2][2]{
+			{controlSelector(std::floor(x),std::floor(z)),controlSelector(std::floor(x),std::ceil(z))},
+			{controlSelector(std::ceil(x),std::floor(z)),controlSelector(std::ceil(x),std::ceil(z))}
+		};
+		return Utility::BilinearInterpolate(quad, x - std::floor(x), z - std::floor(z));
+	}
+}
+
+Vector3 HeightMap::Normal(int x, int z, std::function<float(int, int)>&& controlSelector)
+{
+	float left = controlSelector(x - 1, z);
+	float right = controlSelector(x + 1, z);
+	float down = controlSelector(x, z - 1);
+	float up = controlSelector(x, z + 1);
+
+	Vector3 normal = DirectX::SimpleMath::Vector3(left - right, 2.f, down - up);
+	normal.Normalize();
+	return normal;
+}
+
 float HeightMap::Height(int x, int z)
 {
 	if (Bounded(x,z)) {
 		return map[x][z];
 	}
 	return 0.0f;
+}
+
+void HeightMap::SetHeight(int x, int z, float value)
+{
+	if (Bounded(x, z)) {
+		map[x][z] = value;
+	}
 }
 
 float HeightMap::HeightAbsPos(Vector2 position)

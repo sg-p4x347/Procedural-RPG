@@ -29,11 +29,11 @@ namespace Components {
 		int LOD;
 		bool LODchanged;
 		// Inherited via Component
-		void Export(std::ofstream & ofs)
+		void Export(std::ostream & ofs)
 		{
 			Serialize(Effect, ofs);
 		}
-		void Import(std::ifstream & ifs)
+		void Import(std::istream & ifs)
 		{
 			DeSerialize(Effect, ifs);
 		}
@@ -42,7 +42,7 @@ namespace Components {
 		void CreateVB(Microsoft::WRL::ComPtr<ID3D11Device> device)
 		{
 			D3D11_BUFFER_DESC desc = { 0 };
-			desc.ByteWidth = sizeof(VertexType)*Vertices.size();
+			desc.ByteWidth = (UINT)sizeof(VertexType)*Vertices.size();
 			desc.Usage = D3D11_USAGE_DEFAULT;
 			desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
@@ -55,7 +55,7 @@ namespace Components {
 		void CreateIB(Microsoft::WRL::ComPtr<ID3D11Device> device)
 		{
 			D3D11_BUFFER_DESC desc = { 0 };
-			desc.ByteWidth = sizeof(uint16_t)*Indices.size();
+			desc.ByteWidth = (UINT)sizeof(uint16_t)*Indices.size();
 			desc.Usage = D3D11_USAGE_DEFAULT;
 			desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 

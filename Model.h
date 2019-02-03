@@ -1,28 +1,16 @@
 #pragma once
-#include "Component.h"
+#include "WorldComponent.h"
 #include "AssetTypes.h"
-namespace Components {
+namespace world {
 	
 	class Model :
-		public Component
+		public WorldComponent
 	{
 	public:
 		Model();
-		Model(string path,AssetType type);
+		Model(EntityID asset,AssetType type);
 		
-		// Relative path for locating the model
-		string Path;
-		// Determines how to import this model
+		EntityID Asset;
 		AssetType Type;
-
-		//// Effect used to render the model
-		//string Effect;
-		//// Cull back faces
-		//bool BackfaceCulling;
-
-		// Inherited via Component
-		virtual string GetName() override;
-		virtual void Export(std::ofstream & ofs) override;
-		virtual void Import(std::ifstream & ifs) override;
 	};
 }

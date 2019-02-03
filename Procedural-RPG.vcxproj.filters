@@ -92,6 +92,12 @@
     <Filter Include="Assets\UI">
       <UniqueIdentifier>{b57dd812-079f-40f4-8b9f-a40836a3e483}</UniqueIdentifier>
     </Filter>
+    <Filter Include="World\Database">
+      <UniqueIdentifier>{cfece8f3-2423-4cc4-bf64-2408b77c572b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility\Geometry\CMF">
+      <UniqueIdentifier>{8c9ab8d6-25df-4c32-b825-39dfe3152bb7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -100,9 +106,6 @@
       <Filter>Filesystem</Filter>
     </ClInclude>
     <ClInclude Include="Position.h">
-      <Filter>World\Component</Filter>
-    </ClInclude>
-    <ClInclude Include="Terrain.h">
       <Filter>World\Component</Filter>
     </ClInclude>
     <ClInclude Include="TerrainSystem.h">
@@ -138,9 +141,6 @@
     <ClInclude Include="WaterCell.h">
       <Filter>World\Erosion</Filter>
     </ClInclude>
-    <ClInclude Include="Tag.h">
-      <Filter>World\Component</Filter>
-    </ClInclude>
     <ClInclude Include="Model.h">
       <Filter>World\Component</Filter>
     </ClInclude>
@@ -164,9 +164,6 @@
     </ClInclude>
     <ClInclude Include="JsonParser.h">
       <Filter>Utility\Serialization</Filter>
-    </ClInclude>
-    <ClInclude Include="Delegate.h">
-      <Filter>World\Component</Filter>
     </ClInclude>
     <ClInclude Include="PositionNormalTextureVBO.h">
       <Filter>World\Component</Filter>
@@ -195,17 +192,8 @@
     <ClInclude Include="BaseEntityManager.h">
       <Filter>ECS</Filter>
     </ClInclude>
-    <ClInclude Include="Entity.h">
-      <Filter>ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="Component.h">
-      <Filter>ECS</Filter>
-    </ClInclude>
     <ClInclude Include="PersistenceEntityManager.h">
       <Filter>ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="WorldEntityManager.h">
-      <Filter>World</Filter>
     </ClInclude>
     <ClInclude Include="SystemManager.h">
       <Filter>ECS</Filter>
@@ -255,9 +243,6 @@
     <ClInclude Include="ReadData.h">
       <Filter>DirectXTK</Filter>
     </ClInclude>
-    <ClInclude Include="TaskThread.h">
-      <Filter>Misc</Filter>
-    </ClInclude>
     <ClInclude Include="ModelManager.h">
       <Filter>Misc</Filter>
     </ClInclude>
@@ -291,9 +276,6 @@
     <ClInclude Include="EventHandler.h">
       <Filter>Events</Filter>
     </ClInclude>
-    <ClInclude Include="EntityRegion.h">
-      <Filter>World\Component</Filter>
-    </ClInclude>
     <ClInclude Include="Collision.h">
       <Filter>World\Component</Filter>
     </ClInclude>
@@ -309,12 +291,6 @@
     </ClInclude>
     <ClInclude Include="BuildingGenerator.h">
       <Filter>World\Generator\Building</Filter>
-    </ClInclude>
-    <ClInclude Include="BuildingVoxel.h">
-      <Filter>World\Generator\Building</Filter>
-    </ClInclude>
-    <ClInclude Include="Building.h">
-      <Filter>World\Component</Filter>
     </ClInclude>
     <ClInclude Include="Room.h">
       <Filter>World\Generator\Building</Filter>
@@ -373,7 +349,6 @@
     <ClInclude Include="XmlParser.h">
       <Filter>Utility\Serialization</Filter>
     </ClInclude>
-    <ClInclude Include="CssParser.h" />
     <ClInclude Include="HeightMapAsset.h">
       <Filter>Assets\Component</Filter>
     </ClInclude>
@@ -387,6 +362,129 @@
       <Filter>GUI\System</Filter>
     </ClInclude>
     <ClInclude Include="InventoryGuiHandler.h" />
+    <ClInclude Include="EntityRegion.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityCache.h">
+      <Filter>World\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityIndex.h">
+      <Filter>World\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Region.h">
+      <Filter>World\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldEntityCache.h">
+      <Filter>World\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="ComponentCache.h">
+      <Filter>World\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldComponent.h">
+      <Filter>World\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldEntity.h">
+      <Filter>World\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldEntityManager.h">
+      <Filter>World\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityTypedefs.h">
+      <Filter>World\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldDomain.h">
+      <Filter>World\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Tag.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="Delegate.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldEntityProxy.h">
+      <Filter>World\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskThread.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionUtil.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Global.h" />
+    <ClInclude Include="CustomModelLoadCMO.h">
+      <Filter>Utility\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionAsset.h" />
+    <ClInclude Include="JsonUtil.h">
+      <Filter>Utility\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="CMF.h">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshPart.h">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClInclude>
+    <ClInclude Include="LodGroup.h">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionModel.h">
+      <Filter>Utility\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="ConvexHull.h">
+      <Filter>Utility\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClInclude>
+    <ClInclude Include="VoxelGrid.h">
+      <Filter>World\Generator\Building</Filter>
+    </ClInclude>
+    <ClInclude Include="Voxel.h">
+      <Filter>World\Generator\Building</Filter>
+    </ClInclude>
+    <ClInclude Include="VoxelGridModel.h">
+      <Filter>World\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelVoxel.h">
+      <Filter>World\Generator\Building</Filter>
+    </ClInclude>
+    <ClInclude Include="AssetTypedefs.h" />
+    <ClInclude Include="CollisionVolume.h">
+      <Filter>Utility\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Cylinder.h">
+      <Filter>Utility\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="MovementControllerSystem.h">
+      <Filter>World\System</Filter>
+    </ClInclude>
+    <ClInclude Include="MovementController.h">
+      <Filter>World\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Plant.h">
+      <Filter>World\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="TerrainVertex.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderJob.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="RegionJobCache.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="CssParser.h">
+      <Filter>Utility\Serialization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -396,9 +494,6 @@
       <Filter>Filesystem</Filter>
     </ClCompile>
     <ClCompile Include="Position.cpp">
-      <Filter>World\Component</Filter>
-    </ClCompile>
-    <ClCompile Include="Terrain.cpp">
       <Filter>World\Component</Filter>
     </ClCompile>
     <ClCompile Include="TerrainSystem.cpp">
@@ -434,9 +529,6 @@
     <ClCompile Include="WaterCell.cpp">
       <Filter>World\Erosion</Filter>
     </ClCompile>
-    <ClCompile Include="Tag.cpp">
-      <Filter>World\Component</Filter>
-    </ClCompile>
     <ClCompile Include="GuiEntityManager.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
@@ -459,9 +551,6 @@
       <Filter>Utility\Serialization</Filter>
     </ClCompile>
     <ClCompile Include="Model.cpp">
-      <Filter>World\Component</Filter>
-    </ClCompile>
-    <ClCompile Include="Delegate.cpp">
       <Filter>World\Component</Filter>
     </ClCompile>
     <ClCompile Include="PositionNormalTextureVBO.cpp">
@@ -491,17 +580,8 @@
     <ClCompile Include="BaseEntityManager.cpp">
       <Filter>ECS</Filter>
     </ClCompile>
-    <ClCompile Include="Entity.cpp">
-      <Filter>ECS</Filter>
-    </ClCompile>
-    <ClCompile Include="Component.cpp">
-      <Filter>ECS</Filter>
-    </ClCompile>
     <ClCompile Include="PersistenceEntityManager.cpp">
       <Filter>ECS</Filter>
-    </ClCompile>
-    <ClCompile Include="WorldEntityManager.cpp">
-      <Filter>World</Filter>
     </ClCompile>
     <ClCompile Include="SystemManager.cpp">
       <Filter>ECS</Filter>
@@ -536,9 +616,6 @@
     <ClCompile Include="VboParser.cpp">
       <Filter>Utility\Serialization</Filter>
     </ClCompile>
-    <ClCompile Include="TaskThread.cpp">
-      <Filter>Misc</Filter>
-    </ClCompile>
     <ClCompile Include="ModelManager.cpp">
       <Filter>Misc</Filter>
     </ClCompile>
@@ -566,9 +643,6 @@
     <ClCompile Include="IEventManager.cpp">
       <Filter>Events</Filter>
     </ClCompile>
-    <ClCompile Include="EntityRegion.cpp">
-      <Filter>World\Component</Filter>
-    </ClCompile>
     <ClCompile Include="Collision.cpp">
       <Filter>World\Component</Filter>
     </ClCompile>
@@ -584,12 +658,6 @@
     </ClCompile>
     <ClCompile Include="BuildingGenerator.cpp">
       <Filter>World\Generator\Building</Filter>
-    </ClCompile>
-    <ClCompile Include="BuildingVoxel.cpp">
-      <Filter>World\Generator\Building</Filter>
-    </ClCompile>
-    <ClCompile Include="Building.cpp">
-      <Filter>World\Component</Filter>
     </ClCompile>
     <ClCompile Include="Room.cpp">
       <Filter>World\Generator\Building</Filter>
@@ -648,7 +716,6 @@
     <ClCompile Include="XmlParser.cpp">
       <Filter>Utility\Serialization</Filter>
     </ClCompile>
-    <ClCompile Include="CssParser.cpp" />
     <ClCompile Include="HeightMapAsset.cpp">
       <Filter>Assets\Component</Filter>
     </ClCompile>
@@ -659,6 +726,92 @@
       <Filter>GUI\System</Filter>
     </ClCompile>
     <ClCompile Include="InventoryGuiHandler.cpp" />
+    <ClCompile Include="EntityRegion.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityIndex.cpp">
+      <Filter>World\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="Component.cpp">
+      <Filter>ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldComponent.cpp">
+      <Filter>World\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Tag.cpp">
+      <Filter>ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="Delegate.cpp">
+      <Filter>ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity.cpp">
+      <Filter>ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskThread.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="Global.cpp" />
+    <ClCompile Include="CustomModelLoadCMO.cpp">
+      <Filter>Utility\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionAsset.cpp" />
+    <ClCompile Include="CMF.cpp">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshPart.cpp">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClCompile>
+    <ClCompile Include="LodGroup.cpp">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionModel.cpp">
+      <Filter>Utility\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="ConvexHull.cpp">
+      <Filter>Utility\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Utility\Geometry\CMF</Filter>
+    </ClCompile>
+    <ClCompile Include="Voxel.cpp">
+      <Filter>World\Generator\Building</Filter>
+    </ClCompile>
+    <ClCompile Include="VoxelGridModel.cpp">
+      <Filter>World\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelVoxel.cpp">
+      <Filter>World\Generator\Building</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionVolume.cpp">
+      <Filter>Utility\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="Cylinder.cpp">
+      <Filter>Utility\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="MovementControllerSystem.cpp">
+      <Filter>World\System</Filter>
+    </ClCompile>
+    <ClCompile Include="MovementController.cpp">
+      <Filter>World\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Plant.cpp">
+      <Filter>World\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="TerrainVertex.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="RegionJobCache.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderJob.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="CssParser.cpp">
+      <Filter>Utility\Serialization</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Procedural-RPG.rc">
@@ -684,10 +837,13 @@
     <None Include="packages.config">
       <Filter>VS</Filter>
     </None>
-    <None Include="config\WorldEntityManager.json">
+    <None Include="config\world.json">
       <Filter>Config</Filter>
     </None>
-    <None Include="config\world.json">
+    <None Include="Config\game.json">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="config\plants.json">
       <Filter>Config</Filter>
     </None>
   </ItemGroup>
@@ -737,43 +893,20 @@
       <Filter>Assets\Textures</Filter>
     </ImageContentTask>
     <ImageContentTask Include="Assets\Textures\iron_ore.png">
-      <Filter>Assets</Filter>
+      <Filter>Assets\Textures</Filter>
     </ImageContentTask>
-  </ItemGroup>
-  <ItemGroup>
-    <MeshContentTask Include="Assets\Models\Tree.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Cube.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Building\models-building-corner0_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Building\models-building-floor0_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Building\models-building-wall0_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Crate_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Boulder_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Iron_Boulder_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
-    <MeshContentTask Include="Assets\Models\Grass_0.fbx">
-      <Filter>Assets\Models</Filter>
-    </MeshContentTask>
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico">
       <Filter>Assets\Textures</Filter>
     </Image>
     <Image Include="Assets\Textures\Item\logs.png">
+      <Filter>Assets\Textures</Filter>
+    </Image>
+    <Image Include="Assets\Textures\grass_billboard_0.png">
+      <Filter>Assets\Textures</Filter>
+    </Image>
+    <Image Include="Assets\Textures\adobe.png">
       <Filter>Assets\Textures</Filter>
     </Image>
   </ItemGroup>
@@ -804,5 +937,19 @@
     <Xml Include="Assets\UI\hud.xml">
       <Filter>Assets\UI</Filter>
     </Xml>
+    <Xml Include="Assets\UI\loading.xml">
+      <Filter>Assets\UI</Filter>
+    </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <ShaderGraphContentTask Include="Assets\Shaders\Lambert.dgsl">
+      <Filter>Assets\Shaders</Filter>
+    </ShaderGraphContentTask>
+    <ShaderGraphContentTask Include="Assets\Shaders\Phong.dgsl">
+      <Filter>Assets\Shaders</Filter>
+    </ShaderGraphContentTask>
+    <ShaderGraphContentTask Include="Assets\Shaders\Unlit.dgsl">
+      <Filter>Assets\Shaders</Filter>
+    </ShaderGraphContentTask>
   </ItemGroup>
 </Project>

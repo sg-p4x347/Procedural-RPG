@@ -54,6 +54,16 @@ string BaseEntityManager::NameOf(const unsigned long & mask)
 	return "";
 }
 
+std::map<string, unsigned long> BaseEntityManager::GetMasks()
+{
+	return m_masks;
+}
+
+std::map<unsigned long, string> BaseEntityManager::GetNames()
+{
+	return m_names;
+}
+
 EntityPtr BaseEntityManager::NewEntity()
 {
 	std::lock_guard<shared_mutex> lock(m_mutex);
@@ -91,7 +101,6 @@ EntityPtr BaseEntityManager::Copy(Entity * source)
 
 void BaseEntityManager::DeleteEntity(EntityPtr & entity)
 {
-	IEventManager::Invoke(EventTypes::Entity_Deleted, entity);
 	m_removedIDs.push(entity->ID());
 	// Remove all components from the entity
 	entity->RemoveComponents();

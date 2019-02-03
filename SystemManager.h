@@ -1,6 +1,5 @@
 #pragma once
 #include "System.h"
-#include "WorldEntityManager.h"
 #include "EventManager.h"
 
 class SystemManager

@@ -31,7 +31,7 @@ EntityPtr InventoryGuiHandler::GetElement()
 
 
 	static string currentCategory = "All";
-	auto categories = SM->GetSystem<ItemSystem>("Item")->GetItemCatagories();
+	auto categories = SM->GetSystem<world::ItemSystem>("Item")->GetItemCatagories();
 	categories.insert("craft");
 	for (string category : categories) {
 		tabs.push_back([=] {
@@ -51,13 +51,13 @@ EntityPtr InventoryGuiHandler::GetElement()
 	EM.AddChildren(header, tabs);
 	return inv;
 }
-EntityPtr InventoryGuiHandler::CreateInventoryGrid(string gridTemplate, vector<Components::InventoryItem> items)
+EntityPtr InventoryGuiHandler::CreateInventoryGrid(string gridTemplate, vector<world::InventoryItem> items)
 {
 	auto invGrid = m_guiSystem->ImportMarkup(gridTemplate);
 	auto cellTemplate = m_guiSystem->ImportMarkup("UI/inv_item.xml",this);
 	vector<EntityPtr> rows;
 	for (auto & item : items) {
-		auto itemType = SM->GetSystem<ItemSystem>("Item")->TypeOf(item)->GetComponent<Item>("Item");
+		auto itemType = SM->GetSystem<world::ItemSystem>("Item")->TypeOf(item)->GetComponent<Item>("Item");
 		// Add a grid cell
 		auto cell = EM.Copy(cellTemplate);
 		/*EM.AddEventHandler(cell, new GUI::EventHandler("Click", [=](Event evt) {
@@ -77,7 +77,7 @@ EntityPtr InventoryGuiHandler::CreateInventoryGrid(string gridTemplate, vector<C
 
 void InventoryGuiHandler::SelectInventoryTab(EntityPtr gridContainer, string category)
 {
-	auto & itemSystem = SM->GetSystem<ItemSystem>("Item");
+	auto & itemSystem = SM->GetSystem<world::ItemSystem>("Item");
 	m_guiSystem->DeleteChildren(gridContainer);
 	EntityPtr openContainer = itemSystem->GetOpenContainer();
 	if (openContainer && openContainer != itemSystem->GetPlayer()) {

@@ -11,6 +11,7 @@ PersistenceEntityManager::PersistenceEntityManager(Filesystem::path & directory)
 {
 	//----------------------------------------------------------------
 	// Initialize filesystem dependencies
+	Filesystem::create_directory(directory);
 	ifstream nextEntityFile(m_directory / m_nextEntityFile);
 	if (nextEntityFile) {
 		unsigned int nextID = 1;
@@ -22,18 +23,13 @@ PersistenceEntityManager::PersistenceEntityManager(Filesystem::path & directory)
 shared_ptr<Components::Component> PersistenceEntityManager::LoadComponent(unsigned long & mask, Entity * entity)
 {
 	shared_ptr<Components::Component> component = std::shared_ptr<Components::Component>(GetPrototype(mask));
-	//std::size_t underscorePos = m_names[mask].find('_');
-	//if (underscorePos == string::npos) {
-	//}
-	//else {
-	//	// Delegate types
-	//	string discreteType = m_names[mask].substr(0, underscorePos);	// before the '_'
-	//	string delegateType = m_names[mask].substr(underscorePos+1);	// after the '_'
-	//	component = std::shared_ptr<Components::Component>(m_delegatePrototypes[mask](delegateType));
-	//}
-
+	
 	if (component) {
-		component->Load(m_directory, entity->ID());
+		Filesystem::path componentDir = m_directory / component->GetName();
+		Filesystem::create_directory(componentDir);
+		std::ifstream ifs(componentDir / (std::to_string(entity->ID()) + ".dat"), ios::binary);
+		component->Import(ifs);
+		component->Entity = entity;
 		return component;
 	}
 	else {
@@ -53,11 +49,14 @@ vector<EntityPtr> PersistenceEntityManager::LoadEntities(unsigned long & compone
 	for (int i = 0; i < m_maskSize; i++) {
 		if (mask[i]) {
 			unordered_set<unsigned int> nextMatching;
-			for (auto & dir : Filesystem::directory_iterator(m_directory / NameOf(std::pow(2, i)))) {
-				string fileName = FileSystemHelpers::StripExtension(dir.path().filename().string());
-				if (Utility::IsNumeric(fileName)) {
-					unsigned int id = std::stoi(fileName);
-					if (firstComp || unCached.count(id)) nextMatching.insert(id);
+			Filesystem::path directory = m_directory / NameOf((unsigned long)std::pow(2, i));
+			if (Filesystem::exists(directory)) {
+				for (auto & dir : Filesystem::directory_iterator(directory)) {
+					string fileName = FileSystemHelpers::FilenameWithoutExtension(dir.path());
+					if (Utility::IsNumeric(fileName)) {
+						unsigned int id = std::stoi(fileName);
+						if (firstComp || unCached.count(id)) nextMatching.insert(id);
+					}
 				}
 			}
 			unCached = nextMatching;
@@ -223,7 +222,10 @@ void PersistenceEntityManager::Save()
 	// Components
 	for (std::unordered_map<unsigned int, EntityPtr>::iterator it = m_entities.begin(); it != m_entities.end(); ++it) {
 		for (auto & component : it->second->GetLoadedComponents()) {
-			component->Save(m_directory);
+			Filesystem::path componentDir = m_directory / component->GetName();
+			Filesystem::create_directory(componentDir);
+			std::ofstream ofs(componentDir / (std::to_string(it->first) + ".dat"), ios::binary);
+			component->Export(ofs);
 		}
 	}
 	//----------------------------------------------------------------

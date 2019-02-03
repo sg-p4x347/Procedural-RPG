@@ -6,7 +6,18 @@ class TaskManager
 {
 public:
 	static TaskManager & Get();
-	void Push(Task task);
+	void Push(Task && task);
+	void RunSynchronous(Task && task);
+	// tries to run a task on the given thread
+	void Peek(WorkerThread & thread);
+	void WaitForAll();
+	std::condition_variable m_peekCondition;
+	std::condition_variable m_syncPeek;
+	std::mutex m_peekMutex;
+	std::atomic_bool m_waitingSync;
+	std::atomic_bool m_canPeek;
+	std::atomic_int m_active;
+	bool QueueEmpty();
 private:
 	TaskManager();
 	~TaskManager();
@@ -14,13 +25,19 @@ private:
 private:
 	//----------------------------------------------------------------
 	// Threads
-	static const UINT m_threadCount = 4;
-	vector<shared_ptr<WorkerThread>> m_threads;
-	recursive_mutex m_mutex;
+	uint32_t m_threadCount;
+	std::vector<std::shared_ptr<WorkerThread>> m_threads;
+	std::mutex m_mutex;
+	std::mutex m_syncLock;
+	
 	//----------------------------------------------------------------
 	// Tasks
-	std::queue<Task> m_queue;
-	// Tries to run as many tasks as possible with the current dependency graph
-	void Peek();
+	std::list<Task> m_queue;
+	bool HasDependendency(Task & task);
+	//----------------------------------------------------------------
+	// Synchronous task
+	std::atomic_ulong m_readDependencies;
+	std::atomic_ulong m_writeDependencies;
+	std::atomic_ulong m_queryDependencies;
 };
 

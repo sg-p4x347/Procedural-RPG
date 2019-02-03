@@ -8,20 +8,21 @@ struct Map :
 	Map() : Map::Map(0, 0.0, 0.0, 0) {}
 	Map(int w, float i, float d, int z) : Map::Map(w,w)
 	{
-		width = w;
 		initialDeviation = i;
 		diamondDeviation = i;
 		squareDeviation = i;
 		deviationDecrease = d;
 		zoom = z;
 	}
-	Map(int width, int length = width);
+	Map(int width);
+	Map(int width, int length);
 	Map(Rectangle area);
 	DataType & ValueAt(int x, int y);
 	DataType default = DataType();
 	vector< vector<DataType> > map;
 	int width;
 	int length;
+	int size;
 	Rectangle area;
 	float initialDeviation;
 	float diamondDeviation;
@@ -32,23 +33,48 @@ struct Map :
 	bool Bounded(int x, int y);
 	bool Bounded(float x, float y);
 
-	virtual void Resize(int width, int length = width) {
-		map = vector<vector<DataType>>(width, vector<DataType>(length));
+	virtual void Resize(int w) {
+		Resize(w, w);
+	}
+	virtual void Resize(int w, int l) {
+		if (w+1 > width)
+			map.resize(w + 1);
+		for (int x = 0; x <= w; x++) {
+			map[x].resize(l + 1);
+			map[x].shrink_to_fit();
+		}
+		if (w + 1 < width) {
+			map.resize(w + 1);
+			map.shrink_to_fit();
+		}
+
+		width = w;
+		length = l;
+		size = width * length;
 	}
 	// Inherited via ISerialization
-	virtual void Import(std::ifstream & ifs) override
+	virtual void Import(std::istream & ifs) override
 	{
 		DeSerialize(width, ifs);
 		DeSerialize(length, ifs);
 		Resize(width + 1, length + 1);
 	}
 	
-	virtual void Export(std::ofstream & ofs) override
+	virtual void Export(std::ostream & ofs) override
 	{
 		Serialize(width, ofs);
 		Serialize(length, ofs);
 	}
+	
+	vector<DataType> & operator[](const int x) {
+		return map[x];
+	}
 };
+
+template<typename DataType>
+inline Map<DataType>::Map(int width) : Map<DataType>::Map(width,width)
+{
+}
 
 template<typename DataType>
 inline Map<DataType>::Map(int width, int length) : Map<DataType>::Map(SimpleMath::Rectangle(0,0,width,length))
@@ -59,7 +85,7 @@ inline Map<DataType>::Map(int width, int length) : Map<DataType>::Map(SimpleMath
 template<typename DataType>
 inline Map<DataType>::Map(SimpleMath::Rectangle area) : area(area), width(area.width), length(area.height)
 {
-	Resize(area.width + 1, area.height + 1);
+	Resize(area.width, area.height);
 }
 
 template<typename DataType>
