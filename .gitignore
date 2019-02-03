@@ -1,7 +1,11 @@
-# Procedural-RPG
+# Directories
 Saves/
 Unused/
 DirectXTK/
+Assets/
+Misc/
+FBX SDK/
+# Assets
 *.fbx
 *.wav
 *.xwb
@@ -73,7 +77,4 @@ Release/
 *.opensdf
 *.tlog
 *.log
-Version.h
-Version.cpp
-/Assets
-/Misc
+
