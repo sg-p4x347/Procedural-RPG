@@ -834,9 +834,6 @@
     <None Include="config\building.json">
       <Filter>Config</Filter>
     </None>
-    <None Include="packages.config">
-      <Filter>VS</Filter>
-    </None>
     <None Include="config\world.json">
       <Filter>Config</Filter>
     </None>
