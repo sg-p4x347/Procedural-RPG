@@ -1,6 +1,0 @@
-{
-"Name":"Clay Pot",
-"Description":"A primitive clay pot",
-"Mass": 5,
-"Sprite":"Item/primitive_pot.png"
-}
