@@ -555,10 +555,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="config\building.json" />
-    <None Include="config\city.json" />
     <None Include="config\continent.json" />
     <None Include="Config\game.json" />
-    <None Include="config\history.json" />
+    <None Include="config\nouns.json" />
     <None Include="config\plants.json" />
     <None Include="config\world.json" />
   </ItemGroup>

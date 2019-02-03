@@ -822,13 +822,7 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="config\city.json">
-      <Filter>Config</Filter>
-    </None>
     <None Include="config\continent.json">
-      <Filter>Config</Filter>
-    </None>
-    <None Include="config\history.json">
       <Filter>Config</Filter>
     </None>
     <None Include="config\building.json">
@@ -841,6 +835,9 @@
       <Filter>Config</Filter>
     </None>
     <None Include="config\plants.json">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="config\nouns.json">
       <Filter>Config</Filter>
     </None>
   </ItemGroup>

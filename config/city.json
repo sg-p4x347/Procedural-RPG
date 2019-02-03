@@ -1,9 +1,0 @@
-{
-    "MinCities": 12,
-    "MaxCities": 16,
-    "MinElevation": 0.0,
-    "MaxElevation": 256.0,
-    "MinDistance": 128,
-    "MinArea": 256,
-    "MaxArea": 512
-}
