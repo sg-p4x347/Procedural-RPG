@@ -1,0 +1,6 @@
+{
+"Name":"Basket",
+"Description":"A primitive basket",
+"Mass": 0.1,
+"Sprite":"Item/primitive_basket.png"
+}

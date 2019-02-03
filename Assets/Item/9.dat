@@ -1,0 +1,6 @@
+{
+"Name":"Iron Ore",
+"Description":"A chunk of iron ore",
+"Mass": 70,
+"Sprite":"Item/iron_ore.png"
+}

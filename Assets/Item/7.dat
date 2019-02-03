@@ -1,0 +1,6 @@
+{
+"Name":"Coal",
+"Description":"A few lumps of coal",
+"Mass": 70,
+"Sprite":"Item/coal.png"
+}
